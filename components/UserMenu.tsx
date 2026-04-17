@@ -12,6 +12,12 @@ export function UserMenu({ user }: { user: User }) {
 
   return (
     <div className="flex items-center gap-3 text-sm">
+      <Link
+        href="/me/favourites"
+        className="hidden text-white/60 hover:text-white sm:inline"
+      >
+        Favourites
+      </Link>
       {isModerator(role) && (
         <Link
           href="/admin/triage"

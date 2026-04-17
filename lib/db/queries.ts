@@ -14,8 +14,13 @@ import {
   categories,
   creationCategories,
   creationTags,
+  creationVotes,
   creations,
+  favorites,
+  ROLE_WEIGHT,
+  tagVotes,
   tags,
+  users,
   type CreationKind,
 } from "./schema";
 
@@ -34,6 +39,9 @@ export interface CreationCardRow {
   votesUp: number | null;
   votesDown: number | null;
   approvedAt: Date | null;
+  // Site-native aggregates (denormalised; recomputed on every vote action).
+  siteWeightedUp: number;
+  siteWeightedDown: number;
 }
 
 const cardColumns = {
@@ -51,6 +59,8 @@ const cardColumns = {
   votesUp: creations.votesUp,
   votesDown: creations.votesDown,
   approvedAt: creations.approvedAt,
+  siteWeightedUp: creations.siteWeightedUp,
+  siteWeightedDown: creations.siteWeightedDown,
 };
 
 export const SORT_MODES = [
@@ -348,4 +358,154 @@ export async function getAllTags() {
 export async function getAllCategories() {
   const db = getDb();
   return db.select().from(categories).orderBy(categories.name);
+}
+
+// ---------------- v2.0 community helpers ----------------
+
+export interface TagWithVotes {
+  tagId: number;
+  slug: string;
+  name: string;
+  categoryId: number | null;
+  source: string;
+  confirmed: boolean;
+  rejected: boolean;
+  weightedUp: number;
+  weightedDown: number;
+  /** -1, 0, or 1 — the viewer's current vote, 0 if unvoted or ghost. */
+  viewerVote: -1 | 0 | 1;
+}
+
+function weightOfRole(role: string | null | undefined): number {
+  if (!role) return 1;
+  return (ROLE_WEIGHT as Record<string, number>)[role] ?? 1;
+}
+
+export async function getCreationTagsWithVotes(
+  creationId: string,
+  viewerSteamid: string | null,
+): Promise<TagWithVotes[]> {
+  const db = getDb();
+
+  const creationTagRows = await db
+    .select({
+      tagId: tags.id,
+      slug: tags.slug,
+      name: tags.name,
+      categoryId: tags.categoryId,
+      source: creationTags.source,
+      confirmed: creationTags.confirmed,
+      rejected: creationTags.rejected,
+    })
+    .from(creationTags)
+    .innerJoin(tags, eq(creationTags.tagId, tags.id))
+    .where(eq(creationTags.creationId, creationId));
+
+  if (creationTagRows.length === 0) return [];
+
+  const voteRows = await db
+    .select({
+      tagId: tagVotes.tagId,
+      value: tagVotes.value,
+      role: users.role,
+    })
+    .from(tagVotes)
+    .innerJoin(users, eq(users.steamid, tagVotes.userId))
+    .where(eq(tagVotes.creationId, creationId));
+
+  const scoreByTag = new Map<number, { up: number; down: number }>();
+  for (const v of voteRows) {
+    const w = weightOfRole(v.role);
+    const bucket = scoreByTag.get(v.tagId) ?? { up: 0, down: 0 };
+    if (v.value > 0) bucket.up += w;
+    else if (v.value < 0) bucket.down += w;
+    scoreByTag.set(v.tagId, bucket);
+  }
+
+  const viewerVoteByTag = new Map<number, -1 | 1>();
+  if (viewerSteamid) {
+    const mine = await db
+      .select({ tagId: tagVotes.tagId, value: tagVotes.value })
+      .from(tagVotes)
+      .where(
+        and(
+          eq(tagVotes.userId, viewerSteamid),
+          eq(tagVotes.creationId, creationId),
+        ),
+      );
+    for (const m of mine) {
+      if (m.value === 1 || m.value === -1) viewerVoteByTag.set(m.tagId, m.value);
+    }
+  }
+
+  return creationTagRows.map((r) => ({
+    tagId: r.tagId,
+    slug: r.slug,
+    name: r.name,
+    categoryId: r.categoryId,
+    source: r.source,
+    confirmed: r.confirmed,
+    rejected: r.rejected,
+    weightedUp: scoreByTag.get(r.tagId)?.up ?? 0,
+    weightedDown: scoreByTag.get(r.tagId)?.down ?? 0,
+    viewerVote: viewerVoteByTag.get(r.tagId) ?? 0,
+  }));
+}
+
+export async function getUserVoteOnCreation(
+  creationId: string,
+  viewerSteamid: string,
+): Promise<-1 | 0 | 1> {
+  const db = getDb();
+  const [row] = await db
+    .select({ value: creationVotes.value })
+    .from(creationVotes)
+    .where(
+      and(
+        eq(creationVotes.userId, viewerSteamid),
+        eq(creationVotes.creationId, creationId),
+      ),
+    )
+    .limit(1);
+  if (!row) return 0;
+  return row.value === 1 || row.value === -1 ? row.value : 0;
+}
+
+export async function isCreationFavourited(
+  creationId: string,
+  viewerSteamid: string,
+): Promise<boolean> {
+  const db = getDb();
+  const [row] = await db
+    .select({ creationId: favorites.creationId })
+    .from(favorites)
+    .where(
+      and(
+        eq(favorites.userId, viewerSteamid),
+        eq(favorites.creationId, creationId),
+      ),
+    )
+    .limit(1);
+  return !!row;
+}
+
+export async function getUserFavourites(
+  viewerSteamid: string,
+  limit = 24,
+  offset = 0,
+): Promise<CreationCardRow[]> {
+  const db = getDb();
+  return db
+    .select(cardColumns)
+    .from(favorites)
+    .innerJoin(creations, eq(creations.id, favorites.creationId))
+    .where(
+      and(
+        eq(favorites.userId, viewerSteamid),
+        eq(creations.status, "approved"),
+      ),
+    )
+    .orderBy(desc(favorites.createdAt))
+    .limit(limit)
+    .offset(offset);
 }

@@ -95,6 +95,10 @@ export const creations = pgTable(
     // v2.0: track attribution. Null = cron-ingested / system.
     uploadedByUserId: text("uploaded_by_user_id"),
     reviewedByUserId: text("reviewed_by_user_id"),
+    // v2.0: denormalised aggregates from creation_votes so card grids don't
+    // need a GROUP BY on every render. Recomputed on every vote action.
+    siteWeightedUp: integer("site_weighted_up").notNull().default(0),
+    siteWeightedDown: integer("site_weighted_down").notNull().default(0),
   },
   (t) => [
     index("creations_status_idx").on(t.status),

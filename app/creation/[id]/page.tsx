@@ -2,8 +2,17 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { getCreationDetail } from "@/lib/db/queries";
+import {
+  getCreationDetail,
+  getCreationTagsWithVotes,
+  getUserVoteOnCreation,
+  isCreationFavourited,
+} from "@/lib/db/queries";
+import { getCurrentUser } from "@/lib/auth/session";
 import { StarRating, sentimentLabel } from "@/components/StarRating";
+import { CreationVotePanel } from "@/components/CreationVotePanel";
+import { FavouriteButton } from "@/components/FavouriteButton";
+import { TagVoteList } from "@/components/TagVoteList";
 
 export const dynamic = "force-dynamic";
 
@@ -38,10 +47,31 @@ export default async function CreationDetailPage({ params }: { params: Params })
   const detail = await getCreationDetail(id);
   if (!detail) notFound();
 
-  const { creation, tags, categories } = detail;
+  const { creation, categories } = detail;
   if (creation.status !== "approved") notFound();
 
+  const viewer = await getCurrentUser();
+  const [tagsWithVotes, viewerCreationVote, viewerFavourited] = await Promise.all([
+    getCreationTagsWithVotes(creation.id, viewer?.steamid ?? null),
+    viewer ? getUserVoteOnCreation(creation.id, viewer.steamid) : Promise.resolve(0 as const),
+    viewer ? isCreationFavourited(creation.id, viewer.steamid) : Promise.resolve(false),
+  ]);
+
+  const visibleTags = tagsWithVotes.filter((t) => !t.rejected);
+  const confirmedTags = visibleTags.filter((t) => t.confirmed);
+  const communityTags = visibleTags
+    .filter((t) => !t.confirmed && t.weightedUp - t.weightedDown >= 3)
+    .sort((a, b) => b.weightedUp - b.weightedDown - (a.weightedUp - a.weightedDown))
+    .slice(0, 5);
+  const displayTags = [...confirmedTags, ...communityTags];
+
+  // Any other non-rejected tags: still show in the vote UI so users can tip them
+  // over threshold, just don't count them in displayTags.
+  const votableTags = visibleTags;
+
   const kindLabel = KIND_LABELS[creation.kind] ?? creation.kind;
+  const siteTotal = creation.siteWeightedUp + creation.siteWeightedDown;
+  const siteScore = siteTotal > 0 ? creation.siteWeightedUp / siteTotal : null;
 
   return (
     <article className="mx-auto max-w-4xl space-y-6">
@@ -97,21 +127,25 @@ export default async function CreationDetailPage({ params }: { params: Params })
         </div>
       )}
 
-      <div className="grid gap-4 text-sm text-white/60 sm:grid-cols-2 md:grid-cols-4">
+      <div className="grid gap-4 text-sm text-white/60 sm:grid-cols-2 md:grid-cols-3">
         <Stat label="Subscribers" value={creation.subscriptions.toLocaleString()} />
         <Stat label="Favourites" value={creation.favorites.toLocaleString()} />
         <Stat label="Views" value={creation.views.toLocaleString()} />
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
         <div className="rounded-md border border-border bg-card/60 px-3 py-2">
           <div className="text-[10px] uppercase tracking-widest text-white/40">
-            Rating
+            Steam rating
           </div>
-          <div className="mt-0.5 flex flex-col gap-0.5">
+          <div className="mt-1 flex flex-col gap-0.5">
             <StarRating
               score={creation.voteScore}
               votesUp={creation.votesUp}
               votesDown={creation.votesDown}
               size="md"
-              showLabel={false}
+              color="green"
+              showLabel={true}
             />
             {creation.voteScore != null &&
               ((creation.votesUp ?? 0) + (creation.votesDown ?? 0)) >= 5 && (
@@ -122,27 +156,42 @@ export default async function CreationDetailPage({ params }: { params: Params })
               )}
           </div>
         </div>
+        <div className="rounded-md border border-border bg-card/60 px-3 py-2">
+          <div className="text-[10px] uppercase tracking-widest text-white/40">
+            Site rating
+          </div>
+          <div className="mt-1 flex flex-col gap-0.5">
+            <StarRating
+              score={siteScore}
+              votesUp={creation.siteWeightedUp}
+              votesDown={creation.siteWeightedDown}
+              size="md"
+              color="orange"
+              showLabel={true}
+            />
+            {siteScore != null && (
+              <div className="text-[10px] text-white/50">
+                {sentimentLabel(siteScore)} · {siteTotal.toLocaleString()} weighted votes
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
-      {tags.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {tags.map((t) => (
-            <Link
-              key={t.id}
-              href={`/search?tags=${t.slug}`}
-              className="rounded-full border border-border bg-card px-2.5 py-0.5 text-xs text-white/70 hover:border-accent hover:text-accent"
-            >
-              {t.name}
-            </Link>
-          ))}
-        </div>
-      )}
+      <CreationVotePanel
+        creationId={creation.id}
+        initialUserVote={viewerCreationVote}
+        weightedUp={creation.siteWeightedUp}
+        weightedDown={creation.siteWeightedDown}
+        signedIn={!!viewer}
+      />
 
-      <p className="whitespace-pre-wrap text-base leading-relaxed text-white/80">
-        {creation.descriptionClean || "(no description)"}
-      </p>
-
-      <div className="flex gap-3 pt-2">
+      <div className="flex gap-3">
+        <FavouriteButton
+          creationId={creation.id}
+          initialFavourited={viewerFavourited}
+          signedIn={!!viewer}
+        />
         <a
           href={creation.steamUrl}
           target="_blank"
@@ -152,6 +201,45 @@ export default async function CreationDetailPage({ params }: { params: Params })
           View on Steam Workshop ↗
         </a>
       </div>
+
+      {displayTags.length > 0 && (
+        <div>
+          <div className="mb-1.5 text-[10px] uppercase tracking-widest text-white/40">
+            Tags
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {displayTags.map((t) => (
+              <Link
+                key={t.tagId}
+                href={`/search?tags=${t.slug}`}
+                className="rounded-full border border-border bg-card px-2.5 py-0.5 text-xs text-white/70 hover:border-accent hover:text-accent"
+              >
+                {t.name}
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div>
+        <div className="mb-1.5 flex items-baseline justify-between">
+          <div className="text-[10px] uppercase tracking-widest text-white/40">
+            Vote on tags
+          </div>
+          <div className="text-[10px] text-white/30">
+            Community tags appear publicly at +3 net votes.
+          </div>
+        </div>
+        <TagVoteList
+          creationId={creation.id}
+          tags={votableTags}
+          signedIn={!!viewer}
+        />
+      </div>
+
+      <p className="whitespace-pre-wrap text-base leading-relaxed text-white/80">
+        {creation.descriptionClean || "(no description)"}
+      </p>
     </article>
   );
 }

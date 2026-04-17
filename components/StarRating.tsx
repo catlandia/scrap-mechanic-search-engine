@@ -2,6 +2,8 @@ import { cn } from "@/lib/utils";
 
 const MIN_VOTES_FOR_RATING = 5;
 
+export type StarColor = "amber" | "green" | "orange";
+
 export interface StarRatingProps {
   /** 0..1, Steam's vote score */
   score: number | null;
@@ -12,6 +14,10 @@ export interface StarRatingProps {
   showLabel?: boolean;
   /** Visual scale. */
   size?: "xs" | "sm" | "md";
+  /** amber (default) = Steam stars · green for Steam highlight · orange for site-native votes. */
+  color?: StarColor;
+  /** Short label shown after the percentage, eg "steam" or "site". */
+  tag?: string;
   className?: string;
 }
 
@@ -19,6 +25,12 @@ const SIZE_CLASSES: Record<NonNullable<StarRatingProps["size"]>, string> = {
   xs: "text-xs",
   sm: "text-sm",
   md: "text-base",
+};
+
+const COLOR_CLASSES: Record<StarColor, string> = {
+  amber: "text-amber-400",
+  green: "text-emerald-400",
+  orange: "text-orange-400",
 };
 
 export function sentimentLabel(score: number): string {
@@ -38,6 +50,8 @@ export function StarRating({
   votesDown,
   showLabel = true,
   size = "sm",
+  color = "amber",
+  tag,
   className,
 }: StarRatingProps) {
   const totalVotes = (votesUp ?? 0) + (votesDown ?? 0);
@@ -46,7 +60,11 @@ export function StarRating({
   if (score == null || !hasEnoughVotes) {
     return (
       <div className={cn("text-[11px] italic text-white/30", className)}>
-        {totalVotes > 0 ? `only ${totalVotes} vote${totalVotes === 1 ? "" : "s"}` : "unrated"}
+        {totalVotes > 0
+          ? `${tag ? `${tag}: ` : ""}only ${totalVotes} vote${totalVotes === 1 ? "" : "s"}`
+          : tag
+            ? `${tag}: unrated`
+            : "unrated"}
       </div>
     );
   }
@@ -57,7 +75,7 @@ export function StarRating({
   return (
     <div
       className={cn("inline-flex items-center gap-1.5", className)}
-      title={`${label} · ${Math.round(pct)}% · ${totalVotes.toLocaleString()} rating${totalVotes === 1 ? "" : "s"}`}
+      title={`${tag ? `${tag.toUpperCase()} · ` : ""}${label} · ${Math.round(pct)}% · ${totalVotes.toLocaleString()} rating${totalVotes === 1 ? "" : "s"}`}
     >
       <div
         className={cn(
@@ -68,7 +86,10 @@ export function StarRating({
       >
         <span className="text-white/15">★★★★★</span>
         <span
-          className="absolute inset-y-0 left-0 overflow-hidden text-amber-400"
+          className={cn(
+            "absolute inset-y-0 left-0 overflow-hidden",
+            COLOR_CLASSES[color],
+          )}
           style={{ width: `${pct}%` }}
           aria-hidden
         >
@@ -78,6 +99,7 @@ export function StarRating({
       {showLabel && (
         <span className="text-[11px] font-medium text-white/60">
           {Math.round(pct)}%
+          {tag ? <span className="ml-1 text-white/40">{tag}</span> : null}
         </span>
       )}
     </div>

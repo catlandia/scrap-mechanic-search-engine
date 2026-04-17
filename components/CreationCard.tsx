@@ -45,12 +45,20 @@ export function CreationCard({ creation }: { creation: CreationCardRow }) {
           <div className="truncate font-medium group-hover:text-accent">
             {creation.title}
           </div>
-          <StarRating
-            score={creation.voteScore}
-            votesUp={creation.votesUp}
-            votesDown={creation.votesDown}
-            size="xs"
-          />
+          <div className="flex flex-col gap-0.5">
+            <StarRating
+              score={creation.voteScore}
+              votesUp={creation.votesUp}
+              votesDown={creation.votesDown}
+              size="xs"
+              color="green"
+              tag="steam"
+            />
+            <SiteStars
+              up={creation.siteWeightedUp}
+              down={creation.siteWeightedDown}
+            />
+          </div>
         </div>
       </Link>
       <div className="flex items-center justify-between gap-2 px-3 pb-3 pt-0.5">
@@ -77,6 +85,22 @@ export function CreationCard({ creation }: { creation: CreationCardRow }) {
         </div>
       </div>
     </article>
+  );
+}
+
+function SiteStars({ up, down }: { up: number; down: number }) {
+  const total = up + down;
+  if (total === 0) return null;
+  const score = total > 0 ? up / total : null;
+  return (
+    <StarRating
+      score={score}
+      votesUp={up}
+      votesDown={down}
+      size="xs"
+      color="orange"
+      tag="site"
+    />
   );
 }
 
