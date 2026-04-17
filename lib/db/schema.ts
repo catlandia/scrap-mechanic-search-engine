@@ -34,6 +34,10 @@ export const creations = pgTable(
   "creations",
   {
     id: text("id").primaryKey(),
+    // Short public-facing id. Auto-incrementing; used in user-facing URLs
+    // like /creation/42 while `id` stays the Steam publishedfileid used for
+    // ingest upserts and joins.
+    shortId: serial("short_id").notNull().unique(),
     title: text("title").notNull(),
     descriptionRaw: text("description_raw").notNull().default(""),
     descriptionClean: text("description_clean").notNull().default(""),
@@ -62,6 +66,7 @@ export const creations = pgTable(
     index("creations_kind_idx").on(t.kind),
     index("creations_approved_at_idx").on(t.approvedAt.desc()),
     index("creations_time_updated_idx").on(t.timeUpdated),
+    index("creations_author_idx").on(t.authorSteamid),
   ],
 );
 

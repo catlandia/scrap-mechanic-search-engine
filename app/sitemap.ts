@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq, isNotNull, sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import { creations } from "@/lib/db/schema";
 
@@ -30,23 +30,40 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   let creationEntries: MetadataRoute.Sitemap = [];
+  let authorEntries: MetadataRoute.Sitemap = [];
   try {
     const db = getDb();
     const rows = await db
-      .select({ id: creations.id, approvedAt: creations.approvedAt })
+      .select({ shortId: creations.shortId, approvedAt: creations.approvedAt })
       .from(creations)
       .where(eq(creations.status, "approved"))
       .orderBy(desc(creations.approvedAt))
       .limit(5000);
     creationEntries = rows.map((r) => ({
-      url: `${base}/creation/${r.id}`,
+      url: `${base}/creation/${r.shortId}`,
       lastModified: r.approvedAt ?? now,
       changeFrequency: "weekly" as const,
       priority: 0.6,
     }));
+
+    const authorRows = await db
+      .select({ steamid: creations.authorSteamid, latest: sql<Date>`max(${creations.approvedAt})` })
+      .from(creations)
+      .where(
+        and(eq(creations.status, "approved"), isNotNull(creations.authorSteamid)),
+      )
+      .groupBy(creations.authorSteamid);
+    authorEntries = authorRows
+      .filter((r) => r.steamid)
+      .map((r) => ({
+        url: `${base}/author/${r.steamid}`,
+        lastModified: r.latest ?? now,
+        changeFrequency: "weekly" as const,
+        priority: 0.5,
+      }));
   } catch {
-    // DB not ready (e.g. during first build before migrations). Skip creations.
+    // DB not ready (e.g. during first build before migrations). Skip.
   }
 
-  return [...staticEntries, ...creationEntries];
+  return [...staticEntries, ...creationEntries, ...authorEntries];
 }

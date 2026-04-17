@@ -16,45 +16,63 @@ const KIND_LABELS: Record<string, string> = {
 export function CreationCard({ creation }: { creation: CreationCardRow }) {
   const kindLabel = KIND_LABELS[creation.kind] ?? creation.kind;
   return (
-    <Link
-      href={`/creation/${creation.id}`}
-      className="group flex flex-col overflow-hidden rounded-lg border border-border bg-card transition hover:border-accent"
-    >
-      <div className="relative aspect-video bg-black">
-        {creation.thumbnailUrl ? (
-          <Image
-            src={creation.thumbnailUrl}
-            alt={creation.title}
-            fill
-            unoptimized
-            sizes="(max-width: 768px) 100vw, 33vw"
-            className="object-cover transition group-hover:scale-105"
-          />
-        ) : (
-          <div className="flex h-full items-center justify-center text-sm text-white/30">
-            no thumbnail
+    <article className="group flex flex-col overflow-hidden rounded-lg border border-border bg-card transition hover:border-accent">
+      <Link href={`/creation/${creation.shortId}`} className="flex flex-1 flex-col">
+        <div className="relative aspect-video bg-black">
+          {creation.thumbnailUrl ? (
+            <Image
+              src={creation.thumbnailUrl}
+              alt={creation.title}
+              fill
+              unoptimized
+              sizes="(max-width: 768px) 100vw, 33vw"
+              className="object-cover transition group-hover:scale-105"
+            />
+          ) : (
+            <div className="flex h-full items-center justify-center text-sm text-white/30">
+              no thumbnail
+            </div>
+          )}
+          <span className="absolute left-2 top-2 rounded bg-black/70 px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-white/80">
+            {kindLabel}
+          </span>
+          <span className="absolute right-2 top-2 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-mono text-white/70">
+            #{creation.shortId}
+          </span>
+        </div>
+        <div className="flex flex-col gap-0.5 p-3 pb-1">
+          <div className="truncate font-medium group-hover:text-accent">
+            {creation.title}
           </div>
-        )}
-        <span className="absolute left-2 top-2 rounded bg-black/70 px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-white/80">
-          {kindLabel}
-        </span>
-      </div>
-      <div className="flex flex-1 flex-col gap-1 p-3">
-        <div className="truncate font-medium group-hover:text-accent">
-          {creation.title}
         </div>
-        <div className="truncate text-xs text-white/50">
-          {creation.authorName ? `by ${creation.authorName}` : "\u00A0"}
+      </Link>
+      <div className="flex items-center justify-between gap-2 px-3 pb-3">
+        <div className="min-w-0 truncate text-xs text-white/50">
+          {creation.authorName && creation.authorSteamid ? (
+            <>
+              by{" "}
+              <Link
+                href={`/author/${creation.authorSteamid}`}
+                className="hover:text-accent"
+              >
+                {creation.authorName}
+              </Link>
+            </>
+          ) : creation.authorName ? (
+            `by ${creation.authorName}`
+          ) : (
+            "\u00A0"
+          )}
         </div>
-        <div className="mt-auto flex gap-3 pt-2 text-[11px] text-white/45">
-          <span>{creation.subscriptions.toLocaleString()} subs</span>
-          <span>{creation.favorites.toLocaleString()} favs</span>
+        <div className="flex shrink-0 gap-2 text-[11px] text-white/45">
+          <span>{creation.subscriptions.toLocaleString()}↓</span>
+          <span>{creation.favorites.toLocaleString()}★</span>
           {creation.voteScore != null && (
             <span>{Math.round(creation.voteScore * 100)}%</span>
           )}
         </div>
       </div>
-    </Link>
+    </article>
   );
 }
 

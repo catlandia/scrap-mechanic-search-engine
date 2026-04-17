@@ -59,8 +59,28 @@ export default async function CreationDetailPage({ params }: { params: Params })
         </div>
         <h1 className="text-3xl font-bold">{creation.title}</h1>
         {creation.authorName && (
-          <p className="text-sm text-white/60">by {creation.authorName}</p>
+          <p className="text-sm text-white/60">
+            by{" "}
+            {creation.authorSteamid ? (
+              <Link
+                href={`/author/${creation.authorSteamid}`}
+                className="text-accent hover:underline"
+              >
+                {creation.authorName}
+              </Link>
+            ) : (
+              creation.authorName
+            )}
+          </p>
         )}
+        <div className="flex flex-wrap gap-4 pt-1 font-mono text-[11px] text-white/45">
+          <span>
+            <span className="text-white/35">ID:</span> #{creation.shortId}
+          </span>
+          <span>
+            <span className="text-white/35">Steam:</span> {creation.id}
+          </span>
+        </div>
       </header>
 
       {creation.thumbnailUrl && (

@@ -20,11 +20,13 @@ import {
 
 export interface CreationCardRow {
   id: string;
+  shortId: number;
   title: string;
   thumbnailUrl: string | null;
   steamUrl: string;
   kind: string;
   authorName: string | null;
+  authorSteamid: string | null;
   subscriptions: number;
   favorites: number;
   voteScore: number | null;
@@ -33,11 +35,13 @@ export interface CreationCardRow {
 
 const cardColumns = {
   id: creations.id,
+  shortId: creations.shortId,
   title: creations.title,
   thumbnailUrl: creations.thumbnailUrl,
   steamUrl: creations.steamUrl,
   kind: creations.kind,
   authorName: creations.authorName,
+  authorSteamid: creations.authorSteamid,
   subscriptions: creations.subscriptions,
   favorites: creations.favorites,
   voteScore: creations.voteScore,
@@ -189,27 +193,86 @@ export interface CreationDetail {
   categories: { id: number; slug: string; name: string }[];
 }
 
-export async function getCreationDetail(id: string): Promise<CreationDetail | null> {
+/**
+ * Accepts either a short_id (integer, used in user-facing URLs) or a Steam
+ * publishedfileid (numeric string). Short IDs stay under 500M; modern Scrap
+ * Mechanic publishedfileids are already 3.7B+, so the ranges never collide.
+ */
+export async function getCreationDetail(input: string): Promise<CreationDetail | null> {
   const db = getDb();
-  const [creation] = await db
-    .select()
-    .from(creations)
-    .where(eq(creations.id, id))
-    .limit(1);
+  let creation: typeof creations.$inferSelect | undefined;
+
+  const asInt = Number(input);
+  if (Number.isInteger(asInt) && asInt > 0 && asInt < 500_000_000) {
+    const rows = await db
+      .select()
+      .from(creations)
+      .where(eq(creations.shortId, asInt))
+      .limit(1);
+    creation = rows[0];
+  }
+  if (!creation) {
+    const rows = await db
+      .select()
+      .from(creations)
+      .where(eq(creations.id, input))
+      .limit(1);
+    creation = rows[0];
+  }
   if (!creation) return null;
 
   const tagRows = await db
     .select({ id: tags.id, slug: tags.slug, name: tags.name })
     .from(creationTags)
     .innerJoin(tags, eq(creationTags.tagId, tags.id))
-    .where(eq(creationTags.creationId, id));
+    .where(eq(creationTags.creationId, creation.id));
   const categoryRows = await db
     .select({ id: categories.id, slug: categories.slug, name: categories.name })
     .from(creationCategories)
     .innerJoin(categories, eq(creationCategories.categoryId, categories.id))
-    .where(eq(creationCategories.creationId, id));
+    .where(eq(creationCategories.creationId, creation.id));
 
   return { creation, tags: tagRows, categories: categoryRows };
+}
+
+export interface AuthorProfile {
+  steamid: string;
+  authorName: string | null;
+  count: number;
+}
+
+export async function getAuthorProfile(steamid: string): Promise<AuthorProfile | null> {
+  const db = getDb();
+  const rows = await db
+    .select({
+      authorName: creations.authorName,
+      count: sql<number>`count(*)::int`,
+    })
+    .from(creations)
+    .where(
+      and(eq(creations.status, "approved"), eq(creations.authorSteamid, steamid)),
+    )
+    .groupBy(creations.authorName)
+    .limit(1);
+  if (rows.length === 0) return null;
+  return { steamid, authorName: rows[0].authorName, count: rows[0].count };
+}
+
+export async function getAuthorCreations(
+  steamid: string,
+  limit = 24,
+  offset = 0,
+): Promise<CreationCardRow[]> {
+  const db = getDb();
+  return db
+    .select(cardColumns)
+    .from(creations)
+    .where(
+      and(eq(creations.status, "approved"), eq(creations.authorSteamid, steamid)),
+    )
+    .orderBy(desc(creations.approvedAt))
+    .limit(limit)
+    .offset(offset);
 }
 
 export async function getApprovedKindCounts(): Promise<Record<string, number>> {
