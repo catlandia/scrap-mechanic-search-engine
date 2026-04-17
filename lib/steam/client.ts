@@ -26,6 +26,14 @@ export const QUERY_TYPE = {
   RankedByLastUpdatedDate: 21,
 } as const;
 
+// Steam's two endpoints return booleans differently:
+// - QueryFiles:                `banned: true/false`
+// - GetPublishedFileDetails:   `banned: 1/0`
+// Accept either and normalise.
+const looseBool = z
+  .union([z.boolean(), z.number()])
+  .transform((v) => (typeof v === "number" ? v !== 0 : v));
+
 const PublishedFileSchema = z
   .object({
     publishedfileid: z.string(),
@@ -40,7 +48,7 @@ const PublishedFileSchema = z
     time_created: z.number().optional(),
     time_updated: z.number().optional(),
     visibility: z.number().optional(),
-    banned: z.boolean().optional(),
+    banned: looseBool.optional(),
     subscriptions: z.number().optional(),
     favorited: z.number().optional(),
     lifetime_subscriptions: z.number().optional(),
