@@ -9,7 +9,6 @@ import {
   creationVotes,
   favorites,
   reports,
-  ROLE_WEIGHT,
   tagVotes,
   users,
 } from "@/lib/db/schema";
@@ -28,25 +27,18 @@ async function requireVotingUser() {
   return user;
 }
 
-function weightOf(role: string | null | undefined): number {
-  if (!role) return 1;
-  return (ROLE_WEIGHT as Record<string, number>)[role] ?? 1;
-}
-
 async function recomputeSiteVoteScore(creationId: string) {
   const db = getDb();
   const rows = await db
-    .select({ value: creationVotes.value, role: users.role })
+    .select({ value: creationVotes.value })
     .from(creationVotes)
-    .innerJoin(users, eq(users.steamid, creationVotes.userId))
     .where(eq(creationVotes.creationId, creationId));
 
   let up = 0;
   let down = 0;
   for (const r of rows) {
-    const w = weightOf(r.role);
-    if (r.value > 0) up += w;
-    else if (r.value < 0) down += w;
+    if (r.value > 0) up += 1;
+    else if (r.value < 0) down += 1;
   }
 
   await db

@@ -5,26 +5,26 @@ import { useState, useTransition } from "react";
 import { voteCreation } from "@/lib/community/actions";
 import { cn } from "@/lib/utils";
 import { StarRating } from "@/components/StarRating";
+import type { RoleVoteBreakdown } from "@/lib/db/queries";
+import { RoleBreakdown } from "@/components/RoleBreakdown";
 
 export function CreationVotePanel({
   creationId,
   initialUserVote,
-  weightedUp,
-  weightedDown,
+  breakdown,
   signedIn,
 }: {
   creationId: string;
   initialUserVote: -1 | 0 | 1;
-  weightedUp: number;
-  weightedDown: number;
+  breakdown: RoleVoteBreakdown;
   signedIn: boolean;
 }) {
   const router = useRouter();
   const [userVote, setUserVote] = useState<-1 | 0 | 1>(initialUserVote);
   const [isPending, startTransition] = useTransition();
-  const net = weightedUp - weightedDown;
-  const total = weightedUp + weightedDown;
-  const score = total > 0 ? weightedUp / total : null;
+  const net = breakdown.up - breakdown.down;
+  const total = breakdown.up + breakdown.down;
+  const score = total > 0 ? breakdown.up / total : null;
 
   function cast(target: -1 | 1) {
     if (!signedIn) {
@@ -46,7 +46,7 @@ export function CreationVotePanel({
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-4 rounded-md border border-border bg-card/60 px-4 py-3">
+    <div className="flex flex-col gap-3 rounded-md border border-border bg-card/60 px-4 py-3 sm:flex-row sm:items-center sm:gap-6">
       <div className="flex items-center gap-2">
         <VoteButton
           direction="up"
@@ -54,7 +54,7 @@ export function CreationVotePanel({
           disabled={isPending}
           onClick={() => cast(1)}
         />
-        <div className="min-w-[2.5ch] text-center font-mono text-lg font-medium">
+        <div className="min-w-[3ch] text-center font-mono text-lg font-medium">
           {net > 0 ? `+${net}` : net}
         </div>
         <VoteButton
@@ -64,18 +64,19 @@ export function CreationVotePanel({
           onClick={() => cast(-1)}
         />
       </div>
-      <div className="flex flex-col gap-0.5 text-xs text-white/50">
+      <div className="flex flex-1 flex-col gap-1">
         <StarRating
           score={score}
-          votesUp={weightedUp}
-          votesDown={weightedDown}
+          votesUp={breakdown.up}
+          votesDown={breakdown.down}
           size="sm"
           color="orange"
           tag="site"
         />
-        <span className="font-mono text-[10px] text-white/40">
-          {weightedUp.toLocaleString()}↑ · {weightedDown.toLocaleString()}↓
-        </span>
+        <div className="font-mono text-[10px] text-white/40">
+          {breakdown.up.toLocaleString()} up · {breakdown.down.toLocaleString()} down
+        </div>
+        <RoleBreakdown breakdown={breakdown} direction="both" className="mt-0.5" />
       </div>
     </div>
   );

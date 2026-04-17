@@ -17,7 +17,6 @@ import {
   creationVotes,
   creations,
   favorites,
-  ROLE_WEIGHT,
   tagVotes,
   tags,
   users,
@@ -362,7 +361,62 @@ export async function getAllCategories() {
 
 // ---------------- v2.0 community helpers ----------------
 
-export interface TagWithVotes {
+export interface RoleVoteBreakdown {
+  up: number;
+  down: number;
+  // Raw counts by role.
+  userUp: number;
+  userDown: number;
+  modUp: number;
+  modDown: number;
+  eliteUp: number;
+  eliteDown: number;
+  creatorUp: number;
+  creatorDown: number;
+}
+
+function emptyBreakdown(): RoleVoteBreakdown {
+  return {
+    up: 0,
+    down: 0,
+    userUp: 0,
+    userDown: 0,
+    modUp: 0,
+    modDown: 0,
+    eliteUp: 0,
+    eliteDown: 0,
+    creatorUp: 0,
+    creatorDown: 0,
+  };
+}
+
+function applyVote(
+  bd: RoleVoteBreakdown,
+  value: number,
+  role: string | null | undefined,
+) {
+  if (value > 0) bd.up += 1;
+  else if (value < 0) bd.down += 1;
+  switch (role) {
+    case "moderator":
+      if (value > 0) bd.modUp += 1;
+      else if (value < 0) bd.modDown += 1;
+      break;
+    case "elite_moderator":
+      if (value > 0) bd.eliteUp += 1;
+      else if (value < 0) bd.eliteDown += 1;
+      break;
+    case "creator":
+      if (value > 0) bd.creatorUp += 1;
+      else if (value < 0) bd.creatorDown += 1;
+      break;
+    default:
+      if (value > 0) bd.userUp += 1;
+      else if (value < 0) bd.userDown += 1;
+  }
+}
+
+export interface TagWithVotes extends RoleVoteBreakdown {
   tagId: number;
   slug: string;
   name: string;
@@ -370,15 +424,8 @@ export interface TagWithVotes {
   source: string;
   confirmed: boolean;
   rejected: boolean;
-  weightedUp: number;
-  weightedDown: number;
   /** -1, 0, or 1 — the viewer's current vote, 0 if unvoted or ghost. */
   viewerVote: -1 | 0 | 1;
-}
-
-function weightOfRole(role: string | null | undefined): number {
-  if (!role) return 1;
-  return (ROLE_WEIGHT as Record<string, number>)[role] ?? 1;
 }
 
 export async function getCreationTagsWithVotes(
@@ -413,13 +460,11 @@ export async function getCreationTagsWithVotes(
     .innerJoin(users, eq(users.steamid, tagVotes.userId))
     .where(eq(tagVotes.creationId, creationId));
 
-  const scoreByTag = new Map<number, { up: number; down: number }>();
+  const breakdownByTag = new Map<number, RoleVoteBreakdown>();
   for (const v of voteRows) {
-    const w = weightOfRole(v.role);
-    const bucket = scoreByTag.get(v.tagId) ?? { up: 0, down: 0 };
-    if (v.value > 0) bucket.up += w;
-    else if (v.value < 0) bucket.down += w;
-    scoreByTag.set(v.tagId, bucket);
+    const bucket = breakdownByTag.get(v.tagId) ?? emptyBreakdown();
+    applyVote(bucket, v.value, v.role);
+    breakdownByTag.set(v.tagId, bucket);
   }
 
   const viewerVoteByTag = new Map<number, -1 | 1>();
@@ -438,18 +483,35 @@ export async function getCreationTagsWithVotes(
     }
   }
 
-  return creationTagRows.map((r) => ({
-    tagId: r.tagId,
-    slug: r.slug,
-    name: r.name,
-    categoryId: r.categoryId,
-    source: r.source,
-    confirmed: r.confirmed,
-    rejected: r.rejected,
-    weightedUp: scoreByTag.get(r.tagId)?.up ?? 0,
-    weightedDown: scoreByTag.get(r.tagId)?.down ?? 0,
-    viewerVote: viewerVoteByTag.get(r.tagId) ?? 0,
-  }));
+  return creationTagRows.map((r) => {
+    const bd = breakdownByTag.get(r.tagId) ?? emptyBreakdown();
+    return {
+      tagId: r.tagId,
+      slug: r.slug,
+      name: r.name,
+      categoryId: r.categoryId,
+      source: r.source,
+      confirmed: r.confirmed,
+      rejected: r.rejected,
+      viewerVote: viewerVoteByTag.get(r.tagId) ?? 0,
+      ...bd,
+    };
+  });
+}
+
+export async function getCreationVoteBreakdown(
+  creationId: string,
+): Promise<RoleVoteBreakdown> {
+  const db = getDb();
+  const rows = await db
+    .select({ value: creationVotes.value, role: users.role })
+    .from(creationVotes)
+    .innerJoin(users, eq(users.steamid, creationVotes.userId))
+    .where(eq(creationVotes.creationId, creationId));
+
+  const bd = emptyBreakdown();
+  for (const v of rows) applyVote(bd, v.value, v.role);
+  return bd;
 }
 
 export async function getUserVoteOnCreation(

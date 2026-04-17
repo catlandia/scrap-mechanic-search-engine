@@ -6,6 +6,7 @@ import { useState, useTransition } from "react";
 import type { TagWithVotes } from "@/lib/db/queries";
 import { voteTag } from "@/lib/community/actions";
 import { cn } from "@/lib/utils";
+import { breakdownTitle } from "@/components/RoleBreakdown";
 
 interface TagChipState {
   viewerVote: -1 | 0 | 1;
@@ -75,7 +76,9 @@ export function TagVoteList({
     <ul className="flex flex-wrap gap-2">
       {tags.map((t) => {
         const local = stateByTag[t.tagId] ?? { viewerVote: t.viewerVote, pending: false };
-        const net = t.weightedUp - t.weightedDown;
+        const net = t.up - t.down;
+        const roleInfo = breakdownTitle(t, "both");
+        const elevatedUp = t.modUp + t.eliteUp + t.creatorUp;
         return (
           <li
             key={t.tagId}
@@ -87,6 +90,13 @@ export function TagVoteList({
                   ? "border-emerald-400/40 bg-emerald-500/10"
                   : "border-border",
             )}
+            title={
+              t.confirmed
+                ? "Admin-confirmed tag"
+                : roleInfo
+                  ? `${net >= 0 ? "+" : ""}${net} net · ${roleInfo}`
+                  : `${net >= 0 ? "+" : ""}${net} net vote${net === 1 || net === -1 ? "" : "s"}`
+            }
           >
             <Link
               href={`/search?tags=${t.slug}`}
@@ -94,17 +104,31 @@ export function TagVoteList({
                 "font-medium",
                 t.confirmed ? "text-accent" : "text-white/80 hover:text-accent",
               )}
-              title={
-                t.confirmed
-                  ? "Admin-confirmed tag"
-                  : `${net >= 0 ? "+" : ""}${net} net vote${net === 1 || net === -1 ? "" : "s"}`
-              }
             >
               {t.name}
             </Link>
             <span className="select-none font-mono text-[10px] text-white/50">
               {net >= 0 ? `+${net}` : net}
             </span>
+            {elevatedUp > 0 && (
+              <span className="flex items-center gap-0.5 text-[9px] text-white/40">
+                {t.modUp > 0 && (
+                  <span className="text-sky-300" title={`${t.modUp} moderator${t.modUp === 1 ? "" : "s"} upvoted`}>
+                    {t.modUp}m
+                  </span>
+                )}
+                {t.eliteUp > 0 && (
+                  <span className="text-amber-300" title={`${t.eliteUp} elite moderator${t.eliteUp === 1 ? "" : "s"} upvoted`}>
+                    {t.eliteUp}e
+                  </span>
+                )}
+                {t.creatorUp > 0 && (
+                  <span className="text-purple-300" title="creator upvoted">
+                    ★
+                  </span>
+                )}
+              </span>
+            )}
             <div className="flex items-center gap-0.5">
               <VoteArrow
                 dir="up"

@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import {
   getCreationDetail,
   getCreationTagsWithVotes,
+  getCreationVoteBreakdown,
   getUserVoteOnCreation,
   isCreationFavourited,
 } from "@/lib/db/queries";
@@ -51,27 +52,29 @@ export default async function CreationDetailPage({ params }: { params: Params })
   if (creation.status !== "approved") notFound();
 
   const viewer = await getCurrentUser();
-  const [tagsWithVotes, viewerCreationVote, viewerFavourited] = await Promise.all([
-    getCreationTagsWithVotes(creation.id, viewer?.steamid ?? null),
-    viewer ? getUserVoteOnCreation(creation.id, viewer.steamid) : Promise.resolve(0 as const),
-    viewer ? isCreationFavourited(creation.id, viewer.steamid) : Promise.resolve(false),
-  ]);
+  const [tagsWithVotes, viewerCreationVote, viewerFavourited, voteBreakdown] =
+    await Promise.all([
+      getCreationTagsWithVotes(creation.id, viewer?.steamid ?? null),
+      viewer ? getUserVoteOnCreation(creation.id, viewer.steamid) : Promise.resolve(0 as const),
+      viewer ? isCreationFavourited(creation.id, viewer.steamid) : Promise.resolve(false),
+      getCreationVoteBreakdown(creation.id),
+    ]);
 
   const visibleTags = tagsWithVotes.filter((t) => !t.rejected);
   const confirmedTags = visibleTags.filter((t) => t.confirmed);
   const communityTags = visibleTags
-    .filter((t) => !t.confirmed && t.weightedUp - t.weightedDown >= 3)
-    .sort((a, b) => b.weightedUp - b.weightedDown - (a.weightedUp - a.weightedDown))
+    .filter((t) => !t.confirmed && t.up - t.down >= 3)
+    .sort((a, b) => b.up - b.down - (a.up - a.down))
     .slice(0, 5);
   const displayTags = [...confirmedTags, ...communityTags];
 
-  // Any other non-rejected tags: still show in the vote UI so users can tip them
-  // over threshold, just don't count them in displayTags.
+  // All non-rejected tags remain in the vote panel so users can tip weak tags
+  // over threshold even though they don't yet render in `displayTags`.
   const votableTags = visibleTags;
 
   const kindLabel = KIND_LABELS[creation.kind] ?? creation.kind;
-  const siteTotal = creation.siteWeightedUp + creation.siteWeightedDown;
-  const siteScore = siteTotal > 0 ? creation.siteWeightedUp / siteTotal : null;
+  const siteTotal = voteBreakdown.up + voteBreakdown.down;
+  const siteScore = siteTotal > 0 ? voteBreakdown.up / siteTotal : null;
 
   return (
     <article className="mx-auto max-w-4xl space-y-6">
@@ -163,15 +166,15 @@ export default async function CreationDetailPage({ params }: { params: Params })
           <div className="mt-1 flex flex-col gap-0.5">
             <StarRating
               score={siteScore}
-              votesUp={creation.siteWeightedUp}
-              votesDown={creation.siteWeightedDown}
+              votesUp={voteBreakdown.up}
+              votesDown={voteBreakdown.down}
               size="md"
               color="orange"
               showLabel={true}
             />
             {siteScore != null && (
               <div className="text-[10px] text-white/50">
-                {sentimentLabel(siteScore)} · {siteTotal.toLocaleString()} weighted votes
+                {sentimentLabel(siteScore)} · {siteTotal.toLocaleString()} votes
               </div>
             )}
           </div>
@@ -181,8 +184,7 @@ export default async function CreationDetailPage({ params }: { params: Params })
       <CreationVotePanel
         creationId={creation.id}
         initialUserVote={viewerCreationVote}
-        weightedUp={creation.siteWeightedUp}
-        weightedDown={creation.siteWeightedDown}
+        breakdown={voteBreakdown}
         signedIn={!!viewer}
       />
 
