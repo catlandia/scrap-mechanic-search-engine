@@ -110,8 +110,8 @@ export async function runIngest(options: IngestOptions = {}): Promise<IngestResu
 
   const db = getDb();
   const kinds = options.kinds ?? ALL_KINDS;
-  // Hobby plan: 60s function limit. 1 page × 50 items × 7 kinds = 350 items/day,
-  // plenty for curation. Raise via options.pagesPerKind when running manually.
+  // 1 page × 50 items × 7 kinds = 350 items/day; raise via options.pagesPerKind
+  // when running a manual catch-up.
   const pagesPerKind = options.pagesPerKind ?? 1;
   const numPerPage = options.numPerPage ?? 50;
 
