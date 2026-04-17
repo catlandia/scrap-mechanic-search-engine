@@ -20,13 +20,25 @@ const FEATURED_KINDS: Array<{
 ];
 
 export default async function HomePage() {
-  const [newest, counts, ...perKind] = await Promise.all([
-    getNewestApproved(12),
-    getApprovedKindCounts(),
-    ...FEATURED_KINDS.map((k) =>
-      getApprovedByKind(k.kind, { sort: "popular", limit: 6 }),
-    ),
-  ]);
+  let newest: Awaited<ReturnType<typeof getNewestApproved>> = [];
+  let counts: Record<string, number> = {};
+  let perKind: Awaited<ReturnType<typeof getApprovedByKind>>[] = [];
+  let dbError: string | null = null;
+
+  try {
+    const results = await Promise.all([
+      getNewestApproved(12),
+      getApprovedKindCounts(),
+      ...FEATURED_KINDS.map((k) =>
+        getApprovedByKind(k.kind, { sort: "popular", limit: 6 }),
+      ),
+    ]);
+    newest = results[0] as typeof newest;
+    counts = results[1] as typeof counts;
+    perKind = results.slice(2) as typeof perKind;
+  } catch (err) {
+    dbError = err instanceof Error ? err.message : String(err);
+  }
 
   const total = Object.values(counts).reduce((sum, n) => sum + n, 0);
   const hasAny = total > 0;
@@ -53,7 +65,17 @@ export default async function HomePage() {
         </p>
       </section>
 
-      {!hasAny ? (
+      {dbError ? (
+        <section className="space-y-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-5 py-4 text-sm">
+          <div className="font-medium text-amber-200">Database not reachable.</div>
+          <div className="font-mono text-xs text-amber-100/80">{dbError}</div>
+          <div className="text-white/60">
+            Check that <code className="rounded bg-black/40 px-1">DATABASE_URL</code> is set in
+            Vercel and migrations have been applied (
+            <code className="rounded bg-black/40 px-1">npm run db:migrate</code>).
+          </div>
+        </section>
+      ) : !hasAny ? (
         <section className="rounded-md border border-border bg-card/60 px-5 py-8 text-sm text-white/60">
           No approved creations yet. Kick off an ingest and review the queue.
         </section>
