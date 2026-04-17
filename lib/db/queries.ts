@@ -1,5 +1,6 @@
 import {
   and,
+  asc,
   desc,
   eq,
   ilike,
@@ -30,6 +31,8 @@ export interface CreationCardRow {
   subscriptions: number;
   favorites: number;
   voteScore: number | null;
+  votesUp: number | null;
+  votesDown: number | null;
   approvedAt: Date | null;
 }
 
@@ -45,8 +48,59 @@ const cardColumns = {
   subscriptions: creations.subscriptions,
   favorites: creations.favorites,
   voteScore: creations.voteScore,
+  votesUp: creations.votesUp,
+  votesDown: creations.votesDown,
   approvedAt: creations.approvedAt,
 };
+
+export const SORT_MODES = [
+  "newest",
+  "oldest",
+  "popular",
+  "unpopular",
+  "favorites",
+  "least-favorites",
+  "rating",
+  "least-rating",
+] as const;
+export type SortMode = (typeof SORT_MODES)[number];
+
+export const SORT_LABELS: Record<SortMode, string> = {
+  newest: "Newest first",
+  oldest: "Oldest first",
+  popular: "Most subscribers",
+  unpopular: "Fewest subscribers",
+  favorites: "Most favourites",
+  "least-favorites": "Fewest favourites",
+  rating: "Highest rated",
+  "least-rating": "Lowest rated",
+};
+
+export function parseSortMode(raw: string | undefined | null): SortMode {
+  if (raw && (SORT_MODES as readonly string[]).includes(raw)) return raw as SortMode;
+  return "newest";
+}
+
+function orderByForSort(sort: SortMode): SQL {
+  switch (sort) {
+    case "newest":
+      return sql`${creations.approvedAt} DESC NULLS LAST`;
+    case "oldest":
+      return sql`${creations.approvedAt} ASC NULLS LAST`;
+    case "popular":
+      return sql`${creations.subscriptions} DESC`;
+    case "unpopular":
+      return sql`${creations.subscriptions} ASC`;
+    case "favorites":
+      return sql`${creations.favorites} DESC`;
+    case "least-favorites":
+      return sql`${creations.favorites} ASC`;
+    case "rating":
+      return sql`${creations.voteScore} DESC NULLS LAST`;
+    case "least-rating":
+      return sql`${creations.voteScore} ASC NULLS LAST`;
+  }
+}
 
 export async function getNewestApproved(
   limit = 24,
@@ -64,19 +118,15 @@ export async function getNewestApproved(
 
 export async function getApprovedByKind(
   kind: CreationKind,
-  opts: { sort?: "newest" | "popular"; limit?: number; offset?: number } = {},
+  opts: { sort?: SortMode; limit?: number; offset?: number } = {},
 ): Promise<CreationCardRow[]> {
   const db = getDb();
   const { sort = "newest", limit = 24, offset = 0 } = opts;
-  const orderBy =
-    sort === "popular"
-      ? desc(creations.subscriptions)
-      : desc(creations.approvedAt);
   return db
     .select(cardColumns)
     .from(creations)
     .where(and(eq(creations.status, "approved"), eq(creations.kind, kind)))
-    .orderBy(orderBy)
+    .orderBy(orderByForSort(sort))
     .limit(limit)
     .offset(offset);
 }
@@ -86,7 +136,7 @@ export interface SearchFilters {
   categorySlug?: string;
   tagSlugs?: string[];
   q?: string;
-  sort?: "newest" | "popular";
+  sort?: SortMode;
 }
 
 async function tagIdsForSlugs(slugs: string[]): Promise<number[]> {
@@ -166,10 +216,7 @@ export async function searchApproved(
   }
 
   const condition = where.length === 1 ? where[0] : and(...where);
-  const orderBy =
-    filters.sort === "popular"
-      ? desc(creations.subscriptions)
-      : desc(creations.approvedAt);
+  const orderBy = orderByForSort(filters.sort ?? "newest");
 
   const [countRow] = await db
     .select({ n: sql<number>`count(*)::int` })
@@ -260,17 +307,17 @@ export async function getAuthorProfile(steamid: string): Promise<AuthorProfile |
 
 export async function getAuthorCreations(
   steamid: string,
-  limit = 24,
-  offset = 0,
+  opts: { sort?: SortMode; limit?: number; offset?: number } = {},
 ): Promise<CreationCardRow[]> {
   const db = getDb();
+  const { sort = "newest", limit = 24, offset = 0 } = opts;
   return db
     .select(cardColumns)
     .from(creations)
     .where(
       and(eq(creations.status, "approved"), eq(creations.authorSteamid, steamid)),
     )
-    .orderBy(desc(creations.approvedAt))
+    .orderBy(orderByForSort(sort))
     .limit(limit)
     .offset(offset);
 }

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getCreationDetail } from "@/lib/db/queries";
+import { StarRating, sentimentLabel } from "@/components/StarRating";
 
 export const dynamic = "force-dynamic";
 
@@ -96,14 +97,31 @@ export default async function CreationDetailPage({ params }: { params: Params })
         </div>
       )}
 
-      <div className="grid gap-4 text-sm text-white/60 sm:grid-cols-4">
-        <Stat label="Subscriptions" value={creation.subscriptions.toLocaleString()} />
-        <Stat label="Favorites" value={creation.favorites.toLocaleString()} />
+      <div className="grid gap-4 text-sm text-white/60 sm:grid-cols-2 md:grid-cols-4">
+        <Stat label="Subscribers" value={creation.subscriptions.toLocaleString()} />
+        <Stat label="Favourites" value={creation.favorites.toLocaleString()} />
         <Stat label="Views" value={creation.views.toLocaleString()} />
-        <Stat
-          label="Rating"
-          value={creation.voteScore != null ? `${Math.round(creation.voteScore * 100)}%` : "—"}
-        />
+        <div className="rounded-md border border-border bg-card/60 px-3 py-2">
+          <div className="text-[10px] uppercase tracking-widest text-white/40">
+            Rating
+          </div>
+          <div className="mt-0.5 flex flex-col gap-0.5">
+            <StarRating
+              score={creation.voteScore}
+              votesUp={creation.votesUp}
+              votesDown={creation.votesDown}
+              size="md"
+              showLabel={false}
+            />
+            {creation.voteScore != null &&
+              ((creation.votesUp ?? 0) + (creation.votesDown ?? 0)) >= 5 && (
+                <div className="text-[10px] text-white/50">
+                  {sentimentLabel(creation.voteScore)} ·{" "}
+                  {((creation.votesUp ?? 0) + (creation.votesDown ?? 0)).toLocaleString()} votes
+                </div>
+              )}
+          </div>
+        </div>
       </div>
 
       {tags.length > 0 && (

@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { CreationGrid } from "@/components/CreationCard";
-import { getApprovedByKind } from "@/lib/db/queries";
+import { SortSelector } from "@/components/SortSelector";
+import { getApprovedByKind, parseSortMode } from "@/lib/db/queries";
 import type { CreationKind } from "@/lib/db/schema";
 
 export const dynamic = "force-dynamic";
@@ -35,7 +37,7 @@ export function generateStaticParams() {
 const PAGE_SIZE = 24;
 
 type Params = Promise<{ kind: string }>;
-type SearchParams = Promise<{ sort?: "newest" | "popular"; page?: string }>;
+type SearchParams = Promise<{ sort?: string; page?: string }>;
 
 export default async function KindPage({
   params,
@@ -49,7 +51,7 @@ export default async function KindPage({
   if (!entry) notFound();
 
   const sp = await searchParams;
-  const sort = sp.sort === "popular" ? "popular" : "newest";
+  const sort = parseSortMode(sp.sort);
   const pageIndex = Math.max(0, Number(sp.page ?? "1") - 1);
   const items = await getApprovedByKind(entry.kind, {
     sort,
@@ -73,33 +75,15 @@ export default async function KindPage({
 
   return (
     <div className="space-y-6">
-      <header className="space-y-1">
-        <h1 className="text-3xl font-bold">{entry.label}</h1>
-        <p className="text-sm text-white/60">{entry.description}</p>
+      <header className="flex flex-wrap items-end justify-between gap-3">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-bold">{entry.label}</h1>
+          <p className="text-sm text-white/60">{entry.description}</p>
+        </div>
+        <Suspense>
+          <SortSelector current={sort} />
+        </Suspense>
       </header>
-
-      <div className="flex items-center gap-2 text-sm">
-        <Link
-          href={qs({ sort: "newest", page: null })}
-          className={
-            sort === "newest"
-              ? "rounded-full border border-accent bg-accent/20 px-3 py-0.5 text-accent"
-              : "rounded-full border border-border px-3 py-0.5 text-white/60 hover:text-white"
-          }
-        >
-          Newest
-        </Link>
-        <Link
-          href={qs({ sort: "popular", page: null })}
-          className={
-            sort === "popular"
-              ? "rounded-full border border-accent bg-accent/20 px-3 py-0.5 text-accent"
-              : "rounded-full border border-border px-3 py-0.5 text-white/60 hover:text-white"
-          }
-        >
-          Popular
-        </Link>
-      </div>
 
       <CreationGrid items={displayed} />
 

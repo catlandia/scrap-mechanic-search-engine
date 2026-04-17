@@ -2,9 +2,11 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { CreationGrid } from "@/components/CreationCard";
 import { SearchFilters } from "@/components/SearchFilters";
+import { SortSelector } from "@/components/SortSelector";
 import {
   getAllCategories,
   getAllTags,
+  parseSortMode,
   searchApproved,
 } from "@/lib/db/queries";
 
@@ -17,6 +19,7 @@ type SearchParamsType = Promise<{
   category?: string;
   tags?: string;
   q?: string;
+  sort?: string;
   page?: string;
 }>;
 
@@ -26,6 +29,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean);
+  const sort = parseSortMode(sp.sort);
   const pageIndex = Math.max(0, Number(sp.page ?? "1") - 1);
 
   const [allTags, allCategories, results] = await Promise.all([
@@ -37,6 +41,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
         categorySlug: sp.category,
         tagSlugs,
         q: sp.q,
+        sort,
       },
       pageIndex,
       PAGE_SIZE,
@@ -51,6 +56,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
     if (sp.category) params.set("category", sp.category);
     if (sp.q) params.set("q", sp.q);
     if (tagSlugs.length > 0) params.set("tags", tagSlugs.join(","));
+    if (sort !== "newest") params.set("sort", sort);
     if (targetPage > 0) params.set("page", String(targetPage + 1));
     const s = params.toString();
     return s ? `/search?${s}` : "/search";
@@ -65,9 +71,14 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
       <section className="space-y-4">
         <header className="flex flex-wrap items-baseline justify-between gap-3">
           <h1 className="text-2xl font-semibold">Search</h1>
-          <p className="text-sm text-white/50">
-            {results.total} result{results.total === 1 ? "" : "s"}
-          </p>
+          <div className="flex items-center gap-4">
+            <p className="text-sm text-white/50">
+              {results.total} result{results.total === 1 ? "" : "s"}
+            </p>
+            <Suspense>
+              <SortSelector current={sort} />
+            </Suspense>
+          </div>
         </header>
 
         <CreationGrid items={results.items} />

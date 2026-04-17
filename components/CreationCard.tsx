@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { CreationCardRow } from "@/lib/db/queries";
+import { StarRating } from "@/components/StarRating";
 
 const KIND_LABELS: Record<string, string> = {
   blueprint: "Blueprint",
@@ -40,13 +41,19 @@ export function CreationCard({ creation }: { creation: CreationCardRow }) {
             #{creation.shortId}
           </span>
         </div>
-        <div className="flex flex-col gap-0.5 p-3 pb-1">
+        <div className="flex flex-col gap-1 p-3 pb-1">
           <div className="truncate font-medium group-hover:text-accent">
             {creation.title}
           </div>
+          <StarRating
+            score={creation.voteScore}
+            votesUp={creation.votesUp}
+            votesDown={creation.votesDown}
+            size="xs"
+          />
         </div>
       </Link>
-      <div className="flex items-center justify-between gap-2 px-3 pb-3">
+      <div className="flex items-center justify-between gap-2 px-3 pb-3 pt-0.5">
         <div className="min-w-0 truncate text-xs text-white/50">
           {creation.authorName && creation.authorSteamid ? (
             <>
@@ -65,11 +72,8 @@ export function CreationCard({ creation }: { creation: CreationCardRow }) {
           )}
         </div>
         <div className="flex shrink-0 gap-2 text-[11px] text-white/45">
-          <span>{creation.subscriptions.toLocaleString()}↓</span>
-          <span>{creation.favorites.toLocaleString()}★</span>
-          {creation.voteScore != null && (
-            <span>{Math.round(creation.voteScore * 100)}%</span>
-          )}
+          <span title="Subscribers">{creation.subscriptions.toLocaleString()}↓</span>
+          <span title="Favourites">{creation.favorites.toLocaleString()}★</span>
         </div>
       </div>
     </article>

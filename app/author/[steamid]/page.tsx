@@ -1,15 +1,21 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { CreationGrid } from "@/components/CreationCard";
-import { getAuthorCreations, getAuthorProfile } from "@/lib/db/queries";
+import { SortSelector } from "@/components/SortSelector";
+import {
+  getAuthorCreations,
+  getAuthorProfile,
+  parseSortMode,
+} from "@/lib/db/queries";
 
 export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 24;
 
 type Params = Promise<{ steamid: string }>;
-type SearchParams = Promise<{ page?: string }>;
+type SearchParams = Promise<{ sort?: string; page?: string }>;
 
 function isValidSteamId(s: string) {
   return /^\d{1,25}$/.test(s);
@@ -41,11 +47,16 @@ export default async function AuthorPage({
   if (!isValidSteamId(steamid)) notFound();
 
   const sp = await searchParams;
+  const sort = parseSortMode(sp.sort);
   const pageIndex = Math.max(0, Number(sp.page ?? "1") - 1);
 
   const [profile, items] = await Promise.all([
     getAuthorProfile(steamid),
-    getAuthorCreations(steamid, PAGE_SIZE + 1, pageIndex * PAGE_SIZE),
+    getAuthorCreations(steamid, {
+      sort,
+      limit: PAGE_SIZE + 1,
+      offset: pageIndex * PAGE_SIZE,
+    }),
   ]);
 
   if (!profile) notFound();
@@ -55,20 +66,25 @@ export default async function AuthorPage({
 
   return (
     <div className="space-y-6">
-      <header className="space-y-1">
-        <p className="text-sm uppercase tracking-widest text-accent">Author</p>
-        <h1 className="text-3xl font-bold">{profile.authorName ?? "Unknown author"}</h1>
-        <p className="text-sm text-white/60">
-          {profile.count} approved creation{profile.count === 1 ? "" : "s"} on the site ·{" "}
-          <a
-            href={`https://steamcommunity.com/profiles/${steamid}`}
-            target="_blank"
-            rel="noreferrer"
-            className="text-accent hover:underline"
-          >
-            Steam profile ↗
-          </a>
-        </p>
+      <header className="flex flex-wrap items-end justify-between gap-3">
+        <div className="space-y-1">
+          <p className="text-sm uppercase tracking-widest text-accent">Author</p>
+          <h1 className="text-3xl font-bold">{profile.authorName ?? "Unknown author"}</h1>
+          <p className="text-sm text-white/60">
+            {profile.count} approved creation{profile.count === 1 ? "" : "s"} on the site ·{" "}
+            <a
+              href={`https://steamcommunity.com/profiles/${steamid}`}
+              target="_blank"
+              rel="noreferrer"
+              className="text-accent hover:underline"
+            >
+              Steam profile ↗
+            </a>
+          </p>
+        </div>
+        <Suspense>
+          <SortSelector current={sort} />
+        </Suspense>
       </header>
 
       <CreationGrid items={displayed} />
