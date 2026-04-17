@@ -38,5 +38,8 @@
   },
   "enableAllProjectMcpServers": true,
   "disabledMcpjsonServers": [],
-  "skipDangerousModePermissionPrompt": true
+  "skipDangerousModePermissionPrompt": true,
+  "enabledPlugins": {
+    "vercel@claude-plugins-official": true
+  }
 }
