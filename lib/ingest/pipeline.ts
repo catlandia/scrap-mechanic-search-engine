@@ -1,0 +1,316 @@
+import { eq, inArray } from "drizzle-orm";
+import { getDb } from "@/lib/db/client";
+import {
+  creationCategories,
+  creationTags,
+  creations,
+  ingestRuns,
+  tags as tagsTable,
+  type NewCreation,
+} from "@/lib/db/schema";
+import { stripBBCode } from "@/lib/steam/bbcode";
+import {
+  detectKind,
+  queryFiles,
+  resolvePlayerNames,
+  STEAM_KIND_TAGS,
+  steamUrlFor,
+  type PublishedFile,
+  type SteamKind,
+} from "@/lib/steam/client";
+import { classify } from "@/lib/tagger/classify";
+import { thresholdsForKind } from "./thresholds";
+
+export interface IngestOptions {
+  kinds?: SteamKind[];
+  pagesPerKind?: number;
+  numPerPage?: number;
+}
+
+export interface IngestResult {
+  runId: number;
+  fetched: number;
+  newItems: number;
+  updatedItems: number;
+  filtered: number;
+  tagRowsInserted: number;
+  errors: { kind?: string; message: string }[];
+}
+
+export const ALL_KINDS: SteamKind[] = [
+  "blueprint",
+  "mod",
+  "world",
+  "challenge",
+  "tile",
+  "custom_game",
+  "terrain_asset",
+];
+
+interface CollectedItem {
+  item: PublishedFile;
+  kind: string;
+  descriptionClean: string;
+}
+
+function toDate(unixSeconds: number | undefined): Date | null {
+  if (!unixSeconds) return null;
+  return new Date(unixSeconds * 1000);
+}
+
+function ageDays(unixSeconds: number | undefined): number {
+  if (!unixSeconds) return 0;
+  return (Date.now() / 1000 - unixSeconds) / 86400;
+}
+
+function passesFollowGate(item: PublishedFile, kind: string): boolean {
+  const { minSubscriptions, minAgeDays } = thresholdsForKind(kind);
+  const subs = item.lifetime_subscriptions ?? item.subscriptions ?? 0;
+  if (subs < minSubscriptions) return false;
+  if (ageDays(item.time_created) < minAgeDays) return false;
+  if (item.banned) return false;
+  return true;
+}
+
+function buildRow(
+  collected: CollectedItem,
+  authorName: string | null,
+): NewCreation {
+  const { item, kind, descriptionClean } = collected;
+  const tagNames = (item.tags ?? []).map((t) => t.tag);
+  return {
+    id: item.publishedfileid,
+    title: item.title || "(untitled)",
+    descriptionRaw: item.file_description || item.short_description || "",
+    descriptionClean,
+    authorSteamid: item.creator ?? null,
+    authorName,
+    thumbnailUrl: item.preview_url ?? null,
+    steamUrl: steamUrlFor(item.publishedfileid),
+    fileSizeBytes:
+      typeof item.file_size === "string"
+        ? Number(item.file_size) || null
+        : (item.file_size ?? null),
+    timeCreated: toDate(item.time_created),
+    timeUpdated: toDate(item.time_updated),
+    voteScore: item.vote_data?.score ?? null,
+    votesUp: item.vote_data?.votes_up ?? null,
+    votesDown: item.vote_data?.votes_down ?? null,
+    subscriptions: item.lifetime_subscriptions ?? item.subscriptions ?? 0,
+    favorites: item.lifetime_favorited ?? item.favorited ?? 0,
+    views: item.views ?? 0,
+    steamTags: tagNames,
+    kind,
+  };
+}
+
+export async function runIngest(options: IngestOptions = {}): Promise<IngestResult> {
+  const apiKey = process.env.STEAM_API_KEY;
+  if (!apiKey) throw new Error("STEAM_API_KEY is not set");
+
+  const db = getDb();
+  const kinds = options.kinds ?? ALL_KINDS;
+  const pagesPerKind = options.pagesPerKind ?? 2;
+  const numPerPage = options.numPerPage ?? 50;
+
+  const [run] = await db
+    .insert(ingestRuns)
+    .values({ startedAt: new Date(), fetched: 0, newItems: 0 })
+    .returning();
+
+  const errors: IngestResult["errors"] = [];
+  let totalFetched = 0;
+  let totalFiltered = 0;
+  let tagRowsInserted = 0;
+  const collected: CollectedItem[] = [];
+
+  for (const kind of kinds) {
+    const requiredTag = STEAM_KIND_TAGS[kind];
+    let cursor = "*";
+    try {
+      for (let page = 0; page < pagesPerKind; page += 1) {
+        const { items, nextCursor } = await queryFiles({
+          apiKey,
+          requiredTags: [requiredTag],
+          numPerPage,
+          cursor,
+        });
+        totalFetched += items.length;
+        for (const item of items) {
+          if (!passesFollowGate(item, kind)) {
+            totalFiltered += 1;
+            continue;
+          }
+          const detectedKind = detectKind((item.tags ?? []).map((t) => t.tag));
+          const descRaw = item.file_description || item.short_description || "";
+          collected.push({
+            item,
+            kind: detectedKind,
+            descriptionClean: stripBBCode(descRaw),
+          });
+        }
+        if (!nextCursor || nextCursor === cursor) break;
+        cursor = nextCursor;
+      }
+    } catch (err) {
+      errors.push({ kind, message: err instanceof Error ? err.message : String(err) });
+    }
+  }
+
+  // De-dupe: a single publishedfileid could appear under multiple kind queries.
+  const byId = new Map<string, CollectedItem>();
+  for (const c of collected) byId.set(c.item.publishedfileid, c);
+  const uniqueCollected = Array.from(byId.values());
+
+  let nameMap = new Map<string, string>();
+  if (uniqueCollected.length > 0) {
+    try {
+      const authorIds = uniqueCollected
+        .map((c) => c.item.creator)
+        .filter((id): id is string => Boolean(id));
+      nameMap = await resolvePlayerNames(apiKey, authorIds);
+    } catch (err) {
+      errors.push({
+        message: `resolvePlayerNames: ${err instanceof Error ? err.message : err}`,
+      });
+    }
+  }
+
+  const allIds = uniqueCollected.map((c) => c.item.publishedfileid);
+  const existingRows =
+    allIds.length > 0
+      ? await db
+          .select({ id: creations.id })
+          .from(creations)
+          .where(inArray(creations.id, allIds))
+      : [];
+  const existingIds = new Set(existingRows.map((r) => r.id));
+
+  const toInsert: CollectedItem[] = [];
+  const toUpdate: CollectedItem[] = [];
+  for (const c of uniqueCollected) {
+    (existingIds.has(c.item.publishedfileid) ? toUpdate : toInsert).push(c);
+  }
+
+  if (toInsert.length > 0) {
+    const rows = toInsert.map((c) =>
+      buildRow(c, (c.item.creator && nameMap.get(c.item.creator)) ?? null),
+    );
+    try {
+      await db.insert(creations).values(rows);
+    } catch (err) {
+      errors.push({
+        message: `bulk insert: ${err instanceof Error ? err.message : err}`,
+      });
+    }
+  }
+
+  for (const c of toUpdate) {
+    const row = buildRow(c, (c.item.creator && nameMap.get(c.item.creator)) ?? null);
+    try {
+      await db
+        .update(creations)
+        .set({
+          title: row.title,
+          descriptionRaw: row.descriptionRaw,
+          descriptionClean: row.descriptionClean,
+          authorName: row.authorName,
+          thumbnailUrl: row.thumbnailUrl,
+          timeUpdated: row.timeUpdated,
+          voteScore: row.voteScore,
+          votesUp: row.votesUp,
+          votesDown: row.votesDown,
+          subscriptions: row.subscriptions,
+          favorites: row.favorites,
+          views: row.views,
+          steamTags: row.steamTags,
+          kind: row.kind,
+        })
+        .where(eq(creations.id, c.item.publishedfileid));
+    } catch (err) {
+      errors.push({
+        message: `update ${c.item.publishedfileid}: ${err instanceof Error ? err.message : err}`,
+      });
+    }
+  }
+
+  // Tagger — run only on newly inserted rows so admin confirmations survive.
+  if (toInsert.length > 0) {
+    const allTags = await db
+      .select({ id: tagsTable.id, slug: tagsTable.slug, categoryId: tagsTable.categoryId })
+      .from(tagsTable);
+    const tagBySlug = new Map(allTags.map((t) => [t.slug, t]));
+
+    for (const c of toInsert) {
+      const suggestions = classify({
+        title: c.item.title ?? "",
+        descriptionClean: c.descriptionClean,
+        steamTags: (c.item.tags ?? []).map((t) => t.tag),
+      });
+      if (suggestions.length === 0) continue;
+
+      const tagRows: typeof creationTags.$inferInsert[] = [];
+      const categoryIdSet = new Set<number>();
+      for (const s of suggestions) {
+        const tag = tagBySlug.get(s.slug);
+        if (!tag) continue;
+        tagRows.push({
+          creationId: c.item.publishedfileid,
+          tagId: tag.id,
+          source: s.source,
+          confidence: s.confidence,
+          confirmed: false,
+        });
+        if (tag.categoryId) categoryIdSet.add(tag.categoryId);
+      }
+
+      if (tagRows.length > 0) {
+        try {
+          await db.insert(creationTags).values(tagRows).onConflictDoNothing();
+          tagRowsInserted += tagRows.length;
+        } catch (err) {
+          errors.push({
+            message: `insert creation_tags for ${c.item.publishedfileid}: ${err instanceof Error ? err.message : err}`,
+          });
+        }
+      }
+      if (categoryIdSet.size > 0) {
+        try {
+          await db
+            .insert(creationCategories)
+            .values(
+              Array.from(categoryIdSet).map((cid) => ({
+                creationId: c.item.publishedfileid,
+                categoryId: cid,
+              })),
+            )
+            .onConflictDoNothing();
+        } catch (err) {
+          errors.push({
+            message: `insert creation_categories for ${c.item.publishedfileid}: ${err instanceof Error ? err.message : err}`,
+          });
+        }
+      }
+    }
+  }
+
+  await db
+    .update(ingestRuns)
+    .set({
+      endedAt: new Date(),
+      fetched: totalFetched,
+      newItems: toInsert.length,
+      errors: errors as unknown[],
+    })
+    .where(eq(ingestRuns.id, run.id));
+
+  return {
+    runId: run.id,
+    fetched: totalFetched,
+    newItems: toInsert.length,
+    updatedItems: toUpdate.length,
+    filtered: totalFiltered,
+    tagRowsInserted,
+    errors,
+  };
+}
