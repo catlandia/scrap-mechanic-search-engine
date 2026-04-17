@@ -3,6 +3,7 @@ import Link from "next/link";
 const adminNav = [
   { href: "/admin/triage", label: "Triage" },
   { href: "/admin/queue", label: "Queue" },
+  { href: "/admin/add", label: "Add" },
   { href: "/admin/tags", label: "Tags" },
   { href: "/admin/ingest", label: "Ingest" },
 ];
