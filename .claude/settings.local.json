@@ -1,0 +1,40 @@
+{
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
+    "CLAUDE_CODE_USE_POWERSHELL_TOOL": "1"
+  },
+  "permissions": {
+    "defaultMode": "bypassPermissions",
+    "allow": [
+      "Bash(*)",
+      "Read(*)",
+      "Write(*)",
+      "Edit(*)",
+      "Glob(*)",
+      "Grep(*)",
+      "WebFetch(*)",
+      "WebSearch(*)",
+      "mcp__*"
+    ],
+    "deny": [
+      "Bash(format *)",
+      "Bash(diskpart*)",
+      "Bash(rm -rf /)",
+      "Bash(rm -rf /*)",
+      "Bash(del /s /q C:\\*)",
+      "Bash(rd /s /q C:\\*)",
+      "Bash(dd if=* of=/dev/sd*)",
+      "Bash(mkfs*)",
+      "Bash(shred /dev/*)",
+      "Bash(cipher /w:C*)"
+    ],
+    "ask": [
+      "Bash(git push*)",
+      "Bash(gh pr create*)",
+      "Bash(gh release create*)"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "disabledMcpjsonServers": [],
+  "skipDangerousModePermissionPrompt": true
+}
