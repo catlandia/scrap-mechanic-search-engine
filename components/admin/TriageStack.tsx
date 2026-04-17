@@ -1,0 +1,400 @@
+"use client";
+
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import { quickApprove, rejectCreation } from "@/app/admin/actions";
+import { cn } from "@/lib/utils";
+
+const KIND_LABELS: Record<string, string> = {
+  blueprint: "Blueprint",
+  mod: "Mod",
+  world: "World",
+  challenge: "Challenge",
+  tile: "Tile",
+  custom_game: "Custom Game",
+  terrain_asset: "Terrain",
+  other: "Other",
+};
+
+export interface TriageCard {
+  id: string;
+  title: string;
+  description: string;
+  thumbnailUrl: string | null;
+  steamUrl: string;
+  kind: string;
+  subscriptions: number;
+  favorites: number;
+  voteScore: number | null;
+  authorName: string | null;
+  steamTags: string[];
+  tags: { id: number; name: string }[];
+}
+
+type ExitDirection = "approve" | "reject" | "skip" | null;
+
+const SWIPE_THRESHOLD = 120;
+const ANIM_MS = 280;
+
+export function TriageStack({
+  cards,
+  totalPending,
+}: {
+  cards: TriageCard[];
+  totalPending: number;
+}) {
+  const router = useRouter();
+  const [index, setIndex] = useState(0);
+  const [exit, setExit] = useState<ExitDirection>(null);
+  const [drag, setDrag] = useState(0);
+  const [isPending, startTransition] = useTransition();
+  const dragStart = useRef<number | null>(null);
+  const busy = useRef(false);
+
+  const current = cards[index];
+  const next = cards[index + 1];
+  const remaining = Math.max(0, cards.length - index);
+
+  const act = useCallback(
+    (action: Exclude<ExitDirection, null>) => {
+      if (!current || busy.current) return;
+      busy.current = true;
+      setExit(action);
+      setDrag(0);
+
+      if (action === "skip") {
+        window.setTimeout(() => {
+          setExit(null);
+          setIndex((i) => i + 1);
+          busy.current = false;
+        }, ANIM_MS);
+        return;
+      }
+
+      const fd = new FormData();
+      fd.append("creationId", current.id);
+      startTransition(async () => {
+        try {
+          if (action === "approve") await quickApprove(fd);
+          else await rejectCreation(fd);
+        } catch (err) {
+          console.error(err);
+        }
+        window.setTimeout(() => {
+          setExit(null);
+          setIndex((i) => i + 1);
+          busy.current = false;
+        }, ANIM_MS);
+      });
+    },
+    [current],
+  );
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement
+      ) {
+        return;
+      }
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        act("reject");
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        act("approve");
+      } else if (e.key === " " || e.key === "ArrowDown") {
+        e.preventDefault();
+        act("skip");
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [act]);
+
+  useEffect(() => {
+    if (cards.length > 0 && index >= cards.length) {
+      router.refresh();
+    }
+  }, [index, cards.length, router]);
+
+  function onPointerDown(e: React.PointerEvent<HTMLDivElement>) {
+    if (busy.current) return;
+    (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
+    dragStart.current = e.clientX;
+  }
+  function onPointerMove(e: React.PointerEvent<HTMLDivElement>) {
+    if (dragStart.current == null) return;
+    setDrag(e.clientX - dragStart.current);
+  }
+  function onPointerUp() {
+    if (dragStart.current == null) return;
+    const dx = drag;
+    dragStart.current = null;
+    if (dx > SWIPE_THRESHOLD) act("approve");
+    else if (dx < -SWIPE_THRESHOLD) act("reject");
+    else setDrag(0);
+  }
+
+  if (cards.length === 0) {
+    return (
+      <div className="mx-auto max-w-xl space-y-4 rounded-lg border border-border bg-card p-8 text-center">
+        <div className="text-5xl">🎉</div>
+        <h1 className="text-2xl font-semibold">Queue is clear.</h1>
+        <p className="text-white/60">
+          No pending creations right now. Run an ingest from{" "}
+          <Link href="/admin/ingest" className="text-accent hover:underline">
+            /admin/ingest
+          </Link>
+          .
+        </p>
+      </div>
+    );
+  }
+
+  if (index >= cards.length) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center text-white/60">
+        Loading next batch…
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex min-h-[calc(100vh-220px)] flex-col">
+      <header className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
+        <div>
+          <h1 className="text-2xl font-semibold">Triage</h1>
+          <p className="text-xs text-white/50">
+            Quick-approve items with their auto-tags. Need to edit tags? Use{" "}
+            <Link href="/admin/queue" className="text-accent hover:underline">
+              /admin/queue
+            </Link>
+            .
+          </p>
+        </div>
+        <div className="text-sm text-white/60">
+          <span className="font-medium text-white">{remaining}</span> of{" "}
+          {totalPending} in this batch
+        </div>
+      </header>
+
+      <div className="relative flex-1">
+        {next && <TriageCardView card={next} style={{ scale: 0.96, zIndex: 0 }} />}
+        {current && (
+          <TriageCardView
+            card={current}
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+            onPointerCancel={onPointerUp}
+            exit={exit}
+            drag={drag}
+            style={{ zIndex: 1 }}
+          />
+        )}
+      </div>
+
+      <footer className="mt-5 flex items-center justify-center gap-4">
+        <ActionButton
+          label="Reject"
+          shortcut="←"
+          variant="reject"
+          disabled={isPending}
+          onClick={() => act("reject")}
+        />
+        <ActionButton
+          label="Skip"
+          shortcut="Space"
+          variant="skip"
+          disabled={isPending}
+          onClick={() => act("skip")}
+        />
+        <ActionButton
+          label="Approve"
+          shortcut="→"
+          variant="approve"
+          disabled={isPending}
+          onClick={() => act("approve")}
+        />
+      </footer>
+    </div>
+  );
+}
+
+function TriageCardView({
+  card,
+  style,
+  exit,
+  drag = 0,
+  ...pointer
+}: {
+  card: TriageCard;
+  style?: React.CSSProperties;
+  exit?: ExitDirection;
+  drag?: number;
+} & Partial<React.DOMAttributes<HTMLDivElement>>) {
+  const kindLabel = KIND_LABELS[card.kind] ?? card.kind;
+
+  let transform = "translateX(0) rotate(0deg)";
+  let transition = pointer.onPointerDown
+    ? `transform ${ANIM_MS}ms ease-out, opacity ${ANIM_MS}ms ease-out`
+    : "none";
+  let opacity = 1;
+
+  if (exit === "approve") {
+    transform = "translateX(120vw) rotate(14deg)";
+    opacity = 0;
+  } else if (exit === "reject") {
+    transform = "translateX(-120vw) rotate(-14deg)";
+    opacity = 0;
+  } else if (exit === "skip") {
+    transform = "translateY(-25vh) scale(0.92)";
+    opacity = 0;
+  } else if (drag !== 0) {
+    const rot = Math.max(-14, Math.min(14, drag / 14));
+    transform = `translateX(${drag}px) rotate(${rot}deg)`;
+    transition = "none";
+  } else if (style?.scale) {
+    transform = `scale(${style.scale})`;
+  }
+
+  const approveVisible = drag > 40;
+  const rejectVisible = drag < -40;
+
+  return (
+    <div
+      className="absolute inset-0 select-none touch-pan-y"
+      style={{
+        transform,
+        transition,
+        opacity,
+        willChange: "transform, opacity",
+        zIndex: style?.zIndex,
+      }}
+      {...pointer}
+    >
+      <div className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card shadow-2xl">
+        <div className="relative aspect-video w-full bg-black">
+          {card.thumbnailUrl ? (
+            <Image
+              src={card.thumbnailUrl}
+              alt={card.title}
+              fill
+              unoptimized
+              sizes="(max-width: 768px) 100vw, 800px"
+              className="object-cover"
+              priority={!!pointer.onPointerDown}
+              draggable={false}
+            />
+          ) : (
+            <div className="flex h-full items-center justify-center text-white/30">
+              no thumbnail
+            </div>
+          )}
+          <span className="absolute left-3 top-3 rounded bg-black/70 px-2 py-0.5 text-xs uppercase tracking-wider text-white/80">
+            {kindLabel}
+          </span>
+          <div
+            className={cn(
+              "pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 rounded-lg border-2 border-red-400 bg-red-500/20 px-3 py-1 text-xl font-bold uppercase tracking-wider text-red-300 transition",
+              rejectVisible ? "opacity-100" : "opacity-0",
+            )}
+          >
+            Reject
+          </div>
+          <div
+            className={cn(
+              "pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 rounded-lg border-2 border-emerald-400 bg-emerald-500/20 px-3 py-1 text-xl font-bold uppercase tracking-wider text-emerald-300 transition",
+              approveVisible ? "opacity-100" : "opacity-0",
+            )}
+          >
+            Approve
+          </div>
+        </div>
+
+        <div className="flex flex-1 flex-col gap-3 overflow-y-auto p-5">
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <div className="min-w-0">
+              <h2 className="truncate text-xl font-semibold">{card.title}</h2>
+              <div className="text-xs text-white/50">
+                {card.authorName ? `by ${card.authorName} · ` : ""}
+                {card.subscriptions.toLocaleString()} subs ·{" "}
+                {card.favorites.toLocaleString()} favs
+                {card.voteScore != null &&
+                  ` · ${Math.round(card.voteScore * 100)}%`}
+              </div>
+            </div>
+            <a
+              href={card.steamUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="rounded border border-border px-2 py-1 text-xs text-white/60 hover:border-accent hover:text-accent"
+            >
+              Steam ↗
+            </a>
+          </div>
+
+          {card.tags.length > 0 ? (
+            <div className="flex flex-wrap gap-1.5">
+              {card.tags.map((t) => (
+                <span
+                  key={t.id}
+                  className="rounded-full border border-accent/40 bg-accent/15 px-2.5 py-0.5 text-xs text-accent"
+                >
+                  {t.name}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <div className="text-xs text-white/40">
+              no auto-tags — consider rejecting or opening in /admin/queue to tag manually
+            </div>
+          )}
+
+          <p className="whitespace-pre-wrap text-sm leading-relaxed text-white/70">
+            {card.description || "(no description)"}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ActionButton({
+  label,
+  shortcut,
+  variant,
+  disabled,
+  onClick,
+}: {
+  label: string;
+  shortcut: string;
+  variant: "reject" | "skip" | "approve";
+  disabled?: boolean;
+  onClick: () => void;
+}) {
+  const styles =
+    variant === "approve"
+      ? "bg-emerald-500 text-black hover:bg-emerald-400"
+      : variant === "reject"
+        ? "bg-red-500 text-white hover:bg-red-400"
+        : "bg-white/10 text-white/80 hover:bg-white/20";
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={cn(
+        "flex min-w-[110px] flex-col items-center gap-0.5 rounded-lg px-5 py-2.5 font-medium transition disabled:opacity-50",
+        styles,
+      )}
+    >
+      <span>{label}</span>
+      <span className="text-[10px] opacity-70">{shortcut}</span>
+    </button>
+  );
+}

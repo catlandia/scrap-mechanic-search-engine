@@ -93,6 +93,35 @@ export async function rejectCreation(formData: FormData) {
     .set({ status: "rejected", reviewedAt: now })
     .where(eq(creations.id, id));
   revalidatePath("/admin/queue");
+  revalidatePath("/admin/triage");
+}
+
+/**
+ * Triage fast-path: mark pending creation approved without editing its
+ * auto-suggested tags. The keyword tagger already populated creation_tags
+ * and creation_categories on ingest — we just flip status + confirm the
+ * existing rows in place. Use /admin/queue for tag-level edits.
+ */
+export async function quickApprove(formData: FormData) {
+  const db = getDb();
+  const id = String(formData.get("creationId") ?? "");
+  if (!id) throw new Error("creationId required");
+  const now = new Date();
+
+  await db
+    .update(creationTags)
+    .set({ confirmed: true })
+    .where(eq(creationTags.creationId, id));
+
+  await db
+    .update(creations)
+    .set({ status: "approved", reviewedAt: now, approvedAt: now })
+    .where(eq(creations.id, id));
+
+  revalidatePath("/admin/triage");
+  revalidatePath("/admin/queue");
+  revalidatePath("/");
+  revalidatePath("/new");
 }
 
 export async function saveCreationTags(formData: FormData) {
