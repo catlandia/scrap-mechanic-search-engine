@@ -181,11 +181,13 @@ export function TriageStack({
         <div>
           <h1 className="text-2xl font-semibold">Triage</h1>
           <p className="text-xs text-white/50">
-            Quick-approve items with their auto-tags. Need to edit tags? Use{" "}
+            Approve pushes the item to the public site without tagging.
+            Untagged items land in{" "}
             <Link href="/admin/queue" className="text-accent hover:underline">
               /admin/queue
             </Link>
-            .
+            {" "}until admin confirms a tag or the community votes one over
+            +3.
           </p>
         </div>
         <div className="text-sm text-white/60">

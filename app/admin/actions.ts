@@ -108,21 +108,17 @@ export async function rejectCreation(formData: FormData) {
 }
 
 /**
- * Triage fast-path: mark pending creation approved without editing its
- * auto-suggested tags. The keyword tagger already populated creation_tags
- * and creation_categories on ingest — we just flip status + confirm the
- * existing rows in place. Use /admin/queue for tag-level edits.
+ * Triage fast-path: flip the creation to approved (visible on the public
+ * site) without touching its tags. Keyword-suggested creation_tags rows
+ * remain unconfirmed, so the community can vote on them. The creation
+ * lands in /admin/queue as "needs tagging" until at least one of its
+ * tags is admin-confirmed OR hits the +3 community-vote threshold.
  */
 export async function quickApprove(formData: FormData) {
   const db = getDb();
   const id = String(formData.get("creationId") ?? "");
   if (!id) throw new Error("creationId required");
   const now = new Date();
-
-  await db
-    .update(creationTags)
-    .set({ confirmed: true })
-    .where(eq(creationTags.creationId, id));
 
   await db
     .update(creations)
