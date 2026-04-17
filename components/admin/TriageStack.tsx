@@ -34,6 +34,7 @@ export interface TriageCard {
 }
 
 type ExitDirection = "approve" | "reject" | "skip" | null;
+type CardRole = "current" | "next";
 
 const SWIPE_THRESHOLD = 120;
 const ANIM_MS = 280;
@@ -61,15 +62,17 @@ export function TriageStack({
     (action: Exclude<ExitDirection, null>) => {
       if (!current || busy.current) return;
       busy.current = true;
-      setExit(action);
       setDrag(0);
+      setExit(action);
+
+      const advance = () => {
+        setExit(null);
+        setIndex((i) => i + 1);
+        busy.current = false;
+      };
 
       if (action === "skip") {
-        window.setTimeout(() => {
-          setExit(null);
-          setIndex((i) => i + 1);
-          busy.current = false;
-        }, ANIM_MS);
+        window.setTimeout(advance, ANIM_MS);
         return;
       }
 
@@ -82,11 +85,7 @@ export function TriageStack({
         } catch (err) {
           console.error(err);
         }
-        window.setTimeout(() => {
-          setExit(null);
-          setIndex((i) => i + 1);
-          busy.current = false;
-        }, ANIM_MS);
+        window.setTimeout(advance, ANIM_MS);
       });
     },
     [current],
@@ -183,17 +182,25 @@ export function TriageStack({
       </header>
 
       <div className="relative flex-1">
-        {next && <TriageCardView card={next} style={{ scale: 0.96, zIndex: 0 }} />}
+        {next && (
+          <TriageCardView
+            key={next.id}
+            card={next}
+            role="next"
+            rising={exit !== null}
+          />
+        )}
         {current && (
           <TriageCardView
+            key={current.id}
             card={current}
+            role="current"
+            exit={exit}
+            drag={drag}
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
             onPointerCancel={onPointerUp}
-            exit={exit}
-            drag={drag}
-            style={{ zIndex: 1 }}
           />
         )}
       </div>
@@ -225,57 +232,83 @@ export function TriageStack({
   );
 }
 
-function TriageCardView({
-  card,
-  style,
-  exit,
-  drag = 0,
-  ...pointer
-}: {
+interface CardViewProps {
   card: TriageCard;
-  style?: React.CSSProperties;
+  role: CardRole;
   exit?: ExitDirection;
   drag?: number;
-} & Partial<React.DOMAttributes<HTMLDivElement>>) {
+  rising?: boolean;
+  onPointerDown?: (e: React.PointerEvent<HTMLDivElement>) => void;
+  onPointerMove?: (e: React.PointerEvent<HTMLDivElement>) => void;
+  onPointerUp?: (e: React.PointerEvent<HTMLDivElement>) => void;
+  onPointerCancel?: (e: React.PointerEvent<HTMLDivElement>) => void;
+}
+
+function TriageCardView({
+  card,
+  role,
+  exit,
+  drag = 0,
+  rising = false,
+  onPointerDown,
+  onPointerMove,
+  onPointerUp,
+  onPointerCancel,
+}: CardViewProps) {
   const kindLabel = KIND_LABELS[card.kind] ?? card.kind;
 
-  let transform = "translateX(0) rotate(0deg)";
-  let transition = pointer.onPointerDown
-    ? `transform ${ANIM_MS}ms ease-out, opacity ${ANIM_MS}ms ease-out`
-    : "none";
+  let transform = "none";
+  let transition = `transform ${ANIM_MS}ms ease-out, opacity ${ANIM_MS}ms ease-out`;
   let opacity = 1;
 
-  if (exit === "approve") {
-    transform = "translateX(120vw) rotate(14deg)";
-    opacity = 0;
-  } else if (exit === "reject") {
-    transform = "translateX(-120vw) rotate(-14deg)";
-    opacity = 0;
-  } else if (exit === "skip") {
-    transform = "translateY(-25vh) scale(0.92)";
-    opacity = 0;
-  } else if (drag !== 0) {
-    const rot = Math.max(-14, Math.min(14, drag / 14));
-    transform = `translateX(${drag}px) rotate(${rot}deg)`;
-    transition = "none";
-  } else if (style?.scale) {
-    transform = `scale(${style.scale})`;
+  if (role === "current") {
+    if (exit === "approve") {
+      transform = "translateX(120vw) rotate(14deg)";
+      opacity = 0;
+    } else if (exit === "reject") {
+      transform = "translateX(-120vw) rotate(-14deg)";
+      opacity = 0;
+    } else if (exit === "skip") {
+      transform = "translateY(-25vh) scale(0.92)";
+      opacity = 0;
+    } else if (drag !== 0) {
+      const rot = Math.max(-14, Math.min(14, drag / 14));
+      transform = `translateX(${drag}px) rotate(${rot}deg)`;
+      transition = "none";
+    }
+  } else {
+    // role === "next": sits slightly scaled-down behind the current card.
+    // When an exit is in flight, rise to the current card's resting transform so
+    // the swap after the animation is seamless.
+    if (rising) {
+      transform = "none";
+      opacity = 1;
+    } else {
+      transform = "scale(0.96) translateY(8px)";
+      opacity = 0.85;
+    }
   }
 
-  const approveVisible = drag > 40;
-  const rejectVisible = drag < -40;
+  const approveVisible = role === "current" && drag > 40;
+  const rejectVisible = role === "current" && drag < -40;
 
   return (
     <div
-      className="absolute inset-0 select-none touch-pan-y"
+      className={cn(
+        "absolute inset-0 select-none touch-pan-y",
+        role === "next" && "pointer-events-none",
+      )}
       style={{
         transform,
         transition,
         opacity,
         willChange: "transform, opacity",
-        zIndex: style?.zIndex,
+        zIndex: role === "current" ? 2 : 1,
       }}
-      {...pointer}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerCancel={onPointerCancel}
     >
       <div className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card shadow-2xl">
         <div className="relative aspect-video w-full bg-black">
@@ -287,7 +320,7 @@ function TriageCardView({
               unoptimized
               sizes="(max-width: 768px) 100vw, 800px"
               className="object-cover"
-              priority={!!pointer.onPointerDown}
+              priority={role === "current"}
               draggable={false}
             />
           ) : (
