@@ -110,7 +110,9 @@ export async function runIngest(options: IngestOptions = {}): Promise<IngestResu
 
   const db = getDb();
   const kinds = options.kinds ?? ALL_KINDS;
-  const pagesPerKind = options.pagesPerKind ?? 2;
+  // Hobby plan: 60s function limit. 1 page × 50 items × 7 kinds = 350 items/day,
+  // plenty for curation. Raise via options.pagesPerKind when running manually.
+  const pagesPerKind = options.pagesPerKind ?? 1;
   const numPerPage = options.numPerPage ?? 50;
 
   const [run] = await db
@@ -235,11 +237,16 @@ export async function runIngest(options: IngestOptions = {}): Promise<IngestResu
   }
 
   // Tagger — run only on newly inserted rows so admin confirmations survive.
+  // Collect all tag/category rows into single batched inserts to minimise
+  // roundtrips (Hobby plan's 60s function limit is the binding constraint).
   if (toInsert.length > 0) {
     const allTags = await db
       .select({ id: tagsTable.id, slug: tagsTable.slug, categoryId: tagsTable.categoryId })
       .from(tagsTable);
     const tagBySlug = new Map(allTags.map((t) => [t.slug, t]));
+
+    const batchedTagRows: typeof creationTags.$inferInsert[] = [];
+    const batchedCategoryRows: typeof creationCategories.$inferInsert[] = [];
 
     for (const c of toInsert) {
       const suggestions = classify({
@@ -249,12 +256,11 @@ export async function runIngest(options: IngestOptions = {}): Promise<IngestResu
       });
       if (suggestions.length === 0) continue;
 
-      const tagRows: typeof creationTags.$inferInsert[] = [];
       const categoryIdSet = new Set<number>();
       for (const s of suggestions) {
         const tag = tagBySlug.get(s.slug);
         if (!tag) continue;
-        tagRows.push({
+        batchedTagRows.push({
           creationId: c.item.publishedfileid,
           tagId: tag.id,
           source: s.source,
@@ -263,33 +269,34 @@ export async function runIngest(options: IngestOptions = {}): Promise<IngestResu
         });
         if (tag.categoryId) categoryIdSet.add(tag.categoryId);
       }
-
-      if (tagRows.length > 0) {
-        try {
-          await db.insert(creationTags).values(tagRows).onConflictDoNothing();
-          tagRowsInserted += tagRows.length;
-        } catch (err) {
-          errors.push({
-            message: `insert creation_tags for ${c.item.publishedfileid}: ${err instanceof Error ? err.message : err}`,
-          });
-        }
+      for (const cid of categoryIdSet) {
+        batchedCategoryRows.push({
+          creationId: c.item.publishedfileid,
+          categoryId: cid,
+        });
       }
-      if (categoryIdSet.size > 0) {
-        try {
-          await db
-            .insert(creationCategories)
-            .values(
-              Array.from(categoryIdSet).map((cid) => ({
-                creationId: c.item.publishedfileid,
-                categoryId: cid,
-              })),
-            )
-            .onConflictDoNothing();
-        } catch (err) {
-          errors.push({
-            message: `insert creation_categories for ${c.item.publishedfileid}: ${err instanceof Error ? err.message : err}`,
-          });
-        }
+    }
+
+    if (batchedTagRows.length > 0) {
+      try {
+        await db.insert(creationTags).values(batchedTagRows).onConflictDoNothing();
+        tagRowsInserted = batchedTagRows.length;
+      } catch (err) {
+        errors.push({
+          message: `batch insert creation_tags: ${err instanceof Error ? err.message : err}`,
+        });
+      }
+    }
+    if (batchedCategoryRows.length > 0) {
+      try {
+        await db
+          .insert(creationCategories)
+          .values(batchedCategoryRows)
+          .onConflictDoNothing();
+      } catch (err) {
+        errors.push({
+          message: `batch insert creation_categories: ${err instanceof Error ? err.message : err}`,
+        });
       }
     }
   }
