@@ -4,10 +4,12 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import {
   getCreationDetail,
+  getCreationSiteCounts,
   getCreationTagsWithVotes,
   getCreationVoteBreakdown,
   getUserVoteOnCreation,
   isCreationFavourited,
+  recordCreationView,
 } from "@/lib/db/queries";
 import { getCurrentUser } from "@/lib/auth/session";
 import { StarRating, sentimentLabel } from "@/components/StarRating";
@@ -52,13 +54,30 @@ export default async function CreationDetailPage({ params }: { params: Params })
   if (creation.status !== "approved") notFound();
 
   const viewer = await getCurrentUser();
-  const [tagsWithVotes, viewerCreationVote, viewerFavourited, voteBreakdown] =
-    await Promise.all([
-      getCreationTagsWithVotes(creation.id, viewer?.steamid ?? null),
-      viewer ? getUserVoteOnCreation(creation.id, viewer.steamid) : Promise.resolve(0 as const),
-      viewer ? isCreationFavourited(creation.id, viewer.steamid) : Promise.resolve(false),
-      getCreationVoteBreakdown(creation.id),
-    ]);
+
+  // Record the view BEFORE we fetch counts so the viewer's own visit is
+  // reflected in the Site-views number they see.
+  if (viewer) {
+    try {
+      await recordCreationView(creation.id, viewer.steamid);
+    } catch (err) {
+      console.error("recordCreationView failed:", err);
+    }
+  }
+
+  const [
+    tagsWithVotes,
+    viewerCreationVote,
+    viewerFavourited,
+    voteBreakdown,
+    siteCounts,
+  ] = await Promise.all([
+    getCreationTagsWithVotes(creation.id, viewer?.steamid ?? null),
+    viewer ? getUserVoteOnCreation(creation.id, viewer.steamid) : Promise.resolve(0 as const),
+    viewer ? isCreationFavourited(creation.id, viewer.steamid) : Promise.resolve(false),
+    getCreationVoteBreakdown(creation.id),
+    getCreationSiteCounts(creation.id),
+  ]);
 
   const visibleTags = tagsWithVotes.filter((t) => !t.rejected);
   const confirmedTags = visibleTags.filter((t) => t.confirmed);
@@ -132,8 +151,23 @@ export default async function CreationDetailPage({ params }: { params: Params })
 
       <div className="grid gap-4 text-sm text-white/60 sm:grid-cols-2 md:grid-cols-3">
         <Stat label="Subscribers" value={creation.subscriptions.toLocaleString()} />
-        <Stat label="Favourites" value={creation.favorites.toLocaleString()} />
-        <Stat label="Views" value={creation.views.toLocaleString()} />
+        <SplitStat
+          label="Favourites"
+          a={{ sublabel: "Steam", value: creation.favorites.toLocaleString() }}
+          b={{
+            sublabel: "Site",
+            value: siteCounts.siteFavourites.toLocaleString(),
+          }}
+        />
+        <SplitStat
+          label="Views"
+          a={{ sublabel: "Steam", value: creation.views.toLocaleString() }}
+          b={{
+            sublabel: "Site",
+            value: siteCounts.siteViews.toLocaleString(),
+            hint: "signed-in viewers",
+          }}
+        />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
@@ -251,6 +285,36 @@ function Stat({ label, value }: { label: string; value: string }) {
     <div className="rounded-md border border-border bg-card/60 px-3 py-2">
       <div className="text-[10px] uppercase tracking-widest text-white/40">{label}</div>
       <div className="mt-0.5 text-base font-medium text-white">{value}</div>
+    </div>
+  );
+}
+
+function SplitStat({
+  label,
+  a,
+  b,
+}: {
+  label: string;
+  a: { sublabel: string; value: string; hint?: string };
+  b: { sublabel: string; value: string; hint?: string };
+}) {
+  return (
+    <div className="rounded-md border border-border bg-card/60 px-3 py-2">
+      <div className="text-[10px] uppercase tracking-widest text-white/40">{label}</div>
+      <div className="mt-1 grid grid-cols-2 gap-2">
+        <div title={a.hint}>
+          <div className="text-[9px] uppercase tracking-wider text-emerald-400/70">
+            {a.sublabel}
+          </div>
+          <div className="text-base font-medium text-white">{a.value}</div>
+        </div>
+        <div title={b.hint}>
+          <div className="text-[9px] uppercase tracking-wider text-orange-400/80">
+            {b.sublabel}
+          </div>
+          <div className="text-base font-medium text-white">{b.value}</div>
+        </div>
+      </div>
     </div>
   );
 }

@@ -262,6 +262,34 @@ export const favorites = pgTable(
   (t) => [
     primaryKey({ columns: [t.userId, t.creationId] }),
     index("favorites_user_idx").on(t.userId),
+    index("favorites_creation_idx").on(t.creationId),
+  ],
+);
+
+/**
+ * Verified views: one row per (signed-in user, creation) — ghosts don't count.
+ * Upserted when the user opens the creation detail page; lastViewedAt tracks
+ * repeat views. COUNT(*) per creationId gives the site-native view count.
+ */
+export const creationViews = pgTable(
+  "creation_views",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.steamid, { onDelete: "cascade" }),
+    creationId: text("creation_id")
+      .notNull()
+      .references(() => creations.id, { onDelete: "cascade" }),
+    firstViewedAt: timestamp("first_viewed_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    lastViewedAt: timestamp("last_viewed_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.userId, t.creationId] }),
+    index("creation_views_creation_idx").on(t.creationId),
   ],
 );
 

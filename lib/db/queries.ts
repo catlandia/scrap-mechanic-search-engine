@@ -14,6 +14,7 @@ import {
   categories,
   creationCategories,
   creationTags,
+  creationViews,
   creationVotes,
   creations,
   favorites,
@@ -549,6 +550,53 @@ export async function isCreationFavourited(
     )
     .limit(1);
   return !!row;
+}
+
+export interface SiteActivityCounts {
+  siteFavourites: number;
+  siteViews: number;
+}
+
+export async function getCreationSiteCounts(
+  creationId: string,
+): Promise<SiteActivityCounts> {
+  const db = getDb();
+  const [favRow] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(favorites)
+    .where(eq(favorites.creationId, creationId));
+  const [viewRow] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(creationViews)
+    .where(eq(creationViews.creationId, creationId));
+  return {
+    siteFavourites: favRow?.n ?? 0,
+    siteViews: viewRow?.n ?? 0,
+  };
+}
+
+/**
+ * Records that a signed-in user viewed a creation's detail page. Idempotent —
+ * subsequent views bump lastViewedAt. Ghost viewers are ignored (no row).
+ */
+export async function recordCreationView(
+  creationId: string,
+  viewerSteamid: string,
+): Promise<void> {
+  const db = getDb();
+  const now = new Date();
+  await db
+    .insert(creationViews)
+    .values({
+      userId: viewerSteamid,
+      creationId,
+      firstViewedAt: now,
+      lastViewedAt: now,
+    })
+    .onConflictDoUpdate({
+      target: [creationViews.userId, creationViews.creationId],
+      set: { lastViewedAt: now },
+    });
 }
 
 export async function getUserFavourites(
