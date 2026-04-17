@@ -147,9 +147,18 @@ export async function saveCreationTags(formData: FormData) {
   revalidatePath("/admin/queue");
 }
 
-export async function triggerIngest(): Promise<void> {
-  await runIngest({});
+export async function triggerIngest(formData?: FormData): Promise<void> {
+  let pagesPerKind: number | undefined;
+  if (formData) {
+    const raw = formData.get("pagesPerKind");
+    const parsed = raw != null ? Number(raw) : NaN;
+    if (Number.isInteger(parsed) && parsed > 0 && parsed <= 20) {
+      pagesPerKind = parsed;
+    }
+  }
+  await runIngest({ pagesPerKind });
   revalidatePath("/admin/queue");
+  revalidatePath("/admin/triage");
   revalidatePath("/admin/ingest");
 }
 
@@ -424,6 +433,57 @@ export async function actionReport(formData: FormData) {
       resolverUserId: user.steamid,
       resolverNote: note,
       resolvedAt: new Date(),
+    })
+    .where(eq(reports.id, id));
+
+  revalidatePath("/admin/reports");
+  revalidatePath(`/creation/${row.creationId}`);
+  revalidatePath("/");
+  revalidatePath("/new");
+}
+
+/**
+ * Mod action: hide the creation from public view (status='rejected') AND
+ * mark the driving report as actioned. For now 'rejected' doubles as the
+ * archive bucket — elite-mod restore UI ships in v2.1. The report gets an
+ * automatic resolver note explaining the archive so it appears in the
+ * "Currently flagged" list with context.
+ */
+export async function archiveFromReport(formData: FormData) {
+  const user = await requireMod();
+  const idRaw = String(formData.get("reportId") ?? "");
+  const id = Number(idRaw);
+  if (!Number.isInteger(id) || id <= 0) throw new Error("invalid_report_id");
+  const extra = String(formData.get("note") ?? "").trim();
+
+  const db = getDb();
+  const [row] = await db
+    .select({ creationId: reports.creationId, reason: reports.reason })
+    .from(reports)
+    .where(eq(reports.id, id))
+    .limit(1);
+  if (!row) throw new Error("report_not_found");
+
+  const now = new Date();
+
+  await db
+    .update(creations)
+    .set({
+      status: "rejected",
+      reviewedAt: now,
+      reviewedByUserId: user.steamid,
+    })
+    .where(eq(creations.id, row.creationId));
+
+  await db
+    .update(reports)
+    .set({
+      status: "actioned",
+      resolverUserId: user.steamid,
+      resolverNote: extra
+        ? `Archived: ${extra}`
+        : `Archived for ${row.reason}.`,
+      resolvedAt: now,
     })
     .where(eq(reports.id, id));
 

@@ -22,12 +22,30 @@ export default async function IngestPage() {
 
   return (
     <div className="space-y-6">
-      <header className="flex flex-wrap items-center justify-between gap-4">
+      <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold">Ingest runs</h1>
-          <p className="text-sm text-white/50">Most recent 20 runs.</p>
+          <p className="text-sm text-white/50">
+            Most recent 20 runs. Already-approved and already-rejected items
+            are skipped entirely, so bumping pages-per-kind digs deeper into
+            the Workshop trending list instead of re-scanning the top.
+          </p>
         </div>
-        <form action={triggerIngest}>
+        <form
+          action={triggerIngest}
+          className="flex items-end gap-2 rounded-md border border-border bg-card p-3"
+        >
+          <label className="flex flex-col gap-1 text-xs text-white/60">
+            Pages per kind
+            <input
+              type="number"
+              name="pagesPerKind"
+              min={1}
+              max={20}
+              defaultValue={5}
+              className="w-20 rounded border border-border bg-background px-2 py-1 text-sm text-white"
+            />
+          </label>
           <button
             type="submit"
             className="rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-black hover:bg-accent-strong"

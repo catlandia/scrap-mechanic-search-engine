@@ -110,10 +110,20 @@ export async function runIngest(options: IngestOptions = {}): Promise<IngestResu
 
   const db = getDb();
   const kinds = options.kinds ?? ALL_KINDS;
-  // 1 page × 50 items × 7 kinds = 350 items/day; raise via options.pagesPerKind
-  // when running a manual catch-up.
+  // Daily cron sticks to 1 page per kind; /admin/ingest lets you dial this up
+  // for manual catch-up runs. Skipping already-decided items below means a
+  // higher value actually digs deeper instead of re-scanning the same top.
   const pagesPerKind = options.pagesPerKind ?? 1;
   const numPerPage = options.numPerPage ?? 50;
+
+  // Preload ids of items we've already approved or rejected so ingest
+  // skips them completely — both the QueryFiles processing and the later
+  // upsert. Pending items still refresh (their stats may have changed).
+  const decidedRows = await db
+    .select({ id: creations.id })
+    .from(creations)
+    .where(inArray(creations.status, ["approved", "rejected"]));
+  const alreadyDecided = new Set(decidedRows.map((r) => r.id));
 
   const [run] = await db
     .insert(ingestRuns)
@@ -139,6 +149,10 @@ export async function runIngest(options: IngestOptions = {}): Promise<IngestResu
         });
         totalFetched += items.length;
         for (const item of items) {
+          if (alreadyDecided.has(item.publishedfileid)) {
+            totalFiltered += 1;
+            continue;
+          }
           if (!passesFollowGate(item, kind)) {
             totalFiltered += 1;
             continue;

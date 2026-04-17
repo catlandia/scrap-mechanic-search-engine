@@ -1,7 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { getActionedReports, getOpenReports } from "@/lib/db/queries";
-import { actionReport, clearReport } from "@/app/admin/actions";
+import {
+  actionReport,
+  archiveFromReport,
+  clearReport,
+} from "@/app/admin/actions";
 import { RoleBadge } from "@/components/RoleBadge";
 import { UserName } from "@/components/UserName";
 import type { UserRole } from "@/lib/db/schema";
@@ -128,32 +132,52 @@ export default async function ReportsQueuePage() {
                   </p>
                 )}
 
-                <div className="flex flex-wrap items-center gap-2 pt-2">
-                  <form action={clearReport}>
-                    <input type="hidden" name="reportId" value={r.id} />
-                    <button
-                      type="submit"
-                      className="rounded-md border border-border bg-background px-3 py-1.5 text-sm text-white/70 hover:border-white/50 hover:text-white"
+                <div className="flex flex-col gap-2 pt-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <form action={clearReport}>
+                      <input type="hidden" name="reportId" value={r.id} />
+                      <button
+                        type="submit"
+                        className="rounded-md border border-border bg-background px-3 py-1.5 text-sm text-white/70 hover:border-white/50 hover:text-white"
+                      >
+                        Clear
+                      </button>
+                    </form>
+                    <form
+                      action={actionReport}
+                      className="flex flex-1 items-center gap-2"
                     >
-                      Clear
-                    </button>
-                  </form>
+                      <input type="hidden" name="reportId" value={r.id} />
+                      <input
+                        type="text"
+                        name="note"
+                        placeholder="Mod note (shown publicly)"
+                        className="flex-1 rounded border border-border bg-background px-2 py-1.5 text-sm"
+                      />
+                      <button
+                        type="submit"
+                        className="rounded-md bg-amber-500 px-3 py-1.5 text-sm font-medium text-black hover:bg-amber-400"
+                      >
+                        Action
+                      </button>
+                    </form>
+                  </div>
                   <form
-                    action={actionReport}
-                    className="flex flex-1 items-center gap-2"
+                    action={archiveFromReport}
+                    className="flex flex-wrap items-center gap-2"
                   >
                     <input type="hidden" name="reportId" value={r.id} />
                     <input
                       type="text"
                       name="note"
-                      placeholder="Mod note (shown publicly)"
-                      className="flex-1 rounded border border-border bg-background px-2 py-1.5 text-sm"
+                      placeholder="Archive note (optional)"
+                      className="flex-1 rounded border border-red-500/30 bg-red-500/5 px-2 py-1.5 text-sm"
                     />
                     <button
                       type="submit"
-                      className="rounded-md bg-amber-500 px-3 py-1.5 text-sm font-medium text-black hover:bg-amber-400"
+                      className="rounded-md border border-red-500/60 bg-red-500/20 px-3 py-1.5 text-sm font-medium text-red-200 hover:bg-red-500/30"
                     >
-                      Action
+                      Archive creation
                     </button>
                   </form>
                 </div>
