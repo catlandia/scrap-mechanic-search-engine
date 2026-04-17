@@ -56,6 +56,8 @@ const cardColumns = {
 export const SORT_MODES = [
   "newest",
   "oldest",
+  "steam-newest",
+  "steam-oldest",
   "popular",
   "unpopular",
   "favorites",
@@ -66,8 +68,10 @@ export const SORT_MODES = [
 export type SortMode = (typeof SORT_MODES)[number];
 
 export const SORT_LABELS: Record<SortMode, string> = {
-  newest: "Newest first",
-  oldest: "Oldest first",
+  newest: "Newest on site",
+  oldest: "Oldest on site",
+  "steam-newest": "Newest on Steam",
+  "steam-oldest": "Oldest on Steam",
   popular: "Most subscribers",
   unpopular: "Fewest subscribers",
   favorites: "Most favourites",
@@ -87,6 +91,10 @@ function orderByForSort(sort: SortMode): SQL {
       return sql`${creations.approvedAt} DESC NULLS LAST`;
     case "oldest":
       return sql`${creations.approvedAt} ASC NULLS LAST`;
+    case "steam-newest":
+      return sql`${creations.timeCreated} DESC NULLS LAST`;
+    case "steam-oldest":
+      return sql`${creations.timeCreated} ASC NULLS LAST`;
     case "popular":
       return sql`${creations.subscriptions} DESC`;
     case "unpopular":
