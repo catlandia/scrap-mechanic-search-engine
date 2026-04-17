@@ -18,6 +18,7 @@ import {
   creationVotes,
   creations,
   favorites,
+  reports,
   tagVotes,
   tags,
   users,
@@ -597,6 +598,100 @@ export async function recordCreationView(
       target: [creationViews.userId, creationViews.creationId],
       set: { lastViewedAt: now },
     });
+}
+
+export interface PublicReportBadge {
+  reason: string;
+  customText: string | null;
+  resolverNote: string | null;
+  resolverName: string | null;
+  resolverRole: string | null;
+  resolverSteamid: string | null;
+  resolvedAt: Date | null;
+}
+
+/**
+ * Returns the most recently-actioned public report for a creation, or null.
+ * Only status='actioned' rows surface — open reports stay private to mods.
+ */
+export async function getPublicReportBadge(
+  creationId: string,
+): Promise<PublicReportBadge | null> {
+  const db = getDb();
+  const [row] = await db
+    .select({
+      reason: reports.reason,
+      customText: reports.customText,
+      resolverNote: reports.resolverNote,
+      resolvedAt: reports.resolvedAt,
+      resolverSteamid: reports.resolverUserId,
+      resolverName: users.personaName,
+      resolverRole: users.role,
+    })
+    .from(reports)
+    .leftJoin(users, eq(users.steamid, reports.resolverUserId))
+    .where(
+      and(
+        eq(reports.creationId, creationId),
+        eq(reports.status, "actioned"),
+      ),
+    )
+    .orderBy(desc(reports.resolvedAt))
+    .limit(1);
+
+  return row
+    ? {
+        reason: row.reason,
+        customText: row.customText,
+        resolverNote: row.resolverNote,
+        resolverName: row.resolverName,
+        resolverRole: row.resolverRole,
+        resolverSteamid: row.resolverSteamid,
+        resolvedAt: row.resolvedAt,
+      }
+    : null;
+}
+
+export interface ModReportRow {
+  id: number;
+  creationId: string;
+  creationShortId: number;
+  creationTitle: string;
+  creationThumbnail: string | null;
+  creationSteamUrl: string;
+  reason: string;
+  customText: string | null;
+  source: string;
+  createdAt: Date;
+  reporterSteamid: string | null;
+  reporterName: string | null;
+  reporterRole: string | null;
+}
+
+export async function getOpenReports(limit = 50): Promise<ModReportRow[]> {
+  const db = getDb();
+  return db
+    .select({
+      id: reports.id,
+      creationId: reports.creationId,
+      creationShortId: creations.shortId,
+      creationTitle: creations.title,
+      creationThumbnail: creations.thumbnailUrl,
+      creationSteamUrl: creations.steamUrl,
+      reason: reports.reason,
+      customText: reports.customText,
+      source: reports.source,
+      createdAt: reports.createdAt,
+      reporterSteamid: reports.reporterUserId,
+      reporterName: users.personaName,
+      reporterRole: users.role,
+    })
+    .from(reports)
+    .innerJoin(creations, eq(creations.id, reports.creationId))
+    .leftJoin(users, eq(users.steamid, reports.reporterUserId))
+    .where(eq(reports.status, "open"))
+    .orderBy(desc(reports.createdAt))
+    .limit(limit);
 }
 
 export async function getUserFavourites(

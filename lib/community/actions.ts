@@ -9,8 +9,10 @@ import {
   creationVotes,
   favorites,
   reports,
+  REPORT_REASONS,
   tagVotes,
   users,
+  type ReportReason,
 } from "@/lib/db/schema";
 
 const MIN_STEAM_AGE_DAYS = 7;
@@ -140,6 +142,38 @@ export async function voteCreation(
   // Public pages show orange stars; refresh their feeds so the new score sticks.
   revalidatePath("/");
   revalidatePath("/new");
+}
+
+export async function reportCreation(formData: FormData): Promise<void> {
+  const user = await requireVotingUser();
+  const db = getDb();
+
+  const creationId = String(formData.get("creationId") ?? "");
+  if (!creationId) throw new Error("creationId required");
+
+  const reasonRaw = String(formData.get("reason") ?? "other");
+  const reason: ReportReason = (REPORT_REASONS as readonly string[]).includes(
+    reasonRaw,
+  )
+    ? (reasonRaw as ReportReason)
+    : "other";
+
+  const customText = String(formData.get("customText") ?? "").trim();
+  if (reason === "other" && !customText) {
+    throw new Error("custom_text_required");
+  }
+
+  await db.insert(reports).values({
+    creationId,
+    reporterUserId: user.steamid,
+    reason,
+    customText: customText || null,
+    source: "user",
+    status: "open",
+  });
+
+  revalidatePath(`/creation/${creationId}`);
+  revalidatePath("/admin/reports");
 }
 
 export async function voteTag(

@@ -2,17 +2,21 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { eq, inArray } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import {
   categories,
   creationCategories,
   creationTags,
   creations,
+  reports,
   tags,
 } from "@/lib/db/schema";
 import { runIngest } from "@/lib/ingest/pipeline";
 import { CREATION_KINDS } from "@/lib/db/schema";
+import { getCurrentUser } from "@/lib/auth/session";
+import { isModerator } from "@/lib/auth/roles";
+import type { UserRole } from "@/lib/db/schema";
 import {
   detectKind,
   getPublishedFileDetails,
@@ -369,6 +373,64 @@ export async function addCreation(formData: FormData) {
   redirect(
     `/admin/add?added=${parsedId}&status=${autoApprove ? "approved" : "pending"}`,
   );
+}
+
+async function requireMod() {
+  const user = await getCurrentUser();
+  if (!user) throw new Error("not_signed_in");
+  if (!isModerator(user.role as UserRole)) throw new Error("not_a_mod");
+  return user;
+}
+
+export async function clearReport(formData: FormData) {
+  const user = await requireMod();
+  const idRaw = String(formData.get("reportId") ?? "");
+  const id = Number(idRaw);
+  if (!Number.isInteger(id) || id <= 0) throw new Error("invalid_report_id");
+
+  const db = getDb();
+  await db
+    .update(reports)
+    .set({
+      status: "cleared",
+      resolverUserId: user.steamid,
+      resolvedAt: new Date(),
+    })
+    .where(eq(reports.id, id));
+
+  revalidatePath("/admin/reports");
+  revalidatePath("/");
+}
+
+export async function actionReport(formData: FormData) {
+  const user = await requireMod();
+  const idRaw = String(formData.get("reportId") ?? "");
+  const id = Number(idRaw);
+  if (!Number.isInteger(id) || id <= 0) throw new Error("invalid_report_id");
+  const note = String(formData.get("note") ?? "").trim() || null;
+
+  const db = getDb();
+  const [row] = await db
+    .select({ creationId: reports.creationId })
+    .from(reports)
+    .where(eq(reports.id, id))
+    .limit(1);
+  if (!row) throw new Error("report_not_found");
+
+  await db
+    .update(reports)
+    .set({
+      status: "actioned",
+      resolverUserId: user.steamid,
+      resolverNote: note,
+      resolvedAt: new Date(),
+    })
+    .where(eq(reports.id, id));
+
+  revalidatePath("/admin/reports");
+  revalidatePath(`/creation/${row.creationId}`);
+  revalidatePath("/");
+  revalidatePath("/new");
 }
 
 export async function createCategory(formData: FormData) {

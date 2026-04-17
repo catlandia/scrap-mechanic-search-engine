@@ -7,6 +7,7 @@ import {
   getCreationSiteCounts,
   getCreationTagsWithVotes,
   getCreationVoteBreakdown,
+  getPublicReportBadge,
   getUserVoteOnCreation,
   isCreationFavourited,
   recordCreationView,
@@ -15,6 +16,8 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { StarRating, sentimentLabel } from "@/components/StarRating";
 import { CreationVotePanel } from "@/components/CreationVotePanel";
 import { FavouriteButton } from "@/components/FavouriteButton";
+import { ReportButton } from "@/components/ReportButton";
+import { ReportBadge } from "@/components/ReportBadge";
 import { TagVoteList } from "@/components/TagVoteList";
 
 export const dynamic = "force-dynamic";
@@ -71,12 +74,14 @@ export default async function CreationDetailPage({ params }: { params: Params })
     viewerFavourited,
     voteBreakdown,
     siteCounts,
+    reportBadge,
   ] = await Promise.all([
     getCreationTagsWithVotes(creation.id, viewer?.steamid ?? null),
     viewer ? getUserVoteOnCreation(creation.id, viewer.steamid) : Promise.resolve(0 as const),
     viewer ? isCreationFavourited(creation.id, viewer.steamid) : Promise.resolve(false),
     getCreationVoteBreakdown(creation.id),
     getCreationSiteCounts(creation.id),
+    getPublicReportBadge(creation.id),
   ]);
 
   const visibleTags = tagsWithVotes.filter((t) => !t.rejected);
@@ -222,12 +227,13 @@ export default async function CreationDetailPage({ params }: { params: Params })
         signedIn={!!viewer}
       />
 
-      <div className="flex gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <FavouriteButton
           creationId={creation.id}
           initialFavourited={viewerFavourited}
           signedIn={!!viewer}
         />
+        <ReportButton creationId={creation.id} signedIn={!!viewer} />
         <a
           href={creation.steamUrl}
           target="_blank"
@@ -237,6 +243,8 @@ export default async function CreationDetailPage({ params }: { params: Params })
           View on Steam Workshop ↗
         </a>
       </div>
+
+      {reportBadge && <ReportBadge badge={reportBadge} />}
 
       {displayTags.length > 0 && (
         <div>

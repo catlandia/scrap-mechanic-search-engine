@@ -8,6 +8,7 @@ import type { UserRole } from "@/lib/db/schema";
 const adminNav = [
   { href: "/admin/triage", label: "Triage" },
   { href: "/admin/queue", label: "Queue" },
+  { href: "/admin/reports", label: "Reports" },
   { href: "/admin/add", label: "Add" },
   { href: "/admin/tags", label: "Tags" },
   { href: "/admin/ingest", label: "Ingest" },
