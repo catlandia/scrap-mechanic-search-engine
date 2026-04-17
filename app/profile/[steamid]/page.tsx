@@ -89,6 +89,7 @@ export default async function ProfilePage({ params }: { params: Params }) {
       </header>
 
       <section className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
+        <Stat label="Site ID" value={`#${user.shortId}`} mono />
         <Stat label="On the site since" value={user.siteJoinedAt?.toLocaleDateString() ?? "—"} />
         <Stat
           label="Steam account since"

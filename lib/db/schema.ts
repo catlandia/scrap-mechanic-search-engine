@@ -175,6 +175,8 @@ export const users = pgTable(
   "users",
   {
     steamid: text("steamid").primaryKey(),
+    // Short, human-readable per-site ID. #1 = first to sign up.
+    shortId: serial("short_id").notNull().unique(),
     personaName: text("persona_name").notNull(),
     avatarUrl: text("avatar_url"),
     profileUrl: text("profile_url"),
