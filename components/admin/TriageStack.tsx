@@ -47,6 +47,10 @@ export function TriageStack({
   totalPending: number;
 }) {
   const router = useRouter();
+  // Snapshot the cards prop on mount. Keep progressing through the buffer
+  // and only accept a replacement batch when the current one is exhausted —
+  // this way a server-action re-render can't shuffle the stack mid-animation.
+  const [buffer, setBuffer] = useState<TriageCard[]>(() => cards);
   const [index, setIndex] = useState(0);
   const [exit, setExit] = useState<ExitDirection>(null);
   const [drag, setDrag] = useState(0);
@@ -54,9 +58,18 @@ export function TriageStack({
   const dragStart = useRef<number | null>(null);
   const busy = useRef(false);
 
-  const current = cards[index];
-  const next = cards[index + 1];
-  const remaining = Math.max(0, cards.length - index);
+  useEffect(() => {
+    if (index >= buffer.length || buffer.length === 0) {
+      setBuffer(cards);
+      setIndex(0);
+    }
+    // Only react to cards prop changes; ignore our own setIndex updates here.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cards]);
+
+  const current = buffer[index];
+  const next = buffer[index + 1];
+  const remaining = Math.max(0, buffer.length - index);
 
   const act = useCallback(
     (action: Exclude<ExitDirection, null>) => {
@@ -115,10 +128,10 @@ export function TriageStack({
   }, [act]);
 
   useEffect(() => {
-    if (cards.length > 0 && index >= cards.length) {
+    if (buffer.length > 0 && index >= buffer.length) {
       router.refresh();
     }
-  }, [index, cards.length, router]);
+  }, [index, buffer.length, router]);
 
   function onPointerDown(e: React.PointerEvent<HTMLDivElement>) {
     if (busy.current) return;
@@ -138,7 +151,7 @@ export function TriageStack({
     else setDrag(0);
   }
 
-  if (cards.length === 0) {
+  if (buffer.length === 0) {
     return (
       <div className="mx-auto max-w-xl space-y-4 rounded-lg border border-border bg-card p-8 text-center">
         <div className="text-5xl">🎉</div>
@@ -154,7 +167,7 @@ export function TriageStack({
     );
   }
 
-  if (index >= cards.length) {
+  if (index >= buffer.length) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center text-white/60">
         Loading next batch…

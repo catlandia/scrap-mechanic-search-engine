@@ -93,7 +93,9 @@ export async function rejectCreation(formData: FormData) {
     .set({ status: "rejected", reviewedAt: now })
     .where(eq(creations.id, id));
   revalidatePath("/admin/queue");
-  revalidatePath("/admin/triage");
+  // Note: intentionally not revalidating /admin/triage — the client component
+  // manages its own buffer so the stack animation isn't interrupted by a
+  // mid-flight RSC re-render.
 }
 
 /**
@@ -118,7 +120,6 @@ export async function quickApprove(formData: FormData) {
     .set({ status: "approved", reviewedAt: now, approvedAt: now })
     .where(eq(creations.id, id));
 
-  revalidatePath("/admin/triage");
   revalidatePath("/admin/queue");
   revalidatePath("/");
   revalidatePath("/new");
