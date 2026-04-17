@@ -1,10 +1,14 @@
 import { getIronSession, type SessionOptions } from "iron-session";
 import { cookies } from "next/headers";
+import { cache } from "react";
+import { eq } from "drizzle-orm";
+import { getDb } from "@/lib/db/client";
+import { users, type User } from "@/lib/db/schema";
 
-export const SESSION_COOKIE_NAME = "smse_admin";
+export const SESSION_COOKIE_NAME = "smse_session";
 
-export interface AdminSession {
-  isAdmin?: boolean;
+export interface UserSession {
+  steamid?: string;
 }
 
 export function buildSessionOptions(password: string): SessionOptions {
@@ -15,6 +19,7 @@ export function buildSessionOptions(password: string): SessionOptions {
       secure: process.env.NODE_ENV === "production",
       httpOnly: true,
       sameSite: "lax",
+      path: "/",
     },
   };
 }
@@ -29,7 +34,24 @@ function requireSecret(): string {
   return password;
 }
 
-export async function getAdminSession() {
+export async function getUserSession() {
   const cookieStore = await cookies();
-  return getIronSession<AdminSession>(cookieStore, buildSessionOptions(requireSecret()));
+  return getIronSession<UserSession>(cookieStore, buildSessionOptions(requireSecret()));
 }
+
+/**
+ * Looks up the currently signed-in user (Steam OpenID session -> users row).
+ * Memoised per-request via React's `cache()` so N pages/components using it
+ * incur one DB roundtrip.
+ */
+export const getCurrentUser = cache(async (): Promise<User | null> => {
+  const session = await getUserSession();
+  if (!session.steamid) return null;
+  const db = getDb();
+  const [user] = await db
+    .select()
+    .from(users)
+    .where(eq(users.steamid, session.steamid))
+    .limit(1);
+  return user ?? null;
+});

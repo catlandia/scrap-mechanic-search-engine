@@ -180,6 +180,68 @@ export async function resolvePlayerNames(
   return out;
 }
 
+export interface SteamPlayerSummary {
+  steamid: string;
+  personaname: string;
+  profileurl?: string;
+  avatar?: string;
+  avatarmedium?: string;
+  avatarfull?: string;
+  avatarhash?: string;
+  /** 1 = private, 3 = public */
+  communityvisibilitystate?: number;
+  profilestate?: number;
+  /** Unix seconds when the Steam account was created. Only populated when the profile is public. */
+  timecreated?: number;
+  personastate?: number;
+}
+
+export async function getPlayerSummary(
+  apiKey: string,
+  steamid: string,
+): Promise<SteamPlayerSummary | null> {
+  const params = new URLSearchParams({ key: apiKey, steamids: steamid });
+  const url = `${STEAM_BASE}/ISteamUser/GetPlayerSummaries/v2/?${params.toString()}`;
+  const res = await fetch(url, { cache: "no-store" });
+  if (!res.ok) return null;
+  const json = (await res.json()) as {
+    response?: { players?: SteamPlayerSummary[] };
+  };
+  return json.response?.players?.[0] ?? null;
+}
+
+/**
+ * Returns total Scrap Mechanic playtime in minutes, or null if the Steam
+ * profile/game-details are private (user has to opt in on Steam to expose this).
+ */
+export async function getSmPlaytimeMinutes(
+  apiKey: string,
+  steamid: string,
+): Promise<number | null> {
+  const params = new URLSearchParams({
+    key: apiKey,
+    steamid,
+    include_appinfo: "false",
+    include_played_free_games: "1",
+    "appids_filter[0]": String(SCRAP_MECHANIC_APPID),
+  });
+  const url = `${STEAM_BASE}/IPlayerService/GetOwnedGames/v1/?${params.toString()}`;
+  let res: Response;
+  try {
+    res = await fetch(url, { cache: "no-store" });
+  } catch {
+    return null;
+  }
+  if (!res.ok) return null;
+  const json = (await res.json()) as {
+    response?: {
+      games?: Array<{ appid: number; playtime_forever?: number }>;
+    };
+  };
+  const game = json.response?.games?.find((g) => g.appid === SCRAP_MECHANIC_APPID);
+  return game?.playtime_forever ?? null;
+}
+
 export function steamUrlFor(publishedFileId: string): string {
   return `https://steamcommunity.com/sharedfiles/filedetails/?id=${publishedFileId}`;
 }

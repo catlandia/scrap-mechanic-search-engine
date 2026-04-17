@@ -1,0 +1,119 @@
+import Image from "next/image";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import type { Metadata } from "next";
+import { eq } from "drizzle-orm";
+import { getDb } from "@/lib/db/client";
+import { users, type UserRole } from "@/lib/db/schema";
+import { RoleBadge } from "@/components/RoleBadge";
+import { UserName } from "@/components/UserName";
+import { ROLE_LABELS, ROLE_STYLES } from "@/lib/auth/roles";
+
+export const dynamic = "force-dynamic";
+
+type Params = Promise<{ steamid: string }>;
+
+async function loadUser(steamid: string) {
+  if (!/^\d{1,25}$/.test(steamid)) return null;
+  const db = getDb();
+  const [row] = await db.select().from(users).where(eq(users.steamid, steamid)).limit(1);
+  return row ?? null;
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Params;
+}): Promise<Metadata> {
+  const { steamid } = await params;
+  const user = await loadUser(steamid);
+  if (!user) return {};
+  return { title: `${user.personaName} — profile` };
+}
+
+export default async function ProfilePage({ params }: { params: Params }) {
+  const { steamid } = await params;
+  const user = await loadUser(steamid);
+  if (!user) notFound();
+
+  const role = user.role as UserRole;
+  const style = ROLE_STYLES[role] ?? ROLE_STYLES.user;
+
+  let playtimeLabel: string;
+  if (user.smPlaytimeMinutes == null) {
+    playtimeLabel = "hidden by Steam profile";
+  } else {
+    const hours = Math.floor(user.smPlaytimeMinutes / 60);
+    const minutes = user.smPlaytimeMinutes % 60;
+    playtimeLabel = hours === 0 ? `${minutes}m` : `${hours}h ${minutes}m`;
+  }
+
+  return (
+    <article className="mx-auto max-w-3xl space-y-8">
+      <header className="flex flex-wrap items-center gap-4">
+        {user.avatarUrl ? (
+          <Image
+            src={user.avatarUrl}
+            alt=""
+            width={96}
+            height={96}
+            unoptimized
+            className="size-24 rounded-lg border border-white/10"
+          />
+        ) : (
+          <div className="size-24 rounded-lg bg-white/5" />
+        )}
+        <div className="space-y-2">
+          <h1 className={`text-3xl font-bold ${style.name}`}>
+            <UserName name={user.personaName} role={role} bold />
+          </h1>
+          <div className="flex flex-wrap items-center gap-2 text-xs text-white/50">
+            <RoleBadge role={role} />
+            {role === "user" && (
+              <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-wider text-white/50">
+                {ROLE_LABELS.user}
+              </span>
+            )}
+            {user.profileUrl && (
+              <a
+                href={user.profileUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="text-accent hover:underline"
+              >
+                Steam profile ↗
+              </a>
+            )}
+          </div>
+        </div>
+      </header>
+
+      <section className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
+        <Stat label="On the site since" value={user.siteJoinedAt?.toLocaleDateString() ?? "—"} />
+        <Stat
+          label="Steam account since"
+          value={user.steamCreatedAt?.toLocaleDateString() ?? "hidden"}
+        />
+        <Stat label="Scrap Mechanic playtime" value={playtimeLabel} />
+        <Stat label="SteamID64" value={user.steamid} mono />
+      </section>
+
+      <section className="rounded-md border border-border bg-card/60 px-4 py-5 text-sm text-white/60">
+        More on this profile soon: favourites, vote history, submitted items.
+      </section>
+    </article>
+  );
+}
+
+function Stat({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
+  return (
+    <div className="rounded-md border border-border bg-card/60 px-3 py-2">
+      <div className="text-[10px] uppercase tracking-widest text-white/40">{label}</div>
+      <div
+        className={`mt-0.5 ${mono ? "font-mono text-[11px]" : "text-base"} text-white`}
+      >
+        {value}
+      </div>
+    </div>
+  );
+}

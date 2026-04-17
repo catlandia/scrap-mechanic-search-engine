@@ -15,6 +15,13 @@
       "when": 1776457831143,
       "tag": "0001_heavy_rictor",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1776463215176,
+      "tag": "0002_common_whizzer",
+      "breakpoints": true
     }
   ]
 }

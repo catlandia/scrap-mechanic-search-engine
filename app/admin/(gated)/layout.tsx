@@ -1,4 +1,9 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getCurrentUser } from "@/lib/auth/session";
+import { isModerator, ROLE_LABELS } from "@/lib/auth/roles";
+import { RoleBadge } from "@/components/RoleBadge";
+import type { UserRole } from "@/lib/db/schema";
 
 const adminNav = [
   { href: "/admin/triage", label: "Triage" },
@@ -8,7 +13,24 @@ const adminNav = [
   { href: "/admin/ingest", label: "Ingest" },
 ];
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  const user = await getCurrentUser();
+  if (!user) redirect("/auth/steam/login?next=/admin/triage");
+  const role = user.role as UserRole;
+  if (!isModerator(role)) {
+    return (
+      <div className="mx-auto max-w-xl rounded-lg border border-red-500/40 bg-red-500/10 p-6 text-sm">
+        <div className="text-lg font-semibold text-red-200">Not allowed.</div>
+        <p className="mt-2 text-red-100/80">
+          You&apos;re signed in as{" "}
+          <span className="font-medium">{user.personaName}</span> (
+          {ROLE_LABELS[role] ?? "User"}). Only moderators and above can access admin
+          tools.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div>
       <div className="mb-8 flex flex-wrap items-center justify-between gap-4 border-b border-border pb-4">
@@ -22,11 +44,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             ))}
           </nav>
         </div>
-        <form action="/admin/logout" method="post">
-          <button type="submit" className="text-sm text-white/50 hover:text-white">
-            Sign out
-          </button>
-        </form>
+        <div className="flex items-center gap-3 text-xs text-white/50">
+          <RoleBadge role={role} />
+          <span>{user.personaName}</span>
+        </div>
       </div>
       {children}
     </div>

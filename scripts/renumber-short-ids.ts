@@ -64,7 +64,7 @@ async function main() {
       MAX(short_id)::int   AS max_short
     FROM creations
   `);
-  console.log("Summary:", result.rows?.[0] ?? result[0] ?? result);
+  console.log("Summary:", result.rows?.[0]);
 }
 
 main().catch((err) => {

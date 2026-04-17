@@ -30,6 +30,38 @@ export type CreationStatus = (typeof CREATION_STATUSES)[number];
 export const TAG_SOURCES = ["keyword", "steam", "admin"] as const;
 export type TagSource = (typeof TAG_SOURCES)[number];
 
+export const USER_ROLES = [
+  "user",
+  "moderator",
+  "elite_moderator",
+  "creator",
+] as const;
+export type UserRole = (typeof USER_ROLES)[number];
+
+export const ROLE_WEIGHT: Record<UserRole, number> = {
+  user: 1,
+  moderator: 5,
+  elite_moderator: 15,
+  // Creator uses hard-override at the application layer; their vote weight
+  // below is mostly symbolic (if they choose to vote rather than admin-confirm).
+  creator: 50,
+};
+
+export const REPORT_REASONS = [
+  "wrong_tags",
+  "poor_quality",
+  "spam",
+  "not_scrap_mechanic",
+  "other",
+] as const;
+export type ReportReason = (typeof REPORT_REASONS)[number];
+
+export const REPORT_STATUSES = ["open", "cleared", "actioned"] as const;
+export type ReportStatus = (typeof REPORT_STATUSES)[number];
+
+export const REPORT_SOURCES = ["user", "auto"] as const;
+export type ReportSource = (typeof REPORT_SOURCES)[number];
+
 export const creations = pgTable(
   "creations",
   {
@@ -60,6 +92,9 @@ export const creations = pgTable(
     ingestedAt: timestamp("ingested_at", { withTimezone: true }).notNull().defaultNow(),
     reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
     approvedAt: timestamp("approved_at", { withTimezone: true }),
+    // v2.0: track attribution. Null = cron-ingested / system.
+    uploadedByUserId: text("uploaded_by_user_id"),
+    reviewedByUserId: text("reviewed_by_user_id"),
   },
   (t) => [
     index("creations_status_idx").on(t.status),
@@ -102,6 +137,9 @@ export const creationTags = pgTable(
     source: text("source").notNull(),
     confidence: real("confidence"),
     confirmed: boolean("confirmed").notNull().default(false),
+    // v2.0: creator-level hard override — rejected tags never appear regardless
+    // of community votes.
+    rejected: boolean("rejected").notNull().default(false),
   },
   (t) => [
     primaryKey({ columns: [t.creationId, t.tagId] }),
@@ -131,7 +169,128 @@ export const ingestRuns = pgTable("ingest_runs", {
   errors: jsonb("errors").$type<unknown[]>().notNull().default([]),
 });
 
+// ---------------- v2.0: accounts, voting, favourites, reports ----------------
+
+export const users = pgTable(
+  "users",
+  {
+    steamid: text("steamid").primaryKey(),
+    personaName: text("persona_name").notNull(),
+    avatarUrl: text("avatar_url"),
+    profileUrl: text("profile_url"),
+    // Steam account creation timestamp, used for the 7-day minimum-age gate.
+    steamCreatedAt: timestamp("steam_created_at", { withTimezone: true }),
+    // Total minutes played in Scrap Mechanic (null if profile hides playtime).
+    smPlaytimeMinutes: integer("sm_playtime_minutes"),
+    siteJoinedAt: timestamp("site_joined_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    lastSeenAt: timestamp("last_seen_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    role: text("role").notNull().default("user"),
+  },
+  (t) => [index("users_role_idx").on(t.role)],
+);
+
+export const tagVotes = pgTable(
+  "tag_votes",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.steamid, { onDelete: "cascade" }),
+    creationId: text("creation_id")
+      .notNull()
+      .references(() => creations.id, { onDelete: "cascade" }),
+    tagId: integer("tag_id")
+      .notNull()
+      .references(() => tags.id, { onDelete: "cascade" }),
+    // +1 upvote, -1 downvote. Zero or missing row = no vote.
+    value: integer("value").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.userId, t.creationId, t.tagId] }),
+    index("tag_votes_creation_tag_idx").on(t.creationId, t.tagId),
+  ],
+);
+
+export const creationVotes = pgTable(
+  "creation_votes",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.steamid, { onDelete: "cascade" }),
+    creationId: text("creation_id")
+      .notNull()
+      .references(() => creations.id, { onDelete: "cascade" }),
+    value: integer("value").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.userId, t.creationId] }),
+    index("creation_votes_creation_idx").on(t.creationId),
+  ],
+);
+
+export const favorites = pgTable(
+  "favorites",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.steamid, { onDelete: "cascade" }),
+    creationId: text("creation_id")
+      .notNull()
+      .references(() => creations.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.userId, t.creationId] }),
+    index("favorites_user_idx").on(t.userId),
+  ],
+);
+
+export const reports = pgTable(
+  "reports",
+  {
+    id: serial("id").primaryKey(),
+    creationId: text("creation_id")
+      .notNull()
+      .references(() => creations.id, { onDelete: "cascade" }),
+    // Null when source = 'auto' (machine-generated report).
+    reporterUserId: text("reporter_user_id").references(() => users.steamid, {
+      onDelete: "set null",
+    }),
+    reason: text("reason").notNull(),
+    customText: text("custom_text"),
+    source: text("source").notNull().default("user"),
+    status: text("status").notNull().default("open"),
+    resolverUserId: text("resolver_user_id").references(() => users.steamid, {
+      onDelete: "set null",
+    }),
+    resolverNote: text("resolver_note"),
+    resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index("reports_status_idx").on(t.status),
+    index("reports_creation_status_idx").on(t.creationId, t.status),
+  ],
+);
+
 export type Creation = typeof creations.$inferSelect;
 export type NewCreation = typeof creations.$inferInsert;
 export type Tag = typeof tags.$inferSelect;
 export type Category = typeof categories.$inferSelect;
+export type User = typeof users.$inferSelect;
+export type NewUser = typeof users.$inferInsert;
+export type Report = typeof reports.$inferSelect;
+export type NewReport = typeof reports.$inferInsert;
