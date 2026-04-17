@@ -9,6 +9,7 @@ import {
   sql,
   type SQL,
 } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import { getDb } from "./client";
 import {
   categories,
@@ -691,6 +692,47 @@ export async function getOpenReports(limit = 50): Promise<ModReportRow[]> {
     .leftJoin(users, eq(users.steamid, reports.reporterUserId))
     .where(eq(reports.status, "open"))
     .orderBy(desc(reports.createdAt))
+    .limit(limit);
+}
+
+export interface ActionedReportRow extends ModReportRow {
+  resolverNote: string | null;
+  resolvedAt: Date | null;
+  resolverName: string | null;
+  resolverRole: string | null;
+  resolverSteamid: string | null;
+}
+
+export async function getActionedReports(limit = 50): Promise<ActionedReportRow[]> {
+  const db = getDb();
+  const resolver = alias(users, "resolver");
+  return db
+    .select({
+      id: reports.id,
+      creationId: reports.creationId,
+      creationShortId: creations.shortId,
+      creationTitle: creations.title,
+      creationThumbnail: creations.thumbnailUrl,
+      creationSteamUrl: creations.steamUrl,
+      reason: reports.reason,
+      customText: reports.customText,
+      source: reports.source,
+      createdAt: reports.createdAt,
+      reporterSteamid: reports.reporterUserId,
+      reporterName: users.personaName,
+      reporterRole: users.role,
+      resolverNote: reports.resolverNote,
+      resolvedAt: reports.resolvedAt,
+      resolverSteamid: reports.resolverUserId,
+      resolverName: resolver.personaName,
+      resolverRole: resolver.role,
+    })
+    .from(reports)
+    .innerJoin(creations, eq(creations.id, reports.creationId))
+    .leftJoin(users, eq(users.steamid, reports.reporterUserId))
+    .leftJoin(resolver, eq(resolver.steamid, reports.resolverUserId))
+    .where(eq(reports.status, "actioned"))
+    .orderBy(desc(reports.resolvedAt))
     .limit(limit);
 }
 

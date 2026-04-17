@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { getOpenReports } from "@/lib/db/queries";
+import { getActionedReports, getOpenReports } from "@/lib/db/queries";
 import { actionReport, clearReport } from "@/app/admin/actions";
 import { RoleBadge } from "@/components/RoleBadge";
 import { UserName } from "@/components/UserName";
@@ -17,22 +17,26 @@ const REASON_LABELS: Record<string, string> = {
 };
 
 export default async function ReportsQueuePage() {
-  const rows = await getOpenReports(50);
+  const [rows, flagged] = await Promise.all([
+    getOpenReports(50),
+    getActionedReports(50),
+  ]);
 
   return (
-    <div className="space-y-6">
-      <header className="flex flex-wrap items-baseline justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold">Report queue</h1>
-          <p className="text-sm text-white/60">
-            Open reports. Clear to dismiss, or Action to mark the creation
-            publicly with a moderator note.
-          </p>
-        </div>
-        <span className="text-sm text-white/50">
-          {rows.length} open
-        </span>
-      </header>
+    <div className="space-y-10">
+      <section className="space-y-6">
+        <header className="flex flex-wrap items-baseline justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-semibold">Report queue</h1>
+            <p className="text-sm text-white/60">
+              Open reports. Clear to dismiss, or Action to mark the creation
+              publicly with a moderator note.
+            </p>
+          </div>
+          <span className="text-sm text-white/50">
+            {rows.length} open
+          </span>
+        </header>
 
       {rows.length === 0 ? (
         <div className="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-5 py-6 text-sm text-emerald-200">
@@ -158,6 +162,106 @@ export default async function ReportsQueuePage() {
           ))}
         </div>
       )}
+      </section>
+
+      <section className="space-y-4">
+        <header className="flex flex-wrap items-baseline justify-between gap-3 border-t border-border pt-6">
+          <div>
+            <h2 className="text-xl font-semibold">Currently flagged</h2>
+            <p className="text-sm text-white/60">
+              Creations with a public moderator flag. Clear the flag to remove
+              the public badge — the report itself moves to &quot;cleared&quot;.
+            </p>
+          </div>
+          <span className="text-sm text-white/50">{flagged.length} flagged</span>
+        </header>
+
+        {flagged.length === 0 ? (
+          <div className="rounded-md border border-border bg-card/60 px-5 py-4 text-sm text-white/50">
+            No creations are currently flagged.
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {flagged.map((f) => (
+              <article
+                key={f.id}
+                className="grid gap-4 rounded-lg border border-amber-500/30 bg-amber-500/5 p-4 md:grid-cols-[140px,1fr]"
+              >
+                <Link
+                  href={`/creation/${f.creationShortId}`}
+                  className="block overflow-hidden rounded-md"
+                >
+                  {f.creationThumbnail ? (
+                    <div className="relative aspect-video bg-black">
+                      <Image
+                        src={f.creationThumbnail}
+                        alt={f.creationTitle}
+                        fill
+                        unoptimized
+                        sizes="140px"
+                        className="object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="aspect-video rounded bg-black/40" />
+                  )}
+                </Link>
+
+                <div className="min-w-0 space-y-2">
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <Link
+                      href={`/creation/${f.creationShortId}`}
+                      className="min-w-0 truncate font-medium hover:text-accent"
+                    >
+                      #{f.creationShortId} — {f.creationTitle}
+                    </Link>
+                    <span className="rounded-full border border-amber-500/40 bg-amber-500/15 px-2 py-0.5 text-xs font-medium uppercase tracking-wider text-amber-200">
+                      {REASON_LABELS[f.reason] ?? f.reason}
+                    </span>
+                  </div>
+
+                  {f.resolverNote && (
+                    <p className="whitespace-pre-wrap rounded border border-border bg-background px-3 py-2 text-sm text-white/70">
+                      {f.resolverNote}
+                    </p>
+                  )}
+
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-white/50">
+                    {f.resolverName ? (
+                      <>
+                        flagged by{" "}
+                        <UserName
+                          name={f.resolverName}
+                          role={f.resolverRole as UserRole | null}
+                          steamid={f.resolverSteamid ?? undefined}
+                        />
+                        <RoleBadge role={f.resolverRole as UserRole | null} />
+                      </>
+                    ) : (
+                      <span>flagged</span>
+                    )}
+                    {f.resolvedAt && (
+                      <span className="text-white/30">
+                        · {new Date(f.resolvedAt).toLocaleString()}
+                      </span>
+                    )}
+                  </div>
+
+                  <form action={clearReport} className="pt-1">
+                    <input type="hidden" name="reportId" value={f.id} />
+                    <button
+                      type="submit"
+                      className="rounded-md border border-border bg-background px-3 py-1.5 text-xs text-white/70 hover:border-emerald-400/60 hover:text-emerald-200"
+                    >
+                      Clear flag
+                    </button>
+                  </form>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   );
 }

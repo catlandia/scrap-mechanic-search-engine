@@ -133,16 +133,24 @@ export function TagVoteList({
               <VoteArrow
                 dir="up"
                 active={local.viewerVote === 1}
-                disabled={isPending || local.pending || t.confirmed}
+                disabled={isPending || local.pending}
                 onClick={() => cast(t.tagId, 1)}
-                title={t.confirmed ? "Admin-confirmed" : "Upvote this tag"}
+                title={
+                  t.confirmed
+                    ? "Admin-confirmed · your vote still counts"
+                    : "Upvote this tag"
+                }
               />
               <VoteArrow
                 dir="down"
                 active={local.viewerVote === -1}
-                disabled={isPending || local.pending || t.confirmed}
+                disabled={isPending || local.pending}
                 onClick={() => cast(t.tagId, -1)}
-                title={t.confirmed ? "Admin-confirmed" : "Downvote this tag"}
+                title={
+                  t.confirmed
+                    ? "Admin-confirmed tag is locked visible regardless"
+                    : "Downvote this tag"
+                }
               />
             </div>
           </li>
