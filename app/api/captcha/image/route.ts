@@ -35,8 +35,13 @@ export async function GET() {
     return new Response("No active challenge", { status: 404 });
   }
 
-  const imagePath = questions[current].image;
-  const filePath = join(process.cwd(), "public", imagePath);
+  const imageName = questions[current].image;
+  // Defence in depth: only accept `\d+\.jpg` — keeps a compromised session
+  // from escaping the images dir via traversal.
+  if (!/^\d+\.jpg$/.test(imageName)) {
+    return new Response("Invalid image", { status: 400 });
+  }
+  const filePath = join(process.cwd(), "lib", "captcha", "images", imageName);
 
   try {
     const buffer = await readFile(filePath);

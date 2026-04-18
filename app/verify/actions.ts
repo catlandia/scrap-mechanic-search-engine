@@ -9,6 +9,11 @@ import {
   CHAPTER_2_CHANCE,
   type Character,
 } from "@/lib/captcha/config";
+import {
+  botVerifiedSessionOptions,
+  requireSessionSecret,
+  type BotVerifiedSession,
+} from "@/lib/captcha/verified-session";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -149,15 +154,16 @@ export async function submitAnswer(answer: string): Promise<AnswerResult> {
     session.streak = undefined;
     await session.save();
 
-    // Set verified cookie (30 days)
+    // Seal verified flag into an iron-session cookie. The raw cookie value is
+    // encrypted + signed with SESSION_SECRET, so a client can't forge it by
+    // setting `bot_verified=1` themselves.
     const cookieStore = await cookies();
-    cookieStore.set("bot_verified", "1", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-      maxAge: 60 * 60 * 24 * 30,
-    });
+    const verified = await getIronSession<BotVerifiedSession>(
+      cookieStore,
+      botVerifiedSessionOptions(requireSessionSecret()),
+    );
+    verified.verified = true;
+    await verified.save();
 
     return { status: "complete" };
   }

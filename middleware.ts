@@ -1,6 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getIronSession } from "iron-session";
 import { buildSessionOptions, type UserSession } from "@/lib/auth/session";
+import {
+  botVerifiedSessionOptions,
+  type BotVerifiedSession,
+} from "@/lib/captcha/verified-session";
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -8,7 +12,17 @@ export async function middleware(req: NextRequest) {
   // Captcha gate: only on the Steam login entry point.
   // Visitors can browse freely; the check happens when they try to log in.
   if (pathname === "/auth/steam/login") {
-    const verified = req.cookies.get("bot_verified")?.value === "1";
+    const password = process.env.SESSION_SECRET;
+    let verified = false;
+    if (password && password.length >= 32) {
+      const res = NextResponse.next();
+      const session = await getIronSession<BotVerifiedSession>(
+        req,
+        res,
+        botVerifiedSessionOptions(password),
+      );
+      verified = session.verified === true;
+    }
     if (!verified) {
       const url = req.nextUrl.clone();
       url.pathname = "/verify";

@@ -6,9 +6,9 @@ A custom Scrap Mechanic-themed captcha that gates Steam login on first visit. Do
 
 ## How it works
 
-The captcha is **only required before Steam login** — visitors can browse the site freely without passing it. When a visitor clicks "Sign in with Steam", middleware checks for a `bot_verified=1` cookie. If missing, the visitor is redirected to `/verify?next=/auth/steam/login` and returned to the Steam login flow after passing.
+The captcha is **only required before Steam login** — visitors can browse the site freely without passing it. When a visitor clicks "Sign in with Steam", middleware reads the `bot_verified` iron-session and checks `session.verified === true`. If the session is empty or tampered, the visitor is redirected to `/verify?next=/auth/steam/login` and returned to the Steam login flow after passing.
 
-On success a `bot_verified=1` cookie is set (30-day expiry).
+On success the same session is saved with `verified: true` (30-day expiry). The cookie payload is encrypted + signed with `SESSION_SECRET`, so a client can't forge it by setting `bot_verified=1` themselves — an earlier implementation used a plain `"1"` string and was bypassable with one curl flag.
 
 **Challenge rules:**
 - 3 correct answers in a row required
@@ -32,7 +32,7 @@ On success a `bot_verified=1` cookie is set (30-day expiry).
 | redtapebot | Redtapebot | 3 |
 | chapter2 | **tomorrow** | 1 (easter egg) |
 
-Images live in `public/captcha/` (e.g. `Mechanic1.jpg`, `Mechanic2.jpg`, `Mechanic3.jpg`).
+Images live in `lib/captcha/images/` as opaque numbered files (`01.jpg` – `25.jpg`). They are **intentionally outside `public/`** so there's no direct URL like `/captcha/Mechanic1.jpg` to curl. The character → filename mapping is server-side only in `lib/captcha/config.ts`. Vercel's output tracer is told to bundle the images with the `/api/captcha/image` route via `outputFileTracingIncludes` in `next.config.ts`.
 
 ### Chapter 2 easter egg
 
@@ -59,6 +59,10 @@ The `nonce` UUID serves two purposes: cache-busting (changing `key` forces React
 ```
 lib/captcha/
   config.ts               — character definitions, CHAPTER_2_CHANCE constant
+  verified-session.ts     — iron-session options for the bot_verified cookie
+                            (shared by middleware + verify action)
+  images/                 — opaque numbered jpgs (01.jpg … 25.jpg). NOT served
+                            statically; only the proxy route reads them.
 
 app/verify/
   page.tsx                — client component: progress bar, image, 4-button grid,
@@ -66,7 +70,8 @@ app/verify/
   actions.ts              — startChallenge() and submitAnswer() server actions
 
 app/api/captcha/
-  image/route.ts          — GET handler: reads smse_captcha session, serves image bytes
+  image/route.ts          — GET handler: reads smse_captcha session, serves image
+                            bytes (only accepts `\d+\.jpg` from the session)
 ```
 
 ---
@@ -101,11 +106,11 @@ The admin gate (`/admin/*`) is independent of the captcha and checks for an iron
 
 ## Adding or updating characters
 
-1. Add image files to `public/captcha/` (name them `CharacterN.jpg`)
-2. Add an entry to `NORMAL_CHARACTERS` in `lib/captcha/config.ts`
-3. Redeploy — no DB migration needed
+1. Add image files to `lib/captcha/images/` using the next available numeric name (e.g. `26.jpg`, `27.jpg` …). Keep names opaque — avoid anything that leaks which character a file contains.
+2. Add an entry to `NORMAL_CHARACTERS` in `lib/captcha/config.ts` that references those filenames.
+3. Redeploy — no DB migration needed.
 
-To replace a Chapter 2 image: swap out `public/captcha/Chapter2.jpg` and redeploy.
+To replace a Chapter 2 image: swap out the file it points to (currently `25.jpg`) and redeploy.
 
 ---
 
@@ -119,3 +124,18 @@ Edit `CHAPTER_2_CHANCE` in `lib/captcha/config.ts`:
 | 0.07 | ~20% |
 | 0.15 | ~38% |
 | 0.30 | ~66% |
+
+---
+
+## Threat model + remaining attack surface
+
+What the current setup defends against, and what it still doesn't:
+
+| Attack | Status |
+|---|---|
+| Forging `bot_verified=1` via curl | **Closed.** Cookie is iron-session sealed with `SESSION_SECRET`. |
+| Guessing image URLs (`/captcha/Woc1.jpg`) | **Closed.** Images are outside `public/` and only the session-gated proxy reads them. |
+| Path traversal via the image proxy | **Closed.** Route rejects anything that isn't `\d+\.jpg`. |
+| Session filename leak to client | **Closed.** Browser only ever sees `/api/captcha/image?n=<uuid>`. |
+| Cloning the public GitHub repo and precomputing perceptual hashes of the 25 images to auto-answer challenges | **Open.** An attacker with `git clone` can still build a cheat table from the repo binaries. Closing this requires either (a) moving images out of the repo entirely (private storage, gitignored, fetched at build time), or (b) per-request image jittering (random crop/tint/noise with `sharp`) so no two serves hash the same. Neither is implemented yet. |
+| Vision AI solving a novel image | **Partial.** Informal testing shows general-purpose vision models get roughly one of three right without a cheat table — enough to make brute-forcing 3-in-a-row expensive but not prohibitive. The Chapter 2 easter egg (answer: "tomorrow") is specifically designed to trip AIs that lack game context. |
