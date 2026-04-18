@@ -82,6 +82,8 @@ export const SORT_MODES = [
   "least-favorites",
   "rating",
   "least-rating",
+  "site-rating",
+  "site-least-rating",
 ] as const;
 export type SortMode = (typeof SORT_MODES)[number];
 
@@ -90,12 +92,14 @@ export const SORT_LABELS: Record<SortMode, string> = {
   oldest: "Oldest on site",
   "steam-newest": "Newest on Steam",
   "steam-oldest": "Oldest on Steam",
-  popular: "Most subscribers",
-  unpopular: "Fewest subscribers",
-  favorites: "Most favourites",
-  "least-favorites": "Fewest favourites",
-  rating: "Highest rated",
-  "least-rating": "Lowest rated",
+  popular: "Most subscribers (Steam)",
+  unpopular: "Fewest subscribers (Steam)",
+  favorites: "Most favourites (Steam)",
+  "least-favorites": "Fewest favourites (Steam)",
+  rating: "Highest rated (Steam)",
+  "least-rating": "Lowest rated (Steam)",
+  "site-rating": "Highest rated (Site)",
+  "site-least-rating": "Lowest rated (Site)",
 };
 
 export function parseSortMode(raw: string | undefined | null): SortMode {
@@ -125,6 +129,10 @@ function orderByForSort(sort: SortMode): SQL {
       return sql`${creations.voteScore} DESC NULLS LAST`;
     case "least-rating":
       return sql`${creations.voteScore} ASC NULLS LAST`;
+    case "site-rating":
+      return sql`CASE WHEN ${creations.siteWeightedUp} + ${creations.siteWeightedDown} >= 5 THEN ${creations.siteWeightedUp}::float / NULLIF(${creations.siteWeightedUp} + ${creations.siteWeightedDown}, 0) ELSE NULL END DESC NULLS LAST`;
+    case "site-least-rating":
+      return sql`CASE WHEN ${creations.siteWeightedUp} + ${creations.siteWeightedDown} >= 5 THEN ${creations.siteWeightedUp}::float / NULLIF(${creations.siteWeightedUp} + ${creations.siteWeightedDown}, 0) ELSE NULL END ASC NULLS LAST`;
   }
 }
 
