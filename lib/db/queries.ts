@@ -20,11 +20,13 @@ import {
   creationVotes,
   creations,
   favorites,
+  notifications,
   reports,
   tagVotes,
   tags,
   users,
   type CreationKind,
+  type Notification,
 } from "./schema";
 
 export interface CreationCardRow {
@@ -803,6 +805,44 @@ export async function getUserFavourites(
       ),
     )
     .orderBy(desc(favorites.createdAt))
+    .limit(limit)
+    .offset(offset);
+}
+
+export async function getUnreadNotificationCount(userId: string): Promise<number> {
+  const db = getDb();
+  const [row] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(notifications)
+    .where(and(eq(notifications.userId, userId), eq(notifications.read, false)));
+  return row?.n ?? 0;
+}
+
+export async function getUserNotifications(userId: string, limit = 50): Promise<Notification[]> {
+  const db = getDb();
+  return db
+    .select()
+    .from(notifications)
+    .where(eq(notifications.userId, userId))
+    .orderBy(desc(notifications.createdAt))
+    .limit(limit);
+}
+
+export async function markAllNotificationsRead(userId: string): Promise<void> {
+  const db = getDb();
+  await db
+    .update(notifications)
+    .set({ read: true })
+    .where(and(eq(notifications.userId, userId), eq(notifications.read, false)));
+}
+
+export async function getUserSubmissions(userId: string, limit = 50, offset = 0): Promise<(typeof creations.$inferSelect)[]> {
+  const db = getDb();
+  return db
+    .select()
+    .from(creations)
+    .where(eq(creations.uploadedByUserId, userId))
+    .orderBy(desc(creations.ingestedAt))
     .limit(limit)
     .offset(offset);
 }

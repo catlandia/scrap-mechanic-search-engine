@@ -27,6 +27,7 @@ import {
   getPublishedFileDetails,
   resolvePlayerNames,
   steamUrlFor,
+  SCRAP_MECHANIC_APPID,
 } from "@/lib/steam/client";
 import { stripBBCode } from "@/lib/steam/bbcode";
 import { classify } from "@/lib/tagger/classify";
@@ -395,6 +396,9 @@ export async function submitCreation(formData: FormData): Promise<SubmitResult> 
   if (!item) return { ok: false, error: "Steam returned no data for that id." };
   if (item.result != null && item.result !== 1) {
     return { ok: false, error: `Steam rejected the lookup (result=${item.result}).` };
+  }
+  if (item.consumer_appid != null && item.consumer_appid !== SCRAP_MECHANIC_APPID) {
+    return { ok: false, error: "That item isn't from the Scrap Mechanic Workshop." };
   }
 
   const tagNames = (item.tags ?? []).map((t) => t.tag);

@@ -5,25 +5,20 @@ import { buildSessionOptions, type UserSession } from "@/lib/auth/session";
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Always open: auth flow, verify page, cron endpoints
-  if (
-    pathname.startsWith("/auth") ||
-    pathname.startsWith("/verify") ||
-    pathname.startsWith("/api/cron") ||
-    pathname.startsWith("/api/captcha")
-  ) {
-    return NextResponse.next();
+  // Captcha gate: only on the Steam login entry point.
+  // Visitors can browse freely; the check happens when they try to log in.
+  if (pathname === "/auth/steam/login") {
+    const verified = req.cookies.get("bot_verified")?.value === "1";
+    if (!verified) {
+      const url = req.nextUrl.clone();
+      url.pathname = "/verify";
+      url.searchParams.set("next", pathname + (req.nextUrl.search ?? ""));
+      return NextResponse.redirect(url);
+    }
   }
 
-  // ── Bot check ──────────────────────────────────────────────────────────────
-  // Every visitor must pass the captcha once (30-day cookie).
-  const verified = req.cookies.get("bot_verified")?.value === "1";
-  if (!verified) {
-    const url = req.nextUrl.clone();
-    url.pathname = "/verify";
-    url.searchParams.set("next", pathname);
-    return NextResponse.redirect(url);
-  }
+  // All other /auth/* routes (callback, logout) are always open.
+  if (pathname.startsWith("/auth")) return NextResponse.next();
 
   // ── Admin gate ─────────────────────────────────────────────────────────────
   if (!pathname.startsWith("/admin")) return NextResponse.next();
@@ -54,8 +49,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  // Run on all routes except Next.js internals, static files, and captcha images
-  matcher: [
-    "/((?!_next/static|_next/image|favicon\\.ico|captcha/|logo\\.png).*)",
-  ],
+  matcher: ["/admin/:path*", "/auth/:path*"],
 };

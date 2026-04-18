@@ -49,6 +49,7 @@ const PublishedFileSchema = z
     time_updated: z.number().optional(),
     visibility: z.number().optional(),
     banned: looseBool.optional(),
+    consumer_appid: z.number().optional(),
     subscriptions: z.number().optional(),
     favorited: z.number().optional(),
     lifetime_subscriptions: z.number().optional(),

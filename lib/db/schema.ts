@@ -428,7 +428,28 @@ export const featureSuggestionVotes = pgTable(
   ],
 );
 
+export const notifications = pgTable(
+  "notifications",
+  {
+    id: serial("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.steamid, { onDelete: "cascade" }),
+    type: text("type").notNull(),
+    title: text("title").notNull(),
+    body: text("body"),
+    link: text("link"),
+    read: boolean("read").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("notifications_user_idx").on(t.userId),
+    index("notifications_user_read_idx").on(t.userId, t.read),
+  ],
+);
+
 export type Comment = typeof comments.$inferSelect;
 export type NewComment = typeof comments.$inferInsert;
 export type FeatureSuggestion = typeof featureSuggestions.$inferSelect;
 export type NewFeatureSuggestion = typeof featureSuggestions.$inferInsert;
+export type Notification = typeof notifications.$inferSelect;

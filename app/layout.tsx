@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/session";
 import { UserMenu } from "@/components/UserMenu";
+import { getUnreadNotificationCount } from "@/lib/db/queries";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -26,8 +27,10 @@ const navLinks = [
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   let user = null;
+  let unreadNotifications = 0;
   try {
     user = await getCurrentUser();
+    if (user) unreadNotifications = await getUnreadNotificationCount(user.steamid);
   } catch {
     // If SESSION_SECRET is missing in dev we still want the site to render.
   }
@@ -52,7 +55,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             </nav>
             <div className="ml-auto">
               {user ? (
-                <UserMenu user={user} />
+                <UserMenu user={user} unreadNotifications={unreadNotifications} />
               ) : (
                 <Link
                   href="/auth/steam/login"

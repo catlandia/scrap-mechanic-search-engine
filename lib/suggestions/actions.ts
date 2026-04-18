@@ -11,6 +11,7 @@ import {
   users,
   type UserRole,
 } from "@/lib/db/schema";
+import { createNotification } from "@/lib/db/notifications";
 
 const MAX_TITLE = 120;
 const MAX_BODY = 2000;
@@ -153,6 +154,13 @@ export async function setSuggestionStatus(formData: FormData) {
   const note = String(formData.get("note") ?? "").trim() || null;
 
   const db = getDb();
+
+  const [suggestion] = await db
+    .select({ submitterUserId: featureSuggestions.submitterUserId, title: featureSuggestions.title })
+    .from(featureSuggestions)
+    .where(eq(featureSuggestions.id, id))
+    .limit(1);
+
   await db
     .update(featureSuggestions)
     .set({
@@ -163,6 +171,24 @@ export async function setSuggestionStatus(formData: FormData) {
       implementedAt: status === "implemented" ? new Date() : null,
     })
     .where(eq(featureSuggestions.id, id));
+
+  if (suggestion?.submitterUserId && status !== "submitted") {
+    const notifMap: Record<string, { title: string; body: string }> = {
+      approved: { title: "Idea approved!", body: `Your idea "${suggestion.title}" has been approved for voting.` },
+      rejected: { title: "Idea not accepted", body: `Your idea "${suggestion.title}" was not accepted.` },
+      implemented: { title: "Idea implemented!", body: `Your idea "${suggestion.title}" has been implemented.` },
+    };
+    const notif = notifMap[status];
+    if (notif) {
+      await createNotification({
+        userId: suggestion.submitterUserId,
+        type: `suggestion_${status}`,
+        title: notif.title,
+        body: notif.body,
+        link: "/suggestions",
+      });
+    }
+  }
 
   revalidatePath("/admin/suggestions");
   revalidatePath("/suggestions");

@@ -1,5 +1,6 @@
 "use server";
 
+import { randomUUID } from "crypto";
 import { cookies } from "next/headers";
 import { getIronSession, type SessionOptions } from "iron-session";
 import {
@@ -28,6 +29,7 @@ export type QuestionPayload = {
   options: string[];
   questionNumber: number; // 1-3
   streak: number;
+  nonce: string; // random per question — used as img cache-bust key so filename is never sent
 };
 
 export type AnswerResult =
@@ -114,7 +116,7 @@ export async function startChallenge(): Promise<QuestionPayload> {
   await session.save();
 
   const q = questions[0];
-  return { options: q.options, questionNumber: 1, streak: 0 };
+  return { options: q.options, questionNumber: 1, streak: 0, nonce: randomUUID() };
 }
 
 export async function submitAnswer(answer: string): Promise<AnswerResult> {
@@ -172,6 +174,7 @@ export async function submitAnswer(answer: string): Promise<AnswerResult> {
       options: nextQ.options,
       questionNumber: nextIdx + 1,
       streak: newStreak,
+      nonce: randomUUID(),
     },
   };
 }

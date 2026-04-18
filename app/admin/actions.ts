@@ -26,6 +26,7 @@ import {
 } from "@/lib/steam/client";
 import { stripBBCode } from "@/lib/steam/bbcode";
 import { classify } from "@/lib/tagger/classify";
+import { createNotification } from "@/lib/db/notifications";
 
 function parseKind(raw: FormDataEntryValue | null): string {
   const kind = String(raw ?? "other");
@@ -84,6 +85,12 @@ export async function approveCreation(formData: FormData) {
   const kind = parseKind(formData.get("kind"));
   const tagIds = parseTagIds(formData);
 
+  const [row] = await db
+    .select({ uploadedByUserId: creations.uploadedByUserId, title: creations.title, shortId: creations.shortId })
+    .from(creations)
+    .where(eq(creations.id, id))
+    .limit(1);
+
   const now = new Date();
   await db
     .update(creations)
@@ -91,6 +98,16 @@ export async function approveCreation(formData: FormData) {
     .where(eq(creations.id, id));
 
   await replaceTagsForCreation(id, tagIds);
+
+  if (row?.uploadedByUserId) {
+    await createNotification({
+      userId: row.uploadedByUserId,
+      type: "submission_approved",
+      title: "Submission approved!",
+      body: `"${row.title}" is now live on the site.`,
+      link: `/creation/${row.shortId}`,
+    });
+  }
 
   revalidatePath("/admin/queue");
   revalidatePath("/");
@@ -101,11 +118,29 @@ export async function rejectCreation(formData: FormData) {
   const db = getDb();
   const id = String(formData.get("creationId") ?? "");
   if (!id) throw new Error("creationId required");
+
+  const [row] = await db
+    .select({ uploadedByUserId: creations.uploadedByUserId, title: creations.title })
+    .from(creations)
+    .where(eq(creations.id, id))
+    .limit(1);
+
   const now = new Date();
   await db
     .update(creations)
     .set({ status: "rejected", reviewedAt: now })
     .where(eq(creations.id, id));
+
+  if (row?.uploadedByUserId) {
+    await createNotification({
+      userId: row.uploadedByUserId,
+      type: "submission_rejected",
+      title: "Submission not accepted",
+      body: `"${row.title}" was not accepted into the directory.`,
+      link: "/me/submissions",
+    });
+  }
+
   revalidatePath("/admin/queue");
   // Note: intentionally not revalidating /admin/triage — the client component
   // manages its own buffer so the stack animation isn't interrupted by a
@@ -123,12 +158,28 @@ export async function quickApprove(formData: FormData) {
   const db = getDb();
   const id = String(formData.get("creationId") ?? "");
   if (!id) throw new Error("creationId required");
-  const now = new Date();
 
+  const [row] = await db
+    .select({ uploadedByUserId: creations.uploadedByUserId, title: creations.title, shortId: creations.shortId })
+    .from(creations)
+    .where(eq(creations.id, id))
+    .limit(1);
+
+  const now = new Date();
   await db
     .update(creations)
     .set({ status: "approved", reviewedAt: now, approvedAt: now })
     .where(eq(creations.id, id));
+
+  if (row?.uploadedByUserId) {
+    await createNotification({
+      userId: row.uploadedByUserId,
+      type: "submission_approved",
+      title: "Submission approved!",
+      body: `"${row.title}" is now live on the site.`,
+      link: `/creation/${row.shortId}`,
+    });
+  }
 
   revalidatePath("/admin/queue");
   revalidatePath("/");

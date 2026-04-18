@@ -48,10 +48,12 @@ function VerifyChallenge() {
       const result = await submitAnswer(answer);
 
       if (result.status === "wrong") {
-        setState({ phase: "question", q: (state as { phase: "question"; q: QuestionPayload }).q, flash: "wrong" });
-        setTimeout(() => {
-          startChallenge().then((q) => setState({ phase: "question", q }));
-        }, 900);
+        const currentQ = (state as { phase: "question"; q: QuestionPayload }).q;
+        // Pre-fetch the fresh challenge while showing the wrong flash
+        const freshPromise = startChallenge();
+        setState({ phase: "question", q: currentQ, flash: "wrong" });
+        const fresh = await freshPromise;
+        setTimeout(() => setState({ phase: "question", q: fresh }), 900);
         return;
       }
 
@@ -135,8 +137,8 @@ function VerifyChallenge() {
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            key={q.questionNumber}
-            src={`/api/captcha/image?q=${q.questionNumber}`}
+            key={q.nonce}
+            src={`/api/captcha/image?n=${q.nonce}`}
             alt="Who is this?"
             className="w-full object-cover"
             style={{ maxHeight: "280px", objectPosition: "center" }}

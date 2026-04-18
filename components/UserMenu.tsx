@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { isModerator } from "@/lib/auth/roles";
 import { isBanned } from "@/lib/auth/session";
 
-export function UserMenu({ user }: { user: User }) {
+export function UserMenu({ user, unreadNotifications = 0 }: { user: User; unreadNotifications?: number }) {
   // effectiveRole collapses to null when the user is currently banned —
   // banned users get ghost-level privileges in the UI.
   const role = effectiveRole(user);
@@ -30,6 +30,20 @@ export function UserMenu({ user }: { user: User }) {
             className="hidden text-white/60 hover:text-white sm:inline"
           >
             Favourites
+          </Link>
+          <Link
+            href="/me/notifications"
+            className="relative hidden text-white/60 hover:text-white sm:inline"
+            title="Notifications"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-5">
+              <path d="M10 2a6 6 0 0 0-6 6v2.586l-.707.707A1 1 0 0 0 4 13h12a1 1 0 0 0 .707-1.707L16 10.586V8a6 6 0 0 0-6-6zM10 18a3 3 0 0 1-2.83-2h5.66A3 3 0 0 1 10 18z" />
+            </svg>
+            {unreadNotifications > 0 && (
+              <span className="absolute -right-1.5 -top-1.5 flex size-4 items-center justify-center rounded-full bg-accent text-[9px] font-bold text-black">
+                {unreadNotifications > 9 ? "9+" : unreadNotifications}
+              </span>
+            )}
           </Link>
         </>
       )}
