@@ -391,6 +391,54 @@ async function requireMod() {
   return user;
 }
 
+async function requireCreator() {
+  const user = await getCurrentUser();
+  if (!user) throw new Error("not_signed_in");
+  if ((user.role as UserRole) !== "creator") throw new Error("not_creator");
+  return user;
+}
+
+/**
+ * Creator-only permanent delete. Marks the creation as status='deleted' so
+ * ingest's blocklist refuses to re-add it and every public route treats it
+ * as 404. Row is kept (not DELETE FROM) so the publishedfileid stays on the
+ * blocklist forever unless the creator manually flips it back.
+ */
+export async function deleteCreation(formData: FormData) {
+  const user = await requireCreator();
+  const id = String(formData.get("creationId") ?? "");
+  if (!id) throw new Error("creationId required");
+
+  const db = getDb();
+  await db
+    .update(creations)
+    .set({
+      status: "deleted",
+      reviewedAt: new Date(),
+      reviewedByUserId: user.steamid,
+    })
+    .where(eq(creations.id, id));
+
+  // Also clear any open reports on this creation — there's nothing left to
+  // moderate now that it's gone.
+  await db
+    .update(reports)
+    .set({
+      status: "cleared",
+      resolverUserId: user.steamid,
+      resolverNote: "Creation deleted by Creator.",
+      resolvedAt: new Date(),
+    })
+    .where(and(eq(reports.creationId, id), eq(reports.status, "open")));
+
+  revalidatePath("/");
+  revalidatePath("/new");
+  revalidatePath("/admin/queue");
+  revalidatePath("/admin/triage");
+  revalidatePath("/admin/reports");
+  revalidatePath(`/creation/${id}`);
+}
+
 export async function clearReport(formData: FormData) {
   const user = await requireMod();
   const idRaw = String(formData.get("reportId") ?? "");

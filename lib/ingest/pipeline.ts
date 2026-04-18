@@ -116,13 +116,15 @@ export async function runIngest(options: IngestOptions = {}): Promise<IngestResu
   const pagesPerKind = options.pagesPerKind ?? 1;
   const numPerPage = options.numPerPage ?? 50;
 
-  // Preload ids of items we've already approved or rejected so ingest
-  // skips them completely — both the QueryFiles processing and the later
-  // upsert. Pending items still refresh (their stats may have changed).
+  // Preload ids of items we've already approved, rejected, or creator-deleted
+  // so ingest skips them completely — both the QueryFiles processing and the
+  // later upsert. 'deleted' is the permanent blocklist: once the Creator
+  // removes something it never comes back via ingest. Pending items still
+  // refresh (their stats may have changed).
   const decidedRows = await db
     .select({ id: creations.id })
     .from(creations)
-    .where(inArray(creations.status, ["approved", "rejected"]));
+    .where(inArray(creations.status, ["approved", "rejected", "deleted"]));
   const alreadyDecided = new Set(decidedRows.map((r) => r.id));
 
   const [run] = await db

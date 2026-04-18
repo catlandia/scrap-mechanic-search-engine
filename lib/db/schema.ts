@@ -24,7 +24,7 @@ export const CREATION_KINDS = [
 ] as const;
 export type CreationKind = (typeof CREATION_KINDS)[number];
 
-export const CREATION_STATUSES = ["pending", "approved", "rejected"] as const;
+export const CREATION_STATUSES = ["pending", "approved", "rejected", "deleted"] as const;
 export type CreationStatus = (typeof CREATION_STATUSES)[number];
 
 export const TAG_SOURCES = ["keyword", "steam", "admin"] as const;

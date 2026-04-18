@@ -15,10 +15,13 @@ import {
 import { getCurrentUser } from "@/lib/auth/session";
 import { StarRating, sentimentLabel } from "@/components/StarRating";
 import { CreationVotePanel } from "@/components/CreationVotePanel";
+import { DeleteCreationButton } from "@/components/DeleteCreationButton";
 import { FavouriteButton } from "@/components/FavouriteButton";
 import { ReportButton } from "@/components/ReportButton";
 import { ReportBadge } from "@/components/ReportBadge";
 import { TagVoteList } from "@/components/TagVoteList";
+import { isCreator } from "@/lib/auth/roles";
+import type { UserRole } from "@/lib/db/schema";
 
 export const dynamic = "force-dynamic";
 
@@ -242,6 +245,12 @@ export default async function CreationDetailPage({ params }: { params: Params })
         >
           View on Steam Workshop ↗
         </a>
+        {isCreator(viewer?.role as UserRole | undefined) && (
+          <DeleteCreationButton
+            creationId={creation.id}
+            creationTitle={creation.title}
+          />
+        )}
       </div>
 
       {reportBadge && <ReportBadge badge={reportBadge} />}
