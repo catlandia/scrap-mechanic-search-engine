@@ -11,9 +11,11 @@ import { cn } from "@/lib/utils";
 export function SuggestionCard({
   suggestion,
   signedIn,
+  readOnly = false,
 }: {
   suggestion: SuggestionRow;
   signedIn: boolean;
+  readOnly?: boolean;
 }) {
   const router = useRouter();
   const [userVote, setUserVote] = useState<-1 | 0 | 1>(suggestion.viewerVote);
@@ -22,6 +24,7 @@ export function SuggestionCard({
   const [down, setDown] = useState(suggestion.downCount);
   const [isPending, startTransition] = useTransition();
   const implemented = suggestion.status === "implemented";
+  const rejected = suggestion.status === "rejected";
 
   function cast(target: -1 | 1) {
     if (!signedIn) {
@@ -63,36 +66,47 @@ export function SuggestionCard({
         "flex gap-4 rounded-lg border bg-card p-4",
         implemented
           ? "border-emerald-500/40 bg-emerald-500/5"
-          : "border-border",
+          : rejected
+            ? "border-red-500/30 bg-red-500/5"
+            : "border-border",
       )}
     >
-      <div className="flex flex-col items-center gap-1">
-        <VoteArrow
-          dir="up"
-          active={userVote === 1}
-          disabled={isPending}
-          onClick={() => cast(1)}
-        />
-        <div
-          className={cn(
-            "min-w-[2.5ch] text-center font-mono text-sm font-semibold tabular-nums",
-            net > 0
-              ? "text-emerald-300"
-              : net < 0
-                ? "text-red-300"
-                : "text-white/60",
-          )}
-          title={`${up} up · ${down} down`}
-        >
-          {net > 0 ? `+${net}` : net}
+      {readOnly ? (
+        <div className="flex flex-col items-center justify-center px-1 text-xs text-white/40">
+          <span className="font-mono text-sm text-white/50">
+            {net > 0 ? `+${net}` : net}
+          </span>
+          <span className="text-[10px] uppercase tracking-wider">closed</span>
         </div>
-        <VoteArrow
-          dir="down"
-          active={userVote === -1}
-          disabled={isPending}
-          onClick={() => cast(-1)}
-        />
-      </div>
+      ) : (
+        <div className="flex flex-col items-center gap-1">
+          <VoteArrow
+            dir="up"
+            active={userVote === 1}
+            disabled={isPending}
+            onClick={() => cast(1)}
+          />
+          <div
+            className={cn(
+              "min-w-[2.5ch] text-center font-mono text-sm font-semibold tabular-nums",
+              net > 0
+                ? "text-emerald-300"
+                : net < 0
+                  ? "text-red-300"
+                  : "text-white/60",
+            )}
+            title={`${up} up · ${down} down`}
+          >
+            {net > 0 ? `+${net}` : net}
+          </div>
+          <VoteArrow
+            dir="down"
+            active={userVote === -1}
+            disabled={isPending}
+            onClick={() => cast(-1)}
+          />
+        </div>
+      )}
 
       <div className="min-w-0 flex-1 space-y-1">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -100,6 +114,11 @@ export function SuggestionCard({
           {implemented && (
             <span className="rounded-full border border-emerald-500/40 bg-emerald-500/15 px-2 py-0.5 text-[10px] uppercase tracking-wider text-emerald-200">
               ✓ implemented
+            </span>
+          )}
+          {rejected && (
+            <span className="rounded-full border border-red-500/40 bg-red-500/15 px-2 py-0.5 text-[10px] uppercase tracking-wider text-red-200">
+              ✕ rejected
             </span>
           )}
         </div>

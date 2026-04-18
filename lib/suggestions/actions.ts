@@ -1,6 +1,6 @@
 "use server";
 
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
@@ -172,9 +172,11 @@ export interface SuggestionRow {
   viewerVote: -1 | 0 | 1;
 }
 
-export async function getApprovedSuggestions(
+async function getSuggestionsByStatuses(
+  statuses: string[],
   viewerSteamid: string | null,
 ): Promise<SuggestionRow[]> {
+  if (statuses.length === 0) return [];
   const db = getDb();
   const rows = await db
     .select({
@@ -198,16 +200,28 @@ export async function getApprovedSuggestions(
     })
     .from(featureSuggestions)
     .leftJoin(users, eq(users.steamid, featureSuggestions.submitterUserId))
-    .where(sql`${featureSuggestions.status} IN ('approved', 'implemented')`)
+    .where(inArray(featureSuggestions.status, statuses))
     .orderBy(
       sql`coalesce((SELECT sum(value)::int FROM feature_suggestion_votes v WHERE v.suggestion_id = ${featureSuggestions.id}), 0) DESC`,
       desc(featureSuggestions.approvedAt),
+      desc(featureSuggestions.createdAt),
     );
   return rows.map((r) => ({
     ...r,
-    viewerVote:
-      r.viewerVote === -1 ? -1 : r.viewerVote === 1 ? 1 : 0,
+    viewerVote: r.viewerVote === -1 ? -1 : r.viewerVote === 1 ? 1 : 0,
   }));
+}
+
+export async function getApprovedSuggestions(
+  viewerSteamid: string | null,
+): Promise<SuggestionRow[]> {
+  return getSuggestionsByStatuses(["approved", "implemented"], viewerSteamid);
+}
+
+export async function getRejectedSuggestions(
+  viewerSteamid: string | null,
+): Promise<SuggestionRow[]> {
+  return getSuggestionsByStatuses(["rejected"], viewerSteamid);
 }
 
 export async function getPendingSuggestions(): Promise<SuggestionRow[]> {

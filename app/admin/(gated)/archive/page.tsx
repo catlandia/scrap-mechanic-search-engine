@@ -1,5 +1,4 @@
 import Image from "next/image";
-import Link from "next/link";
 import { desc, eq } from "drizzle-orm";
 import {
   deleteCreation,
@@ -116,36 +115,32 @@ export default async function ArchivePage() {
                   {c.descriptionClean?.slice(0, 240) || "(no description)"}
                 </p>
 
-                <div className="flex flex-wrap items-center gap-2 pt-1">
-                  {viewerCanRestore && (
-                    <form action={restoreFromArchive}>
-                      <input type="hidden" name="creationId" value={c.id} />
-                      <button
-                        type="submit"
-                        className="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-3 py-1.5 text-sm font-medium text-emerald-200 hover:bg-emerald-500/20"
-                      >
-                        Restore to public
-                      </button>
-                    </form>
-                  )}
-                  {viewerIsCreator && (
-                    <form action={deleteCreation}>
-                      <input type="hidden" name="creationId" value={c.id} />
-                      <button
-                        type="submit"
-                        className="rounded-md border border-red-500/40 bg-red-500/10 px-3 py-1.5 text-sm font-medium text-red-200 hover:bg-red-500/20"
-                      >
-                        Permanently delete
-                      </button>
-                    </form>
-                  )}
-                  <Link
-                    href={`/creation/${c.shortId}`}
-                    className="text-xs text-white/40 hover:text-accent"
-                  >
-                    view detail (hidden)
-                  </Link>
-                </div>
+                {(viewerCanRestore || viewerIsCreator) && (
+                  <div className="flex flex-wrap items-center gap-2 pt-1">
+                    {viewerCanRestore && (
+                      <form action={restoreFromArchive}>
+                        <input type="hidden" name="creationId" value={c.id} />
+                        <button
+                          type="submit"
+                          className="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-3 py-1.5 text-sm font-medium text-emerald-200 hover:bg-emerald-500/20"
+                        >
+                          Restore to public
+                        </button>
+                      </form>
+                    )}
+                    {viewerIsCreator && (
+                      <form action={deleteCreation}>
+                        <input type="hidden" name="creationId" value={c.id} />
+                        <button
+                          type="submit"
+                          className="rounded-md border border-red-500/40 bg-red-500/10 px-3 py-1.5 text-sm font-medium text-red-200 hover:bg-red-500/20"
+                        >
+                          Permanently delete
+                        </button>
+                      </form>
+                    )}
+                  </div>
+                )}
               </div>
             </article>
           ))}
