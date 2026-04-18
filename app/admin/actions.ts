@@ -400,6 +400,33 @@ async function requireCreator() {
 }
 
 /**
+ * Creator-only: pull a tag off a creation. Sets rejected=true on the
+ * creation_tags row so future community votes can't bring it back; also
+ * clears confirmed. Cleanest "remove this tag I added" escape hatch.
+ */
+export async function removeCreationTag(formData: FormData) {
+  await requireCreator();
+  const creationId = String(formData.get("creationId") ?? "");
+  const tagIdRaw = String(formData.get("tagId") ?? "");
+  const tagId = Number(tagIdRaw);
+  if (!creationId) throw new Error("creationId required");
+  if (!Number.isInteger(tagId) || tagId <= 0) throw new Error("invalid_tag_id");
+
+  const db = getDb();
+  await db
+    .update(creationTags)
+    .set({ rejected: true, confirmed: false })
+    .where(
+      and(
+        eq(creationTags.creationId, creationId),
+        eq(creationTags.tagId, tagId),
+      ),
+    );
+
+  revalidatePath(`/creation/${creationId}`);
+}
+
+/**
  * Creator-only permanent delete. Marks the creation as status='deleted' so
  * ingest's blocklist refuses to re-add it and every public route treats it
  * as 404. Row is kept (not DELETE FROM) so the publishedfileid stays on the

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import {
   getApprovedSuggestions,
+  getImplementedSuggestions,
   getRejectedSuggestions,
 } from "@/lib/suggestions/actions";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -9,7 +10,15 @@ import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
+type Tab = "approved" | "implemented" | "rejected";
+
 type SearchParams = Promise<{ status?: string }>;
+
+function coerceTab(raw: string | undefined): Tab {
+  if (raw === "implemented") return "implemented";
+  if (raw === "rejected") return "rejected";
+  return "approved";
+}
 
 export default async function SuggestionsPage({
   searchParams,
@@ -17,23 +26,25 @@ export default async function SuggestionsPage({
   searchParams: SearchParams;
 }) {
   const sp = await searchParams;
-  const tab: "approved" | "rejected" =
-    sp.status === "rejected" ? "rejected" : "approved";
+  const tab = coerceTab(sp.status);
 
   const viewer = await getCurrentUser();
-  const suggestions =
-    tab === "rejected"
-      ? await getRejectedSuggestions(viewer?.steamid ?? null)
-      : await getApprovedSuggestions(viewer?.steamid ?? null);
+  const viewerId = viewer?.steamid ?? null;
 
-  const [approvedCount, rejectedCount] = await Promise.all([
-    tab === "approved"
-      ? Promise.resolve(suggestions.length)
-      : getApprovedSuggestions(null).then((r) => r.length),
-    tab === "rejected"
-      ? Promise.resolve(suggestions.length)
-      : getRejectedSuggestions(null).then((r) => r.length),
+  const [approved, implemented, rejected] = await Promise.all([
+    getApprovedSuggestions(viewerId),
+    getImplementedSuggestions(viewerId),
+    getRejectedSuggestions(viewerId),
   ]);
+
+  const suggestions =
+    tab === "implemented"
+      ? implemented
+      : tab === "rejected"
+        ? rejected
+        : approved;
+
+  const readOnly = tab !== "approved";
 
   return (
     <div className="space-y-6">
@@ -44,8 +55,9 @@ export default async function SuggestionsPage({
           </p>
           <h1 className="text-3xl font-bold">Ideas board</h1>
           <p className="text-sm text-white/60">
-            Suggestions reviewed by the Creator. Upvote what you want
-            prioritised; most-upvoted rise to the top.
+            Ideas the Creator has reviewed. Upvote the ones you want first.
+            Rejected ideas stay visible so you can see what didn&apos;t make
+            the cut and why.
           </p>
         </div>
         <Link
@@ -57,10 +69,16 @@ export default async function SuggestionsPage({
       </header>
 
       <nav className="flex gap-2 border-b border-border text-sm">
-        <TabLink label="Approved" count={approvedCount} active={tab === "approved"} href="/suggestions" />
+        <TabLink label="Approved" count={approved.length} active={tab === "approved"} href="/suggestions" />
+        <TabLink
+          label="Implemented"
+          count={implemented.length}
+          active={tab === "implemented"}
+          href="/suggestions?status=implemented"
+        />
         <TabLink
           label="Rejected"
-          count={rejectedCount}
+          count={rejected.length}
           active={tab === "rejected"}
           href="/suggestions?status=rejected"
         />
@@ -69,8 +87,10 @@ export default async function SuggestionsPage({
       {suggestions.length === 0 ? (
         <div className="rounded-md border border-border bg-card/60 px-5 py-8 text-center text-sm text-white/60">
           {tab === "rejected"
-            ? "No rejected suggestions — the Creator hasn't said no to anything yet."
-            : "No public suggestions yet. Be first — submit one and the Creator will review it."}
+            ? "No rejected ideas yet."
+            : tab === "implemented"
+              ? "No implemented ideas yet. Things approved and shipped show up here."
+              : "No approved ideas on the board yet — submit one."}
         </div>
       ) : (
         <ul className="space-y-3">
@@ -79,7 +99,7 @@ export default async function SuggestionsPage({
               <SuggestionCard
                 suggestion={s}
                 signedIn={!!viewer}
-                readOnly={tab === "rejected"}
+                readOnly={readOnly}
               />
             </li>
           ))}
@@ -111,7 +131,7 @@ function TabLink({
       )}
     >
       {label}{" "}
-      <span className="ml-1 text-xs font-mono text-white/40">{count}</span>
+      <span className="ml-1 font-mono text-xs text-white/40">{count}</span>
     </Link>
   );
 }

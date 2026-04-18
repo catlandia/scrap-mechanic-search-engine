@@ -215,7 +215,13 @@ async function getSuggestionsByStatuses(
 export async function getApprovedSuggestions(
   viewerSteamid: string | null,
 ): Promise<SuggestionRow[]> {
-  return getSuggestionsByStatuses(["approved", "implemented"], viewerSteamid);
+  return getSuggestionsByStatuses(["approved"], viewerSteamid);
+}
+
+export async function getImplementedSuggestions(
+  viewerSteamid: string | null,
+): Promise<SuggestionRow[]> {
+  return getSuggestionsByStatuses(["implemented"], viewerSteamid);
 }
 
 export async function getRejectedSuggestions(

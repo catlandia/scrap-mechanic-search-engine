@@ -22,6 +22,7 @@ import { RoleBadge } from "@/components/RoleBadge";
 import { StarRating, sentimentLabel } from "@/components/StarRating";
 import { CommentSection } from "@/components/CommentSection";
 import { CreationVotePanel } from "@/components/CreationVotePanel";
+import { CreatorTagRemoveButton } from "@/components/CreatorTagRemoveButton";
 import { DeleteCreationButton } from "@/components/DeleteCreationButton";
 import { FavouriteButton } from "@/components/FavouriteButton";
 import { ReportButton } from "@/components/ReportButton";
@@ -296,15 +297,29 @@ export default async function CreationDetailPage({ params }: { params: Params })
             Tags
           </div>
           <div className="flex flex-wrap gap-1.5">
-            {displayTags.map((t) => (
-              <Link
-                key={t.tagId}
-                href={`/search?tags=${t.slug}`}
-                className="rounded-full border border-border bg-card px-2.5 py-0.5 text-xs text-white/70 hover:border-accent hover:text-accent"
-              >
-                {t.name}
-              </Link>
-            ))}
+            {displayTags.map((t) => {
+              const viewerIsCreator = isCreator(viewer?.role as UserRole | undefined);
+              return (
+                <span
+                  key={t.tagId}
+                  className="inline-flex items-center rounded-full border border-border bg-card px-2.5 py-0.5 text-xs"
+                >
+                  <Link
+                    href={`/search?tags=${t.slug}`}
+                    className="text-white/70 hover:text-accent"
+                  >
+                    {t.name}
+                  </Link>
+                  {viewerIsCreator && (
+                    <CreatorTagRemoveButton
+                      creationId={creation.id}
+                      tagId={t.tagId}
+                      tagName={t.name}
+                    />
+                  )}
+                </span>
+              );
+            })}
           </div>
         </div>
       )}
