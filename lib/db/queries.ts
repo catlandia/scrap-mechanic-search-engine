@@ -735,7 +735,15 @@ export async function getActionedReports(limit = 50): Promise<ActionedReportRow[
     .innerJoin(creations, eq(creations.id, reports.creationId))
     .leftJoin(users, eq(users.steamid, reports.reporterUserId))
     .leftJoin(resolver, eq(resolver.steamid, reports.resolverUserId))
-    .where(eq(reports.status, "actioned"))
+    .where(
+      and(
+        eq(reports.status, "actioned"),
+        // Only surface flags for creations that are currently public.
+        // Archived/deleted items no longer need a badge — archived has its
+        // own UI, deleted is gone.
+        eq(creations.status, "approved"),
+      ),
+    )
     .orderBy(desc(reports.resolvedAt))
     .limit(limit);
 }

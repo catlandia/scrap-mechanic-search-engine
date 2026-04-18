@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import {
   categories,
@@ -420,8 +420,10 @@ export async function deleteCreation(formData: FormData) {
     })
     .where(eq(creations.id, id));
 
-  // Also clear any open reports on this creation — there's nothing left to
-  // moderate now that it's gone.
+  // Clear every non-cleared report on this creation — both open (nothing
+  // left to moderate) and actioned (public flag can't point at a deleted
+  // creation). Otherwise "Currently flagged" in /admin/reports keeps the
+  // row alive after the creation itself is gone.
   await db
     .update(reports)
     .set({
@@ -430,7 +432,12 @@ export async function deleteCreation(formData: FormData) {
       resolverNote: "Creation deleted by Creator.",
       resolvedAt: new Date(),
     })
-    .where(and(eq(reports.creationId, id), eq(reports.status, "open")));
+    .where(
+      and(
+        eq(reports.creationId, id),
+        sql`${reports.status} IN ('open', 'actioned')`,
+      ),
+    );
 
   revalidatePath("/");
   revalidatePath("/new");
