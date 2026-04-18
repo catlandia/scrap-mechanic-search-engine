@@ -4,7 +4,7 @@ import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
-import { isCreator } from "@/lib/auth/roles";
+import { isCreator, effectiveRole } from "@/lib/auth/roles";
 import {
   featureSuggestions,
   featureSuggestionVotes,
@@ -32,7 +32,7 @@ async function requireActiveUser() {
 async function requireCreator() {
   const user = await getCurrentUser();
   if (!user) throw new Error("signed_out");
-  if (!isCreator(user.role as UserRole)) throw new Error("not_creator");
+  if (!isCreator(effectiveRole(user) ?? undefined)) throw new Error("not_creator");
   return user;
 }
 

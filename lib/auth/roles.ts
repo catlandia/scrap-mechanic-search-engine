@@ -1,4 +1,4 @@
-import type { UserRole } from "@/lib/db/schema";
+import type { User, UserRole } from "@/lib/db/schema";
 
 export const ROLE_HIERARCHY: UserRole[] = [
   "user",
@@ -26,6 +26,18 @@ export const isModerator = (r: UserRole | null | undefined) =>
 export const isEliteModerator = (r: UserRole | null | undefined) =>
   hasRoleAtLeast(r, "elite_moderator");
 export const isCreator = (r: UserRole | null | undefined) => r === "creator";
+
+/**
+ * Role taking current ban status into account. Banned users effectively
+ * lose all tier access and revert to "ghost" (null) until the ban lifts.
+ */
+export function effectiveRole(
+  user: Pick<User, "role" | "bannedUntil"> | null | undefined,
+): UserRole | null {
+  if (!user) return null;
+  if (user.bannedUntil && user.bannedUntil.getTime() > Date.now()) return null;
+  return user.role as UserRole;
+}
 
 export const ROLE_LABELS: Record<UserRole, string> = {
   user: "User",

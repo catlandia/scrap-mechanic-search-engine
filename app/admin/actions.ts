@@ -15,7 +15,7 @@ import {
 } from "@/lib/db/schema";
 import { runIngest } from "@/lib/ingest/pipeline";
 import { CREATION_KINDS } from "@/lib/db/schema";
-import { getCurrentUser } from "@/lib/auth/session";
+import { getCurrentUser, isBanned } from "@/lib/auth/session";
 import { isModerator } from "@/lib/auth/roles";
 import type { UserRole } from "@/lib/db/schema";
 import {
@@ -388,6 +388,7 @@ export async function addCreation(formData: FormData) {
 async function requireMod() {
   const user = await getCurrentUser();
   if (!user) throw new Error("not_signed_in");
+  if (isBanned(user)) throw new Error("banned");
   if (!isModerator(user.role as UserRole)) throw new Error("not_a_mod");
   return user;
 }
@@ -395,6 +396,7 @@ async function requireMod() {
 async function requireCreator() {
   const user = await getCurrentUser();
   if (!user) throw new Error("not_signed_in");
+  if (isBanned(user)) throw new Error("banned");
   if ((user.role as UserRole) !== "creator") throw new Error("not_creator");
   return user;
 }
@@ -528,6 +530,7 @@ export async function actionReport(formData: FormData) {
 async function requireEliteMod() {
   const user = await getCurrentUser();
   if (!user) throw new Error("not_signed_in");
+  if (isBanned(user)) throw new Error("banned");
   const role = user.role as UserRole;
   if (role !== "elite_moderator" && role !== "creator") {
     throw new Error("not_elite_or_creator");

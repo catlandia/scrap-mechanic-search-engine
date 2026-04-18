@@ -1,7 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth/session";
-import { isCreator, isModerator, ROLE_LABELS } from "@/lib/auth/roles";
+import { getCurrentUser, isBanned } from "@/lib/auth/session";
+import {
+  effectiveRole,
+  isCreator,
+  isModerator,
+  ROLE_LABELS,
+} from "@/lib/auth/roles";
 import { RoleBadge } from "@/components/RoleBadge";
 import type { UserRole } from "@/lib/db/schema";
 
@@ -22,7 +27,25 @@ const creatorNav = [
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();
   if (!user) redirect("/auth/steam/login?next=/admin/triage");
-  const role = user.role as UserRole;
+  const banned = isBanned(user);
+  const role = effectiveRole(user);
+
+  if (banned) {
+    return (
+      <div className="mx-auto max-w-xl rounded-lg border border-red-500/40 bg-red-500/10 p-6 text-sm">
+        <div className="text-lg font-semibold text-red-200">Access suspended.</div>
+        <p className="mt-2 text-red-100/80">
+          Your account is currently banned
+          {user.bannedUntil
+            ? ` until ${user.bannedUntil.toLocaleString()}`
+            : ""}
+          . While the ban is active you have ghost privileges — no admin
+          tools, no voting, no commenting.
+        </p>
+      </div>
+    );
+  }
+
   if (!isModerator(role)) {
     return (
       <div className="mx-auto max-w-xl rounded-lg border border-red-500/40 bg-red-500/10 p-6 text-sm">
@@ -30,8 +53,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <p className="mt-2 text-red-100/80">
           You&apos;re signed in as{" "}
           <span className="font-medium">{user.personaName}</span> (
-          {ROLE_LABELS[role] ?? "User"}). Only moderators and above can access admin
-          tools.
+          {ROLE_LABELS[(user.role as UserRole) ?? "user"] ?? "User"}). Only
+          moderators and above can access admin tools.
         </p>
       </div>
     );
@@ -61,7 +84,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           </nav>
         </div>
         <div className="flex items-center gap-3 text-xs text-white/50">
-          <RoleBadge role={role} />
+          <RoleBadge role={role ?? (user.role as UserRole)} />
           <span>{user.personaName}</span>
         </div>
       </div>
