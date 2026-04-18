@@ -45,6 +45,7 @@ Up/down votes on creations themselves.
 - Denormalized into `creations.siteWeightedUp` / `siteWeightedDown` for fast card rendering
 - Banned/muted users cannot vote
 - Used in sort modes: `popular` (net votes), `rating` (ratio)
+- Rate-limited to 30 votes / 60 s / user (V5.0). Same limit covers tag votes, favourite toggles, and suggestion votes. No-op if the incoming value matches the existing row.
 
 ---
 

@@ -27,7 +27,15 @@ All public pages are in `app/` using Next.js 15 App Router. Server Components by
 | `/me/notifications` | `app/me/notifications/page.tsx` | User's notifications; marks all read on load |
 | `/submit` | `app/submit/page.tsx` | Submit a Workshop item |
 | `/suggestions` | `app/suggestions/page.tsx` | Ideas board (3 tabs) |
-| `/suggestions/new` | `app/suggestions/new/page.tsx` | Submit a suggestion |
+| `/suggestions/new` | `app/suggestions/new/page.tsx` | Submit a suggestion (noindex) |
+| `/terms` | `app/terms/page.tsx` | Terms of use |
+| `/privacy` | `app/privacy/page.tsx` | Privacy policy |
+
+**Indexing:** `/me/*`, `/verify`, `/auth/*`, `/profile/[steamid]`, `/suggestions/new`, and `/submit` are all `noindex`. `robots.ts` disallows the same set plus `/admin/` and `/api/`.
+
+**Metadata:** Every public route above has `generateMetadata` or a static `metadata` export with title, description, and `alternates.canonical`. `/creation/[id]` and the root layout carry full Open Graph + Twitter card blocks; the root layout sets `metadataBase` from `NEXT_PUBLIC_SITE_URL` and `app/icon.png` / `app/apple-icon.png` serve as the favicons.
+
+**Offset clamp:** `?page=` is clamped to `≤200` on `/search` and `/me/favourites` so deep OFFSET queries can't DoS Neon.
 
 ---
 

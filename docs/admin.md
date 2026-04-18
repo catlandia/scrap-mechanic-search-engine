@@ -66,7 +66,7 @@ requireEliteMod()  → elite_moderator, creator
 requireCreator()   → creator only
 ```
 
-All helpers check `effectiveRole` (ban-aware), not `user.role` directly.
+All helpers check `effectiveRole` (ban-aware), not `user.role` directly. **Every admin server action calls `requireMod/Elite/Creator` as its first statement** — the layout-level gate at `/admin/(gated)` is not sufficient, because server actions can be invoked from any page that imports them.
 
 ### Creation management
 

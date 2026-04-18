@@ -112,12 +112,28 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           </div>
         </header>
         <main className="mx-auto max-w-6xl px-4 py-6 sm:py-10">{children}</main>
-        <footer className="mx-auto max-w-6xl px-4 py-10 text-xs text-white/40">
+        <footer className="mx-auto max-w-6xl px-4 py-10 text-xs text-white/50">
           <p>
             Not affiliated with Axolot Games. Data pulled from the Steam Web API. Sign-in
             uses Steam OpenID — we only ever see your public SteamID, never your password.
           </p>
-          <p className="mt-2">Made by CybeSlime2077.</p>
+          <p className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
+            <span>Made by CybeSlime2077.</span>
+            <Link href="/terms" className="hover:text-white">
+              Terms
+            </Link>
+            <Link href="/privacy" className="hover:text-white">
+              Privacy
+            </Link>
+            <a
+              href="https://github.com/catlandia/scrap-mechanic-search-engine"
+              target="_blank"
+              rel="noreferrer"
+              className="hover:text-white"
+            >
+              GitHub
+            </a>
+          </p>
         </footer>
       </body>
     </html>
