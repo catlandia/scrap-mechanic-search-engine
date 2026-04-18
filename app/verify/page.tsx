@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { Suspense, useEffect, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { startChallenge, submitAnswer, type QuestionPayload } from "./actions";
 
@@ -11,6 +11,18 @@ type UIState =
   | { phase: "complete" };
 
 export default function VerifyPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <p className="text-white/40 animate-pulse">Loading challenge…</p>
+      </div>
+    }>
+      <VerifyChallenge />
+    </Suspense>
+  );
+}
+
+function VerifyChallenge() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get("next") ?? "/";
