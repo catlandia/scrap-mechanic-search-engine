@@ -63,6 +63,9 @@ export async function voteSuggestion(formData: FormData) {
   const idRaw = String(formData.get("suggestionId") ?? "");
   const id = Number(idRaw);
   if (!Number.isInteger(id) || id <= 0) throw new Error("invalid_id");
+  const valueRaw = Number(formData.get("value"));
+  const value: -1 | 0 | 1 =
+    valueRaw === -1 ? -1 : valueRaw === 1 ? 1 : 0;
 
   const db = getDb();
   const [suggestion] = await db
@@ -70,22 +73,14 @@ export async function voteSuggestion(formData: FormData) {
     .from(featureSuggestions)
     .where(eq(featureSuggestions.id, id))
     .limit(1);
-  if (!suggestion || suggestion.status !== "approved") {
+  if (
+    !suggestion ||
+    (suggestion.status !== "approved" && suggestion.status !== "implemented")
+  ) {
     throw new Error("not_votable");
   }
 
-  const existing = await db
-    .select()
-    .from(featureSuggestionVotes)
-    .where(
-      and(
-        eq(featureSuggestionVotes.userId, user.steamid),
-        eq(featureSuggestionVotes.suggestionId, id),
-      ),
-    )
-    .limit(1);
-
-  if (existing.length > 0) {
+  if (value === 0) {
     await db
       .delete(featureSuggestionVotes)
       .where(
@@ -95,10 +90,20 @@ export async function voteSuggestion(formData: FormData) {
         ),
       );
   } else {
-    await db.insert(featureSuggestionVotes).values({
-      userId: user.steamid,
-      suggestionId: id,
-    });
+    await db
+      .insert(featureSuggestionVotes)
+      .values({
+        userId: user.steamid,
+        suggestionId: id,
+        value,
+      })
+      .onConflictDoUpdate({
+        target: [
+          featureSuggestionVotes.userId,
+          featureSuggestionVotes.suggestionId,
+        ],
+        set: { value, createdAt: new Date() },
+      });
   }
 
   revalidatePath("/suggestions");
@@ -143,8 +148,13 @@ export interface SuggestionRow {
   submitterSteamid: string | null;
   submitterName: string | null;
   submitterRole: string | null;
+  /** Net score = sum(value). */
   voteCount: number;
-  viewerVoted: boolean;
+  /** Raw upvote / downvote counts for display. */
+  upCount: number;
+  downCount: number;
+  /** Current viewer's vote: -1 / 0 / 1 */
+  viewerVote: -1 | 0 | 1;
 }
 
 export async function getApprovedSuggestions(
@@ -164,23 +174,30 @@ export async function getApprovedSuggestions(
       submitterSteamid: featureSuggestions.submitterUserId,
       submitterName: users.personaName,
       submitterRole: users.role,
-      voteCount: sql<number>`(SELECT count(*)::int FROM feature_suggestion_votes v WHERE v.suggestion_id = ${featureSuggestions.id})`,
-      viewerVoted: viewerSteamid
-        ? sql<boolean>`EXISTS (SELECT 1 FROM feature_suggestion_votes v WHERE v.suggestion_id = ${featureSuggestions.id} AND v.user_id = ${viewerSteamid})`
-        : sql<boolean>`false`,
+      voteCount: sql<number>`coalesce((SELECT sum(value)::int FROM feature_suggestion_votes v WHERE v.suggestion_id = ${featureSuggestions.id}), 0)`,
+      upCount: sql<number>`coalesce((SELECT count(*)::int FROM feature_suggestion_votes v WHERE v.suggestion_id = ${featureSuggestions.id} AND v.value = 1), 0)`,
+      downCount: sql<number>`coalesce((SELECT count(*)::int FROM feature_suggestion_votes v WHERE v.suggestion_id = ${featureSuggestions.id} AND v.value = -1), 0)`,
+      viewerVote: viewerSteamid
+        ? sql<number>`coalesce((SELECT value FROM feature_suggestion_votes v WHERE v.suggestion_id = ${featureSuggestions.id} AND v.user_id = ${viewerSteamid}), 0)`
+        : sql<number>`0`,
     })
     .from(featureSuggestions)
     .leftJoin(users, eq(users.steamid, featureSuggestions.submitterUserId))
-    .where(
-      sql`${featureSuggestions.status} IN ('approved', 'implemented')`,
-    )
-    .orderBy(sql`(SELECT count(*)::int FROM feature_suggestion_votes v WHERE v.suggestion_id = ${featureSuggestions.id}) DESC`, desc(featureSuggestions.approvedAt));
-  return rows;
+    .where(sql`${featureSuggestions.status} IN ('approved', 'implemented')`)
+    .orderBy(
+      sql`coalesce((SELECT sum(value)::int FROM feature_suggestion_votes v WHERE v.suggestion_id = ${featureSuggestions.id}), 0) DESC`,
+      desc(featureSuggestions.approvedAt),
+    );
+  return rows.map((r) => ({
+    ...r,
+    viewerVote:
+      r.viewerVote === -1 ? -1 : r.viewerVote === 1 ? 1 : 0,
+  }));
 }
 
 export async function getPendingSuggestions(): Promise<SuggestionRow[]> {
   const db = getDb();
-  return db
+  const rows = await db
     .select({
       id: featureSuggestions.id,
       title: featureSuggestions.title,
@@ -193,11 +210,16 @@ export async function getPendingSuggestions(): Promise<SuggestionRow[]> {
       submitterSteamid: featureSuggestions.submitterUserId,
       submitterName: users.personaName,
       submitterRole: users.role,
-      voteCount: sql<number>`0`,
-      viewerVoted: sql<boolean>`false`,
     })
     .from(featureSuggestions)
     .leftJoin(users, eq(users.steamid, featureSuggestions.submitterUserId))
     .where(eq(featureSuggestions.status, "submitted"))
     .orderBy(desc(featureSuggestions.createdAt));
+  return rows.map((r) => ({
+    ...r,
+    voteCount: 0,
+    upCount: 0,
+    downCount: 0,
+    viewerVote: 0 as const,
+  }));
 }

@@ -413,6 +413,8 @@ export const featureSuggestionVotes = pgTable(
     suggestionId: integer("suggestion_id")
       .notNull()
       .references(() => featureSuggestions.id, { onDelete: "cascade" }),
+    // +1 upvote, -1 downvote. No row = no vote.
+    value: integer("value").notNull().default(1),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

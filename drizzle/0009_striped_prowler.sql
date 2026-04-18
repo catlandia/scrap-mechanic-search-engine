@@ -1,0 +1,1 @@
+ALTER TABLE "feature_suggestion_votes" ADD COLUMN "value" integer DEFAULT 1 NOT NULL;

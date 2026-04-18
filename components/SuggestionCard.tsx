@@ -16,28 +16,42 @@ export function SuggestionCard({
   signedIn: boolean;
 }) {
   const router = useRouter();
-  const [voted, setVoted] = useState(suggestion.viewerVoted);
-  const [count, setCount] = useState(suggestion.voteCount);
+  const [userVote, setUserVote] = useState<-1 | 0 | 1>(suggestion.viewerVote);
+  const [net, setNet] = useState(suggestion.voteCount);
+  const [up, setUp] = useState(suggestion.upCount);
+  const [down, setDown] = useState(suggestion.downCount);
   const [isPending, startTransition] = useTransition();
   const implemented = suggestion.status === "implemented";
 
-  function toggle() {
+  function cast(target: -1 | 1) {
     if (!signedIn) {
       router.push("/auth/steam/login?next=/suggestions");
       return;
     }
-    const prev = voted;
-    setVoted(!prev);
-    setCount((c) => c + (prev ? -1 : 1));
+    const next: -1 | 0 | 1 = userVote === target ? 0 : target;
+    const prev = userVote;
+    // Optimistic deltas
+    const netDelta = next - prev;
+    const upDelta = (next === 1 ? 1 : 0) - (prev === 1 ? 1 : 0);
+    const downDelta = (next === -1 ? 1 : 0) - (prev === -1 ? 1 : 0);
+    setUserVote(next);
+    setNet((n) => n + netDelta);
+    setUp((n) => n + upDelta);
+    setDown((n) => n + downDelta);
+
     const fd = new FormData();
     fd.append("suggestionId", String(suggestion.id));
+    fd.append("value", String(next));
     startTransition(async () => {
       try {
         await voteSuggestion(fd);
         router.refresh();
       } catch (err) {
-        setVoted(prev);
-        setCount((c) => c + (prev ? 1 : -1));
+        // Roll back
+        setUserVote(prev);
+        setNet((n) => n - netDelta);
+        setUp((n) => n - upDelta);
+        setDown((n) => n - downDelta);
         console.error(err);
       }
     });
@@ -53,21 +67,31 @@ export function SuggestionCard({
       )}
     >
       <div className="flex flex-col items-center gap-1">
-        <button
-          type="button"
-          onClick={toggle}
+        <VoteArrow
+          dir="up"
+          active={userVote === 1}
           disabled={isPending}
-          aria-label={voted ? "Remove upvote" : "Upvote"}
+          onClick={() => cast(1)}
+        />
+        <div
           className={cn(
-            "flex size-12 flex-col items-center justify-center rounded-md border font-semibold transition disabled:opacity-50",
-            voted
-              ? "border-accent bg-accent/20 text-accent"
-              : "border-border bg-background text-white/60 hover:border-white/30",
+            "min-w-[2.5ch] text-center font-mono text-sm font-semibold tabular-nums",
+            net > 0
+              ? "text-emerald-300"
+              : net < 0
+                ? "text-red-300"
+                : "text-white/60",
           )}
+          title={`${up} up · ${down} down`}
         >
-          <span className="text-lg leading-none">▲</span>
-          <span className="text-xs">{count}</span>
-        </button>
+          {net > 0 ? `+${net}` : net}
+        </div>
+        <VoteArrow
+          dir="down"
+          active={userVote === -1}
+          disabled={isPending}
+          onClick={() => cast(-1)}
+        />
       </div>
 
       <div className="min-w-0 flex-1 space-y-1">
@@ -106,6 +130,9 @@ export function SuggestionCard({
               </span>
             </>
           )}
+          <span className="text-white/30">
+            · {up}↑ / {down}↓
+          </span>
         </div>
         {suggestion.creatorNote && (
           <div className="rounded border border-purple-500/30 bg-purple-500/5 px-3 py-2 text-xs text-purple-200">
@@ -115,5 +142,38 @@ export function SuggestionCard({
         )}
       </div>
     </article>
+  );
+}
+
+function VoteArrow({
+  dir,
+  active,
+  disabled,
+  onClick,
+}: {
+  dir: "up" | "down";
+  active: boolean;
+  disabled: boolean;
+  onClick: () => void;
+}) {
+  const activeColor =
+    dir === "up"
+      ? "border-emerald-400/70 bg-emerald-500/20 text-emerald-200"
+      : "border-red-400/70 bg-red-500/20 text-red-200";
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={dir === "up" ? "Upvote suggestion" : "Downvote suggestion"}
+      className={cn(
+        "flex size-8 items-center justify-center rounded-md border text-base transition disabled:opacity-50",
+        active
+          ? activeColor
+          : "border-border bg-background text-white/60 hover:border-white/30 hover:text-white",
+      )}
+    >
+      {dir === "up" ? "▲" : "▼"}
+    </button>
   );
 }
