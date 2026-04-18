@@ -9,7 +9,15 @@ interface VoteHistoryRow extends CreationCardRow {
   voteValue: number;
 }
 
-export async function VoteHistory({ steamid }: { steamid: string }) {
+export async function VoteHistory({
+  steamid,
+  viewerSteamid,
+}: {
+  steamid: string;
+  viewerSteamid: string | null;
+}) {
+  if (viewerSteamid !== steamid) return null;
+
   const db = getDb();
   const rows = (await db
     .select({ ...cardColumns, voteValue: creationVotes.value })

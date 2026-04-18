@@ -21,6 +21,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${base}/`, lastModified: now, changeFrequency: "daily", priority: 1 },
     { url: `${base}/new`, lastModified: now, changeFrequency: "hourly", priority: 0.9 },
     { url: `${base}/search`, lastModified: now, changeFrequency: "weekly", priority: 0.7 },
+    { url: `${base}/suggestions`, lastModified: now, changeFrequency: "daily", priority: 0.6 },
     ...KIND_SLUGS.map((slug) => ({
       url: `${base}/${slug}`,
       lastModified: now,

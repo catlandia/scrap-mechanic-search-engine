@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState, useTransition } from "react";
+import { Suspense, useEffect, useRef, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { startChallenge, submitAnswer, type QuestionPayload } from "./actions";
 
@@ -12,13 +12,16 @@ type UIState =
 
 export default function VerifyPage() {
   return (
-    <Suspense fallback={
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <p className="text-white/40 animate-pulse">Loading challenge…</p>
-      </div>
-    }>
-      <VerifyChallenge />
-    </Suspense>
+    <>
+      <meta name="robots" content="noindex, nofollow" />
+      <Suspense fallback={
+        <div className="flex min-h-screen items-center justify-center bg-background">
+          <p className="text-white/40 animate-pulse">Loading challenge…</p>
+        </div>
+      }>
+        <VerifyChallenge />
+      </Suspense>
+    </>
   );
 }
 
@@ -29,18 +32,35 @@ function VerifyChallenge() {
 
   const [state, setState] = useState<UIState>({ phase: "loading" });
   const [isPending, startTransition] = useTransition();
+  const pendingTimers = useRef<number[]>([]);
 
   useEffect(() => {
     startChallenge().then((q) => setState({ phase: "question", q }));
   }, []);
 
-  // Redirect after completion
+  useEffect(() => {
+    const timers = pendingTimers;
+    return () => {
+      for (const id of timers.current) window.clearTimeout(id);
+      timers.current = [];
+    };
+  }, []);
+
   useEffect(() => {
     if (state.phase === "complete") {
-      const t = setTimeout(() => router.replace(next), 1200);
-      return () => clearTimeout(t);
+      const t = window.setTimeout(() => router.replace(next), 1200);
+      pendingTimers.current.push(t);
+      return () => window.clearTimeout(t);
     }
   }, [state.phase, next, router]);
+
+  function scheduleTimer(fn: () => void, ms: number) {
+    const id = window.setTimeout(() => {
+      pendingTimers.current = pendingTimers.current.filter((x) => x !== id);
+      fn();
+    }, ms);
+    pendingTimers.current.push(id);
+  }
 
   function handleAnswer(answer: string) {
     if (isPending || state.phase !== "question") return;
@@ -49,11 +69,10 @@ function VerifyChallenge() {
 
       if (result.status === "wrong") {
         const currentQ = (state as { phase: "question"; q: QuestionPayload }).q;
-        // Pre-fetch the fresh challenge while showing the wrong flash
         const freshPromise = startChallenge();
         setState({ phase: "question", q: currentQ, flash: "wrong" });
         const fresh = await freshPromise;
-        setTimeout(() => setState({ phase: "question", q: fresh }), 900);
+        scheduleTimer(() => setState({ phase: "question", q: fresh }), 900);
         return;
       }
 
@@ -62,9 +81,8 @@ function VerifyChallenge() {
         return;
       }
 
-      // correct — brief flash then next question
       setState({ phase: "question", q: (state as { phase: "question"; q: QuestionPayload }).q, flash: "correct" });
-      setTimeout(() => {
+      scheduleTimer(() => {
         setState({ phase: "question", q: result.next });
       }, 500);
     });
@@ -168,7 +186,11 @@ function VerifyChallenge() {
 
         {/* Wrong feedback */}
         {flash === "wrong" && (
-          <p className="text-center text-sm text-red-400 animate-pulse">
+          <p
+            role="status"
+            aria-live="polite"
+            className="text-center text-sm text-red-400 animate-pulse"
+          >
             Wrong — starting over…
           </p>
         )}

@@ -1,9 +1,14 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getUserSubmissions } from "@/lib/db/queries";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 const STATUS_LABELS: Record<string, { label: string; className: string }> = {
   pending:  { label: "Pending review", className: "border-yellow-500/40 bg-yellow-500/10 text-yellow-300" },

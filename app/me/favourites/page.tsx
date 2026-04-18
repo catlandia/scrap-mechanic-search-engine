@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { CreationGrid } from "@/components/CreationCard";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -6,7 +7,12 @@ import { getRatingMode } from "@/lib/prefs.server";
 
 export const dynamic = "force-dynamic";
 
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
+
 const PAGE_SIZE = 24;
+const MAX_PAGE = 200;
 
 type SearchParams = Promise<{ page?: string }>;
 
@@ -19,7 +25,8 @@ export default async function FavouritesPage({
   if (!user) redirect("/auth/steam/login?next=/me/favourites");
 
   const sp = await searchParams;
-  const pageIndex = Math.max(0, Number(sp.page ?? "1") - 1);
+  const rawPage = Number(sp.page ?? "1") - 1;
+  const pageIndex = Math.min(MAX_PAGE, Math.max(0, Number.isFinite(rawPage) ? rawPage : 0));
   const items = await getUserFavourites(user.steamid, PAGE_SIZE + 1, pageIndex * PAGE_SIZE);
   const hasNext = items.length > PAGE_SIZE;
   const displayed = items.slice(0, PAGE_SIZE);
