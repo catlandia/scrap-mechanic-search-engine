@@ -84,7 +84,7 @@ Community members can submit Steam Workshop items for admin review.
 - Must not be banned
 - Must not be muted
 - Steam account must be ≥ 7 days old (prevents fresh sock-puppet accounts)
-- Item must belong to the Scrap Mechanic Workshop (`consumer_appid === 387990`) — items from other games are rejected
+- Item must belong to the Scrap Mechanic Workshop (`consumer_appid === 387990`) — items from other games (and items where Steam omits the field) are rejected. Previously a missing `consumer_appid` was allowed through; tightened in V4.15 so the check now requires an explicit match.
 
 **Flow:**
 1. User pastes a Steam Workshop URL or ID
@@ -170,7 +170,7 @@ Users receive in-app notifications for key events involving their own content.
 | Event | Notification title |
 |---|---|
 | Submission approved | "Submission approved!" |
-| Submission rejected | "Submission not accepted" |
+| Submission rejected | "Submission not accepted" (body includes the optional `reason` typed by the moderator when rejecting, V4.15) |
 | Idea approved | "Idea approved!" |
 | Idea rejected | "Idea not accepted" |
 | Idea implemented | "Idea implemented!" |
@@ -178,6 +178,8 @@ Users receive in-app notifications for key events involving their own content.
 **Delivery:** Best-effort — notification inserts never block the primary action. If the insert fails, the action succeeds anyway.
 
 **Reading:** `/me/notifications` — loads all notifications for the current user, newest first. All unread notifications are marked as read on page load.
+
+**Per-notification mark-read (V4.15):** The "View →" link on each row points to `/api/notifications/[id]/click`, not directly to the stored link. That route calls `markNotificationRead(userId, id)` (ownership-checked) and 303-redirects to the target. This way a user who arrives from an external prompt and clicks a single notification gets *that* notification cleared even if they never visit `/me/notifications` — useful because the bell badge otherwise only clears on index load.
 
 **Bell icon:** The nav UserMenu shows a bell icon with an unread count badge. Count is queried in `app/layout.tsx` on every request (server-side, so no polling needed).
 

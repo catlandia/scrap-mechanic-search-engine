@@ -16,12 +16,12 @@
 
 ## Quick orientation
 
-- Current version: **V4.12** — custom captcha with hidden image proxy
+- Current version: **V4.15** — rating-mode toggle, fixed 3-star bug, mobile drawer nav
 - Stack: Next.js 15 App Router · TypeScript · Tailwind v4 · Drizzle + Neon · iron-session · Steam OpenID
 - Hard constraint: everything must remain on **free tiers** — no paid APIs, no metered per-item costs
 - Transactions are **not available** (neon-http driver) — writes are sequential, partial state is accepted
 
-## Recent changes (V4.6–4.12)
+## Recent changes (V4.6–4.15)
 
 - **V4.6:** 3-tab public ideas board (Approved/Implemented/Rejected); creator can reject live suggestions; creator-side tag removal button on creation detail page
 - **V4.7:** `effectiveRole()` helper — banned users lose all write permissions automatically; ban lifts without manual cleanup when `bannedUntil` elapses
@@ -30,3 +30,6 @@
 - **V4.10:** Scrap Mechanic logo image in nav replaces the plain "SM" text. Logo served from `public/logo.png`.
 - **V4.11:** Custom Scrap Mechanic captcha on first visit. 3 correct in a row, 4 options, 9 characters (Mechanic/Totebot/Haybot/Tapebot/Farmbot/Glowb/Woc/Redtapebot + Chapter 2 easter egg at ~10% chance). `bot_verified` cookie lasts 30 days. See `docs/captcha.md`.
 - **V4.12:** Character image filename hidden from network inspection. Image served via `/api/captcha/image` proxy route — actual path stored only in encrypted server-side session. Client never sees `Mechanic1.jpg` etc.
+- **V4.13:** Steam-workshop appid gate (rejects non-SM items on submission); notifications system with bell icon + unread badge; `/me/submissions` status page; captcha nonce-based cache-busting; captcha only gates Steam login rather than the whole site.
+- **V4.14:** Creator can clear user warnings from the admin user page.
+- **V4.15:** Rating-mode toggle (Steam/Site/Both) stored as cookie, applied across card + detail views. Fixed the "everything is 3 stars" bug — `StarRating` now computes raw `up/(up+down)` instead of trusting Steam's Wilson-smoothed `vote_score` (which regressed low-sample ratings toward 0.5); min-votes threshold raised from 5 to 10. Added `site-rating` / `site-least-rating` sort modes (5-vote floor). Queue reject action accepts an optional reason that surfaces in the submitter's rejection notification. Tightened appid check so a missing `consumer_appid` no longer slips through. Per-notification mark-read via `/api/notifications/[id]/click`. Rebuilt mobile header: sticky compact bar with logo + submit/heart/bell/avatar icons, hamburger opens a right-side drawer (portaled to `document.body` at `z-[100]`) with nav links, rating toggle, deep links (submissions, admin triage), and sign-out.

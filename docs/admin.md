@@ -31,7 +31,7 @@ Purpose: review new `status='pending'` items before they go public.
 - Each card shows: thumbnail, title, Steam metadata (subs, favorites, vote score), kind badge, suggested tags with confidence scores
 - **Actions:**
   - **Approve** — sets `status=approved`, `approvedAt=now()`, confirms selected tags (sets `confirmed=true`)
-  - **Reject** — sets `status=rejected`
+  - **Reject** — sets `status=rejected`. The form includes an optional `reason` text input (max 300 chars); if filled, it's appended to the submitter's rejection notification body (`"<title>" was not accepted. Reason: <reason>`).
   - **Quick Approve** — fast-path, skips manual tag confirmation; suggested tags stay `confirmed=false` for community voting to decide
 
 ---

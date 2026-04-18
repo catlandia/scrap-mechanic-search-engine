@@ -63,7 +63,7 @@ Community layer (requires Steam login):
 
 ---
 
-## Current Version: V4.8
+## Current Version: V4.15
 
 The project has grown well beyond the initial search-engine scope. Version history at a glance:
 
@@ -79,6 +79,13 @@ The project has grown well beyond the initial search-engine scope. Version histo
 | V4.6 | 3-tab ideas board; creator can reject live ideas; creator-side tag removal |
 | V4.7 | Banned users demoted to ghost via `effectiveRole()` |
 | V4.8 | Hard ban (blocks sign-in); full suggestion status re-routing; creator hard-delete |
+| V4.9 | Creator sees all non-rejected tags on `/creation/[id]` |
+| V4.10 | Scrap Mechanic logo image replaces "SM" text in nav |
+| V4.11 | Custom SM-themed captcha (9 characters, Chapter 2 easter egg) |
+| V4.12 | Captcha image filename hidden via `/api/captcha/image` proxy |
+| V4.13 | Appid gate for submissions; notifications system + bell; `/me/submissions`; captcha gates Steam login only |
+| V4.14 | Creator can clear user warnings from admin user page |
+| V4.15 | Rating-mode toggle (Steam/Site/Both); raw ratio instead of Wilson-smoothed `vote_score`; site-rating sorts; queue reject reason; mobile hamburger drawer nav |
 
 ---
 

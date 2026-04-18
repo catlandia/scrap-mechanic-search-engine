@@ -74,20 +74,24 @@ Full-featured search with URL-based state (links are shareable).
 | `sort` | string | See sort modes below |
 | `page` | number | 1-indexed |
 
-**Sort modes:**
+**Sort modes** (defined in `lib/db/queries.ts` · `SORT_MODES`):
 
 | Value | Description |
 |---|---|
-| `newest` | By `approvedAt DESC` (newest on site) |
-| `oldest` | By `approvedAt ASC` |
-| `steam-newest` | By `timeCreated DESC` (Steam upload date) |
-| `steam-oldest` | By `timeCreated ASC` |
-| `popular` | By net site votes DESC |
-| `favorites` | By site favorites count DESC |
-| `rating` | By vote ratio DESC |
-| `subscriptions` | By Steam subscriptions DESC |
-| `views` | By Steam views DESC |
-| `updated` | By `timeUpdated DESC` |
+| `newest` | `approvedAt DESC` (newest on site) |
+| `oldest` | `approvedAt ASC` |
+| `steam-newest` | `timeCreated DESC` (Steam upload date) |
+| `steam-oldest` | `timeCreated ASC` |
+| `popular` | Most subscribers (Steam) — `subscriptions DESC` |
+| `unpopular` | Fewest subscribers (Steam) |
+| `favorites` | Most favourites (Steam) — `favorites DESC` |
+| `least-favorites` | Fewest favourites (Steam) |
+| `rating` | Highest rated (Steam) — `vote_score DESC` |
+| `least-rating` | Lowest rated (Steam) |
+| `site-rating` | Highest rated (Site) — `site_weighted_up / (up+down)` DESC, ≥5 votes required |
+| `site-least-rating` | Lowest rated (Site), ≥5 votes required |
+
+Site-rating sorts use a CASE expression so items below the 5-vote floor fall to `NULLS LAST`, preventing a single upvote from dominating the ranking.
 
 **Tag filtering logic:** All requested tag slugs must match — intersection, not union. Implemented as a `DISTINCT COUNT HAVING` subquery on `creationTags`.
 
@@ -146,27 +150,50 @@ Full-featured search with URL-based state (links are shareable).
 
 ## Layout (`app/layout.tsx`)
 
-**Navigation links:**
+**Header:** sticky at top with backdrop blur (`z-30`). Logo left, primary nav centre, actions right.
+
+**Navigation links (desktop, hidden on mobile):**
 - Newest (`/new`)
 - Blueprints, Mods, Worlds, Challenges, Tiles (kind pages)
 - Search (`/search`)
 - Ideas (`/suggestions`)
 
-**User menu (signed in):**
-- Avatar + persona name + role badge
-- Link to own profile
-- Submit link (`/submit`)
-- Favourites link (`/me/favourites`)
+**Rating-mode toggle** (`components/RatingModeToggle.tsx`): three buttons — Steam / Site / Both — posting to `/api/prefs/rating-mode` which sets the `smse_rating_mode` cookie (1-year maxAge, non-httpOnly so server components can read it via `lib/prefs.server.ts → getRatingMode()`). The selected mode is passed through every page that renders `<CreationGrid>` or `<StarRating>` so SSR output matches preference with no flicker. The toggle lives inline in the header on desktop and inside the mobile drawer on `<sm`.
+
+**User menu (signed in, `components/UserMenu.tsx`):**
+- Submit (icon on mobile, text on desktop)
+- Favourites (heart icon on mobile, text on desktop)
 - Bell icon with unread badge → `/me/notifications` (hidden when banned)
-- Admin link (mod+ only)
-- Sign out
+- Admin link (mod+, desktop only — mobile variant lives in the drawer)
+- Avatar + persona name (name hidden `<sm`) + role badge
+- Sign out (desktop; mobile-only sign-out lives in the drawer)
 
 Unread notification count is fetched server-side in `app/layout.tsx` on every render and passed as a prop to `UserMenu`.
 
+**Mobile drawer (`components/MobileNav.tsx`):** hamburger visible only on `<sm`. Opens a right-side slide-over panel rendered via `createPortal(document.body)` at `z-[100]` so it escapes the sticky header's stacking context. Contains:
+- Primary nav links (Newest / kinds / Search / Ideas) with active-route highlight
+- Extra links: Submit, Your favourites, Notifications, Your submissions, Admin triage (mods+)
+- Rating-mode toggle
+- Sign in / Sign out button
+
+The drawer auto-closes on route change (`usePathname` effect) and locks `document.body` overflow while open.
+
 **Unauthenticated:**
-- "Sign in with Steam" button
+- "Sign in with Steam" button (desktop header + drawer)
 
 **Footer:** Non-affiliation disclaimer (Scrap Mechanic is Axolot Games), data source (Steam Web API), privacy note about OpenID.
+
+---
+
+## Rating display (`lib/prefs.ts` / `lib/prefs.server.ts`)
+
+The file is split intentionally:
+- `lib/prefs.ts` — constants (`RATING_MODES`, `DEFAULT_RATING_MODE`, `RATING_MODE_COOKIE`) and the `RatingMode` type. Safe for client components.
+- `lib/prefs.server.ts` — `getRatingMode()` / `setRatingModeCookie()` which call `next/headers`. Server-only.
+
+Mixing the two in one file (as the initial implementation did) crashes the production build because webpack refuses to bundle `next/headers` into a client module.
+
+`StarRating` (`components/StarRating.tsx`) prefers a raw `up / (up+down)` ratio over Steam's Wilson-smoothed `vote_score` whenever both counts are available — this avoids the "everything is 3 stars" regression where low-sample Steam scores collapse toward 0.5. Rating rendering requires ≥10 total votes; below that the component shows `unrated` or `only N votes`.
 
 ---
 
