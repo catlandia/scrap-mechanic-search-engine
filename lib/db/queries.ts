@@ -41,7 +41,7 @@ export interface CreationCardRow {
   uploadedByUserId: string | null;
 }
 
-const cardColumns = {
+export const cardColumns = {
   id: creations.id,
   shortId: creations.shortId,
   title: creations.title,
