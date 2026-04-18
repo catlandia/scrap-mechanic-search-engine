@@ -373,5 +373,57 @@ export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Report = typeof reports.$inferSelect;
 export type NewReport = typeof reports.$inferInsert;
+export const SUGGESTION_STATUSES = [
+  "submitted",
+  "approved",
+  "rejected",
+  "implemented",
+] as const;
+export type SuggestionStatus = (typeof SUGGESTION_STATUSES)[number];
+
+export const featureSuggestions = pgTable(
+  "feature_suggestions",
+  {
+    id: serial("id").primaryKey(),
+    submitterUserId: text("submitter_user_id").references(() => users.steamid, {
+      onDelete: "set null",
+    }),
+    title: text("title").notNull(),
+    body: text("body"),
+    status: text("status").notNull().default("submitted"),
+    approvedByUserId: text("approved_by_user_id").references(() => users.steamid, {
+      onDelete: "set null",
+    }),
+    approvedAt: timestamp("approved_at", { withTimezone: true }),
+    implementedAt: timestamp("implemented_at", { withTimezone: true }),
+    creatorNote: text("creator_note"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [index("feature_suggestions_status_idx").on(t.status)],
+);
+
+export const featureSuggestionVotes = pgTable(
+  "feature_suggestion_votes",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.steamid, { onDelete: "cascade" }),
+    suggestionId: integer("suggestion_id")
+      .notNull()
+      .references(() => featureSuggestions.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.userId, t.suggestionId] }),
+    index("feature_suggestion_votes_suggestion_idx").on(t.suggestionId),
+  ],
+);
+
 export type Comment = typeof comments.$inferSelect;
 export type NewComment = typeof comments.$inferInsert;
+export type FeatureSuggestion = typeof featureSuggestions.$inferSelect;
+export type NewFeatureSuggestion = typeof featureSuggestions.$inferInsert;

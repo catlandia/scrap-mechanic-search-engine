@@ -19,7 +19,10 @@ const baseNav = [
   { href: "/admin/ingest", label: "Ingest" },
 ];
 const eliteNav = [{ href: "/admin/archive", label: "Archive" }];
-const creatorNav = [{ href: "/admin/users", label: "Users" }];
+const creatorNav = [
+  { href: "/admin/suggestions", label: "Suggestions" },
+  { href: "/admin/users", label: "Users" },
+];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();

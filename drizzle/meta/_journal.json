@@ -57,6 +57,13 @@
       "when": 1776503475895,
       "tag": "0007_needy_kingpin",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1776503757647,
+      "tag": "0008_rainy_the_leader",
+      "breakpoints": true
     }
   ]
 }

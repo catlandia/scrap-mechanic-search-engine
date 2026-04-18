@@ -21,6 +21,7 @@ const navLinks = [
   { href: "/challenges", label: "Challenges" },
   { href: "/tiles", label: "Tiles" },
   { href: "/search", label: "Search" },
+  { href: "/suggestions", label: "Ideas" },
 ];
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
