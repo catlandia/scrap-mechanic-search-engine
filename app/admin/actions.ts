@@ -922,6 +922,21 @@ export async function clearHardBan(formData: FormData) {
   revalidatePath(`/profile/${steamid}`);
 }
 
+export async function clearWarnings(formData: FormData) {
+  await requireCreator();
+  const steamid = String(formData.get("steamid") ?? "").trim();
+  if (!steamid) throw new Error("steamid required");
+
+  const db = getDb();
+  await db
+    .update(users)
+    .set({ warningsCount: 0, warningNote: null })
+    .where(eq(users.steamid, steamid));
+
+  revalidatePath("/admin/users");
+  revalidatePath(`/profile/${steamid}`);
+}
+
 export async function warnUser(formData: FormData) {
   const actor = await requireMod();
   const steamid = String(formData.get("steamid") ?? "").trim();

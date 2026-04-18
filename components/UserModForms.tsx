@@ -6,6 +6,7 @@ import {
   clearBan,
   clearHardBan,
   clearMute,
+  clearWarnings,
   hardBanUser,
   muteUser,
   warnUser,
@@ -26,6 +27,7 @@ export function UserModForms({
   isCurrentlyBanned,
   isCurrentlyMuted,
   isCurrentlyHardBanned,
+  warningsCount = 0,
 }: {
   targetSteamid: string;
   viewerIsCreator: boolean;
@@ -33,6 +35,7 @@ export function UserModForms({
   isCurrentlyBanned: boolean;
   isCurrentlyMuted: boolean;
   isCurrentlyHardBanned: boolean;
+  warningsCount?: number;
 }) {
   const [open, setOpen] = useState<null | "ban" | "mute" | "warn" | "hardban">(null);
 
@@ -67,6 +70,18 @@ export function UserModForms({
             </button>
           )}
         </>
+      )}
+      {viewerIsCreator && warningsCount > 0 && (
+        <form action={clearWarnings}>
+          <input type="hidden" name="steamid" value={targetSteamid} />
+          <button
+            type="submit"
+            className="rounded border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-amber-200 hover:bg-amber-500/20"
+            title={`Clear all ${warningsCount} warning${warningsCount === 1 ? "" : "s"}`}
+          >
+            Clear warnings
+          </button>
+        </form>
       )}
       {viewerIsCreator && (
         <>
