@@ -20,6 +20,7 @@ export function buildSessionOptions(password: string): SessionOptions {
       httpOnly: true,
       sameSite: "lax",
       path: "/",
+      maxAge: 60 * 60 * 24 * 7,
     },
   };
 }

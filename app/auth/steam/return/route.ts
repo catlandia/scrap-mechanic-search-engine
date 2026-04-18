@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
   const url = req.nextUrl;
   const params = url.searchParams;
   const rawNext = params.get("next") ?? "/";
-  const next = rawNext.startsWith("/") ? rawNext : "/";
+  const next = rawNext && rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/";
 
   const failUrl = (code: string) => {
     const home = new URL("/", url);

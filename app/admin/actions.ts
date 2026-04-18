@@ -16,7 +16,7 @@ import {
 import { runIngest } from "@/lib/ingest/pipeline";
 import { CREATION_KINDS } from "@/lib/db/schema";
 import { getCurrentUser, isBanned } from "@/lib/auth/session";
-import { isModerator } from "@/lib/auth/roles";
+import { effectiveRole, isModerator } from "@/lib/auth/roles";
 import type { UserRole } from "@/lib/db/schema";
 import {
   detectKind,
@@ -79,6 +79,7 @@ async function replaceTagsForCreation(creationId: string, tagIds: number[]) {
 }
 
 export async function approveCreation(formData: FormData) {
+  await requireMod();
   const db = getDb();
   const id = String(formData.get("creationId") ?? "");
   if (!id) throw new Error("creationId required");
@@ -115,6 +116,7 @@ export async function approveCreation(formData: FormData) {
 }
 
 export async function rejectCreation(formData: FormData) {
+  await requireMod();
   const db = getDb();
   const id = String(formData.get("creationId") ?? "");
   if (!id) throw new Error("creationId required");
@@ -159,6 +161,7 @@ export async function rejectCreation(formData: FormData) {
  * tags is admin-confirmed OR hits the +3 community-vote threshold.
  */
 export async function quickApprove(formData: FormData) {
+  await requireMod();
   const db = getDb();
   const id = String(formData.get("creationId") ?? "");
   if (!id) throw new Error("creationId required");
@@ -191,6 +194,7 @@ export async function quickApprove(formData: FormData) {
 }
 
 export async function saveCreationTags(formData: FormData) {
+  await requireMod();
   const db = getDb();
   const id = String(formData.get("creationId") ?? "");
   if (!id) throw new Error("creationId required");
@@ -204,6 +208,7 @@ export async function saveCreationTags(formData: FormData) {
 }
 
 export async function triggerIngest(formData?: FormData): Promise<void> {
+  await requireMod();
   let pagesPerKind: number | undefined;
   if (formData) {
     const raw = formData.get("pagesPerKind");
@@ -219,6 +224,7 @@ export async function triggerIngest(formData?: FormData): Promise<void> {
 }
 
 export async function createTag(formData: FormData) {
+  await requireMod();
   const db = getDb();
   const slug = String(formData.get("slug") ?? "")
     .trim()
@@ -264,6 +270,7 @@ function parsePublishedFileId(input: string): string | null {
  * for brand-new rows so suggestions still appear in the queue/triage.
  */
 export async function addCreation(formData: FormData) {
+  await requireMod();
   const raw = String(formData.get("input") ?? "").trim();
   const autoApprove = formData.get("approve") === "on";
 
@@ -444,7 +451,7 @@ async function requireMod() {
   const user = await getCurrentUser();
   if (!user) throw new Error("not_signed_in");
   if (isBanned(user)) throw new Error("banned");
-  if (!isModerator(user.role as UserRole)) throw new Error("not_a_mod");
+  if (!isModerator(effectiveRole(user))) throw new Error("not_a_mod");
   return user;
 }
 
@@ -452,7 +459,7 @@ async function requireCreator() {
   const user = await getCurrentUser();
   if (!user) throw new Error("not_signed_in");
   if (isBanned(user)) throw new Error("banned");
-  if ((user.role as UserRole) !== "creator") throw new Error("not_creator");
+  if (effectiveRole(user) !== "creator") throw new Error("not_creator");
   return user;
 }
 
@@ -556,7 +563,7 @@ export async function actionReport(formData: FormData) {
   const idRaw = String(formData.get("reportId") ?? "");
   const id = Number(idRaw);
   if (!Number.isInteger(id) || id <= 0) throw new Error("invalid_report_id");
-  const note = String(formData.get("note") ?? "").trim() || null;
+  const note = String(formData.get("note") ?? "").trim().slice(0, 500) || null;
 
   const db = getDb();
   const [row] = await db
@@ -586,7 +593,7 @@ async function requireEliteMod() {
   const user = await getCurrentUser();
   if (!user) throw new Error("not_signed_in");
   if (isBanned(user)) throw new Error("banned");
-  const role = user.role as UserRole;
+  const role = effectiveRole(user);
   if (role !== "elite_moderator" && role !== "creator") {
     throw new Error("not_elite_or_creator");
   }
@@ -604,7 +611,7 @@ export async function archiveFromReport(formData: FormData) {
   const idRaw = String(formData.get("reportId") ?? "");
   const id = Number(idRaw);
   if (!Number.isInteger(id) || id <= 0) throw new Error("invalid_report_id");
-  const extra = String(formData.get("note") ?? "").trim();
+  const extra = String(formData.get("note") ?? "").trim().slice(0, 500);
 
   const db = getDb();
   const [row] = await db
@@ -786,7 +793,7 @@ export async function banUser(formData: FormData) {
 
   const until = parseDurationDays(formData.get("duration"));
   if (!until) throw new Error("invalid_duration");
-  const reason = String(formData.get("reason") ?? "").trim() || null;
+  const reason = String(formData.get("reason") ?? "").trim().slice(0, 300) || null;
 
   const db = getDb();
   const [target] = await db
@@ -833,7 +840,7 @@ export async function muteUser(formData: FormData) {
 
   const until = parseDurationDays(formData.get("duration"));
   if (!until) throw new Error("invalid_duration");
-  const reason = String(formData.get("reason") ?? "").trim() || null;
+  const reason = String(formData.get("reason") ?? "").trim().slice(0, 300) || null;
 
   const db = getDb();
   const [target] = await db
@@ -946,7 +953,7 @@ export async function warnUser(formData: FormData) {
   const steamid = String(formData.get("steamid") ?? "").trim();
   if (!steamid) throw new Error("steamid required");
   if (steamid === actor.steamid) throw new Error("cannot_warn_self");
-  const note = String(formData.get("note") ?? "").trim() || null;
+  const note = String(formData.get("note") ?? "").trim().slice(0, 500) || null;
 
   const db = getDb();
   const [target] = await db
@@ -970,6 +977,7 @@ export async function warnUser(formData: FormData) {
 }
 
 export async function createCategory(formData: FormData) {
+  await requireMod();
   const db = getDb();
   const slug = String(formData.get("slug") ?? "")
     .trim()

@@ -4,9 +4,8 @@ import { buildSteamLoginUrl } from "@/lib/auth/steam-openid";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
-  const requested = req.nextUrl.searchParams.get("next") ?? "/";
-  // Only allow same-site redirects after login.
-  const next = requested.startsWith("/") ? requested : "/";
+  const rawNext = req.nextUrl.searchParams.get("next") ?? "/";
+  const next = rawNext && rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/";
 
   // Always use the origin of the incoming request — NEXT_PUBLIC_SITE_URL can
   // go stale when Vercel rotates preview/deployment aliases and Steam will

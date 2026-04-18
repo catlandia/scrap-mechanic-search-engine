@@ -9,6 +9,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "invalid_mode" }, { status: 400 });
   }
   await setRatingModeCookie(raw as RatingMode);
-  const next = String(form.get("next") ?? "/");
+  const rawNext = String(form.get("next") ?? "/");
+  const next = rawNext && rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/";
   return NextResponse.redirect(new URL(next, req.url), { status: 303 });
 }

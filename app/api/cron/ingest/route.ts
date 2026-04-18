@@ -15,9 +15,6 @@ function isAuthorized(req: NextRequest): boolean {
   const headerSecret = req.headers.get("x-cron-secret");
   if (headerSecret === secret) return true;
 
-  const url = new URL(req.url);
-  if (url.searchParams.get("secret") === secret) return true;
-
   return false;
 }
 
@@ -30,8 +27,8 @@ async function handle(req: NextRequest) {
     const result = await runIngest({});
     return NextResponse.json({ ok: true, ...result });
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    return NextResponse.json({ ok: false, error: message }, { status: 500 });
+    console.error(err);
+    return NextResponse.json({ ok: false, error: "internal" }, { status: 500 });
   }
 }
 
