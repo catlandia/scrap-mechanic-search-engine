@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, eq, inArray, ne, sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import {
   categories,
@@ -247,6 +247,53 @@ export async function createTag(formData: FormData) {
     });
   revalidatePath("/admin/tags");
   revalidatePath("/admin/queue");
+}
+
+/**
+ * Edit an existing tag's name, slug, or category. Creator-only because
+ * slug changes break any bookmarked /search?tags=<slug> URL that points
+ * at the old value — that's site-wide blast radius.
+ *
+ * tag_id is the stable FK that creation_tags references, so changing the
+ * slug doesn't orphan anything.
+ */
+export async function updateTag(formData: FormData) {
+  await requireCreator();
+  const db = getDb();
+
+  const tagIdRaw = String(formData.get("tagId") ?? "");
+  const tagId = Number(tagIdRaw);
+  if (!Number.isInteger(tagId) || tagId <= 0) throw new Error("invalid_tag_id");
+
+  const name = String(formData.get("name") ?? "").trim();
+  const slug = String(formData.get("slug") ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+  const categoryIdRaw = String(formData.get("categoryId") ?? "").trim();
+  const categoryId = categoryIdRaw ? Number(categoryIdRaw) : null;
+
+  if (!slug || !name) throw new Error("slug and name required");
+
+  // Reject slug collisions against other tags — the DB unique constraint
+  // would catch it, but a friendlier error is worth the round-trip.
+  const [conflict] = await db
+    .select({ id: tags.id })
+    .from(tags)
+    .where(and(eq(tags.slug, slug), ne(tags.id, tagId)))
+    .limit(1);
+  if (conflict) throw new Error(`slug_in_use: another tag already uses "${slug}"`);
+
+  await db
+    .update(tags)
+    .set({ name, slug, categoryId: categoryId ?? null })
+    .where(eq(tags.id, tagId));
+
+  revalidatePath("/admin/tags");
+  revalidatePath("/admin/queue");
+  revalidatePath("/search");
 }
 
 function parsePublishedFileId(input: string): string | null {

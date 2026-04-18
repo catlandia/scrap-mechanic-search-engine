@@ -1,14 +1,19 @@
-import { eq } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
-import { categories, tags } from "@/lib/db/schema";
-import { createCategory, createTag } from "@/app/admin/actions";
+import { categories, tags, type Category, type Tag } from "@/lib/db/schema";
+import { createCategory, createTag, updateTag } from "@/app/admin/actions";
+import { getCurrentUser } from "@/lib/auth/session";
+import { effectiveRole, isCreator } from "@/lib/auth/roles";
 
 export const dynamic = "force-dynamic";
 
 export default async function TagsPage() {
   const db = getDb();
-  const allCategories = await db.select().from(categories).orderBy(categories.name);
-  const allTags = await db.select().from(tags).orderBy(tags.name);
+  const [user, allCategories, allTags] = await Promise.all([
+    getCurrentUser(),
+    db.select().from(categories).orderBy(categories.name),
+    db.select().from(tags).orderBy(tags.name),
+  ]);
+  const creatorView = isCreator(effectiveRole(user));
 
   const tagsByCategory = new Map<number | null, typeof allTags>();
   for (const t of allTags) {
@@ -24,6 +29,11 @@ export default async function TagsPage() {
         <h1 className="text-2xl font-semibold">Taxonomy</h1>
         <p className="text-sm text-white/50">
           {allCategories.length} categories · {allTags.length} tags
+          {creatorView && (
+            <span className="ml-2 text-purple-300">
+              · click any tag to edit
+            </span>
+          )}
         </p>
       </header>
 
@@ -107,40 +117,130 @@ export default async function TagsPage() {
             const bucket = tagsByCategory.get(cat.id);
             if (!bucket || bucket.length === 0) return null;
             return (
-              <div key={cat.id}>
-                <div className="mb-1 text-xs uppercase tracking-wide text-white/40">{cat.name}</div>
-                <div className="flex flex-wrap gap-2">
-                  {bucket.map((t) => (
-                    <span
-                      key={t.id}
-                      className="rounded-full border border-border bg-card px-2.5 py-0.5 text-xs text-white/80"
-                    >
-                      {t.name} <span className="text-white/40">· {t.slug}</span>
-                    </span>
-                  ))}
-                </div>
-              </div>
+              <TagGroup
+                key={cat.id}
+                label={cat.name}
+                tags={bucket}
+                allCategories={allCategories}
+                creatorView={creatorView}
+              />
             );
           })}
           {(tagsByCategory.get(null)?.length ?? 0) > 0 && (
-            <div>
-              <div className="mb-1 text-xs uppercase tracking-wide text-white/40">
-                Uncategorised
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {tagsByCategory.get(null)!.map((t) => (
-                  <span
-                    key={t.id}
-                    className="rounded-full border border-border bg-card px-2.5 py-0.5 text-xs text-white/80"
-                  >
-                    {t.name} <span className="text-white/40">· {t.slug}</span>
-                  </span>
-                ))}
-              </div>
-            </div>
+            <TagGroup
+              label="Uncategorised"
+              tags={tagsByCategory.get(null)!}
+              allCategories={allCategories}
+              creatorView={creatorView}
+            />
           )}
         </div>
       </section>
     </div>
+  );
+}
+
+function TagGroup({
+  label,
+  tags,
+  allCategories,
+  creatorView,
+}: {
+  label: string;
+  tags: Tag[];
+  allCategories: Category[];
+  creatorView: boolean;
+}) {
+  return (
+    <div>
+      <div className="mb-1 text-xs uppercase tracking-wide text-white/40">{label}</div>
+      <div className="flex flex-wrap gap-2">
+        {tags.map((t) =>
+          creatorView ? (
+            <TagChipEditable key={t.id} tag={t} allCategories={allCategories} />
+          ) : (
+            <span
+              key={t.id}
+              className="rounded-full border border-border bg-card px-2.5 py-0.5 text-xs text-white/80"
+            >
+              {t.name} <span className="text-white/40">· {t.slug}</span>
+            </span>
+          ),
+        )}
+      </div>
+    </div>
+  );
+}
+
+function TagChipEditable({
+  tag,
+  allCategories,
+}: {
+  tag: Tag;
+  allCategories: Category[];
+}) {
+  return (
+    <details className="group rounded-md border border-border bg-card/60 text-xs">
+      <summary className="cursor-pointer list-none rounded-md px-2.5 py-0.5 text-white/80 hover:bg-white/5 group-open:rounded-b-none group-open:border-b group-open:border-border">
+        {tag.name} <span className="text-white/40">· {tag.slug}</span>
+        <span className="ml-2 text-[10px] text-purple-300 group-open:hidden">
+          edit
+        </span>
+      </summary>
+      <form action={updateTag} className="grid gap-2 p-3 sm:grid-cols-4">
+        <input type="hidden" name="tagId" value={tag.id} />
+        <label className="space-y-1">
+          <span className="block text-[10px] uppercase tracking-wider text-white/40">
+            Name
+          </span>
+          <input
+            name="name"
+            defaultValue={tag.name}
+            required
+            className="w-full rounded border border-border bg-background px-2 py-1 text-sm"
+          />
+        </label>
+        <label className="space-y-1">
+          <span className="block text-[10px] uppercase tracking-wider text-white/40">
+            Slug
+          </span>
+          <input
+            name="slug"
+            defaultValue={tag.slug}
+            required
+            className="w-full rounded border border-border bg-background px-2 py-1 text-sm"
+          />
+        </label>
+        <label className="space-y-1">
+          <span className="block text-[10px] uppercase tracking-wider text-white/40">
+            Category
+          </span>
+          <select
+            name="categoryId"
+            defaultValue={tag.categoryId ?? ""}
+            className="w-full rounded border border-border bg-background px-2 py-1 text-sm"
+          >
+            <option value="">— no category —</option>
+            {allCategories.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <div className="flex items-end">
+          <button
+            type="submit"
+            className="w-full rounded bg-accent px-3 py-1 text-sm font-medium text-black hover:bg-accent-strong"
+          >
+            Save
+          </button>
+        </div>
+        <p className="text-[11px] text-amber-200/70 sm:col-span-4">
+          Changing the slug breaks any existing <code>/search?tags=&lt;old-slug&gt;</code>{" "}
+          link. Safe for fixing typos; be deliberate about renames.
+        </p>
+      </form>
+    </details>
   );
 }

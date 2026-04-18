@@ -207,6 +207,14 @@ function ModeratorSection() {
           Building, Mechanism, etc.). Don&apos;t create a category just for
           one tag.
         </p>
+        <p className="text-white/60">
+          <strong className="text-white">Editing an existing tag</strong> (fix
+          a misspelled slug, re-bucket it under a different category) is
+          creator-only — click any tag chip on the page to open an inline
+          edit form. Slug changes break any bookmarked{" "}
+          <code className="rounded bg-black/40 px-1">/search?tags=&lt;old&gt;</code>{" "}
+          URL, so be deliberate with renames.
+        </p>
       </Step>
 
       <Step title="Reports — handling community reports">

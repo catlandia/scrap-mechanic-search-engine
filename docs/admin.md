@@ -102,6 +102,7 @@ All helpers check `effectiveRole` (ban-aware), not `user.role` directly. **Every
 | Action | Notes |
 |---|---|
 | `createTag(name, slug, categoryId)` | Normalizes slug, upserts to avoid duplicate errors |
+| `updateTag(tagId, name, slug, categoryId)` | Creator-only. Fixes misspellings or re-buckets a tag. Normalises the slug; rejects collisions with another tag's slug. `creation_tags.tag_id` is the immutable FK, so changing the slug doesn't orphan anything — but bookmarked `/search?tags=<old>` URLs break. |
 | `createCategory(name, slug)` | Creates a new category |
 
 ### Ingest
