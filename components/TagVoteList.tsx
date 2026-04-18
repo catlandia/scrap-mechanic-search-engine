@@ -4,9 +4,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import type { TagWithVotes } from "@/lib/db/queries";
-import { voteTag } from "@/lib/community/actions";
+import { suggestTag, voteTag } from "@/lib/community/actions";
 import { cn } from "@/lib/utils";
 import { breakdownTitle } from "@/components/RoleBreakdown";
+import { TagAutocomplete, type TagSuggestion } from "@/components/TagAutocomplete";
 
 interface TagChipState {
   viewerVote: -1 | 0 | 1;
@@ -64,15 +65,43 @@ export function TagVoteList({
     });
   }
 
+  const presentSlugs = tags.map((t) => t.slug);
+
+  async function nominate(pick: TagSuggestion) {
+    if (!signedIn) {
+      router.push(`/auth/steam/login?next=/creation/${creationId}`);
+      return;
+    }
+    const fd = new FormData();
+    fd.append("creationId", creationId);
+    fd.append("tagSlug", pick.slug);
+    try {
+      await suggestTag(fd);
+      router.refresh();
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   if (tags.length === 0) {
     return (
-      <div className="text-sm text-white/40">
-        No tags yet. Sign in to vote on tags once they&apos;re suggested.
+      <div className="space-y-3">
+        <div className="text-sm text-white/40">
+          No tags yet. Type a tag name below to suggest one — your vote
+          counts as the first upvote.
+        </div>
+        <TagAutocomplete
+          placeholder="Suggest a tag (type to search)"
+          excludeSlugs={presentSlugs}
+          onSelect={nominate}
+          disabled={!signedIn}
+        />
       </div>
     );
   }
 
   return (
+    <div className="space-y-3">
     <ul className="flex flex-wrap gap-2">
       {tags.map((t) => {
         const local = stateByTag[t.tagId] ?? { viewerVote: t.viewerVote, pending: false };
@@ -157,6 +186,20 @@ export function TagVoteList({
         );
       })}
     </ul>
+      <div>
+        <div className="mb-1 text-[10px] uppercase tracking-widest text-white/40">
+          Suggest another tag
+        </div>
+        <TagAutocomplete
+          placeholder={
+            signedIn ? "Type a tag name…" : "Sign in to suggest tags"
+          }
+          excludeSlugs={presentSlugs}
+          onSelect={nominate}
+          disabled={!signedIn}
+        />
+      </div>
+    </div>
   );
 }
 

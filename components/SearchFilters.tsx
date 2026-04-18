@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 
 interface Tag {
@@ -68,8 +68,17 @@ export function SearchFilters({ allTags, allCategories }: Props) {
     update({ tags: next || null });
   }
 
+  const [tagFilter, setTagFilter] = useState("");
+
+  const tagMatches = (t: Tag) => {
+    if (!tagFilter.trim()) return true;
+    const q = tagFilter.trim().toLowerCase();
+    return t.name.toLowerCase().includes(q) || t.slug.toLowerCase().includes(q);
+  };
+
   const tagsByCategory = new Map<number | null, Tag[]>();
   for (const t of allTags) {
+    if (!tagMatches(t)) continue;
     const key = t.categoryId ?? null;
     const bucket = tagsByCategory.get(key) ?? [];
     bucket.push(t);
@@ -151,18 +160,27 @@ export function SearchFilters({ allTags, allCategories }: Props) {
       </div>
 
       <div className="space-y-3">
-        <div className="text-xs uppercase tracking-widest text-white/50">
-          Tags{" "}
+        <div className="flex items-center justify-between">
+          <div className="text-xs uppercase tracking-widest text-white/50">
+            Tags
+          </div>
           {tagSlugs.length > 0 && (
             <button
               type="button"
               onClick={() => update({ tags: null })}
-              className="ml-2 text-white/60 hover:text-white"
+              className="text-[11px] text-white/60 hover:text-white"
             >
-              (clear)
+              clear selection
             </button>
           )}
         </div>
+        <input
+          type="text"
+          value={tagFilter}
+          onChange={(e) => setTagFilter(e.target.value)}
+          placeholder="Filter tags…"
+          className="w-full rounded border border-border bg-background px-2 py-1 text-xs focus:border-accent focus:outline-none"
+        />
         {allCategories.map((c) => {
           const bucket = tagsByCategory.get(c.id);
           if (!bucket || bucket.length === 0) return null;

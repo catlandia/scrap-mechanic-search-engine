@@ -6,11 +6,13 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
 import {
   creations,
+  creationTags,
   creationVotes,
   favorites,
   reports,
   REPORT_REASONS,
   tagVotes,
+  tags,
   users,
   type ReportReason,
 } from "@/lib/db/schema";
@@ -174,6 +176,56 @@ export async function reportCreation(formData: FormData): Promise<void> {
 
   revalidatePath(`/creation/${creationId}`);
   revalidatePath("/admin/reports");
+}
+
+/**
+ * Community tag nomination: adds a +1 vote on a tag that may or may not be
+ * present on this creation yet. If no creation_tags row exists, one is
+ * created with source='community' and confirmed=false — the tag only
+ * appears publicly once it has +3 net community votes OR an admin confirms.
+ */
+export async function suggestTag(formData: FormData): Promise<void> {
+  const user = await requireVotingUser();
+  const db = getDb();
+
+  const creationId = String(formData.get("creationId") ?? "");
+  const tagSlug = String(formData.get("tagSlug") ?? "").trim();
+  if (!creationId) throw new Error("creationId required");
+  if (!tagSlug) throw new Error("tagSlug required");
+
+  const [tag] = await db
+    .select({ id: tags.id })
+    .from(tags)
+    .where(eq(tags.slug, tagSlug))
+    .limit(1);
+  if (!tag) throw new Error("unknown_tag");
+
+  await db
+    .insert(creationTags)
+    .values({
+      creationId,
+      tagId: tag.id,
+      source: "community",
+      confidence: null,
+      confirmed: false,
+      rejected: false,
+    })
+    .onConflictDoNothing();
+
+  await db
+    .insert(tagVotes)
+    .values({
+      userId: user.steamid,
+      creationId,
+      tagId: tag.id,
+      value: 1,
+    })
+    .onConflictDoUpdate({
+      target: [tagVotes.userId, tagVotes.creationId, tagVotes.tagId],
+      set: { value: 1, createdAt: new Date() },
+    });
+
+  revalidatePath(`/creation/${creationId}`);
 }
 
 export async function voteTag(
