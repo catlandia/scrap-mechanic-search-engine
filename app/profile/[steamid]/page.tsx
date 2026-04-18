@@ -7,6 +7,9 @@ import { getDb } from "@/lib/db/client";
 import { users, type UserRole } from "@/lib/db/schema";
 import { RoleBadge } from "@/components/RoleBadge";
 import { UserName } from "@/components/UserName";
+import { ProfileFavourites } from "@/components/profile/ProfileFavourites";
+import { SubmittedItems } from "@/components/profile/SubmittedItems";
+import { VoteHistory } from "@/components/profile/VoteHistory";
 import { ROLE_LABELS, ROLE_STYLES } from "@/lib/auth/roles";
 
 export const dynamic = "force-dynamic";
@@ -131,9 +134,9 @@ export default async function ProfilePage({ params }: { params: Params }) {
         </section>
       )}
 
-      <section className="rounded-md border border-border bg-card/60 px-4 py-5 text-sm text-white/60">
-        More on this profile soon: favourites, vote history, submitted items.
-      </section>
+      <SubmittedItems steamid={user.steamid} />
+      <ProfileFavourites steamid={user.steamid} />
+      <VoteHistory steamid={user.steamid} />
     </article>
   );
 }
