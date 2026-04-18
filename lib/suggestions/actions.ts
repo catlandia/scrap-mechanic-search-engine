@@ -46,6 +46,21 @@ export async function submitSuggestion(formData: FormData): Promise<{ ok: boolea
     if (body.length > MAX_BODY) return { ok: false, error: "Body too long." };
 
     const db = getDb();
+
+    // Rate limit: 1 suggestion per 5 minutes per user.
+    const [recent] = await db
+      .select({ n: sql<number>`count(*)::int` })
+      .from(featureSuggestions)
+      .where(
+        and(
+          eq(featureSuggestions.submitterUserId, user.steamid),
+          sql`${featureSuggestions.createdAt} > now() - interval '5 minutes'`,
+        ),
+      );
+    if ((recent?.n ?? 0) > 0) {
+      return { ok: false, error: "Please wait 5 minutes between suggestions." };
+    }
+
     await db.insert(featureSuggestions).values({
       submitterUserId: user.steamid,
       title,

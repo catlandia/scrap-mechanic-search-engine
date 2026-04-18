@@ -4,6 +4,7 @@ import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
+import { sql } from "drizzle-orm";
 import {
   categories,
   comments,
@@ -260,6 +261,21 @@ export async function postComment(formData: FormData): Promise<void> {
   if (body.length > MAX_COMMENT_LENGTH) throw new Error("body_too_long");
 
   const db = getDb();
+
+  // Rate limit: 1 comment per 30 seconds per user.
+  const [recent] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(comments)
+    .where(
+      and(
+        eq(comments.userId, user.steamid),
+        sql`${comments.createdAt} > now() - interval '30 seconds'`,
+      ),
+    );
+  if ((recent?.n ?? 0) > 0) {
+    throw new Error("rate_limited: wait 30s between comments");
+  }
+
   await db.insert(comments).values({
     creationId,
     userId: user.steamid,
@@ -348,6 +364,21 @@ export async function submitCreation(formData: FormData): Promise<SubmitResult> 
   if (!apiKey) return { ok: false, error: "Steam API key not configured." };
 
   const db = getDb();
+
+  // Rate limit: one submission per 10 minutes per user.
+  const [recent] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(creations)
+    .where(
+      and(
+        eq(creations.uploadedByUserId, user.steamid),
+        sql`${creations.ingestedAt} > now() - interval '10 minutes'`,
+      ),
+    );
+  if ((recent?.n ?? 0) > 0) {
+    return { ok: false, error: "Please wait 10 minutes between submissions." };
+  }
+
   const [existing] = await db
     .select({ id: creations.id, status: creations.status })
     .from(creations)
