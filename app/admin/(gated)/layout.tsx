@@ -18,6 +18,7 @@ const baseNav = [
   { href: "/admin/add", label: "Add" },
   { href: "/admin/tags", label: "Tags" },
   { href: "/admin/ingest", label: "Ingest" },
+  { href: "/admin/guide", label: "Guide" },
 ];
 const creatorNav = [
   { href: "/admin/suggestions", label: "Suggestions" },

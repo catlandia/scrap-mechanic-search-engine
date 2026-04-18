@@ -20,6 +20,7 @@ The admin backend is gated at `/admin/*` by the middleware, requiring a Steam lo
 | `/admin/add` | Mod+ | Manually add a Workshop item by URL |
 | `/admin/users` | Creator | User role + ban management |
 | `/admin/suggestions` | Creator | Feature suggestion board management |
+| `/admin/guide` | Mod+ | In-app moderator handbook. Sections are tier-gated — a regular mod only sees moderator-tier content, an elite sees mod+elite, the creator sees everything. |
 
 ---
 
