@@ -107,13 +107,17 @@ export default async function CreationDetailPage({ params }: { params: Params })
   ]);
   const uploader = uploaderRow;
 
+  const viewerIsCreator = isCreator(viewer?.role as UserRole | undefined);
   const visibleTags = tagsWithVotes.filter((t) => !t.rejected);
   const confirmedTags = visibleTags.filter((t) => t.confirmed);
   const communityTags = visibleTags
     .filter((t) => !t.confirmed && t.up - t.down >= 3)
     .sort((a, b) => b.up - b.down - (a.up - a.down))
     .slice(0, 5);
-  const displayTags = [...confirmedTags, ...communityTags];
+  // Creator sees all non-rejected tags so they can remove any of them.
+  const displayTags = viewerIsCreator
+    ? visibleTags
+    : [...confirmedTags, ...communityTags];
 
   // All non-rejected tags remain in the vote panel so users can tip weak tags
   // over threshold even though they don't yet render in `displayTags`.
@@ -298,7 +302,6 @@ export default async function CreationDetailPage({ params }: { params: Params })
           </div>
           <div className="flex flex-wrap gap-1.5">
             {displayTags.map((t) => {
-              const viewerIsCreator = isCreator(viewer?.role as UserRole | undefined);
               return (
                 <span
                   key={t.tagId}
