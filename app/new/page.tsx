@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { CreationGrid } from "@/components/CreationCard";
 import { getNewestApproved } from "@/lib/db/queries";
-import { getRatingMode } from "@/lib/prefs";
+import { getRatingMode } from "@/lib/prefs.server";
 
 export const dynamic = "force-dynamic";
 

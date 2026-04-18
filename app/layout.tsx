@@ -5,7 +5,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { UserMenu } from "@/components/UserMenu";
 import { RatingModeToggle } from "@/components/RatingModeToggle";
 import { getUnreadNotificationCount } from "@/lib/db/queries";
-import { getRatingMode } from "@/lib/prefs";
+import { getRatingMode } from "@/lib/prefs.server";
 import "./globals.css";
 
 export const metadata: Metadata = {

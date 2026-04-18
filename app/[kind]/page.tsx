@@ -5,7 +5,7 @@ import { CreationGrid } from "@/components/CreationCard";
 import { SortSelector } from "@/components/SortSelector";
 import { getApprovedByKind, parseSortMode } from "@/lib/db/queries";
 import type { CreationKind } from "@/lib/db/schema";
-import { getRatingMode } from "@/lib/prefs";
+import { getRatingMode } from "@/lib/prefs.server";
 
 export const dynamic = "force-dynamic";
 

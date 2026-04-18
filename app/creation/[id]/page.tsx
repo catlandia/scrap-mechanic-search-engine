@@ -30,7 +30,7 @@ import { ReportBadge } from "@/components/ReportBadge";
 import { TagVoteList } from "@/components/TagVoteList";
 import { isCreator, isModerator } from "@/lib/auth/roles";
 import type { UserRole } from "@/lib/db/schema";
-import { getRatingMode } from "@/lib/prefs";
+import { getRatingMode } from "@/lib/prefs.server";
 
 export const dynamic = "force-dynamic";
 

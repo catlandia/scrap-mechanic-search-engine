@@ -5,7 +5,7 @@ import {
   getApprovedKindCounts,
   getNewestApproved,
 } from "@/lib/db/queries";
-import { getRatingMode } from "@/lib/prefs";
+import { getRatingMode } from "@/lib/prefs.server";
 
 export const dynamic = "force-dynamic";
 

@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { RATING_MODES, setRatingModeCookie, type RatingMode } from "@/lib/prefs";
+import { RATING_MODES, type RatingMode } from "@/lib/prefs";
+import { setRatingModeCookie } from "@/lib/prefs.server";
 
 export async function POST(req: NextRequest) {
   const form = await req.formData();
