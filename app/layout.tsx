@@ -37,11 +37,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body className="min-h-screen bg-background text-foreground antialiased">
         <header className="border-b border-white/10 bg-black/40 backdrop-blur supports-[backdrop-filter]:bg-black/30">
           <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
-            <Link
-              href="/"
-              className="text-lg font-semibold tracking-tight text-accent hover:text-accent-strong"
-            >
-              SM<span className="text-foreground">/</span>Search
+            <Link href="/" className="flex items-center gap-2 hover:opacity-80">
+              <img src="/logo.png" alt="Scrap Mechanic" className="h-8 w-auto" />
+              <span className="text-lg font-semibold tracking-tight text-accent">
+                <span className="text-foreground">/</span>Search
+              </span>
             </Link>
             <nav className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-white/70">
               {navLinks.map((link) => (
