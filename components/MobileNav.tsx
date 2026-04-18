@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { RatingModeToggle } from "@/components/RatingModeToggle";
 import type { RatingMode } from "@/lib/prefs";
 import { cn } from "@/lib/utils";
@@ -21,7 +22,12 @@ export function MobileNav({
   signedIn: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     setOpen(false);
@@ -68,9 +74,9 @@ export function MobileNav({
         </svg>
       </button>
 
-      {open && (
+      {open && mounted && createPortal(
         <div
-          className="fixed inset-0 z-40 sm:hidden"
+          className="fixed inset-0 z-[100] sm:hidden"
           role="dialog"
           aria-modal="true"
         >
@@ -174,7 +180,8 @@ export function MobileNav({
               </>
             )}
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </>
   );
