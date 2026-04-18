@@ -11,13 +11,31 @@ import { isModerator } from "@/lib/auth/roles";
 import type { UserRole } from "@/lib/db/schema";
 import "./globals.css";
 
+const siteTitle = "Scrap Mechanic Search Engine";
+const siteDescription =
+  "A curated search engine for Scrap Mechanic Steam Workshop creations, mods, worlds, challenges, and more.";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
   title: {
-    default: "Scrap Mechanic Search Engine",
+    default: siteTitle,
     template: "%s · Scrap Mechanic Search Engine",
   },
-  description:
-    "A curated search engine for Scrap Mechanic Steam Workshop creations, mods, worlds, challenges, and more.",
+  description: siteDescription,
+  openGraph: {
+    title: siteTitle,
+    description: siteDescription,
+    siteName: "Scrap Mechanic Search Engine",
+    url: "/",
+    type: "website",
+    images: ["/logo.png"],
+  },
+  twitter: {
+    card: "summary",
+    title: siteTitle,
+    description: siteDescription,
+    images: ["/logo.png"],
+  },
 };
 
 const navLinks = [

@@ -1,9 +1,17 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { CreationGrid } from "@/components/CreationCard";
 import { getNewestApproved } from "@/lib/db/queries";
 import { getRatingMode } from "@/lib/prefs.server";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Newest additions — Scrap Mechanic Search Engine",
+  description:
+    "The most recently approved Scrap Mechanic Steam Workshop creations across every kind — fresh blueprints, mods, worlds, challenges, tiles, and more.",
+  alternates: { canonical: "/new" },
+};
 
 const PAGE_SIZE = 24;
 

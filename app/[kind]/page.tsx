@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
@@ -33,6 +34,21 @@ const SLUG_TO_KIND: Record<string, { kind: CreationKind; label: string; descript
 
 export function generateStaticParams() {
   return Object.keys(SLUG_TO_KIND).map((slug) => ({ kind: slug }));
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ kind: string }>;
+}): Promise<Metadata> {
+  const { kind: slug } = await params;
+  const entry = SLUG_TO_KIND[slug];
+  if (!entry) return {};
+  return {
+    title: `${entry.label} — Scrap Mechanic Search Engine`,
+    description: entry.description,
+    alternates: { canonical: `/${slug}` },
+  };
 }
 
 const PAGE_SIZE = 24;

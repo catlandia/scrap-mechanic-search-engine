@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { CreationGrid } from "@/components/CreationCard";
 import {
@@ -8,6 +9,13 @@ import {
 import { getRatingMode } from "@/lib/prefs.server";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Scrap Mechanic Search Engine",
+  description:
+    "Browse a curated directory of Scrap Mechanic Steam Workshop creations — blueprints, mods, worlds, challenges, tiles, custom games, and terrain assets.",
+  alternates: { canonical: "/" },
+};
 
 const FEATURED_KINDS: Array<{
   kind: "blueprint" | "mod" | "world" | "challenge" | "tile";

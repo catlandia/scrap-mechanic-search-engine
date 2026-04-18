@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { CreationGrid } from "@/components/CreationCard";
@@ -12,6 +13,13 @@ import {
 import { getRatingMode } from "@/lib/prefs.server";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Search — Scrap Mechanic Search Engine",
+  description:
+    "Search and filter Scrap Mechanic Steam Workshop creations by kind, category, and tags — find drivable campers, mech walkers, custom worlds, and more.",
+  alternates: { canonical: "/search" },
+};
 
 const PAGE_SIZE = 24;
 
@@ -33,7 +41,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
   const hasQuery = Boolean(sp.q?.trim());
   const defaultSort = hasQuery ? "relevance" : "newest";
   const sort = sp.sort ? parseSortMode(sp.sort) : defaultSort;
-  const pageIndex = Math.max(0, Number(sp.page ?? "1") - 1);
+  const pageIndex = Math.min(200, Math.max(0, Number(sp.page ?? "1") - 1));
 
   const [allTags, allCategories, results] = await Promise.all([
     getAllTags(),

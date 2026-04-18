@@ -1,8 +1,16 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { getCurrentUser, isBanned, isMuted } from "@/lib/auth/session";
 import { SubmitCreationForm } from "@/components/SubmitCreationForm";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Submit a creation — Scrap Mechanic Search Engine",
+  description:
+    "Submit a Scrap Mechanic Steam Workshop creation the cron hasn't found yet. Approved items appear on the public feed with a Community badge crediting you.",
+  robots: { index: false, follow: false },
+};
 
 export default async function SubmitPage() {
   const user = await getCurrentUser();

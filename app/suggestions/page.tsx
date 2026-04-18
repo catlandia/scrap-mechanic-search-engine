@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import {
   getApprovedSuggestions,
@@ -9,6 +10,13 @@ import { SuggestionCard } from "@/components/SuggestionCard";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Ideas board — Scrap Mechanic Search Engine",
+  description:
+    "Community-submitted feature suggestions for the Scrap Mechanic Search Engine. Upvote the ideas you want first, or see what's been implemented or rejected.",
+  alternates: { canonical: "/suggestions" },
+};
 
 type Tab = "approved" | "implemented" | "rejected";
 

@@ -1,8 +1,16 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { getCurrentUser, isBanned, isMuted } from "@/lib/auth/session";
 import { SuggestionForm } from "@/components/SuggestionForm";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Submit a suggestion — Scrap Mechanic Search Engine",
+  description:
+    "Submit a private feature suggestion to the Scrap Mechanic Search Engine. Approved ideas land on the public board where the community upvotes them.",
+  robots: { index: false, follow: false },
+};
 
 export default async function NewSuggestionPage() {
   const user = await getCurrentUser();

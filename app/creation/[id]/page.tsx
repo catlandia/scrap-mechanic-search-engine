@@ -51,12 +51,29 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   const { id } = await params;
   const detail = await getCreationDetail(id);
   if (!detail || detail.creation.status !== "approved") return {};
+  const { creation } = detail;
+  const byLine = creation.authorName ? `by ${creation.authorName}. ` : "";
+  const snippet = creation.descriptionClean.slice(0, 180 - byLine.length).trim();
+  const description = `${byLine}${snippet}`.slice(0, 200);
+  const canonical = `/creation/${creation.shortId}`;
+  const images = creation.thumbnailUrl ? [creation.thumbnailUrl] : [];
   return {
-    title: detail.creation.title,
-    description: detail.creation.descriptionClean.slice(0, 180),
-    openGraph: detail.creation.thumbnailUrl
-      ? { images: [detail.creation.thumbnailUrl] }
-      : undefined,
+    title: creation.title,
+    description,
+    alternates: { canonical },
+    openGraph: {
+      title: creation.title,
+      description,
+      type: "article",
+      url: canonical,
+      images,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: creation.title,
+      description,
+      images,
+    },
   };
 }
 
