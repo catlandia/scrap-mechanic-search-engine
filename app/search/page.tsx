@@ -9,6 +9,7 @@ import {
   parseSortMode,
   searchApproved,
 } from "@/lib/db/queries";
+import { getRatingMode } from "@/lib/prefs";
 
 export const dynamic = "force-dynamic";
 
@@ -49,6 +50,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
   ]);
 
   const totalPages = Math.ceil(results.total / PAGE_SIZE);
+  const ratingMode = await getRatingMode();
 
   function pageHref(targetPage: number): string {
     const params = new URLSearchParams();
@@ -81,7 +83,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
           </div>
         </header>
 
-        <CreationGrid items={results.items} />
+        <CreationGrid items={results.items} ratingMode={ratingMode} />
 
         {totalPages > 1 && (
           <nav className="flex items-center justify-between pt-2 text-sm text-white/60">

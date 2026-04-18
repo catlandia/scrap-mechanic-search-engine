@@ -21,19 +21,23 @@ export function UserMenu({ user, unreadNotifications = 0 }: { user: User; unread
         <>
           <Link
             href="/submit"
-            className="hidden text-white/60 hover:text-white sm:inline"
+            className="text-white/60 hover:text-white"
           >
             Submit
           </Link>
           <Link
             href="/me/favourites"
-            className="hidden text-white/60 hover:text-white sm:inline"
+            className="text-white/60 hover:text-white"
+            title="Favourites"
           >
-            Favourites
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-5 sm:hidden">
+              <path d="M9.653 17.482l-.006-.004-.018-.01a22.37 22.37 0 0 1-.317-.192 23.81 23.81 0 0 1-3.699-2.927C3.653 12.61 2 10.22 2 7.5A4.5 4.5 0 0 1 10 4.635 4.5 4.5 0 0 1 18 7.5c0 2.72-1.653 5.11-3.613 6.85a23.81 23.81 0 0 1-3.699 2.926 22.21 22.21 0 0 1-.343.202l-.007.005-.002.001a.752.752 0 0 1-.683-.002z" />
+            </svg>
+            <span className="hidden sm:inline">Favourites</span>
           </Link>
           <Link
             href="/me/notifications"
-            className="relative hidden text-white/60 hover:text-white sm:inline"
+            className="relative text-white/60 hover:text-white"
             title="Notifications"
           >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-5">

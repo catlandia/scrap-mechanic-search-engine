@@ -30,6 +30,7 @@ import { ReportBadge } from "@/components/ReportBadge";
 import { TagVoteList } from "@/components/TagVoteList";
 import { isCreator, isModerator } from "@/lib/auth/roles";
 import type { UserRole } from "@/lib/db/schema";
+import { getRatingMode } from "@/lib/prefs";
 
 export const dynamic = "force-dynamic";
 
@@ -126,6 +127,9 @@ export default async function CreationDetailPage({ params }: { params: Params })
   const kindLabel = KIND_LABELS[creation.kind] ?? creation.kind;
   const siteTotal = voteBreakdown.up + voteBreakdown.down;
   const siteScore = siteTotal > 0 ? voteBreakdown.up / siteTotal : null;
+  const ratingMode = await getRatingMode();
+  const showSteamRating = ratingMode === "steam" || ratingMode === "both";
+  const showSiteRating = ratingMode === "site" || ratingMode === "both";
 
   return (
     <article className="mx-auto max-w-4xl space-y-6">
@@ -219,48 +223,56 @@ export default async function CreationDetailPage({ params }: { params: Params })
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className="rounded-md border border-border bg-card/60 px-3 py-2">
-          <div className="text-[10px] uppercase tracking-widest text-white/40">
-            Steam rating
+        {showSteamRating && (
+          <div className="rounded-md border border-border bg-card/60 px-3 py-2">
+            <div className="text-[10px] uppercase tracking-widest text-white/40">
+              Steam rating
+            </div>
+            <div className="mt-1 flex flex-col gap-0.5">
+              <StarRating
+                score={creation.voteScore}
+                votesUp={creation.votesUp}
+                votesDown={creation.votesDown}
+                size="md"
+                color="green"
+                showLabel={true}
+              />
+              {creation.voteScore != null &&
+                ((creation.votesUp ?? 0) + (creation.votesDown ?? 0)) >= 10 && (
+                  <div className="text-[10px] text-white/50">
+                    {sentimentLabel(
+                      (creation.votesUp ?? 0) /
+                        Math.max(1, (creation.votesUp ?? 0) + (creation.votesDown ?? 0)),
+                    )}{" "}
+                    ·{" "}
+                    {((creation.votesUp ?? 0) + (creation.votesDown ?? 0)).toLocaleString()} votes
+                  </div>
+                )}
+            </div>
           </div>
-          <div className="mt-1 flex flex-col gap-0.5">
-            <StarRating
-              score={creation.voteScore}
-              votesUp={creation.votesUp}
-              votesDown={creation.votesDown}
-              size="md"
-              color="green"
-              showLabel={true}
-            />
-            {creation.voteScore != null &&
-              ((creation.votesUp ?? 0) + (creation.votesDown ?? 0)) >= 5 && (
+        )}
+        {showSiteRating && (
+          <div className="rounded-md border border-border bg-card/60 px-3 py-2">
+            <div className="text-[10px] uppercase tracking-widest text-white/40">
+              Site rating
+            </div>
+            <div className="mt-1 flex flex-col gap-0.5">
+              <StarRating
+                score={siteScore}
+                votesUp={voteBreakdown.up}
+                votesDown={voteBreakdown.down}
+                size="md"
+                color="orange"
+                showLabel={true}
+              />
+              {siteScore != null && (
                 <div className="text-[10px] text-white/50">
-                  {sentimentLabel(creation.voteScore)} ·{" "}
-                  {((creation.votesUp ?? 0) + (creation.votesDown ?? 0)).toLocaleString()} votes
+                  {sentimentLabel(siteScore)} · {siteTotal.toLocaleString()} votes
                 </div>
               )}
+            </div>
           </div>
-        </div>
-        <div className="rounded-md border border-border bg-card/60 px-3 py-2">
-          <div className="text-[10px] uppercase tracking-widest text-white/40">
-            Site rating
-          </div>
-          <div className="mt-1 flex flex-col gap-0.5">
-            <StarRating
-              score={siteScore}
-              votesUp={voteBreakdown.up}
-              votesDown={voteBreakdown.down}
-              size="md"
-              color="orange"
-              showLabel={true}
-            />
-            {siteScore != null && (
-              <div className="text-[10px] text-white/50">
-                {sentimentLabel(siteScore)} · {siteTotal.toLocaleString()} votes
-              </div>
-            )}
-          </div>
-        </div>
+        )}
       </div>
 
       <CreationVotePanel

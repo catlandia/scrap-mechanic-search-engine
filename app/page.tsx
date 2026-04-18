@@ -5,6 +5,7 @@ import {
   getApprovedKindCounts,
   getNewestApproved,
 } from "@/lib/db/queries";
+import { getRatingMode } from "@/lib/prefs";
 
 export const dynamic = "force-dynamic";
 
@@ -42,6 +43,7 @@ export default async function HomePage() {
 
   const total = Object.values(counts).reduce((sum, n) => sum + n, 0);
   const hasAny = total > 0;
+  const ratingMode = await getRatingMode();
 
   return (
     <div className="space-y-14">
@@ -88,7 +90,7 @@ export default async function HomePage() {
                 View all →
               </Link>
             </div>
-            <CreationGrid items={newest} />
+            <CreationGrid items={newest} ratingMode={ratingMode} />
           </section>
 
           {FEATURED_KINDS.map((kind, i) => {
@@ -102,7 +104,7 @@ export default async function HomePage() {
                     More →
                   </Link>
                 </div>
-                <CreationGrid items={items} />
+                <CreationGrid items={items} ratingMode={ratingMode} />
               </section>
             );
           })}

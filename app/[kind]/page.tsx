@@ -5,6 +5,7 @@ import { CreationGrid } from "@/components/CreationCard";
 import { SortSelector } from "@/components/SortSelector";
 import { getApprovedByKind, parseSortMode } from "@/lib/db/queries";
 import type { CreationKind } from "@/lib/db/schema";
+import { getRatingMode } from "@/lib/prefs";
 
 export const dynamic = "force-dynamic";
 
@@ -60,6 +61,7 @@ export default async function KindPage({
   });
   const hasNext = items.length > PAGE_SIZE;
   const displayed = items.slice(0, PAGE_SIZE);
+  const ratingMode = await getRatingMode();
 
   const basePath = `/${slug}`;
   const qs = (extra: Record<string, string | number | null>) => {
@@ -85,7 +87,7 @@ export default async function KindPage({
         </Suspense>
       </header>
 
-      <CreationGrid items={displayed} />
+      <CreationGrid items={displayed} ratingMode={ratingMode} />
 
       <nav className="flex items-center justify-between pt-4 text-sm text-white/60">
         {pageIndex > 0 ? (

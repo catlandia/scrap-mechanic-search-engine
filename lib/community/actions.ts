@@ -397,7 +397,7 @@ export async function submitCreation(formData: FormData): Promise<SubmitResult> 
   if (item.result != null && item.result !== 1) {
     return { ok: false, error: `Steam rejected the lookup (result=${item.result}).` };
   }
-  if (item.consumer_appid != null && item.consumer_appid !== SCRAP_MECHANIC_APPID) {
+  if (item.consumer_appid !== SCRAP_MECHANIC_APPID) {
     return { ok: false, error: "That item isn't from the Scrap Mechanic Workshop." };
   }
 

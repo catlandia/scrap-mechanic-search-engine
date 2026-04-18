@@ -57,8 +57,9 @@ export default async function NotificationsPage() {
               </div>
               {n.link && (
                 <Link
-                  href={n.link}
+                  href={`/api/notifications/${n.id}/click`}
                   className="shrink-0 text-xs text-accent hover:underline"
+                  prefetch={false}
                 >
                   View →
                 </Link>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CreationGrid } from "@/components/CreationCard";
 import { getNewestApproved } from "@/lib/db/queries";
+import { getRatingMode } from "@/lib/prefs";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +15,7 @@ export default async function NewestPage({ searchParams }: { searchParams: Searc
   const items = await getNewestApproved(PAGE_SIZE + 1, pageIndex * PAGE_SIZE);
   const hasNext = items.length > PAGE_SIZE;
   const displayed = items.slice(0, PAGE_SIZE);
+  const ratingMode = await getRatingMode();
 
   return (
     <div className="space-y-6">
@@ -26,7 +28,7 @@ export default async function NewestPage({ searchParams }: { searchParams: Searc
         </div>
       </header>
 
-      <CreationGrid items={displayed} />
+      <CreationGrid items={displayed} ratingMode={ratingMode} />
 
       <nav className="flex items-center justify-between pt-4 text-sm text-white/60">
         {pageIndex > 0 ? (

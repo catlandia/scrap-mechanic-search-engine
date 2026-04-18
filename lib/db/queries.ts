@@ -836,6 +836,24 @@ export async function markAllNotificationsRead(userId: string): Promise<void> {
     .where(and(eq(notifications.userId, userId), eq(notifications.read, false)));
 }
 
+export async function markNotificationRead(
+  userId: string,
+  notificationId: number,
+): Promise<{ link: string | null } | null> {
+  const db = getDb();
+  const [row] = await db
+    .select({ link: notifications.link, userId: notifications.userId })
+    .from(notifications)
+    .where(eq(notifications.id, notificationId))
+    .limit(1);
+  if (!row || row.userId !== userId) return null;
+  await db
+    .update(notifications)
+    .set({ read: true })
+    .where(eq(notifications.id, notificationId));
+  return { link: row.link };
+}
+
 export async function getUserSubmissions(userId: string, limit = 50, offset = 0): Promise<(typeof creations.$inferSelect)[]> {
   const db = getDb();
   return db

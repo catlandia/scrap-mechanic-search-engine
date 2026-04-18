@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { CreationGrid } from "@/components/CreationCard";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getUserFavourites } from "@/lib/db/queries";
+import { getRatingMode } from "@/lib/prefs";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +23,7 @@ export default async function FavouritesPage({
   const items = await getUserFavourites(user.steamid, PAGE_SIZE + 1, pageIndex * PAGE_SIZE);
   const hasNext = items.length > PAGE_SIZE;
   const displayed = items.slice(0, PAGE_SIZE);
+  const ratingMode = await getRatingMode();
 
   return (
     <div className="space-y-6">
@@ -38,7 +40,7 @@ export default async function FavouritesPage({
           No favourites yet. Click the heart on any creation to add it here.
         </div>
       ) : (
-        <CreationGrid items={displayed} />
+        <CreationGrid items={displayed} ratingMode={ratingMode} />
       )}
 
       <nav className="flex items-center justify-between pt-2 text-sm text-white/60">

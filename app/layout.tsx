@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Suspense } from "react";
 import { getCurrentUser } from "@/lib/auth/session";
 import { UserMenu } from "@/components/UserMenu";
+import { RatingModeToggle } from "@/components/RatingModeToggle";
 import { getUnreadNotificationCount } from "@/lib/db/queries";
+import { getRatingMode } from "@/lib/prefs";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -34,6 +37,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   } catch {
     // If SESSION_SECRET is missing in dev we still want the site to render.
   }
+  const ratingMode = await getRatingMode();
 
   return (
     <html lang="en" className="dark">
@@ -53,7 +57,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 </Link>
               ))}
             </nav>
-            <div className="ml-auto">
+            <div className="ml-auto flex items-center gap-4">
+              <Suspense>
+                <RatingModeToggle current={ratingMode} />
+              </Suspense>
               {user ? (
                 <UserMenu user={user} unreadNotifications={unreadNotifications} />
               ) : (

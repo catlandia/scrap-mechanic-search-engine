@@ -1,13 +1,18 @@
 import { cn } from "@/lib/utils";
 
-const MIN_VOTES_FOR_RATING = 5;
+const MIN_VOTES_FOR_RATING = 10;
 
 export type StarColor = "amber" | "green" | "orange";
 
 export interface StarRatingProps {
-  /** 0..1, Steam's vote score */
+  /**
+   * 0..1 fallback score. Used only if votesUp/votesDown aren't provided.
+   * Steam's `vote_score` is a Wilson-smoothed number that pulls toward 0.5
+   * for low-sample items — so when raw counts are available we compute
+   * up/(up+down) ourselves instead of trusting this field.
+   */
   score: number | null;
-  /** Upvote / downvote counts used to gate rendering behind a minimum sample size. */
+  /** Upvote / downvote counts. If both are present we compute the ratio from these. */
   votesUp?: number | null;
   votesDown?: number | null;
   /** Show the percentage label alongside the stars. Defaults true. */
@@ -57,7 +62,15 @@ export function StarRating({
   const totalVotes = (votesUp ?? 0) + (votesDown ?? 0);
   const hasEnoughVotes = totalVotes >= MIN_VOTES_FOR_RATING;
 
-  if (score == null || !hasEnoughVotes) {
+  // Prefer raw ratio over Steam's smoothed score to avoid the
+  // "everything looks like 3 stars" regression to 0.5 for low-sample items.
+  const rawRatio =
+    votesUp != null && votesDown != null && totalVotes > 0
+      ? votesUp / totalVotes
+      : null;
+  const effectiveScore = rawRatio ?? score;
+
+  if (effectiveScore == null || !hasEnoughVotes) {
     return (
       <div className={cn("text-[11px] italic text-white/30", className)}>
         {totalVotes > 0
@@ -69,8 +82,8 @@ export function StarRating({
     );
   }
 
-  const pct = Math.max(0, Math.min(1, score)) * 100;
-  const label = sentimentLabel(score);
+  const pct = Math.max(0, Math.min(1, effectiveScore)) * 100;
+  const label = sentimentLabel(effectiveScore);
 
   return (
     <div

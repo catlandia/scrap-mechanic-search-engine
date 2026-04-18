@@ -118,6 +118,7 @@ export async function rejectCreation(formData: FormData) {
   const db = getDb();
   const id = String(formData.get("creationId") ?? "");
   if (!id) throw new Error("creationId required");
+  const reason = String(formData.get("reason") ?? "").trim().slice(0, 300);
 
   const [row] = await db
     .select({ uploadedByUserId: creations.uploadedByUserId, title: creations.title })
@@ -132,11 +133,14 @@ export async function rejectCreation(formData: FormData) {
     .where(eq(creations.id, id));
 
   if (row?.uploadedByUserId) {
+    const body = reason
+      ? `"${row.title}" was not accepted. Reason: ${reason}`
+      : `"${row.title}" was not accepted into the directory.`;
     await createNotification({
       userId: row.uploadedByUserId,
       type: "submission_rejected",
       title: "Submission not accepted",
-      body: `"${row.title}" was not accepted into the directory.`,
+      body,
       link: "/me/submissions",
     });
   }

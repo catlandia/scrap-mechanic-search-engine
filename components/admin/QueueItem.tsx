@@ -222,6 +222,13 @@ export function QueueItem({ creation, suggested, allTags, allCategories }: Props
           >
             Approve
           </button>
+          <input
+            type="text"
+            name="reason"
+            maxLength={300}
+            placeholder="Rejection reason (optional, shown to submitter)"
+            className="min-w-[220px] flex-1 rounded-md border border-border bg-background px-2 py-1.5 text-sm text-white placeholder:text-white/30 focus:border-accent focus:outline-none"
+          />
           <button
             type="submit"
             formAction={rejectCreation}
