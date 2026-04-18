@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
 import {
+  comments,
   creations,
   creationTags,
   creationVotes,
@@ -16,6 +17,8 @@ import {
   users,
   type ReportReason,
 } from "@/lib/db/schema";
+import { isModerator } from "@/lib/auth/roles";
+import type { UserRole } from "@/lib/db/schema";
 
 const MIN_STEAM_AGE_DAYS = 7;
 
@@ -233,6 +236,65 @@ export async function suggestTag(formData: FormData): Promise<void> {
     });
 
   revalidatePath(`/creation/${creationId}`);
+}
+
+const MAX_COMMENT_LENGTH = 2000;
+
+export async function postComment(formData: FormData): Promise<void> {
+  const user = await requireVotingUser();
+  const creationId = String(formData.get("creationId") ?? "");
+  const body = String(formData.get("body") ?? "").trim();
+
+  if (!creationId) throw new Error("creationId required");
+  if (!body) throw new Error("body_empty");
+  if (body.length > MAX_COMMENT_LENGTH) throw new Error("body_too_long");
+
+  const db = getDb();
+  await db.insert(comments).values({
+    creationId,
+    userId: user.steamid,
+    body,
+  });
+
+  revalidatePath(`/creation/${creationId}`);
+}
+
+/**
+ * Soft-delete (sets deletedAt + body replaced in display with [deleted]).
+ * Users can delete their own; mods and above can delete anyone's.
+ */
+export async function deleteComment(formData: FormData): Promise<void> {
+  const user = await getCurrentUser();
+  if (!user) throw new Error("signed_out");
+
+  const idRaw = String(formData.get("commentId") ?? "");
+  const id = Number(idRaw);
+  if (!Number.isInteger(id) || id <= 0) throw new Error("invalid_comment_id");
+
+  const db = getDb();
+  const [row] = await db
+    .select({
+      userId: comments.userId,
+      creationId: comments.creationId,
+    })
+    .from(comments)
+    .where(eq(comments.id, id))
+    .limit(1);
+  if (!row) throw new Error("comment_not_found");
+
+  const isOwner = row.userId === user.steamid;
+  const isMod = isModerator(user.role as UserRole);
+  if (!isOwner && !isMod) throw new Error("forbidden");
+
+  await db
+    .update(comments)
+    .set({
+      deletedAt: new Date(),
+      deletedByUserId: user.steamid,
+    })
+    .where(eq(comments.id, id));
+
+  revalidatePath(`/creation/${row.creationId}`);
 }
 
 export async function voteTag(

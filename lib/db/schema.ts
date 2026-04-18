@@ -339,6 +339,32 @@ export const reports = pgTable(
   ],
 );
 
+export const comments = pgTable(
+  "comments",
+  {
+    id: serial("id").primaryKey(),
+    creationId: text("creation_id")
+      .notNull()
+      .references(() => creations.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.steamid, { onDelete: "cascade" }),
+    // Reserved for future threading; not a FK to keep drizzle-kit happy.
+    parentId: integer("parent_id"),
+    body: text("body").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    editedAt: timestamp("edited_at", { withTimezone: true }),
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
+    deletedByUserId: text("deleted_by_user_id"),
+  },
+  (t) => [
+    index("comments_creation_idx").on(t.creationId),
+    index("comments_user_idx").on(t.userId),
+  ],
+);
+
 export type Creation = typeof creations.$inferSelect;
 export type NewCreation = typeof creations.$inferInsert;
 export type Tag = typeof tags.$inferSelect;
@@ -347,3 +373,5 @@ export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Report = typeof reports.$inferSelect;
 export type NewReport = typeof reports.$inferInsert;
+export type Comment = typeof comments.$inferSelect;
+export type NewComment = typeof comments.$inferInsert;

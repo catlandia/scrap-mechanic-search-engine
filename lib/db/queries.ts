@@ -13,6 +13,7 @@ import { alias } from "drizzle-orm/pg-core";
 import { getDb } from "./client";
 import {
   categories,
+  comments,
   creationCategories,
   creationTags,
   creationViews,
@@ -733,6 +734,44 @@ export async function getActionedReports(limit = 50): Promise<ActionedReportRow[
     .leftJoin(resolver, eq(resolver.steamid, reports.resolverUserId))
     .where(eq(reports.status, "actioned"))
     .orderBy(desc(reports.resolvedAt))
+    .limit(limit);
+}
+
+export interface CreationCommentRow {
+  id: number;
+  creationId: string;
+  body: string;
+  createdAt: Date;
+  editedAt: Date | null;
+  deletedAt: Date | null;
+  authorSteamid: string;
+  authorName: string;
+  authorAvatarUrl: string | null;
+  authorRole: string;
+}
+
+export async function getCreationComments(
+  creationId: string,
+  limit = 100,
+): Promise<CreationCommentRow[]> {
+  const db = getDb();
+  return db
+    .select({
+      id: comments.id,
+      creationId: comments.creationId,
+      body: comments.body,
+      createdAt: comments.createdAt,
+      editedAt: comments.editedAt,
+      deletedAt: comments.deletedAt,
+      authorSteamid: users.steamid,
+      authorName: users.personaName,
+      authorAvatarUrl: users.avatarUrl,
+      authorRole: users.role,
+    })
+    .from(comments)
+    .innerJoin(users, eq(users.steamid, comments.userId))
+    .where(eq(comments.creationId, creationId))
+    .orderBy(desc(comments.createdAt))
     .limit(limit);
 }
 

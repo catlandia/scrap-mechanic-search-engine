@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import {
+  getCreationComments,
   getCreationDetail,
   getCreationSiteCounts,
   getCreationTagsWithVotes,
@@ -12,15 +13,16 @@ import {
   isCreationFavourited,
   recordCreationView,
 } from "@/lib/db/queries";
-import { getCurrentUser } from "@/lib/auth/session";
+import { getCurrentUser, isBanned, isMuted } from "@/lib/auth/session";
 import { StarRating, sentimentLabel } from "@/components/StarRating";
+import { CommentSection } from "@/components/CommentSection";
 import { CreationVotePanel } from "@/components/CreationVotePanel";
 import { DeleteCreationButton } from "@/components/DeleteCreationButton";
 import { FavouriteButton } from "@/components/FavouriteButton";
 import { ReportButton } from "@/components/ReportButton";
 import { ReportBadge } from "@/components/ReportBadge";
 import { TagVoteList } from "@/components/TagVoteList";
-import { isCreator } from "@/lib/auth/roles";
+import { isCreator, isModerator } from "@/lib/auth/roles";
 import type { UserRole } from "@/lib/db/schema";
 
 export const dynamic = "force-dynamic";
@@ -78,6 +80,7 @@ export default async function CreationDetailPage({ params }: { params: Params })
     voteBreakdown,
     siteCounts,
     reportBadge,
+    commentRows,
   ] = await Promise.all([
     getCreationTagsWithVotes(creation.id, viewer?.steamid ?? null),
     viewer ? getUserVoteOnCreation(creation.id, viewer.steamid) : Promise.resolve(0 as const),
@@ -85,6 +88,7 @@ export default async function CreationDetailPage({ params }: { params: Params })
     getCreationVoteBreakdown(creation.id),
     getCreationSiteCounts(creation.id),
     getPublicReportBadge(creation.id),
+    getCreationComments(creation.id, 100),
   ]);
 
   const visibleTags = tagsWithVotes.filter((t) => !t.rejected);
@@ -293,6 +297,14 @@ export default async function CreationDetailPage({ params }: { params: Params })
       <p className="whitespace-pre-wrap text-base leading-relaxed text-white/80">
         {creation.descriptionClean || "(no description)"}
       </p>
+
+      <CommentSection
+        creationId={creation.id}
+        comments={commentRows}
+        viewerSteamid={viewer?.steamid ?? null}
+        viewerIsMod={isModerator(viewer?.role as UserRole | undefined)}
+        viewerCanPost={!!viewer && !isBanned(viewer) && !isMuted(viewer)}
+      />
     </article>
   );
 }
