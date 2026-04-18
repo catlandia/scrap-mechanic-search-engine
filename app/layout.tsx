@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { UserMenu } from "@/components/UserMenu";
 import { MobileNav } from "@/components/MobileNav";
 import { RatingModeToggle } from "@/components/RatingModeToggle";
+import { BetaBanner } from "@/components/BetaBanner";
 import { getUnreadNotificationCount } from "@/lib/db/queries";
 import { getRatingMode } from "@/lib/prefs.server";
 import { isModerator } from "@/lib/auth/roles";
@@ -61,6 +62,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const ratingMode = await getRatingMode();
   const showAdminLink = !!user && isModerator(user.role as UserRole);
   const extraLinks = [
+    { href: "/guide", label: "How to use the site" },
     { href: "/submit", label: "Submit a creation" },
     ...(user ? [{ href: "/me/favourites", label: "Your favourites" }] : []),
     ...(user ? [{ href: "/me/notifications", label: "Notifications" }] : []),
@@ -71,6 +73,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en" className="dark">
       <body className="min-h-screen bg-background text-foreground antialiased">
+        <BetaBanner />
         <header className="sticky top-0 z-30 border-b border-white/10 bg-black/80 backdrop-blur supports-[backdrop-filter]:bg-black/60">
           <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3 sm:flex-wrap sm:gap-x-6 sm:gap-y-2">
             <Link href="/" className="flex shrink-0 items-center gap-2 hover:opacity-80">
@@ -119,6 +122,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           </p>
           <p className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
             <span>Made by CybeSlime2077.</span>
+            <Link href="/guide" className="hover:text-white">
+              Guide
+            </Link>
             <Link href="/terms" className="hover:text-white">
               Terms
             </Link>
