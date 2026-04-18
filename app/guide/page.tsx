@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { GuideSeenMarker } from "@/components/GuideSeenMarker";
 
 export const metadata: Metadata = {
   title: "Quick guide",
@@ -11,6 +12,7 @@ export const metadata: Metadata = {
 export default function GuidePage() {
   return (
     <article className="mx-auto max-w-3xl space-y-8 text-sm leading-relaxed text-white/80">
+      <GuideSeenMarker />
       <header className="space-y-2">
         <p className="text-xs uppercase tracking-widest text-accent">
           Quick guide

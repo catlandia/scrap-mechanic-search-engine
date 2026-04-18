@@ -6,6 +6,7 @@ import { UserMenu } from "@/components/UserMenu";
 import { MobileNav } from "@/components/MobileNav";
 import { RatingModeToggle } from "@/components/RatingModeToggle";
 import { BetaBanner } from "@/components/BetaBanner";
+import { GuideLink } from "@/components/GuideLink";
 import { getUnreadNotificationCount } from "@/lib/db/queries";
 import { getRatingMode } from "@/lib/prefs.server";
 import { isModerator } from "@/lib/auth/roles";
@@ -90,6 +91,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               ))}
             </nav>
             <div className="ml-auto flex items-center gap-2 sm:gap-4">
+              <GuideLink />
               <div className="hidden sm:block">
                 <Suspense>
                   <RatingModeToggle current={ratingMode} />
