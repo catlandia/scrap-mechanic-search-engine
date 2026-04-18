@@ -12,17 +12,21 @@
 | [pages.md](pages.md) | Every public route, rendering strategy, search params, layout/nav |
 | [queries.md](queries.md) | All typed query helpers in lib/db/queries.ts and lib/suggestions/actions.ts |
 | [deployment.md](deployment.md) | Vercel config, cron jobs, migrations, env vars, Hobby plan constraints |
+| [captcha.md](captcha.md) | Custom SM-themed captcha — characters, session design, image hiding, tuning |
 
 ## Quick orientation
 
-- Current version: **V4.8** — hard ban, full suggestion status routing, creator hard-delete
+- Current version: **V4.12** — custom captcha with hidden image proxy
 - Stack: Next.js 15 App Router · TypeScript · Tailwind v4 · Drizzle + Neon · iron-session · Steam OpenID
 - Hard constraint: everything must remain on **free tiers** — no paid APIs, no metered per-item costs
 - Transactions are **not available** (neon-http driver) — writes are sequential, partial state is accepted
 
-## Recent changes (V4.6–4.9)
+## Recent changes (V4.6–4.12)
 
 - **V4.6:** 3-tab public ideas board (Approved/Implemented/Rejected); creator can reject live suggestions; creator-side tag removal button on creation detail page
 - **V4.7:** `effectiveRole()` helper — banned users lose all write permissions automatically; ban lifts without manual cleanup when `bannedUntil` elapses
 - **V4.8:** `hard_banned` column (migration 0010); hard ban blocks sign-in at Steam return handler; `getCurrentUser()` returns null for hard-banned users; full suggestion status transitions in admin UI; creator hard-delete on suggestions
 - **V4.9:** Creator now sees all non-rejected tags on `/creation/[id]` (including community tags below the +3 vote threshold) so the × remove button is reachable on any false tag. Regular visitors still only see confirmed or ≥3 net-vote tags.
+- **V4.10:** Scrap Mechanic logo image in nav replaces the plain "SM" text. Logo served from `public/logo.png`.
+- **V4.11:** Custom Scrap Mechanic captcha on first visit. 3 correct in a row, 4 options, 9 characters (Mechanic/Totebot/Haybot/Tapebot/Farmbot/Glowb/Woc/Redtapebot + Chapter 2 easter egg at ~10% chance). `bot_verified` cookie lasts 30 days. See `docs/captcha.md`.
+- **V4.12:** Character image filename hidden from network inspection. Image served via `/api/captcha/image` proxy route — actual path stored only in encrypted server-side session. Client never sees `Mechanic1.jpg` etc.
