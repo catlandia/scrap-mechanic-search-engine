@@ -54,7 +54,7 @@ Community voting on whether a tag correctly describes a creation.
 
 - Stored in `tagVotes` table with `(userId, creationId, tagId)` PK
 - `value = +1` or `value = -1`
-- Visibility threshold: net ≥ 3 upvotes → tag becomes publicly visible (if not admin-confirmed)
+- Visibility threshold: net ≥ 3 upvotes → tag becomes publicly visible (if not admin-confirmed). Creator bypasses this threshold and always sees all non-rejected tags with a × remove button.
 - Confirmed tags (admin-set) are always visible regardless of vote count
 - Rejected tags (`rejected=true`, set by creator) cannot be voted to visible — creator rejection is final
 - Role-based vote breakdown shown on creation detail page (how many users / mods / elite / creator voted)

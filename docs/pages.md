@@ -117,7 +117,7 @@ Full-featured search with URL-based state (links are shareable).
 - Report button
 
 **Creator actions (creator role):**
-- Remove a specific tag (sets `rejected=true`)
+- Remove a specific tag (sets `rejected=true`) — creator sees **all** non-rejected tags including community tags below the +3 vote threshold, so no false tag is ever unreachable
 - Delete creation (`status=deleted`)
 
 **Elite mod actions:**

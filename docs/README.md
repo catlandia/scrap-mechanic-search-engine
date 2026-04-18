@@ -20,8 +20,9 @@
 - Hard constraint: everything must remain on **free tiers** — no paid APIs, no metered per-item costs
 - Transactions are **not available** (neon-http driver) — writes are sequential, partial state is accepted
 
-## Recent changes (V4.6–4.8)
+## Recent changes (V4.6–4.9)
 
 - **V4.6:** 3-tab public ideas board (Approved/Implemented/Rejected); creator can reject live suggestions; creator-side tag removal button on creation detail page
 - **V4.7:** `effectiveRole()` helper — banned users lose all write permissions automatically; ban lifts without manual cleanup when `bannedUntil` elapses
 - **V4.8:** `hard_banned` column (migration 0010); hard ban blocks sign-in at Steam return handler; `getCurrentUser()` returns null for hard-banned users; full suggestion status transitions in admin UI; creator hard-delete on suggestions
+- **V4.9:** Creator now sees all non-rejected tags on `/creation/[id]` (including community tags below the +3 vote threshold) so the × remove button is reachable on any false tag. Regular visitors still only see confirmed or ≥3 net-vote tags.
