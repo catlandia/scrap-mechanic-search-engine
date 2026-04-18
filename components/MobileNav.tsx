@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { RatingModeToggle } from "@/components/RatingModeToggle";
 import type { RatingMode } from "@/lib/prefs";
@@ -24,6 +24,8 @@ export function MobileNav({
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const closeButtonRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -42,12 +44,36 @@ export function MobileNav({
     };
   }, [open]);
 
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setOpen(false);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+
+  useEffect(() => {
+    if (open) {
+      const t = window.setTimeout(() => {
+        closeButtonRef.current?.focus();
+      }, 0);
+      return () => window.clearTimeout(t);
+    }
+    triggerRef.current?.focus();
+  }, [open]);
+
   return (
     <>
       <button
+        ref={triggerRef}
         type="button"
         aria-label={open ? "Close menu" : "Open menu"}
         aria-expanded={open}
+        aria-controls="mobile-drawer-panel"
         onClick={() => setOpen((v) => !v)}
         className="inline-flex size-9 items-center justify-center rounded-md border border-border text-white/70 hover:text-white sm:hidden"
       >
@@ -76,6 +102,7 @@ export function MobileNav({
 
       {open && mounted && createPortal(
         <div
+          id="mobile-drawer-panel"
           className="fixed inset-0 z-[100] sm:hidden"
           role="dialog"
           aria-modal="true"
@@ -92,6 +119,7 @@ export function MobileNav({
                 Menu
               </span>
               <button
+                ref={closeButtonRef}
                 type="button"
                 aria-label="Close menu"
                 onClick={() => setOpen(false)}

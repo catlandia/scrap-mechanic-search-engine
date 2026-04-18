@@ -26,6 +26,7 @@ export function CommentSection({
   const router = useRouter();
   const [body, setBody] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   function submit(e: React.FormEvent) {
@@ -48,6 +49,7 @@ export function CommentSection({
   }
 
   function handleDelete(commentId: number) {
+    setDeleteError(null);
     const fd = new FormData();
     fd.append("commentId", String(commentId));
     startTransition(async () => {
@@ -56,6 +58,9 @@ export function CommentSection({
         router.refresh();
       } catch (err) {
         console.error(err);
+        setDeleteError(
+          err instanceof Error ? err.message : "Failed to delete comment.",
+        );
       }
     });
   }
@@ -100,6 +105,14 @@ export function CommentSection({
             : "Sign in with Steam to join the discussion."}
         </div>
       )}
+
+      <div role="status" aria-live="polite">
+        {deleteError && (
+          <div className="rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs text-red-200">
+            {deleteError}
+          </div>
+        )}
+      </div>
 
       <ul className="space-y-3">
         {comments.length === 0 && (
@@ -177,6 +190,7 @@ function CommentItem({
           {canDelete && (
             <button
               type="button"
+              aria-label={`Delete comment by ${comment.authorName}`}
               onClick={() => onDelete(comment.id)}
               disabled={pending}
               className={cn(

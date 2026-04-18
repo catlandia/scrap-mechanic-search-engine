@@ -57,7 +57,11 @@ export function SubmitCreationForm() {
       </form>
 
       {result?.ok && (
-        <div className="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm">
+        <div
+          role="status"
+          aria-live="polite"
+          className="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm"
+        >
           Thanks — <strong>{result.title}</strong> is now pending mod review.{" "}
           <Link href="/" className="text-emerald-300 hover:underline">
             Back to home ↗
@@ -65,7 +69,10 @@ export function SubmitCreationForm() {
         </div>
       )}
       {result && !result.ok && (
-        <div className="rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+        <div
+          role="alert"
+          className="rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200"
+        >
           {result.error}
         </div>
       )}

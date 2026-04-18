@@ -74,13 +74,20 @@ export function SuggestionForm() {
       </form>
 
       {result?.ok && (
-        <div className="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
+        <div
+          role="status"
+          aria-live="polite"
+          className="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200"
+        >
           Thanks — the Creator will review it. Approved suggestions appear on
           the public board.
         </div>
       )}
       {result && !result.ok && (
-        <div className="rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+        <div
+          role="alert"
+          className="rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200"
+        >
           {result.error}
         </div>
       )}

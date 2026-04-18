@@ -226,6 +226,8 @@ function VoteArrow({
       onClick={onClick}
       disabled={disabled}
       title={title}
+      aria-label={dir === "up" ? "Upvote this tag" : "Downvote this tag"}
+      aria-pressed={active}
       className={cn(
         "flex size-5 items-center justify-center rounded text-[10px] transition disabled:opacity-40",
         active ? activeColor : "text-white/40 hover:text-white",

@@ -90,6 +90,8 @@ export function SearchFilters({ allTags, allCategories }: Props) {
       <div className="space-y-2">
         <label className="block text-xs uppercase tracking-widest text-white/50">Search</label>
         <form
+          role="search"
+          aria-label="Search creations"
           onSubmit={(e) => {
             e.preventDefault();
             const value = new FormData(e.currentTarget).get("q");
@@ -99,6 +101,7 @@ export function SearchFilters({ allTags, allCategories }: Props) {
           <input
             name="q"
             defaultValue={q}
+            aria-label="Search query"
             placeholder="e.g. sports car"
             className="w-full rounded border border-border bg-background px-2 py-1.5 text-sm"
           />
@@ -113,6 +116,7 @@ export function SearchFilters({ allTags, allCategories }: Props) {
               type="button"
               key={k.value || "all"}
               onClick={() => update({ kind: k.value || null })}
+              aria-pressed={kind === k.value}
               className={cn(
                 "rounded-full border px-2.5 py-0.5 text-xs transition",
                 kind === k.value
@@ -132,6 +136,7 @@ export function SearchFilters({ allTags, allCategories }: Props) {
           <button
             type="button"
             onClick={() => update({ category: null })}
+            aria-pressed={!categorySlug}
             className={cn(
               "rounded-full border px-2.5 py-0.5 text-xs transition",
               !categorySlug
@@ -146,6 +151,7 @@ export function SearchFilters({ allTags, allCategories }: Props) {
               type="button"
               key={c.slug}
               onClick={() => update({ category: c.slug })}
+              aria-pressed={categorySlug === c.slug}
               className={cn(
                 "rounded-full border px-2.5 py-0.5 text-xs transition",
                 categorySlug === c.slug
@@ -178,6 +184,7 @@ export function SearchFilters({ allTags, allCategories }: Props) {
           type="text"
           value={tagFilter}
           onChange={(e) => setTagFilter(e.target.value)}
+          aria-label="Filter tags"
           placeholder="Filter tags…"
           className="w-full rounded border border-border bg-background px-2 py-1 text-xs focus:border-accent focus:outline-none"
         />
@@ -195,6 +202,7 @@ export function SearchFilters({ allTags, allCategories }: Props) {
                       key={t.slug}
                       type="button"
                       onClick={() => toggleTag(t.slug)}
+                      aria-pressed={active}
                       className={cn(
                         "rounded-full border px-2.5 py-0.5 text-xs transition",
                         active

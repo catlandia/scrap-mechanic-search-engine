@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 
-export default function GlobalError({
+export default function Error({
   error,
   reset,
 }: {
@@ -13,43 +13,32 @@ export default function GlobalError({
     console.error(error);
   }, [error]);
 
+  const isDev = process.env.NODE_ENV !== "production";
+
   return (
-    <div className="mx-auto max-w-xl space-y-4 rounded-lg border border-red-500/40 bg-red-500/10 p-6">
-      <h1 className="text-2xl font-semibold text-red-200">Server error</h1>
-      <p className="text-sm text-white/70">
-        Something broke on the server while rendering this page.
-      </p>
-      <div className="rounded bg-black/40 p-3 font-mono text-xs text-red-200">
-        {error.digest ? <div>digest: {error.digest}</div> : null}
-        <div>message: {error.message}</div>
+    <div className="mx-auto max-w-md space-y-4 rounded-lg border border-border bg-card p-6 text-center">
+      <div aria-hidden className="text-3xl">
+        ⚠
       </div>
-      <p className="text-sm text-white/60">
-        Open the Vercel dashboard → your project → <strong>Logs</strong> (or run{" "}
-        <code className="rounded bg-black/40 px-1 py-0.5">vercel logs</code> locally) and search for
-        the digest to see the full stack. Most common causes on first deploy:
+      <h1 className="text-xl font-semibold text-white">Something went wrong.</h1>
+      <p className="text-sm text-white/70">
+        We hit an unexpected error loading this page. Please try again in a moment.
       </p>
-      <ul className="list-inside list-disc space-y-1 text-sm text-white/60">
-        <li>
-          <code className="rounded bg-black/40 px-1 py-0.5">DATABASE_URL</code> not set in Vercel
-          env vars.
-        </li>
-        <li>
-          Migrations not applied to Neon — run{" "}
-          <code className="rounded bg-black/40 px-1 py-0.5">npm run db:migrate</code> locally with
-          production <code className="rounded bg-black/40 px-1 py-0.5">DATABASE_URL</code>.
-        </li>
-        <li>
-          Seed not run — run{" "}
-          <code className="rounded bg-black/40 px-1 py-0.5">npm run db:seed</code>.
-        </li>
-        <li>Neon project paused — first request cold-starts it; refresh once.</li>
-      </ul>
+      {error.digest && (
+        <p className="text-[11px] text-white/40">ref: {error.digest}</p>
+      )}
       <button
+        type="button"
         onClick={reset}
-        className="rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-black hover:bg-accent-strong"
+        className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-black hover:bg-accent-strong"
       >
         Try again
       </button>
+      {isDev && (
+        <pre className="mt-4 overflow-auto whitespace-pre-wrap rounded bg-black/40 p-3 text-left font-mono text-xs text-red-200">
+          {error.message}
+        </pre>
+      )}
     </div>
   );
 }

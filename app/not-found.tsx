@@ -8,12 +8,20 @@ export default function NotFound() {
       <p className="mt-2 text-white/60">
         The page or creation you were looking for isn&apos;t on the site.
       </p>
-      <Link
-        href="/"
-        className="mt-6 inline-block rounded-md bg-accent px-4 py-2 text-sm font-medium text-black"
-      >
-        Back to home
-      </Link>
+      <div className="mt-6 flex flex-col items-center gap-2 sm:flex-row sm:justify-center">
+        <Link
+          href="/"
+          className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-medium text-black"
+        >
+          Back to home
+        </Link>
+        <Link
+          href="/search"
+          className="inline-block rounded-md border border-border bg-card px-4 py-2 text-sm font-medium text-white/80 hover:text-white"
+        >
+          Search for a creation →
+        </Link>
+      </div>
     </div>
   );
 }

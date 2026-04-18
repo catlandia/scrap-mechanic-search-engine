@@ -109,6 +109,7 @@ function VoteButton({
           : "border-border bg-card text-white/60 hover:border-white/40 hover:text-white",
       )}
       aria-label={direction === "up" ? "Upvote" : "Downvote"}
+      aria-pressed={active}
     >
       {direction === "up" ? "▲" : "▼"}
     </button>

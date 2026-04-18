@@ -95,10 +95,18 @@ export function TagAutocomplete({
     }
   }
 
+  const hasOptions = open && suggestions.length > 0;
+  const activeId = hasOptions ? `tag-option-${activeIndex}` : undefined;
+
   return (
     <div className={cn("relative", className)}>
       <input
         type="text"
+        role="combobox"
+        aria-expanded={open}
+        aria-controls="tag-options"
+        aria-autocomplete="list"
+        aria-activedescendant={activeId}
         value={query}
         onChange={(e) => {
           setQuery(e.target.value);
@@ -113,34 +121,42 @@ export function TagAutocomplete({
         className="w-full rounded border border-border bg-background px-2.5 py-1.5 text-sm focus:border-accent focus:outline-none disabled:opacity-50"
       />
       {open && (suggestions.length > 0 || loading) && (
-        <div className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-md border border-border bg-black/95 shadow-xl backdrop-blur">
+        <ul
+          id="tag-options"
+          role="listbox"
+          className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-md border border-border bg-black/95 shadow-xl backdrop-blur"
+        >
           {loading && suggestions.length === 0 && (
-            <div className="px-3 py-2 text-xs text-white/40">Searching…</div>
+            <li className="px-3 py-2 text-xs text-white/40">Searching…</li>
           )}
           {suggestions.map((t, i) => (
-            <button
-              key={t.id}
-              type="button"
-              onMouseDown={(e) => {
-                e.preventDefault();
-                void choose(t);
-              }}
-              onMouseEnter={() => setActiveIndex(i)}
-              className={cn(
-                "flex w-full items-center justify-between gap-3 px-3 py-1.5 text-left text-sm transition",
-                i === activeIndex
-                  ? "bg-accent/20 text-accent"
-                  : "text-white/80 hover:bg-white/5",
-              )}
-            >
-              <span>{t.name}</span>
-              <span className="text-[10px] text-white/40">
-                {t.usage.toLocaleString()}
-                {t.usage === 1 ? " use" : " uses"}
-              </span>
-            </button>
+            <li key={t.id} role="none">
+              <button
+                type="button"
+                role="option"
+                id={`tag-option-${i}`}
+                aria-selected={activeIndex === i}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  void choose(t);
+                }}
+                onMouseEnter={() => setActiveIndex(i)}
+                className={cn(
+                  "flex w-full items-center justify-between gap-3 px-3 py-1.5 text-left text-sm transition",
+                  i === activeIndex
+                    ? "bg-accent/20 text-accent"
+                    : "text-white/80 hover:bg-white/5",
+                )}
+              >
+                <span>{t.name}</span>
+                <span className="text-[10px] text-white/40">
+                  {t.usage.toLocaleString()}
+                  {t.usage === 1 ? " use" : " uses"}
+                </span>
+              </button>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
     </div>
   );

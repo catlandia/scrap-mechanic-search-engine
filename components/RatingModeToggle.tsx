@@ -23,20 +23,24 @@ export function RatingModeToggle({ current }: { current: RatingMode }) {
     >
       <input type="hidden" name="next" value={nextUrl} />
       <span className="hidden uppercase tracking-wider sm:inline">Ratings:</span>
-      <div className="inline-flex overflow-hidden rounded border border-border bg-card/60">
+      <div
+        role="group"
+        aria-label="Rating display"
+        className="inline-flex overflow-hidden rounded border border-border bg-card/60"
+      >
         {RATING_MODES.map((m) => (
           <button
             key={m}
             type="submit"
             name="mode"
             value={m}
+            data-pressed={m === current ? "true" : undefined}
             className={cn(
               "px-2 py-0.5 text-[11px] transition",
               m === current
                 ? "bg-accent/20 text-accent"
                 : "text-white/55 hover:bg-white/5 hover:text-white",
             )}
-            aria-pressed={m === current}
           >
             {LABELS[m]}
           </button>
