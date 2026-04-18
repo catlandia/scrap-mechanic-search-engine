@@ -204,8 +204,18 @@ export const users = pgTable(
       .notNull()
       .defaultNow(),
     role: text("role").notNull().default("user"),
+    // v2.2 moderation. bannedUntil / mutedUntil in the far future = permanent.
+    bannedUntil: timestamp("banned_until", { withTimezone: true }),
+    banReason: text("ban_reason"),
+    mutedUntil: timestamp("muted_until", { withTimezone: true }),
+    muteReason: text("mute_reason"),
+    warningsCount: integer("warnings_count").notNull().default(0),
+    warningNote: text("warning_note"),
   },
-  (t) => [index("users_role_idx").on(t.role)],
+  (t) => [
+    index("users_role_idx").on(t.role),
+    index("users_banned_idx").on(t.bannedUntil),
+  ],
 );
 
 export const tagVotes = pgTable(

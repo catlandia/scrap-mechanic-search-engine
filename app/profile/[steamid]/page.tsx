@@ -99,6 +99,32 @@ export default async function ProfilePage({ params }: { params: Params }) {
         <Stat label="SteamID64" value={user.steamid} mono />
       </section>
 
+      {(user.bannedUntil || user.mutedUntil || (user.warningsCount ?? 0) > 0) && (
+        <section className="space-y-2 rounded-md border border-amber-500/30 bg-amber-500/5 px-4 py-3 text-sm">
+          <div className="text-xs uppercase tracking-widest text-amber-200">
+            Moderation status
+          </div>
+          {user.bannedUntil && user.bannedUntil > new Date() && (
+            <div className="text-red-300">
+              Banned until {user.bannedUntil.toLocaleString()}
+              {user.banReason ? ` — ${user.banReason}` : "."}
+            </div>
+          )}
+          {user.mutedUntil && user.mutedUntil > new Date() && (
+            <div className="text-sky-300">
+              Muted until {user.mutedUntil.toLocaleString()}
+              {user.muteReason ? ` — ${user.muteReason}` : "."}
+            </div>
+          )}
+          {(user.warningsCount ?? 0) > 0 && (
+            <div className="text-amber-300">
+              {user.warningsCount} warning{user.warningsCount === 1 ? "" : "s"}
+              {user.warningNote ? ` — ${user.warningNote}` : "."}
+            </div>
+          )}
+        </section>
+      )}
+
       <section className="rounded-md border border-border bg-card/60 px-4 py-5 text-sm text-white/60">
         More on this profile soon: favourites, vote history, submitted items.
       </section>

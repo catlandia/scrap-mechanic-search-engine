@@ -632,6 +632,18 @@ export async function restoreFromArchive(formData: FormData) {
 const ASSIGNABLE_ROLES = ["user", "moderator", "elite_moderator"] as const;
 type AssignableRole = (typeof ASSIGNABLE_ROLES)[number];
 
+function parseDurationDays(raw: FormDataEntryValue | null): Date | null {
+  if (raw == null) return null;
+  const value = String(raw).trim();
+  if (!value || value === "perma" || value === "permanent") {
+    // Anchor "permanent" at year 9999 so regular date comparisons still work.
+    return new Date("9999-12-31T00:00:00Z");
+  }
+  const days = Number(value);
+  if (!Number.isFinite(days) || days <= 0) return null;
+  return new Date(Date.now() + days * 86_400_000);
+}
+
 /**
  * Creator-only role assignment. Moderators physically cannot call this —
  * requireCreator() throws for them. The creator role itself is anchored by
@@ -667,6 +679,133 @@ export async function setUserRole(formData: FormData) {
     .where(eq(users.steamid, targetSteamid));
 
   revalidatePath("/admin/users");
+}
+
+/**
+ * Ban a user (creator-only). Duration in days, or "perma" for permanent.
+ * Banned users can still visit public pages as a ghost but lose their
+ * session + can't vote / report / comment / favourite.
+ */
+export async function banUser(formData: FormData) {
+  const actor = await requireCreator();
+  const steamid = String(formData.get("steamid") ?? "").trim();
+  if (!steamid) throw new Error("steamid required");
+  if (steamid === actor.steamid) throw new Error("cannot_ban_self");
+
+  const until = parseDurationDays(formData.get("duration"));
+  if (!until) throw new Error("invalid_duration");
+  const reason = String(formData.get("reason") ?? "").trim() || null;
+
+  const db = getDb();
+  const [target] = await db
+    .select({ role: users.role })
+    .from(users)
+    .where(eq(users.steamid, steamid))
+    .limit(1);
+  if (!target) throw new Error("user_not_found");
+  if (target.role === "creator") throw new Error("cannot_ban_creator");
+
+  await db
+    .update(users)
+    .set({ bannedUntil: until, banReason: reason })
+    .where(eq(users.steamid, steamid));
+
+  revalidatePath("/admin/users");
+  revalidatePath(`/profile/${steamid}`);
+}
+
+export async function clearBan(formData: FormData) {
+  await requireCreator();
+  const steamid = String(formData.get("steamid") ?? "").trim();
+  if (!steamid) throw new Error("steamid required");
+
+  const db = getDb();
+  await db
+    .update(users)
+    .set({ bannedUntil: null, banReason: null })
+    .where(eq(users.steamid, steamid));
+
+  revalidatePath("/admin/users");
+  revalidatePath(`/profile/${steamid}`);
+}
+
+/**
+ * Mute a user (elite-mod+). Mutes block votes/reports/comments/favourites
+ * but still allow browsing.
+ */
+export async function muteUser(formData: FormData) {
+  const actor = await requireEliteMod();
+  const steamid = String(formData.get("steamid") ?? "").trim();
+  if (!steamid) throw new Error("steamid required");
+  if (steamid === actor.steamid) throw new Error("cannot_mute_self");
+
+  const until = parseDurationDays(formData.get("duration"));
+  if (!until) throw new Error("invalid_duration");
+  const reason = String(formData.get("reason") ?? "").trim() || null;
+
+  const db = getDb();
+  const [target] = await db
+    .select({ role: users.role })
+    .from(users)
+    .where(eq(users.steamid, steamid))
+    .limit(1);
+  if (!target) throw new Error("user_not_found");
+  if (target.role === "creator") throw new Error("cannot_mute_creator");
+
+  await db
+    .update(users)
+    .set({ mutedUntil: until, muteReason: reason })
+    .where(eq(users.steamid, steamid));
+
+  revalidatePath("/admin/users");
+  revalidatePath(`/profile/${steamid}`);
+}
+
+export async function clearMute(formData: FormData) {
+  await requireEliteMod();
+  const steamid = String(formData.get("steamid") ?? "").trim();
+  if (!steamid) throw new Error("steamid required");
+
+  const db = getDb();
+  await db
+    .update(users)
+    .set({ mutedUntil: null, muteReason: null })
+    .where(eq(users.steamid, steamid));
+
+  revalidatePath("/admin/users");
+  revalidatePath(`/profile/${steamid}`);
+}
+
+/**
+ * Warn a user. Increments warningsCount and stores latest note (replacing).
+ * Mods can warn but can't ban or mute — warnings are their soft tool.
+ */
+export async function warnUser(formData: FormData) {
+  const actor = await requireMod();
+  const steamid = String(formData.get("steamid") ?? "").trim();
+  if (!steamid) throw new Error("steamid required");
+  if (steamid === actor.steamid) throw new Error("cannot_warn_self");
+  const note = String(formData.get("note") ?? "").trim() || null;
+
+  const db = getDb();
+  const [target] = await db
+    .select({ role: users.role, warningsCount: users.warningsCount })
+    .from(users)
+    .where(eq(users.steamid, steamid))
+    .limit(1);
+  if (!target) throw new Error("user_not_found");
+  if (target.role === "creator") throw new Error("cannot_warn_creator");
+
+  await db
+    .update(users)
+    .set({
+      warningsCount: (target.warningsCount ?? 0) + 1,
+      warningNote: note,
+    })
+    .where(eq(users.steamid, steamid));
+
+  revalidatePath("/admin/users");
+  revalidatePath(`/profile/${steamid}`);
 }
 
 export async function createCategory(formData: FormData) {

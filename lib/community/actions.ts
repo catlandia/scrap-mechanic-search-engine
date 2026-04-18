@@ -22,8 +22,15 @@ const MIN_STEAM_AGE_DAYS = 7;
 async function requireVotingUser() {
   const user = await getCurrentUser();
   if (!user) throw new Error("signed_out");
+  const now = Date.now();
+  if (user.bannedUntil && user.bannedUntil.getTime() > now) {
+    throw new Error("banned");
+  }
+  if (user.mutedUntil && user.mutedUntil.getTime() > now) {
+    throw new Error("muted");
+  }
   if (user.steamCreatedAt) {
-    const ageDays = (Date.now() - user.steamCreatedAt.getTime()) / 86_400_000;
+    const ageDays = (now - user.steamCreatedAt.getTime()) / 86_400_000;
     if (ageDays < MIN_STEAM_AGE_DAYS) {
       throw new Error("steam_too_new");
     }

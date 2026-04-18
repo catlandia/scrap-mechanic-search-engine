@@ -5,9 +5,15 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
 import { users } from "@/lib/db/schema";
 import type { UserRole } from "@/lib/db/schema";
-import { isCreator, ROLE_LABELS, ROLE_STYLES } from "@/lib/auth/roles";
+import {
+  isCreator,
+  isEliteModerator,
+  ROLE_LABELS,
+  ROLE_STYLES,
+} from "@/lib/auth/roles";
 import { RoleBadge } from "@/components/RoleBadge";
 import { UserName } from "@/components/UserName";
+import { UserModForms } from "@/components/UserModForms";
 
 export const dynamic = "force-dynamic";
 
@@ -130,29 +136,59 @@ export default async function UsersAdminPage() {
                     ) : isSelf ? (
                       <span className="text-xs text-white/40">That&apos;s you</span>
                     ) : (
-                      <form
-                        action={setUserRole}
-                        className="flex items-center justify-end gap-2"
-                      >
-                        <input type="hidden" name="steamid" value={u.steamid} />
-                        <select
-                          name="role"
-                          defaultValue={role}
-                          className="rounded border border-border bg-background px-2 py-1 text-sm"
+                      <div className="flex flex-col items-end gap-1">
+                        <form
+                          action={setUserRole}
+                          className="flex items-center justify-end gap-2"
                         >
-                          {ASSIGNABLE_ROLES.map((r) => (
-                            <option key={r.value} value={r.value}>
-                              {r.label}
-                            </option>
-                          ))}
-                        </select>
-                        <button
-                          type="submit"
-                          className="rounded bg-accent px-2.5 py-1 text-xs font-medium text-black hover:bg-accent-strong"
-                        >
-                          Save
-                        </button>
-                      </form>
+                          <input type="hidden" name="steamid" value={u.steamid} />
+                          <select
+                            name="role"
+                            defaultValue={role}
+                            className="rounded border border-border bg-background px-2 py-1 text-sm"
+                          >
+                            {ASSIGNABLE_ROLES.map((r) => (
+                              <option key={r.value} value={r.value}>
+                                {r.label}
+                              </option>
+                            ))}
+                          </select>
+                          <button
+                            type="submit"
+                            className="rounded bg-accent px-2.5 py-1 text-xs font-medium text-black hover:bg-accent-strong"
+                          >
+                            Save
+                          </button>
+                        </form>
+                        <UserModForms
+                          targetSteamid={u.steamid}
+                          viewerIsCreator={isCreator(viewer!.role as UserRole)}
+                          viewerIsEliteOrCreator={isEliteModerator(
+                            viewer!.role as UserRole,
+                          )}
+                          isCurrentlyBanned={
+                            !!(u.bannedUntil && u.bannedUntil > new Date())
+                          }
+                          isCurrentlyMuted={
+                            !!(u.mutedUntil && u.mutedUntil > new Date())
+                          }
+                        />
+                        {u.bannedUntil && u.bannedUntil > new Date() && (
+                          <div className="text-[10px] text-red-300">
+                            banned until {u.bannedUntil.toLocaleDateString()}
+                          </div>
+                        )}
+                        {u.mutedUntil && u.mutedUntil > new Date() && (
+                          <div className="text-[10px] text-sky-300">
+                            muted until {u.mutedUntil.toLocaleDateString()}
+                          </div>
+                        )}
+                        {(u.warningsCount ?? 0) > 0 && (
+                          <div className="text-[10px] text-amber-300">
+                            {u.warningsCount} warning{u.warningsCount === 1 ? "" : "s"}
+                          </div>
+                        )}
+                      </div>
                     )}
                   </td>
                 </tr>

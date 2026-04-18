@@ -55,3 +55,13 @@ export const getCurrentUser = cache(async (): Promise<User | null> => {
     .limit(1);
   return user ?? null;
 });
+
+export function isBanned(user: User | null | undefined): boolean {
+  if (!user) return false;
+  return !!(user.bannedUntil && user.bannedUntil.getTime() > Date.now());
+}
+
+export function isMuted(user: User | null | undefined): boolean {
+  if (!user) return false;
+  return !!(user.mutedUntil && user.mutedUntil.getTime() > Date.now());
+}
