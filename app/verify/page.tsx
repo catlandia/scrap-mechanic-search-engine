@@ -32,11 +32,32 @@ function VerifyChallenge() {
 
   const [state, setState] = useState<UIState>({ phase: "loading" });
   const [isPending, startTransition] = useTransition();
+  const [zoomed, setZoomed] = useState(false);
   const pendingTimers = useRef<number[]>([]);
+  const zoomTriggerRef = useRef<HTMLButtonElement>(null);
+  const zoomCloseRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     startChallenge().then((q) => setState({ phase: "question", q }));
   }, []);
+
+  // Close zoom on Escape; move focus into the overlay on open and back to
+  // the trigger on close so keyboard users don't get dropped at the top.
+  const wasZoomed = useRef(false);
+  useEffect(() => {
+    if (zoomed) {
+      zoomCloseRef.current?.focus();
+      function onKey(e: KeyboardEvent) {
+        if (e.key === "Escape") setZoomed(false);
+      }
+      window.addEventListener("keydown", onKey);
+      wasZoomed.current = true;
+      return () => window.removeEventListener("keydown", onKey);
+    } else if (wasZoomed.current) {
+      zoomTriggerRef.current?.focus({ preventScroll: true });
+      wasZoomed.current = false;
+    }
+  }, [zoomed]);
 
   useEffect(() => {
     const timers = pendingTimers;
@@ -72,17 +93,22 @@ function VerifyChallenge() {
         const freshPromise = startChallenge();
         setState({ phase: "question", q: currentQ, flash: "wrong" });
         const fresh = await freshPromise;
-        scheduleTimer(() => setState({ phase: "question", q: fresh }), 900);
+        scheduleTimer(() => {
+          setZoomed(false);
+          setState({ phase: "question", q: fresh });
+        }, 900);
         return;
       }
 
       if (result.status === "complete") {
+        setZoomed(false);
         setState({ phase: "complete" });
         return;
       }
 
       setState({ phase: "question", q: (state as { phase: "question"; q: QuestionPayload }).q, flash: "correct" });
       scheduleTimer(() => {
+        setZoomed(false);
         setState({ phase: "question", q: result.next });
       }, 500);
     });
@@ -149,9 +175,14 @@ function VerifyChallenge() {
           <span className="ml-2 text-xs text-white/40">{q.questionNumber}/3</span>
         </div>
 
-        {/* Image — served through /api/captcha/image so filename is never exposed */}
-        <div
-          className={`relative overflow-hidden rounded-xl border border-white/10 transition-all duration-200 ${flashClass}`}
+        {/* Image — served through /api/captcha/image so filename is never exposed.
+            Click/tap opens a zoomed overlay so small characters are findable on mobile. */}
+        <button
+          ref={zoomTriggerRef}
+          type="button"
+          onClick={() => setZoomed(true)}
+          aria-label="Zoom in on the image"
+          className={`group relative block w-full overflow-hidden rounded-xl border border-white/10 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent ${flashClass}`}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -162,10 +193,26 @@ function VerifyChallenge() {
             style={{ maxHeight: "280px", objectPosition: "center" }}
             draggable={false}
           />
-          <div className="absolute bottom-2 right-3 text-[11px] text-white/30 select-none">
+          <span className="pointer-events-none absolute bottom-2 left-2 inline-flex items-center gap-1 rounded bg-black/60 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-white/80 opacity-80 group-hover:opacity-100">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              className="size-3"
+              aria-hidden
+            >
+              <path
+                fillRule="evenodd"
+                d="M9 3.5a5.5 5.5 0 1 0 3.356 9.857l3.644 3.643a.75.75 0 1 0 1.06-1.06l-3.643-3.644A5.5 5.5 0 0 0 9 3.5zM5 9a4 4 0 1 1 8 0 4 4 0 0 1-8 0zm3.5-1.75a.75.75 0 0 1 1.5 0v1h1a.75.75 0 0 1 0 1.5h-1v1a.75.75 0 0 1-1.5 0v-1h-1a.75.75 0 0 1 0-1.5h1v-1z"
+                clipRule="evenodd"
+              />
+            </svg>
+            Tap to zoom
+          </span>
+          <span className="pointer-events-none absolute bottom-2 right-3 text-[11px] text-white/30 select-none">
             Who is this?
-          </div>
-        </div>
+          </span>
+        </button>
 
         {/* Options grid */}
         <div className="grid grid-cols-2 gap-3">
@@ -200,6 +247,52 @@ function VerifyChallenge() {
           Only Scrap Mechanic players may enter
         </p>
       </div>
+
+      {zoomed && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Zoomed character image"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
+          onClick={() => setZoomed(false)}
+        >
+          <button
+            ref={zoomCloseRef}
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setZoomed(false);
+            }}
+            aria-label="Close zoom"
+            className="absolute right-4 top-4 rounded-full bg-white/10 p-2 text-white hover:bg-white/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              className="size-5"
+              aria-hidden
+            >
+              <path
+                fillRule="evenodd"
+                d="M4.28 3.22a.75.75 0 0 0-1.06 1.06L8.94 10l-5.72 5.72a.75.75 0 1 0 1.06 1.06L10 11.06l5.72 5.72a.75.75 0 1 0 1.06-1.06L11.06 10l5.72-5.72a.75.75 0 0 0-1.06-1.06L10 8.94 4.28 3.22z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </button>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={`/api/captcha/image?n=${q.nonce}`}
+            alt="Who is this?"
+            className="max-h-[90vh] max-w-[95vw] object-contain"
+            draggable={false}
+            onClick={(e) => e.stopPropagation()}
+          />
+          <p className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded bg-black/70 px-3 py-1 text-[11px] text-white/70">
+            Tap outside or press Esc to close
+          </p>
+        </div>
+      )}
     </div>
   );
 }
