@@ -1,8 +1,9 @@
 import { getDb } from "@/lib/db/client";
 import { categories, tags, type Category, type Tag } from "@/lib/db/schema";
-import { createCategory, createTag, updateTag } from "@/app/admin/actions";
+import { createCategory, createTag } from "@/app/admin/actions";
 import { getCurrentUser } from "@/lib/auth/session";
 import { effectiveRole, isCreator } from "@/lib/auth/roles";
+import { TagChipEditable } from "@/components/admin/TagChipEditable";
 
 export const dynamic = "force-dynamic";
 
@@ -172,75 +173,3 @@ function TagGroup({
   );
 }
 
-function TagChipEditable({
-  tag,
-  allCategories,
-}: {
-  tag: Tag;
-  allCategories: Category[];
-}) {
-  return (
-    <details className="group rounded-md border border-border bg-card/60 text-xs">
-      <summary className="cursor-pointer list-none rounded-md px-2.5 py-0.5 text-white/80 hover:bg-white/5 group-open:rounded-b-none group-open:border-b group-open:border-border">
-        {tag.name} <span className="text-white/40">· {tag.slug}</span>
-        <span className="ml-2 text-[10px] text-purple-300 group-open:hidden">
-          edit
-        </span>
-      </summary>
-      <form action={updateTag} className="grid gap-2 p-3 sm:grid-cols-4">
-        <input type="hidden" name="tagId" value={tag.id} />
-        <label className="space-y-1">
-          <span className="block text-[10px] uppercase tracking-wider text-white/40">
-            Name
-          </span>
-          <input
-            name="name"
-            defaultValue={tag.name}
-            required
-            className="w-full rounded border border-border bg-background px-2 py-1 text-sm"
-          />
-        </label>
-        <label className="space-y-1">
-          <span className="block text-[10px] uppercase tracking-wider text-white/40">
-            Slug
-          </span>
-          <input
-            name="slug"
-            defaultValue={tag.slug}
-            required
-            className="w-full rounded border border-border bg-background px-2 py-1 text-sm"
-          />
-        </label>
-        <label className="space-y-1">
-          <span className="block text-[10px] uppercase tracking-wider text-white/40">
-            Category
-          </span>
-          <select
-            name="categoryId"
-            defaultValue={tag.categoryId ?? ""}
-            className="w-full rounded border border-border bg-background px-2 py-1 text-sm"
-          >
-            <option value="">— no category —</option>
-            {allCategories.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <div className="flex items-end">
-          <button
-            type="submit"
-            className="w-full rounded bg-accent px-3 py-1 text-sm font-medium text-black hover:bg-accent-strong"
-          >
-            Save
-          </button>
-        </div>
-        <p className="text-[11px] text-amber-200/70 sm:col-span-4">
-          Changing the slug breaks any existing <code>/search?tags=&lt;old-slug&gt;</code>{" "}
-          link. Safe for fixing typos; be deliberate about renames.
-        </p>
-      </form>
-    </details>
-  );
-}
