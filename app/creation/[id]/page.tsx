@@ -2,6 +2,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { eq } from "drizzle-orm";
+import { getDb } from "@/lib/db/client";
+import { users } from "@/lib/db/schema";
 import {
   getCreationComments,
   getCreationDetail,
@@ -14,6 +17,8 @@ import {
   recordCreationView,
 } from "@/lib/db/queries";
 import { getCurrentUser, isBanned, isMuted } from "@/lib/auth/session";
+import { UserName } from "@/components/UserName";
+import { RoleBadge } from "@/components/RoleBadge";
 import { StarRating, sentimentLabel } from "@/components/StarRating";
 import { CommentSection } from "@/components/CommentSection";
 import { CreationVotePanel } from "@/components/CreationVotePanel";
@@ -81,6 +86,7 @@ export default async function CreationDetailPage({ params }: { params: Params })
     siteCounts,
     reportBadge,
     commentRows,
+    uploaderRow,
   ] = await Promise.all([
     getCreationTagsWithVotes(creation.id, viewer?.steamid ?? null),
     viewer ? getUserVoteOnCreation(creation.id, viewer.steamid) : Promise.resolve(0 as const),
@@ -89,7 +95,16 @@ export default async function CreationDetailPage({ params }: { params: Params })
     getCreationSiteCounts(creation.id),
     getPublicReportBadge(creation.id),
     getCreationComments(creation.id, 100),
+    creation.uploadedByUserId
+      ? getDb()
+          .select()
+          .from(users)
+          .where(eq(users.steamid, creation.uploadedByUserId))
+          .limit(1)
+          .then((r) => r[0] ?? null)
+      : Promise.resolve(null),
   ]);
+  const uploader = uploaderRow;
 
   const visibleTags = tagsWithVotes.filter((t) => !t.rejected);
   const confirmedTags = visibleTags.filter((t) => t.confirmed);
@@ -146,6 +161,22 @@ export default async function CreationDetailPage({ params }: { params: Params })
             <span className="text-white/35">Steam:</span> {creation.id}
           </span>
         </div>
+        {uploader && (
+          <p className="flex flex-wrap items-center gap-2 text-xs text-white/60">
+            <span className="rounded bg-purple-500/20 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-purple-200">
+              Community added
+            </span>
+            <span>
+              submitted by{" "}
+              <UserName
+                name={uploader.personaName}
+                role={uploader.role as UserRole}
+                steamid={uploader.steamid}
+              />
+            </span>
+            <RoleBadge role={uploader.role as UserRole} />
+          </p>
+        )}
       </header>
 
       {creation.thumbnailUrl && (

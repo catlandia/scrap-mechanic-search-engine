@@ -5,7 +5,9 @@ import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
 import {
+  categories,
   comments,
+  creationCategories,
   creations,
   creationTags,
   creationVotes,
@@ -19,6 +21,14 @@ import {
 } from "@/lib/db/schema";
 import { isModerator } from "@/lib/auth/roles";
 import type { UserRole } from "@/lib/db/schema";
+import {
+  detectKind,
+  getPublishedFileDetails,
+  resolvePlayerNames,
+  steamUrlFor,
+} from "@/lib/steam/client";
+import { stripBBCode } from "@/lib/steam/bbcode";
+import { classify } from "@/lib/tagger/classify";
 
 const MIN_STEAM_AGE_DAYS = 7;
 
@@ -295,6 +305,158 @@ export async function deleteComment(formData: FormData): Promise<void> {
     .where(eq(comments.id, id));
 
   revalidatePath(`/creation/${row.creationId}`);
+}
+
+function parsePublishedFileId(input: string): string | null {
+  const trimmed = input.trim();
+  if (!trimmed) return null;
+  if (/^\d+$/.test(trimmed)) return trimmed;
+  try {
+    const url = new URL(trimmed);
+    const id = url.searchParams.get("id");
+    if (id && /^\d+$/.test(id)) return id;
+  } catch {
+    /* not a URL */
+  }
+  const match = trimmed.match(/id=(\d+)/);
+  return match?.[1] ?? null;
+}
+
+export type SubmitResult =
+  | { ok: true; publishedFileId: string; title: string }
+  | { ok: false; error: string };
+
+/**
+ * User-facing workshop submission. Goes into the pending queue with
+ * uploadedByUserId set so we can show a "community added" badge. Not
+ * auto-approved — every submission runs through triage.
+ */
+export async function submitCreation(formData: FormData): Promise<SubmitResult> {
+  let user;
+  try {
+    user = await requireVotingUser();
+  } catch (err) {
+    const code = err instanceof Error ? err.message : "failed";
+    return { ok: false, error: code };
+  }
+
+  const raw = String(formData.get("input") ?? "").trim();
+  const id = parsePublishedFileId(raw);
+  if (!id) return { ok: false, error: "Couldn't parse a URL or numeric id." };
+
+  const apiKey = process.env.STEAM_API_KEY;
+  if (!apiKey) return { ok: false, error: "Steam API key not configured." };
+
+  const db = getDb();
+  const [existing] = await db
+    .select({ id: creations.id, status: creations.status })
+    .from(creations)
+    .where(eq(creations.id, id))
+    .limit(1);
+  if (existing) {
+    return {
+      ok: false,
+      error: `Already in the system (status: ${existing.status}).`,
+    };
+  }
+
+  const [item] = await getPublishedFileDetails([id]);
+  if (!item) return { ok: false, error: "Steam returned no data for that id." };
+  if (item.result != null && item.result !== 1) {
+    return { ok: false, error: `Steam rejected the lookup (result=${item.result}).` };
+  }
+
+  const tagNames = (item.tags ?? []).map((t) => t.tag);
+  const kind = detectKind(tagNames);
+  const descRaw = item.file_description || item.short_description || "";
+  const descClean = stripBBCode(descRaw);
+
+  let authorName: string | null = null;
+  if (item.creator) {
+    try {
+      const names = await resolvePlayerNames(apiKey, [item.creator]);
+      authorName = names.get(item.creator) ?? null;
+    } catch {
+      /* best-effort */
+    }
+  }
+
+  await db.insert(creations).values({
+    id: item.publishedfileid,
+    title: item.title || "(untitled)",
+    descriptionRaw: descRaw,
+    descriptionClean: descClean,
+    authorSteamid: item.creator ?? null,
+    authorName,
+    thumbnailUrl: item.preview_url ?? null,
+    steamUrl: steamUrlFor(item.publishedfileid),
+    fileSizeBytes:
+      typeof item.file_size === "string"
+        ? Number(item.file_size) || null
+        : (item.file_size ?? null),
+    timeCreated: item.time_created ? new Date(item.time_created * 1000) : null,
+    timeUpdated: item.time_updated ? new Date(item.time_updated * 1000) : null,
+    voteScore: item.vote_data?.score ?? null,
+    votesUp: item.vote_data?.votes_up ?? null,
+    votesDown: item.vote_data?.votes_down ?? null,
+    subscriptions: item.lifetime_subscriptions ?? item.subscriptions ?? 0,
+    favorites: item.lifetime_favorited ?? item.favorited ?? 0,
+    views: item.views ?? 0,
+    steamTags: tagNames,
+    kind,
+    status: "pending",
+    uploadedByUserId: user.steamid,
+  });
+
+  // Run the keyword tagger on the new creation.
+  const suggestions = classify({
+    title: item.title ?? "",
+    descriptionClean: descClean,
+    steamTags: tagNames,
+  });
+  if (suggestions.length > 0) {
+    const tagRows = await db
+      .select({ id: tags.id, slug: tags.slug, categoryId: tags.categoryId })
+      .from(tags);
+    const tagBySlug = new Map(tagRows.map((t) => [t.slug, t]));
+    const tagInserts: (typeof creationTags.$inferInsert)[] = [];
+    const categoryIdSet = new Set<number>();
+    for (const s of suggestions) {
+      const tag = tagBySlug.get(s.slug);
+      if (!tag) continue;
+      tagInserts.push({
+        creationId: item.publishedfileid,
+        tagId: tag.id,
+        source: s.source,
+        confidence: s.confidence,
+        confirmed: false,
+      });
+      if (tag.categoryId) categoryIdSet.add(tag.categoryId);
+    }
+    if (tagInserts.length > 0) {
+      await db.insert(creationTags).values(tagInserts).onConflictDoNothing();
+    }
+    if (categoryIdSet.size > 0) {
+      await db
+        .insert(creationCategories)
+        .values(
+          Array.from(categoryIdSet).map((cid) => ({
+            creationId: item.publishedfileid,
+            categoryId: cid,
+          })),
+        )
+        .onConflictDoNothing();
+    }
+  }
+
+  revalidatePath("/admin/triage");
+  revalidatePath("/admin/queue");
+
+  return {
+    ok: true,
+    publishedFileId: item.publishedfileid,
+    title: item.title || "(untitled)",
+  };
 }
 
 export async function voteTag(

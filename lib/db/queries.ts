@@ -45,6 +45,8 @@ export interface CreationCardRow {
   // Site-native aggregates (denormalised; recomputed on every vote action).
   siteWeightedUp: number;
   siteWeightedDown: number;
+  /** Null when the item came from the ingest cron; set for user-submitted items. */
+  uploadedByUserId: string | null;
 }
 
 const cardColumns = {
@@ -64,6 +66,7 @@ const cardColumns = {
   approvedAt: creations.approvedAt,
   siteWeightedUp: creations.siteWeightedUp,
   siteWeightedDown: creations.siteWeightedDown,
+  uploadedByUserId: creations.uploadedByUserId,
 };
 
 export const SORT_MODES = [

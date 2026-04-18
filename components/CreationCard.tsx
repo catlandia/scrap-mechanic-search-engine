@@ -40,6 +40,11 @@ export function CreationCard({ creation }: { creation: CreationCardRow }) {
           <span className="absolute right-2 top-2 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-mono text-white/70">
             #{creation.shortId}
           </span>
+          {creation.uploadedByUserId && (
+            <span className="absolute bottom-2 left-2 rounded bg-purple-500/30 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-purple-200">
+              Community
+            </span>
+          )}
         </div>
         <div className="flex flex-col gap-1 p-3 pb-1">
           <div className="truncate font-medium group-hover:text-accent">
