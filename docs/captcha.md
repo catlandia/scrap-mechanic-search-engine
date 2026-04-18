@@ -1,12 +1,14 @@
 # Captcha System
 
-A custom Scrap Mechanic-themed captcha that gates all public routes on first visit. Doubles as a "are you actually a SM player" filter — the game is niche enough that bots won't have training data for it.
+A custom Scrap Mechanic-themed captcha that gates Steam login on first visit. Doubles as a "are you actually a SM player" filter — the game is niche enough that bots won't have training data for it.
 
 ---
 
 ## How it works
 
-Every visitor must pass a 3-question challenge before accessing the site. On success a `bot_verified=1` cookie is set (30-day expiry). Middleware checks this cookie on every request — if missing, the visitor is redirected to `/verify?next=<original_path>` and returned there after passing.
+The captcha is **only required before Steam login** — visitors can browse the site freely without passing it. When a visitor clicks "Sign in with Steam", middleware checks for a `bot_verified=1` cookie. If missing, the visitor is redirected to `/verify?next=/auth/steam/login` and returned to the Steam login flow after passing.
+
+On success a `bot_verified=1` cookie is set (30-day expiry).
 
 **Challenge rules:**
 - 3 correct answers in a row required
@@ -43,12 +45,12 @@ The Chapter 2 image shows the in-game "Scrap Mechanic Chapter 2" sign. Its corre
 The character filename (e.g. `Mechanic1.jpg`) is **never sent to the client**. Instead:
 
 1. The server stores the actual image path inside the encrypted `smse_captcha` iron-session cookie
-2. The client receives only `{ options, questionNumber, streak }` — no image field
-3. The page renders `<img src="/api/captcha/image?q=<n>" />` — an opaque proxy URL
+2. The client receives `{ options, questionNumber, streak, nonce }` — the `nonce` is a random UUID generated per question, no image path
+3. The page renders `<img key={nonce} src="/api/captcha/image?n=<nonce>" />` — an opaque proxy URL
 4. `GET /api/captcha/image` reads the session server-side and streams the raw image bytes
-5. All inspecting the network tab reveals is `/api/captcha/image?q=1`
+5. All inspecting the network tab reveals is `/api/captcha/image?n=<uuid>`
 
-The `?q=<questionNumber>` parameter exists only for browser cache-busting — the server ignores it and uses the session to know which image to serve.
+The `nonce` UUID serves two purposes: cache-busting (changing `key` forces React to unmount/remount the `<img>` element, preventing stale images after a wrong answer) and obscuring which question is being shown. The server ignores the nonce value entirely and uses the session.
 
 ---
 
@@ -89,14 +91,11 @@ The `correct` field on each stored question is **never returned to the client** 
 
 ## Middleware integration
 
-`middleware.ts` runs on all routes except:
-- `/_next/static`, `/_next/image`, `favicon.ico`, `captcha/`, `logo.png` (static assets — excluded via matcher pattern)
-- `/auth/*` — Steam OpenID flow
-- `/verify/*` — the captcha page itself
-- `/api/cron/*` — server-to-server cron endpoints
-- `/api/captcha/*` — the image proxy (must be reachable from `/verify` before verification)
+`middleware.ts` matcher: `["/admin/:path*", "/auth/:path*"]`
 
-After the bot check passes, the existing admin gate runs as before.
+The bot check fires **only on the exact route `/auth/steam/login`**. All other routes — including the rest of `/auth/*` (callback, logout) — are always open. After the bot check passes on the login route, the request continues normally.
+
+The admin gate (`/admin/*`) is independent of the captcha and checks for an iron-session with a valid steamid.
 
 ---
 

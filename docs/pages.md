@@ -23,6 +23,8 @@ All public pages are in `app/` using Next.js 15 App Router. Server Components by
 | `/author/[steamid]` | `app/author/[steamid]/page.tsx` | Creator's items |
 | `/me` | `app/me/page.tsx` | Redirect to own profile |
 | `/me/favourites` | `app/me/favourites/page.tsx` | User's bookmarks |
+| `/me/submissions` | `app/me/submissions/page.tsx` | User's submitted Workshop items with status badges |
+| `/me/notifications` | `app/me/notifications/page.tsx` | User's notifications; marks all read on load |
 | `/submit` | `app/submit/page.tsx` | Submit a Workshop item |
 | `/suggestions` | `app/suggestions/page.tsx` | Ideas board (3 tabs) |
 | `/suggestions/new` | `app/suggestions/new/page.tsx` | Submit a suggestion |
@@ -153,10 +155,13 @@ Full-featured search with URL-based state (links are shareable).
 **User menu (signed in):**
 - Avatar + persona name + role badge
 - Link to own profile
-- Favorites link (`/me/favourites`)
 - Submit link (`/submit`)
+- Favourites link (`/me/favourites`)
+- Bell icon with unread badge → `/me/notifications` (hidden when banned)
 - Admin link (mod+ only)
 - Sign out
+
+Unread notification count is fetched server-side in `app/layout.tsx` on every render and passed as a prop to `UserMenu`.
 
 **Unauthenticated:**
 - "Sign in with Steam" button

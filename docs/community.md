@@ -84,14 +84,17 @@ Community members can submit Steam Workshop items for admin review.
 - Must not be banned
 - Must not be muted
 - Steam account must be ≥ 7 days old (prevents fresh sock-puppet accounts)
+- Item must belong to the Scrap Mechanic Workshop (`consumer_appid === 387990`) — items from other games are rejected
 
 **Flow:**
 1. User pastes a Steam Workshop URL or ID
 2. System fetches item from Steam API
-3. Item is inserted with `status='pending'` and `uploadedByUserId` set
-4. Tagger runs and suggests tags
-5. Admin triages it like any other pending item
-6. If approved, the creation detail page shows a "Submitted by community" badge crediting the submitter
+3. `consumer_appid` is checked; non-SM items return an error immediately
+4. Item is inserted with `status='pending'` and `uploadedByUserId` set
+5. Tagger runs and suggests tags
+6. Admin triages it like any other pending item
+7. If approved or rejected, the submitter receives a notification
+8. If approved, the creation detail page shows a "Submitted by community" badge crediting the submitter
 
 **Parsing:** Accepts full URLs (`steamcommunity.com/sharedfiles/filedetails/?id=XXX`) or bare numeric IDs.
 
@@ -153,6 +156,43 @@ submitted
 ```
 
 All transitions are available to the creator in `/admin/suggestions`. Hard-delete is creator-only and permanent.
+
+When a suggestion status changes to `approved`, `rejected`, or `implemented`, the original submitter receives a notification automatically.
+
+---
+
+## Notifications
+
+Users receive in-app notifications for key events involving their own content.
+
+**Triggers:**
+
+| Event | Notification title |
+|---|---|
+| Submission approved | "Submission approved!" |
+| Submission rejected | "Submission not accepted" |
+| Idea approved | "Idea approved!" |
+| Idea rejected | "Idea not accepted" |
+| Idea implemented | "Idea implemented!" |
+
+**Delivery:** Best-effort — notification inserts never block the primary action. If the insert fails, the action succeeds anyway.
+
+**Reading:** `/me/notifications` — loads all notifications for the current user, newest first. All unread notifications are marked as read on page load.
+
+**Bell icon:** The nav UserMenu shows a bell icon with an unread count badge. Count is queried in `app/layout.tsx` on every request (server-side, so no polling needed).
+
+**Schema:** `notifications` table — `id`, `userId`, `type`, `title`, `body`, `link`, `read`, `createdAt`. Helper: `lib/db/notifications.ts → createNotification()`.
+
+---
+
+## My Submissions (`/me/submissions`)
+
+Shows all Workshop items the current user has submitted, ordered newest first. Each row shows:
+- Thumbnail, title, kind
+- Status badge: Pending review / Approved / Not accepted / Archived / Deleted
+- Submission date
+- Link to the item's Steam Workshop page
+- If approved, the title links to the creation detail page
 
 ---
 

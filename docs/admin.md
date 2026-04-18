@@ -92,6 +92,7 @@ All helpers check `effectiveRole` (ban-aware), not `user.role` directly.
 | `muteUser(steamid, durationDays \| "perma")` | Elite+ required. Blocks votes/comments/reports/favorites |
 | `clearMute(steamid)` | Lifts mute |
 | `warnUser(steamid, note)` | Increments `warningsCount`, records note. Visible to mod+. |
+| `clearWarnings(steamid)` | Resets `warningsCount` to 0 and clears `warningNote`. Creator-only. |
 | `hardBanUser(steamid)` | Sets `hardBanned=true`. Blocks future sign-ins. Existing sessions die immediately. |
 | `clearHardBan(steamid)` | Wipes hard ban + ban reason |
 
@@ -123,9 +124,11 @@ For each user:
 - Mute status (with expiry)
 - Hard-ban indicator
 - Action buttons based on caller's role:
-  - **Creator sees:** Full role management, ban/clear, hard-ban/clear, mute/clear, warn
+  - **Creator sees:** Full role management, ban/clear, hard-ban/clear, mute/clear, warn, **clear warnings**
   - **Elite mod sees:** Mute/clear, warn (no role management)
   - **Mod sees:** Warn only
+
+"Clear warnings" only appears when the target user has at least one warning — it resets `warningsCount` to 0 and wipes the note.
 
 ---
 
