@@ -9,6 +9,7 @@ import {
   clearWarnings,
   hardBanUser,
   muteUser,
+  setAgeGateBypass,
   warnUser,
 } from "@/app/admin/actions";
 import { cn } from "@/lib/utils";
@@ -28,6 +29,7 @@ export function UserModForms({
   isCurrentlyMuted,
   isCurrentlyHardBanned,
   warningsCount = 0,
+  bypassAgeGate = false,
 }: {
   targetSteamid: string;
   viewerIsCreator: boolean;
@@ -36,6 +38,7 @@ export function UserModForms({
   isCurrentlyMuted: boolean;
   isCurrentlyHardBanned: boolean;
   warningsCount?: number;
+  bypassAgeGate?: boolean;
 }) {
   const [open, setOpen] = useState<null | "ban" | "mute" | "warn" | "hardban">(null);
 
@@ -80,6 +83,28 @@ export function UserModForms({
             title={`Clear all ${warningsCount} warning${warningsCount === 1 ? "" : "s"}`}
           >
             Clear warnings
+          </button>
+        </form>
+      )}
+      {viewerIsCreator && (
+        <form action={setAgeGateBypass}>
+          <input type="hidden" name="steamid" value={targetSteamid} />
+          <input type="hidden" name="on" value={bypassAgeGate ? "0" : "1"} />
+          <button
+            type="submit"
+            className={cn(
+              "rounded px-2 py-0.5",
+              bypassAgeGate
+                ? "border border-emerald-500/40 bg-emerald-500/10 text-emerald-200 hover:bg-emerald-500/20"
+                : "border border-border bg-background text-white/60 hover:border-emerald-400/60 hover:text-emerald-200",
+            )}
+            title={
+              bypassAgeGate
+                ? "Revoke the age-gate bypass — user must wait the 7 days"
+                : "Allow this user past the 7-day Steam account-age gate"
+            }
+          >
+            {bypassAgeGate ? "Revoke age bypass" : "Allow young account"}
           </button>
         </form>
       )}

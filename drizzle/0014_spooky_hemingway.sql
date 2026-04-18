@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD COLUMN "bypass_age_gate" boolean DEFAULT false NOT NULL;

@@ -226,6 +226,9 @@ export const users = pgTable(
     muteReason: text("mute_reason"),
     warningsCount: integer("warnings_count").notNull().default(0),
     warningNote: text("warning_note"),
+    // Creator can wave specific users past the 7-day Steam account-age gate —
+    // useful for trusted community members on fresh Steam accounts.
+    bypassAgeGate: boolean("bypass_age_gate").notNull().default(false),
   },
   (t) => [
     index("users_role_idx").on(t.role),

@@ -1025,6 +1025,29 @@ export async function clearWarnings(formData: FormData) {
   revalidatePath(`/profile/${steamid}`);
 }
 
+/**
+ * Creator-only: toggle the 7-day Steam account-age gate bypass for a
+ * specific user. Useful for trusted community members on fresh Steam
+ * accounts who would otherwise be told to wait a week before they can
+ * submit / comment / vote.
+ */
+export async function setAgeGateBypass(formData: FormData) {
+  await requireCreator();
+  const steamid = String(formData.get("steamid") ?? "").trim();
+  if (!steamid) throw new Error("steamid required");
+  const onRaw = String(formData.get("on") ?? "").trim();
+  const on = onRaw === "1" || onRaw === "true";
+
+  const db = getDb();
+  await db
+    .update(users)
+    .set({ bypassAgeGate: on })
+    .where(eq(users.steamid, steamid));
+
+  revalidatePath("/admin/users");
+  revalidatePath(`/profile/${steamid}`);
+}
+
 export async function warnUser(formData: FormData) {
   const actor = await requireMod();
   const steamid = String(formData.get("steamid") ?? "").trim();

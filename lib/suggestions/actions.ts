@@ -27,7 +27,7 @@ async function requireActiveUser() {
   const now = Date.now();
   if (user.bannedUntil && user.bannedUntil.getTime() > now) throw new Error("banned");
   if (user.mutedUntil && user.mutedUntil.getTime() > now) throw new Error("muted");
-  if (user.steamCreatedAt) {
+  if (user.steamCreatedAt && !user.bypassAgeGate) {
     const ageDays = (now - user.steamCreatedAt.getTime()) / 86_400_000;
     if (ageDays < MIN_STEAM_AGE_DAYS) throw new Error("steam_too_new");
   }
