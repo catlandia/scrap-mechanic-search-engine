@@ -591,8 +591,10 @@ export async function getCreationSiteCounts(
 }
 
 /**
- * Records that a signed-in user viewed a creation's detail page. Idempotent —
- * subsequent views bump lastViewedAt. Ghost viewers are ignored (no row).
+ * Records that a signed-in user viewed a creation's detail page. First visit
+ * inserts; repeat visits only bump lastViewedAt if it's been > 1 hour since
+ * the last bump, so refreshes / tab-switching don't hammer the DB. Ghosts are
+ * ignored (no row).
  */
 export async function recordCreationView(
   creationId: string,
@@ -610,7 +612,9 @@ export async function recordCreationView(
     })
     .onConflictDoUpdate({
       target: [creationViews.userId, creationViews.creationId],
-      set: { lastViewedAt: now },
+      set: {
+        lastViewedAt: sql`CASE WHEN ${creationViews.lastViewedAt} < now() - interval '1 hour' THEN now() ELSE ${creationViews.lastViewedAt} END`,
+      },
     });
 }
 

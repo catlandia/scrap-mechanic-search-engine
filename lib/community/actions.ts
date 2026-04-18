@@ -31,6 +31,12 @@ import {
 } from "@/lib/steam/client";
 import { stripBBCode } from "@/lib/steam/bbcode";
 import { classify } from "@/lib/tagger/classify";
+import {
+  countReportsByUserForCreationSince,
+  countReportsByUserSince,
+  countSubmissionsByUserSince,
+  isInMemoryRateLimited,
+} from "@/lib/rate-limit";
 
 const MIN_STEAM_AGE_DAYS = 7;
 
@@ -79,6 +85,10 @@ export async function toggleFavourite(
   creationId: string,
 ): Promise<{ favourited: boolean }> {
   const user = await requireVotingUser();
+  // 30 toggles / 60s / user — covers double-click spam without punishing normal use.
+  if (isInMemoryRateLimited(`fav:${user.steamid}`, 30, 60_000)) {
+    throw new Error("rate_limited");
+  }
   const db = getDb();
   const existing = await db
     .select()
@@ -116,7 +126,25 @@ export async function voteCreation(
   value: -1 | 0 | 1,
 ): Promise<void> {
   const user = await requireVotingUser();
+  // 30 votes / 60s / user — well above organic use, still bounds script-driven abuse.
+  if (isInMemoryRateLimited(`voteCreation:${user.steamid}`, 30, 60_000)) {
+    throw new Error("rate_limited");
+  }
   const db = getDb();
+
+  const [existing] = await db
+    .select({ value: creationVotes.value })
+    .from(creationVotes)
+    .where(
+      and(
+        eq(creationVotes.userId, user.steamid),
+        eq(creationVotes.creationId, creationId),
+      ),
+    )
+    .limit(1);
+
+  if (value === 0 && !existing) return;
+  if (value !== 0 && existing && existing.value === value) return;
 
   if (value === 0) {
     await db
@@ -182,10 +210,22 @@ export async function reportCreation(formData: FormData): Promise<void> {
     ? (reasonRaw as ReportReason)
     : "other";
 
-  const customText = String(formData.get("customText") ?? "").trim();
+  // 1000 chars is the public comment ceiling; reports shouldn't need more.
+  const customText = String(formData.get("customText") ?? "").trim().slice(0, 1000);
   if (reason === "other" && !customText) {
     throw new Error("custom_text_required");
   }
+
+  // One report per user per creation per 24h — stops a single user flooding
+  // the same item — plus 5 reports per user per 24h cap overall.
+  const dupe = await countReportsByUserForCreationSince(
+    user.steamid,
+    creationId,
+    24 * 60 * 60,
+  );
+  if (dupe > 0) throw new Error("already_reported");
+  const dailyTotal = await countReportsByUserSince(user.steamid, 24 * 60 * 60);
+  if (dailyTotal >= 5) throw new Error("rate_limited: 5 reports per 24h");
 
   await db.insert(reports).values({
     creationId,
@@ -208,6 +248,11 @@ export async function reportCreation(formData: FormData): Promise<void> {
  */
 export async function suggestTag(formData: FormData): Promise<void> {
   const user = await requireVotingUser();
+  // 10 nominations per user per hour — creating new creation_tags rows is
+  // cheap but unbounded nomination would let one user seed spam tags.
+  if (isInMemoryRateLimited(`suggestTag:${user.steamid}`, 10, 60 * 60 * 1000)) {
+    throw new Error("rate_limited");
+  }
   const db = getDb();
 
   const creationId = String(formData.get("creationId") ?? "");
@@ -357,28 +402,27 @@ export async function submitCreation(formData: FormData): Promise<SubmitResult> 
     return { ok: false, error: code };
   }
 
+  const db = getDb();
+
+  // Rate checks run FIRST — before Steam API burn and duplicate lookup — so
+  // spamming URLs (valid or duplicate) can't bypass the cooldown.
+  const recentWindow = await countSubmissionsByUserSince(user.steamid, 10 * 60);
+  if (recentWindow > 0) {
+    return { ok: false, error: "Please wait 10 minutes between submissions." };
+  }
+  // Daily cap: 5 per user per 24h keeps any one account from carpet-bombing
+  // the triage queue even if they pace across the 10-min cooldown.
+  const dailyCount = await countSubmissionsByUserSince(user.steamid, 24 * 60 * 60);
+  if (dailyCount >= 5) {
+    return { ok: false, error: "Daily submission limit reached (5 per 24h)." };
+  }
+
   const raw = String(formData.get("input") ?? "").trim();
   const id = parsePublishedFileId(raw);
   if (!id) return { ok: false, error: "Couldn't parse a URL or numeric id." };
 
   const apiKey = process.env.STEAM_API_KEY;
   if (!apiKey) return { ok: false, error: "Steam API key not configured." };
-
-  const db = getDb();
-
-  // Rate limit: one submission per 10 minutes per user.
-  const [recent] = await db
-    .select({ n: sql<number>`count(*)::int` })
-    .from(creations)
-    .where(
-      and(
-        eq(creations.uploadedByUserId, user.steamid),
-        sql`${creations.ingestedAt} > now() - interval '10 minutes'`,
-      ),
-    );
-  if ((recent?.n ?? 0) > 0) {
-    return { ok: false, error: "Please wait 10 minutes between submissions." };
-  }
 
   const [existing] = await db
     .select({ id: creations.id, status: creations.status })
@@ -500,6 +544,10 @@ export async function voteTag(
   value: -1 | 0 | 1,
 ): Promise<void> {
   const user = await requireVotingUser();
+  // 30 tag votes / 60s / user — matches voteCreation's cap.
+  if (isInMemoryRateLimited(`voteTag:${user.steamid}`, 30, 60_000)) {
+    throw new Error("rate_limited");
+  }
   const db = getDb();
 
   if (value === 0) {

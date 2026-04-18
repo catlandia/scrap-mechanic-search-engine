@@ -12,6 +12,10 @@ import {
   type UserRole,
 } from "@/lib/db/schema";
 import { createNotification } from "@/lib/db/notifications";
+import {
+  countFeatureSuggestionsByUserSince,
+  isInMemoryRateLimited,
+} from "@/lib/rate-limit";
 
 const MAX_TITLE = 120;
 const MAX_BODY = 2000;
@@ -61,6 +65,15 @@ export async function submitSuggestion(formData: FormData): Promise<{ ok: boolea
     if ((recent?.n ?? 0) > 0) {
       return { ok: false, error: "Please wait 5 minutes between suggestions." };
     }
+    // 10 per user per 24h — a firm ceiling on how much noise one account can
+    // put into the creator's review queue per day.
+    const daily = await countFeatureSuggestionsByUserSince(
+      user.steamid,
+      24 * 60 * 60,
+    );
+    if (daily >= 10) {
+      return { ok: false, error: "Daily suggestion limit reached (10 per 24h)." };
+    }
 
     await db.insert(featureSuggestions).values({
       submitterUserId: user.steamid,
@@ -76,6 +89,10 @@ export async function submitSuggestion(formData: FormData): Promise<{ ok: boolea
 
 export async function voteSuggestion(formData: FormData) {
   const user = await requireActiveUser();
+  // 30 votes / 60s / user — matches the creation/tag vote caps.
+  if (isInMemoryRateLimited(`voteSuggestion:${user.steamid}`, 30, 60_000)) {
+    throw new Error("rate_limited");
+  }
   const idRaw = String(formData.get("suggestionId") ?? "");
   const id = Number(idRaw);
   if (!Number.isInteger(id) || id <= 0) throw new Error("invalid_id");
