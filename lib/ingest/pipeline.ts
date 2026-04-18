@@ -124,7 +124,14 @@ export async function runIngest(options: IngestOptions = {}): Promise<IngestResu
   const decidedRows = await db
     .select({ id: creations.id })
     .from(creations)
-    .where(inArray(creations.status, ["approved", "rejected", "deleted"]));
+    .where(
+      inArray(creations.status, [
+        "approved",
+        "rejected",
+        "archived",
+        "deleted",
+      ]),
+    );
   const alreadyDecided = new Set(decidedRows.map((r) => r.id));
 
   const [run] = await db

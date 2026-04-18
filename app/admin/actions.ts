@@ -491,12 +491,21 @@ export async function actionReport(formData: FormData) {
   revalidatePath("/new");
 }
 
+async function requireEliteMod() {
+  const user = await getCurrentUser();
+  if (!user) throw new Error("not_signed_in");
+  const role = user.role as UserRole;
+  if (role !== "elite_moderator" && role !== "creator") {
+    throw new Error("not_elite_or_creator");
+  }
+  return user;
+}
+
 /**
- * Mod action: hide the creation from public view (status='rejected') AND
- * mark the driving report as actioned. For now 'rejected' doubles as the
- * archive bucket — elite-mod restore UI ships in v2.1. The report gets an
- * automatic resolver note explaining the archive so it appears in the
- * "Currently flagged" list with context.
+ * Mod action: archive the creation (status='archived') AND action the
+ * driving report. Elite mods can restore from /admin/archive; creator can
+ * perma-delete. Archive is distinct from 'rejected' (triage reject) so we
+ * keep a clear audit trail of what was public and got pulled.
  */
 export async function archiveFromReport(formData: FormData) {
   const user = await requireMod();
@@ -518,7 +527,7 @@ export async function archiveFromReport(formData: FormData) {
   await db
     .update(creations)
     .set({
-      status: "rejected",
+      status: "archived",
       reviewedAt: now,
       reviewedByUserId: user.steamid,
     })
@@ -537,7 +546,85 @@ export async function archiveFromReport(formData: FormData) {
     .where(eq(reports.id, id));
 
   revalidatePath("/admin/reports");
+  revalidatePath("/admin/archive");
   revalidatePath(`/creation/${row.creationId}`);
+  revalidatePath("/");
+  revalidatePath("/new");
+}
+
+/**
+ * Elite-mod+ action: pull an approved creation into the archive. Used from
+ * the /creation detail page or /admin/archive directly (future).
+ */
+export async function archiveCreation(formData: FormData) {
+  const user = await requireEliteMod();
+  const id = String(formData.get("creationId") ?? "");
+  if (!id) throw new Error("creationId required");
+  const note = String(formData.get("note") ?? "").trim();
+
+  const db = getDb();
+  const now = new Date();
+  await db
+    .update(creations)
+    .set({
+      status: "archived",
+      reviewedAt: now,
+      reviewedByUserId: user.steamid,
+    })
+    .where(eq(creations.id, id));
+
+  await db.insert(reports).values({
+    creationId: id,
+    reporterUserId: user.steamid,
+    reason: "other",
+    customText: note || "Manually archived.",
+    source: "user",
+    status: "actioned",
+    resolverUserId: user.steamid,
+    resolverNote: note || "Manually archived.",
+    resolvedAt: now,
+  });
+
+  revalidatePath("/admin/archive");
+  revalidatePath(`/creation/${id}`);
+  revalidatePath("/");
+  revalidatePath("/new");
+}
+
+/**
+ * Elite-mod+ action: bring a creation back from the archive into the
+ * approved public feed. Preserves the existing tags and vote history.
+ */
+export async function restoreFromArchive(formData: FormData) {
+  const user = await requireEliteMod();
+  const id = String(formData.get("creationId") ?? "");
+  if (!id) throw new Error("creationId required");
+
+  const db = getDb();
+  const now = new Date();
+  await db
+    .update(creations)
+    .set({
+      status: "approved",
+      reviewedAt: now,
+      reviewedByUserId: user.steamid,
+      approvedAt: now,
+    })
+    .where(eq(creations.id, id));
+
+  // Clear any lingering actioned reports so the public badge disappears.
+  await db
+    .update(reports)
+    .set({
+      status: "cleared",
+      resolverUserId: user.steamid,
+      resolverNote: "Restored from archive.",
+      resolvedAt: now,
+    })
+    .where(and(eq(reports.creationId, id), eq(reports.status, "actioned")));
+
+  revalidatePath("/admin/archive");
+  revalidatePath(`/creation/${id}`);
   revalidatePath("/");
   revalidatePath("/new");
 }
