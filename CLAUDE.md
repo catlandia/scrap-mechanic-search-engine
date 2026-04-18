@@ -6,6 +6,10 @@ Guidance for Claude Code when working in this repo.
 
 Scrap Mechanic Search Engine — a curated public directory of Scrap Mechanic Steam Workshop creations (Blueprints, Mods, Worlds, Challenges, Tiles, Custom Games, Terrain Assets). Free-tier only: Vercel Hobby + Neon Postgres + Steam Web API. No paid AI API.
 
+## Documentation
+
+Detailed docs live in `docs/`. Start with `docs/README.md` — it's the index table mapping each area (database, auth, ingest, tagger, admin, community, pages, queries, deployment, captcha) to its owning file, and holds the per-version changelog. Before editing anything in `docs/`, read `docs/maintaining-docs.md` for the routing table and the rules that keep these files small, current, and non-duplicative.
+
 ## Stack
 
 - Next.js 15 App Router, TypeScript

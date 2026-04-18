@@ -15,7 +15,10 @@
       "WebSearch(*)",
       "mcp__*",
       "Bash(npm --version)",
-      "Bash(git --version)"
+      "Bash(git --version)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(npm run *)"
     ],
     "deny": [
       "Bash(format *)",
@@ -38,8 +41,8 @@
   },
   "enableAllProjectMcpServers": true,
   "disabledMcpjsonServers": [],
-  "skipDangerousModePermissionPrompt": true,
   "enabledPlugins": {
     "vercel@claude-plugins-official": true
-  }
+  },
+  "skipDangerousModePermissionPrompt": true
 }

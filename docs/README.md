@@ -13,6 +13,7 @@
 | [queries.md](queries.md) | All typed query helpers in lib/db/queries.ts and lib/suggestions/actions.ts |
 | [deployment.md](deployment.md) | Vercel config, cron jobs, migrations, env vars, Hobby plan constraints |
 | [captcha.md](captcha.md) | Custom SM-themed captcha — characters, session design, image hiding, tuning |
+| [maintaining-docs.md](maintaining-docs.md) | Routing table + rules for keeping these docs small, current, and non-duplicative |
 
 ## Quick orientation
 
