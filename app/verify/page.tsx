@@ -129,14 +129,14 @@ function VerifyChallenge() {
           <span className="ml-2 text-xs text-white/40">{q.questionNumber}/3</span>
         </div>
 
-        {/* Image */}
+        {/* Image — served through /api/captcha/image so filename is never exposed */}
         <div
           className={`relative overflow-hidden rounded-xl border border-white/10 transition-all duration-200 ${flashClass}`}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            key={q.image}
-            src={q.image}
+            key={q.questionNumber}
+            src={`/api/captcha/image?q=${q.questionNumber}`}
             alt="Who is this?"
             className="w-full object-cover"
             style={{ maxHeight: "280px", objectPosition: "center" }}

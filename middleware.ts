@@ -9,7 +9,8 @@ export async function middleware(req: NextRequest) {
   if (
     pathname.startsWith("/auth") ||
     pathname.startsWith("/verify") ||
-    pathname.startsWith("/api/cron")
+    pathname.startsWith("/api/cron") ||
+    pathname.startsWith("/api/captcha")
   ) {
     return NextResponse.next();
   }

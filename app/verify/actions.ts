@@ -25,7 +25,6 @@ type CaptchaSession = {
 };
 
 export type QuestionPayload = {
-  image: string;
   options: string[];
   questionNumber: number; // 1-3
   streak: number;
@@ -115,7 +114,7 @@ export async function startChallenge(): Promise<QuestionPayload> {
   await session.save();
 
   const q = questions[0];
-  return { image: q.image, options: q.options, questionNumber: 1, streak: 0 };
+  return { options: q.options, questionNumber: 1, streak: 0 };
 }
 
 export async function submitAnswer(answer: string): Promise<AnswerResult> {
@@ -170,7 +169,6 @@ export async function submitAnswer(answer: string): Promise<AnswerResult> {
   return {
     status: "correct",
     next: {
-      image: nextQ.image,
       options: nextQ.options,
       questionNumber: nextIdx + 1,
       streak: newStreak,
