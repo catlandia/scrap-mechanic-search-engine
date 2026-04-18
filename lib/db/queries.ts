@@ -17,6 +17,7 @@ import {
   users,
   type CreationKind,
   type Notification,
+  type NotificationTier,
 } from "./schema";
 
 export interface CreationCardRow {
@@ -820,31 +821,76 @@ export async function getUserFavourites(
     .offset(offset);
 }
 
-export async function getUnreadNotificationCount(userId: string): Promise<number> {
+export async function getUnreadNotificationCount(
+  userId: string,
+  tier?: NotificationTier,
+): Promise<number> {
   const db = getDb();
+  const filter = tier
+    ? and(
+        eq(notifications.userId, userId),
+        eq(notifications.read, false),
+        eq(notifications.tier, tier),
+      )
+    : and(eq(notifications.userId, userId), eq(notifications.read, false));
   const [row] = await db
     .select({ n: sql<number>`count(*)::int` })
     .from(notifications)
-    .where(and(eq(notifications.userId, userId), eq(notifications.read, false)));
+    .where(filter);
   return row?.n ?? 0;
 }
 
-export async function getUserNotifications(userId: string, limit = 50): Promise<Notification[]> {
+export async function getUnreadNotificationCountsByTier(
+  userId: string,
+): Promise<Record<NotificationTier, number>> {
   const db = getDb();
+  const rows = await db
+    .select({ tier: notifications.tier, n: sql<number>`count(*)::int` })
+    .from(notifications)
+    .where(and(eq(notifications.userId, userId), eq(notifications.read, false)))
+    .groupBy(notifications.tier);
+  const out: Record<NotificationTier, number> = {
+    user: 0,
+    moderator: 0,
+    elite_moderator: 0,
+    creator: 0,
+  };
+  for (const r of rows) {
+    if (r.tier in out) out[r.tier as NotificationTier] = r.n;
+  }
+  return out;
+}
+
+export async function getUserNotifications(
+  userId: string,
+  limit = 50,
+  tier?: NotificationTier,
+): Promise<Notification[]> {
+  const db = getDb();
+  const filter = tier
+    ? and(eq(notifications.userId, userId), eq(notifications.tier, tier))
+    : eq(notifications.userId, userId);
   return db
     .select()
     .from(notifications)
-    .where(eq(notifications.userId, userId))
+    .where(filter)
     .orderBy(desc(notifications.createdAt))
     .limit(limit);
 }
 
-export async function markAllNotificationsRead(userId: string): Promise<void> {
+export async function markAllNotificationsRead(
+  userId: string,
+  tier?: NotificationTier,
+): Promise<void> {
   const db = getDb();
-  await db
-    .update(notifications)
-    .set({ read: true })
-    .where(and(eq(notifications.userId, userId), eq(notifications.read, false)));
+  const filter = tier
+    ? and(
+        eq(notifications.userId, userId),
+        eq(notifications.read, false),
+        eq(notifications.tier, tier),
+      )
+    : and(eq(notifications.userId, userId), eq(notifications.read, false));
+  await db.update(notifications).set({ read: true }).where(filter);
 }
 
 export async function markNotificationRead(

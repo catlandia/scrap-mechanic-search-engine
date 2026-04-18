@@ -164,27 +164,39 @@ When a suggestion status changes to `approved`, `rejected`, or `implemented`, th
 
 ## Notifications
 
-Users receive in-app notifications for key events involving their own content.
+Users receive in-app notifications for events affecting their own content and, for moderators, events affecting their tier of responsibility.
+
+Every notification is tagged with a **tier** — `user`, `moderator`, `elite_moderator`, or `creator` — which drives which coloured bell surfaces it and how it's grouped on `/me/notifications`.
+
+**Tier bells (V5.1):** the header renders one bell per tier the viewer has access to:
+
+| Bell | Colour | Tier | Who sees it |
+|---|---|---|---|
+| Personal | white / grey | `user` | Everyone signed-in |
+| Moderator | sky blue | `moderator` | moderator · elite · creator |
+| Elite | amber / gold | `elite_moderator` | elite · creator |
+| Creator | purple | `creator` | creator |
+
+Each bell shows its own unread count badge and links to `/me/notifications?tier=<tier>`. Higher tiers inherit lower-tier bells automatically — a creator sees all four stacked.
 
 **Triggers:**
 
-| Event | Notification title |
-|---|---|
-| Submission approved | "Submission approved!" |
-| Submission rejected | "Submission not accepted" (body includes the optional `reason` typed by the moderator when rejecting, V4.15) |
-| Idea approved | "Idea approved!" |
-| Idea rejected | "Idea not accepted" |
-| Idea implemented | "Idea implemented!" |
+| Tier | Event | Notification |
+|---|---|---|
+| user | Submission approved | "Submission approved!" |
+| user | Submission rejected | "Submission not accepted" (body includes the optional reason typed by the moderator when rejecting, V4.15) |
+| user | Idea approved / rejected / implemented | "Idea approved / not accepted / implemented!" |
+| moderator | New user report lands | "New report on \"<title>\"" — broadcast to every mod+ except the reporter |
+| elite_moderator | Creation archived (from report or manual) | "Creation archived: \"<title>\"" — broadcast to every elite+ except the actor |
+| creator | New feature suggestion submitted | "New idea: \"<title>\"" — broadcast to every creator except the submitter |
 
-**Delivery:** Best-effort — notification inserts never block the primary action. If the insert fails, the action succeeds anyway.
+**Delivery:** Best-effort — notification inserts never block the primary action. If the insert fails, the action succeeds anyway. Broadcasts also skip any user who is time-banned or hard-banned.
 
-**Reading:** `/me/notifications` — loads all notifications for the current user, newest first. All unread notifications are marked as read on page load.
+**Reading:** `/me/notifications` shows tabs for each tier the viewer has access to. The active tab's unread notifications are marked as read on page load; other tabs retain their badges until visited.
 
-**Per-notification mark-read (V4.15):** The "View →" link on each row points to `/api/notifications/[id]/click`, not directly to the stored link. That route calls `markNotificationRead(userId, id)` (ownership-checked) and 303-redirects to the target. This way a user who arrives from an external prompt and clicks a single notification gets *that* notification cleared even if they never visit `/me/notifications` — useful because the bell badge otherwise only clears on index load.
+**Per-notification mark-read (V4.15):** The "View →" link on each row points to `/api/notifications/[id]/click`, not directly to the stored link. That route calls `markNotificationRead(userId, id)` (ownership-checked) and 303-redirects to the target. This way a user who arrives from an external prompt and clicks a single notification gets *that* notification cleared even if they never visit `/me/notifications`.
 
-**Bell icon:** The nav UserMenu shows a bell icon with an unread count badge. Count is queried in `app/layout.tsx` on every request (server-side, so no polling needed).
-
-**Schema:** `notifications` table — `id`, `userId`, `type`, `title`, `body`, `link`, `read`, `createdAt`. Helper: `lib/db/notifications.ts → createNotification()`.
+**Schema:** `notifications` table — `id`, `userId`, `type`, `tier`, `title`, `body`, `link`, `read`, `createdAt`. Helpers live in `lib/db/notifications.ts`: `createNotification()` for single-recipient, `broadcastToRole({ minRole, tier, ... })` for fan-out to every user with role ≥ `minRole` (skipping banned users and an optional `excludeUserId`).
 
 ---
 

@@ -37,6 +37,7 @@ import {
   countSubmissionsByUserSince,
   isInMemoryRateLimited,
 } from "@/lib/rate-limit";
+import { broadcastToRole } from "@/lib/db/notifications";
 
 const MIN_STEAM_AGE_DAYS = 7;
 
@@ -235,6 +236,27 @@ export async function reportCreation(formData: FormData): Promise<void> {
     source: "user",
     status: "open",
   });
+
+  // Fan the blue bell: every moderator+ gets pinged that a new report landed.
+  // Lookup title/shortId here so the notification has actionable context; the
+  // report insert succeeded already so a missing creation row is just a noisy
+  // title, not a blocker.
+  const [creationRow] = await db
+    .select({ shortId: creations.shortId, title: creations.title })
+    .from(creations)
+    .where(eq(creations.id, creationId))
+    .limit(1);
+  if (creationRow) {
+    await broadcastToRole({
+      minRole: "moderator",
+      tier: "moderator",
+      type: "mod_new_report",
+      title: `New report on "${creationRow.title}"`,
+      body: `Reason: ${reason}${customText ? ` — ${customText.slice(0, 160)}` : ""}`,
+      link: `/admin/reports`,
+      excludeUserId: user.steamid,
+    });
+  }
 
   revalidatePath(`/creation/${creationId}`);
   revalidatePath("/admin/reports");

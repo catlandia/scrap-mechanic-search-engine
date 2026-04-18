@@ -26,7 +26,7 @@ import {
 } from "@/lib/steam/client";
 import { stripBBCode } from "@/lib/steam/bbcode";
 import { classify } from "@/lib/tagger/classify";
-import { createNotification } from "@/lib/db/notifications";
+import { broadcastToRole, createNotification } from "@/lib/db/notifications";
 
 function parseKind(raw: FormDataEntryValue | null): string {
   const kind = String(raw ?? "other");
@@ -644,6 +644,21 @@ export async function archiveFromReport(formData: FormData) {
     })
     .where(eq(reports.id, id));
 
+  const [creationRow] = await db
+    .select({ title: creations.title })
+    .from(creations)
+    .where(eq(creations.id, row.creationId))
+    .limit(1);
+  await broadcastToRole({
+    minRole: "elite_moderator",
+    tier: "elite_moderator",
+    type: "elite_creation_archived",
+    title: `Creation archived: "${creationRow?.title ?? row.creationId}"`,
+    body: `Archived from report${extra ? ` — ${extra.slice(0, 200)}` : ""}`,
+    link: "/admin/archive",
+    excludeUserId: user.steamid,
+  });
+
   revalidatePath("/admin/reports");
   revalidatePath("/admin/archive");
   revalidatePath(`/creation/${row.creationId}`);
@@ -682,6 +697,21 @@ export async function archiveCreation(formData: FormData) {
     resolverUserId: user.steamid,
     resolverNote: note || "Manually archived.",
     resolvedAt: now,
+  });
+
+  const [creationRow] = await db
+    .select({ title: creations.title })
+    .from(creations)
+    .where(eq(creations.id, id))
+    .limit(1);
+  await broadcastToRole({
+    minRole: "elite_moderator",
+    tier: "elite_moderator",
+    type: "elite_creation_archived",
+    title: `Creation archived: "${creationRow?.title ?? id}"`,
+    body: note ? note.slice(0, 200) : "Manually archived.",
+    link: "/admin/archive",
+    excludeUserId: user.steamid,
   });
 
   revalidatePath("/admin/archive");

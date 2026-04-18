@@ -440,6 +440,14 @@ export const featureSuggestionVotes = pgTable(
   ],
 );
 
+export const NOTIFICATION_TIERS = [
+  "user",
+  "moderator",
+  "elite_moderator",
+  "creator",
+] as const;
+export type NotificationTier = (typeof NOTIFICATION_TIERS)[number];
+
 export const notifications = pgTable(
   "notifications",
   {
@@ -448,6 +456,9 @@ export const notifications = pgTable(
       .notNull()
       .references(() => users.steamid, { onDelete: "cascade" }),
     type: text("type").notNull(),
+    // Which coloured bell this notification shows up under. 'user' = grey,
+    // 'moderator' = blue, 'elite_moderator' = gold, 'creator' = purple.
+    tier: text("tier").notNull().default("user"),
     title: text("title").notNull(),
     body: text("body"),
     link: text("link"),
@@ -457,6 +468,7 @@ export const notifications = pgTable(
   (t) => [
     index("notifications_user_idx").on(t.userId),
     index("notifications_user_read_idx").on(t.userId, t.read),
+    index("notifications_user_tier_read_idx").on(t.userId, t.tier, t.read),
   ],
 );
 

@@ -1,0 +1,2 @@
+ALTER TABLE "notifications" ADD COLUMN "tier" text DEFAULT 'user' NOT NULL;--> statement-breakpoint
+CREATE INDEX "notifications_user_tier_read_idx" ON "notifications" USING btree ("user_id","tier","read");

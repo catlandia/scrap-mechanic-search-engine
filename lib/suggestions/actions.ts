@@ -11,7 +11,7 @@ import {
   users,
   type UserRole,
 } from "@/lib/db/schema";
-import { createNotification } from "@/lib/db/notifications";
+import { broadcastToRole, createNotification } from "@/lib/db/notifications";
 import {
   countFeatureSuggestionsByUserSince,
   isInMemoryRateLimited,
@@ -79,6 +79,16 @@ export async function submitSuggestion(formData: FormData): Promise<{ ok: boolea
       submitterUserId: user.steamid,
       title,
       body: body || null,
+    });
+    // Fan the purple bell: the creator sees every new idea land in the inbox.
+    await broadcastToRole({
+      minRole: "creator",
+      tier: "creator",
+      type: "creator_new_suggestion",
+      title: `New idea: "${title.slice(0, 120)}"`,
+      body: body ? body.slice(0, 200) : null,
+      link: "/admin/suggestions",
+      excludeUserId: user.steamid,
     });
     revalidatePath("/admin/suggestions");
     return { ok: true };

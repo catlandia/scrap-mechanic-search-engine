@@ -7,7 +7,8 @@ import { MobileNav } from "@/components/MobileNav";
 import { RatingModeToggle } from "@/components/RatingModeToggle";
 import { BetaBanner } from "@/components/BetaBanner";
 import { GuideLink } from "@/components/GuideLink";
-import { getUnreadNotificationCount } from "@/lib/db/queries";
+import { getUnreadNotificationCountsByTier } from "@/lib/db/queries";
+import type { NotificationTier } from "@/lib/db/schema";
 import { getRatingMode } from "@/lib/prefs.server";
 import { isModerator } from "@/lib/auth/roles";
 import type { UserRole } from "@/lib/db/schema";
@@ -53,10 +54,17 @@ const navLinks = [
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   let user = null;
-  let unreadNotifications = 0;
+  let unreadByTier: Record<NotificationTier, number> = {
+    user: 0,
+    moderator: 0,
+    elite_moderator: 0,
+    creator: 0,
+  };
   try {
     user = await getCurrentUser();
-    if (user) unreadNotifications = await getUnreadNotificationCount(user.steamid);
+    if (user) {
+      unreadByTier = await getUnreadNotificationCountsByTier(user.steamid);
+    }
   } catch {
     // If SESSION_SECRET is missing in dev we still want the site to render.
   }
@@ -98,7 +106,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 </Suspense>
               </div>
               {user ? (
-                <UserMenu user={user} unreadNotifications={unreadNotifications} />
+                <UserMenu user={user} unreadByTier={unreadByTier} />
               ) : (
                 <Link
                   href="/auth/steam/login"

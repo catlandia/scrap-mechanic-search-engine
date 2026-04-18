@@ -1,23 +1,76 @@
 import Image from "next/image";
 import Link from "next/link";
 import { RoleBadge } from "@/components/RoleBadge";
-import { effectiveRole, ROLE_STYLES } from "@/lib/auth/roles";
-import type { User, UserRole } from "@/lib/db/schema";
+import {
+  effectiveRole,
+  isCreator,
+  isEliteModerator,
+  isModerator,
+  ROLE_STYLES,
+} from "@/lib/auth/roles";
+import type { NotificationTier, User, UserRole } from "@/lib/db/schema";
 import { cn } from "@/lib/utils";
-import { isModerator } from "@/lib/auth/roles";
 import { isBanned } from "@/lib/auth/session";
+
+type TierStyle = {
+  /** tier as it appears in the URL query + DB column */
+  tier: NotificationTier;
+  /** bell tint when there are unread notifications */
+  activeClass: string;
+  /** bell tint when empty */
+  idleClass: string;
+  /** badge background colour */
+  badgeClass: string;
+  label: string;
+};
+
+const TIER_STYLES: Record<NotificationTier, TierStyle> = {
+  user: {
+    tier: "user",
+    activeClass: "text-white/80",
+    idleClass: "text-white/50 hover:text-white",
+    badgeClass: "bg-white text-black",
+    label: "Personal notifications",
+  },
+  moderator: {
+    tier: "moderator",
+    activeClass: "text-sky-300",
+    idleClass: "text-sky-400/40 hover:text-sky-300",
+    badgeClass: "bg-sky-400 text-black",
+    label: "Moderator notifications",
+  },
+  elite_moderator: {
+    tier: "elite_moderator",
+    activeClass: "text-amber-300",
+    idleClass: "text-amber-400/40 hover:text-amber-300",
+    badgeClass: "bg-amber-400 text-black",
+    label: "Elite moderator notifications",
+  },
+  creator: {
+    tier: "creator",
+    activeClass: "text-purple-300",
+    idleClass: "text-purple-400/40 hover:text-purple-300",
+    badgeClass: "bg-purple-400 text-black",
+    label: "Creator notifications",
+  },
+};
 
 export function UserMenu({
   user,
-  unreadNotifications = 0,
+  unreadByTier,
 }: {
   user: User;
-  unreadNotifications?: number;
+  unreadByTier: Record<NotificationTier, number>;
 }) {
   const role = effectiveRole(user);
   const banned = isBanned(user);
   const displayRole = role ?? ((user.role as UserRole) ?? "user");
   const style = ROLE_STYLES[displayRole] ?? ROLE_STYLES.user;
+
+  const visibleTiers: NotificationTier[] = ["user"];
+  if (isModerator(role)) visibleTiers.push("moderator");
+  if (isEliteModerator(role)) visibleTiers.push("elite_moderator");
+  if (isCreator(role)) visibleTiers.push("creator");
 
   return (
     <div className="flex items-center gap-2 text-sm sm:gap-3">
@@ -59,26 +112,13 @@ export function UserMenu({
             </svg>
             <span className="hidden sm:inline">Favourites</span>
           </Link>
-          <Link
-            href="/me/notifications"
-            className="relative text-white/60 hover:text-white"
-            title="Notifications"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              className="size-5"
-              aria-hidden
-            >
-              <path d="M10 2a6 6 0 0 0-6 6v2.586l-.707.707A1 1 0 0 0 4 13h12a1 1 0 0 0 .707-1.707L16 10.586V8a6 6 0 0 0-6-6zM10 18a3 3 0 0 1-2.83-2h5.66A3 3 0 0 1 10 18z" />
-            </svg>
-            {unreadNotifications > 0 && (
-              <span className="absolute -right-1.5 -top-1.5 flex size-4 items-center justify-center rounded-full bg-accent text-[9px] font-bold text-black">
-                {unreadNotifications > 9 ? "9+" : unreadNotifications}
-              </span>
-            )}
-          </Link>
+          {visibleTiers.map((t) => (
+            <TierBell
+              key={t}
+              tier={t}
+              unread={unreadByTier[t] ?? 0}
+            />
+          ))}
         </>
       )}
       {isModerator(role) && (
@@ -141,5 +181,48 @@ export function UserMenu({
         </button>
       </form>
     </div>
+  );
+}
+
+function TierBell({
+  tier,
+  unread,
+}: {
+  tier: NotificationTier;
+  unread: number;
+}) {
+  const style = TIER_STYLES[tier];
+  const tone = unread > 0 ? style.activeClass : style.idleClass;
+  return (
+    <Link
+      href={tier === "user" ? "/me/notifications" : `/me/notifications?tier=${tier}`}
+      className={cn("relative transition", tone)}
+      title={style.label}
+      aria-label={
+        unread > 0
+          ? `${style.label} — ${unread} unread`
+          : style.label
+      }
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 20 20"
+        fill="currentColor"
+        className="size-5"
+        aria-hidden
+      >
+        <path d="M10 2a6 6 0 0 0-6 6v2.586l-.707.707A1 1 0 0 0 4 13h12a1 1 0 0 0 .707-1.707L16 10.586V8a6 6 0 0 0-6-6zM10 18a3 3 0 0 1-2.83-2h5.66A3 3 0 0 1 10 18z" />
+      </svg>
+      {unread > 0 && (
+        <span
+          className={cn(
+            "absolute -right-1.5 -top-1.5 flex size-4 items-center justify-center rounded-full text-[9px] font-bold",
+            style.badgeClass,
+          )}
+        >
+          {unread > 9 ? "9+" : unread}
+        </span>
+      )}
+    </Link>
   );
 }
