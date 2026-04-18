@@ -817,6 +817,60 @@ export async function clearMute(formData: FormData) {
  * Warn a user. Increments warningsCount and stores latest note (replacing).
  * Mods can warn but can't ban or mute — warnings are their soft tool.
  */
+/**
+ * Hard ban a Steam ID: sets the flag, blocks future sign-ins entirely, and
+ * invalidates any existing session cookie (because getCurrentUser returns
+ * null for hard-banned users). Creator-only; use with care — this is the
+ * nuclear option.
+ */
+export async function hardBanUser(formData: FormData) {
+  const actor = await requireCreator();
+  const steamid = String(formData.get("steamid") ?? "").trim();
+  if (!steamid) throw new Error("steamid required");
+  if (steamid === actor.steamid) throw new Error("cannot_hard_ban_self");
+  const reason = String(formData.get("reason") ?? "").trim() || null;
+
+  const db = getDb();
+  const [target] = await db
+    .select({ role: users.role })
+    .from(users)
+    .where(eq(users.steamid, steamid))
+    .limit(1);
+  if (!target) throw new Error("user_not_found");
+  if (target.role === "creator") throw new Error("cannot_hard_ban_creator");
+
+  await db
+    .update(users)
+    .set({
+      hardBanned: true,
+      banReason: reason ?? "Hard ban.",
+      bannedUntil: new Date("9999-12-31T00:00:00Z"),
+    })
+    .where(eq(users.steamid, steamid));
+
+  revalidatePath("/admin/users");
+  revalidatePath(`/profile/${steamid}`);
+}
+
+export async function clearHardBan(formData: FormData) {
+  await requireCreator();
+  const steamid = String(formData.get("steamid") ?? "").trim();
+  if (!steamid) throw new Error("steamid required");
+
+  const db = getDb();
+  await db
+    .update(users)
+    .set({
+      hardBanned: false,
+      bannedUntil: null,
+      banReason: null,
+    })
+    .where(eq(users.steamid, steamid));
+
+  revalidatePath("/admin/users");
+  revalidatePath(`/profile/${steamid}`);
+}
+
 export async function warnUser(formData: FormData) {
   const actor = await requireMod();
   const steamid = String(formData.get("steamid") ?? "").trim();

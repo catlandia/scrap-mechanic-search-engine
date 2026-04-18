@@ -4,7 +4,9 @@ import { useState } from "react";
 import {
   banUser,
   clearBan,
+  clearHardBan,
   clearMute,
+  hardBanUser,
   muteUser,
   warnUser,
 } from "@/app/admin/actions";
@@ -23,14 +25,16 @@ export function UserModForms({
   viewerIsEliteOrCreator,
   isCurrentlyBanned,
   isCurrentlyMuted,
+  isCurrentlyHardBanned,
 }: {
   targetSteamid: string;
   viewerIsCreator: boolean;
   viewerIsEliteOrCreator: boolean;
   isCurrentlyBanned: boolean;
   isCurrentlyMuted: boolean;
+  isCurrentlyHardBanned: boolean;
 }) {
-  const [open, setOpen] = useState<null | "ban" | "mute" | "warn">(null);
+  const [open, setOpen] = useState<null | "ban" | "mute" | "warn" | "hardban">(null);
 
   return (
     <div className="flex flex-wrap items-center justify-end gap-1 text-xs">
@@ -85,6 +89,27 @@ export function UserModForms({
               Ban
             </button>
           )}
+          {isCurrentlyHardBanned ? (
+            <form action={clearHardBan}>
+              <input type="hidden" name="steamid" value={targetSteamid} />
+              <button
+                type="submit"
+                className="rounded border border-emerald-500/60 bg-emerald-500/15 px-2 py-0.5 text-emerald-200 hover:bg-emerald-500/25"
+                title="Remove the hard ban — Steam ID can sign in again"
+              >
+                Clear hard ban
+              </button>
+            </form>
+          ) : (
+            <button
+              type="button"
+              className="rounded border border-red-500/60 bg-red-500/10 px-2 py-0.5 text-red-200 hover:bg-red-500/20"
+              onClick={() => setOpen(open === "hardban" ? null : "hardban")}
+              title="Block this Steam ID from signing in entirely"
+            >
+              Hard ban
+            </button>
+          )}
         </>
       )}
 
@@ -106,22 +131,35 @@ function ModActionForm({
   targetSteamid,
   onDone,
 }: {
-  variant: "ban" | "mute" | "warn";
+  variant: "ban" | "mute" | "warn" | "hardban";
   targetSteamid: string;
   onDone: () => void;
 }) {
   const label =
-    variant === "ban" ? "Ban" : variant === "mute" ? "Mute" : "Warn";
+    variant === "ban"
+      ? "Ban"
+      : variant === "mute"
+        ? "Mute"
+        : variant === "hardban"
+          ? "Hard ban"
+          : "Warn";
   const action =
-    variant === "ban" ? banUser : variant === "mute" ? muteUser : warnUser;
+    variant === "ban"
+      ? banUser
+      : variant === "mute"
+        ? muteUser
+        : variant === "hardban"
+          ? hardBanUser
+          : warnUser;
 
   const reasonName = variant === "warn" ? "note" : "reason";
   const accent =
-    variant === "ban"
+    variant === "ban" || variant === "hardban"
       ? "bg-red-500/80 hover:bg-red-500 text-white"
       : variant === "mute"
         ? "bg-sky-500/80 hover:bg-sky-500 text-black"
         : "bg-amber-500/80 hover:bg-amber-500 text-black";
+  const needsDuration = variant === "ban" || variant === "mute";
 
   return (
     <form
@@ -130,7 +168,7 @@ function ModActionForm({
       onSubmit={() => window.setTimeout(onDone, 0)}
     >
       <input type="hidden" name="steamid" value={targetSteamid} />
-      {variant !== "warn" && (
+      {needsDuration && (
         <select
           name="duration"
           defaultValue="7"
@@ -147,7 +185,11 @@ function ModActionForm({
         type="text"
         name={reasonName}
         placeholder={
-          variant === "warn" ? "Warning note" : "Reason (optional)"
+          variant === "warn"
+            ? "Warning note"
+            : variant === "hardban"
+              ? "Hard-ban reason"
+              : "Reason (optional)"
         }
         className="flex-1 min-w-[12ch] rounded border border-border bg-background px-2 py-1 text-xs"
       />

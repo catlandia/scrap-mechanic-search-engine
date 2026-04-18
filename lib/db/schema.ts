@@ -207,6 +207,9 @@ export const users = pgTable(
     // v2.2 moderation. bannedUntil / mutedUntil in the far future = permanent.
     bannedUntil: timestamp("banned_until", { withTimezone: true }),
     banReason: text("ban_reason"),
+    // Hard ban: blocks sign-in entirely + makes getCurrentUser return null
+    // even if a session cookie exists. Creator-only, never auto-expires.
+    hardBanned: boolean("hard_banned").notNull().default(false),
     mutedUntil: timestamp("muted_until", { withTimezone: true }),
     muteReason: text("mute_reason"),
     warningsCount: integer("warnings_count").notNull().default(0),

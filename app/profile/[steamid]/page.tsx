@@ -99,12 +99,18 @@ export default async function ProfilePage({ params }: { params: Params }) {
         <Stat label="SteamID64" value={user.steamid} mono />
       </section>
 
-      {(user.bannedUntil || user.mutedUntil || (user.warningsCount ?? 0) > 0) && (
+      {(user.bannedUntil || user.mutedUntil || user.hardBanned || (user.warningsCount ?? 0) > 0) && (
         <section className="space-y-2 rounded-md border border-amber-500/30 bg-amber-500/5 px-4 py-3 text-sm">
           <div className="text-xs uppercase tracking-widest text-amber-200">
             Moderation status
           </div>
-          {user.bannedUntil && user.bannedUntil > new Date() && (
+          {user.hardBanned && (
+            <div className="text-red-300">
+              🔒 Hard-banned — this Steam ID is blocked from signing in.
+              {user.banReason ? ` ${user.banReason}` : ""}
+            </div>
+          )}
+          {!user.hardBanned && user.bannedUntil && user.bannedUntil > new Date() && (
             <div className="text-red-300">
               Banned until {user.bannedUntil.toLocaleString()}
               {user.banReason ? ` — ${user.banReason}` : "."}

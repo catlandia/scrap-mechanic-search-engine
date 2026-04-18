@@ -43,6 +43,10 @@ export async function getUserSession() {
  * Looks up the currently signed-in user (Steam OpenID session -> users row).
  * Memoised per-request via React's `cache()` so N pages/components using it
  * incur one DB roundtrip.
+ *
+ * Hard-banned users always resolve as null — their session cookie is
+ * effectively dead weight, and routes that depend on getCurrentUser will
+ * treat them as ghosts until they sign out or the ban lifts.
  */
 export const getCurrentUser = cache(async (): Promise<User | null> => {
   const session = await getUserSession();
@@ -53,7 +57,9 @@ export const getCurrentUser = cache(async (): Promise<User | null> => {
     .from(users)
     .where(eq(users.steamid, session.steamid))
     .limit(1);
-  return user ?? null;
+  if (!user) return null;
+  if (user.hardBanned) return null;
+  return user;
 });
 
 export function isBanned(user: User | null | undefined): boolean {

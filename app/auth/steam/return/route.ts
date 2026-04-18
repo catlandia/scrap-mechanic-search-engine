@@ -63,6 +63,11 @@ export async function GET(req: NextRequest) {
     .where(eq(users.steamid, steamid))
     .limit(1);
 
+  // Hard-banned steamids can't sign in. Session never gets set.
+  if (existing[0]?.hardBanned) {
+    return failUrl("hard_banned");
+  }
+
   const existingRole = existing[0]?.role as UserRole | undefined;
   const nextRole: UserRole = isCreator
     ? "creator"

@@ -172,6 +172,7 @@ export default async function UsersAdminPage() {
                           isCurrentlyMuted={
                             !!(u.mutedUntil && u.mutedUntil > new Date())
                           }
+                          isCurrentlyHardBanned={!!u.hardBanned}
                         />
                         {u.bannedUntil && u.bannedUntil > new Date() && (
                           <div className="text-[10px] text-red-300">

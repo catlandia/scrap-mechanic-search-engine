@@ -1,7 +1,10 @@
 import { getCurrentUser } from "@/lib/auth/session";
 import {
+  deleteSuggestion,
   getApprovedSuggestions,
+  getImplementedSuggestions,
   getPendingSuggestions,
+  getRejectedSuggestions,
   setSuggestionStatus,
   type SuggestionRow,
 } from "@/lib/suggestions/actions";
@@ -12,173 +15,54 @@ import type { UserRole } from "@/lib/db/schema";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminSuggestionsPage() {
-  const viewer = await getCurrentUser();
-  if (!isCreator(viewer?.role as UserRole | undefined)) {
-    return (
-      <div className="mx-auto max-w-xl rounded-lg border border-red-500/40 bg-red-500/10 p-6 text-sm">
-        <div className="text-lg font-semibold text-red-200">Creator only.</div>
-        <p className="mt-2 text-red-100/80">
-          The suggestion inbox is private to the Creator.
-        </p>
-      </div>
-    );
-  }
+type Transition = {
+  label: string;
+  value: "approved" | "rejected" | "implemented";
+  style: string;
+};
 
-  const [inbox, live] = await Promise.all([
-    getPendingSuggestions(),
-    getApprovedSuggestions(viewer!.steamid),
-  ]);
-
+function submitterLine(s: SuggestionRow) {
   return (
-    <div className="space-y-10">
-      <section className="space-y-4">
-        <header className="space-y-1">
-          <h1 className="text-2xl font-semibold">Suggestion inbox</h1>
-          <p className="text-sm text-white/60">
-            New private submissions. Approve to put one on the public board,
-            or reject to dismiss. Creator note is shown publicly with the
-            card.
-          </p>
-        </header>
-
-        {inbox.length === 0 ? (
-          <div className="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-5 py-6 text-sm text-emerald-200">
-            Inbox empty.
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {inbox.map((s) => (
-              <InboxCard key={s.id} suggestion={s} />
-            ))}
-          </div>
-        )}
-      </section>
-
-      <section className="space-y-4">
-        <header className="space-y-1 border-t border-border pt-6">
-          <h2 className="text-xl font-semibold">Live board</h2>
-          <p className="text-sm text-white/60">
-            Currently approved on the public ideas page. You can mark them
-            implemented once you ship, or reject them after the fact (e.g.
-            they stalled on votes).
-          </p>
-        </header>
-
-        {live.length === 0 ? (
-          <div className="rounded-md border border-border bg-card/60 px-5 py-4 text-sm text-white/60">
-            No approved suggestions yet.
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {live.map((s) => (
-              <LiveCard key={s.id} suggestion={s} />
-            ))}
-          </div>
-        )}
-      </section>
+    <div className="flex flex-wrap items-center gap-2 text-xs text-white/50">
+      {s.submitterName && s.submitterSteamid ? (
+        <>
+          <span>from</span>
+          <UserName
+            name={s.submitterName}
+            role={s.submitterRole as UserRole | null}
+            steamid={s.submitterSteamid}
+          />
+          <RoleBadge role={s.submitterRole as UserRole | null} />
+        </>
+      ) : (
+        <span>anonymous</span>
+      )}
+      <span>·</span>
+      <span>{new Date(s.createdAt).toLocaleString()}</span>
+      {s.voteCount !== 0 && (
+        <>
+          <span>·</span>
+          <span>
+            {s.voteCount > 0 ? `+${s.voteCount}` : s.voteCount} net · {s.upCount}↑ / {s.downCount}↓
+          </span>
+        </>
+      )}
     </div>
   );
 }
 
-function InboxCard({ suggestion }: { suggestion: SuggestionRow }) {
+function ActionCard({
+  suggestion,
+  transitions,
+}: {
+  suggestion: SuggestionRow;
+  transitions: Transition[];
+}) {
   return (
     <article className="space-y-3 rounded-lg border border-border bg-card p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h3 className="text-base font-semibold">{suggestion.title}</h3>
-          <div className="flex flex-wrap items-center gap-2 text-xs text-white/50">
-            {suggestion.submitterName && suggestion.submitterSteamid ? (
-              <>
-                <span>from</span>
-                <UserName
-                  name={suggestion.submitterName}
-                  role={suggestion.submitterRole as UserRole | null}
-                  steamid={suggestion.submitterSteamid}
-                />
-                <RoleBadge role={suggestion.submitterRole as UserRole | null} />
-              </>
-            ) : (
-              <span>anonymous</span>
-            )}
-            <span>·</span>
-            <span>{new Date(suggestion.createdAt).toLocaleString()}</span>
-          </div>
-        </div>
-      </div>
-
-      {suggestion.body && (
-        <p className="whitespace-pre-wrap rounded border border-border bg-background px-3 py-2 text-sm text-white/80">
-          {suggestion.body}
-        </p>
-      )}
-
-      <form action={setSuggestionStatus} className="flex flex-wrap items-center gap-2">
-        <input type="hidden" name="suggestionId" value={suggestion.id} />
-        <input
-          name="note"
-          type="text"
-          placeholder="Creator note (optional, shown publicly)"
-          className="min-w-[20ch] flex-1 rounded border border-border bg-background px-2 py-1.5 text-sm"
-        />
-        <button
-          type="submit"
-          name="status"
-          value="approved"
-          className="rounded-md bg-emerald-500 px-3 py-1.5 text-sm font-medium text-black hover:bg-emerald-400"
-        >
-          Approve
-        </button>
-        <button
-          type="submit"
-          name="status"
-          value="rejected"
-          className="rounded-md border border-red-500/40 bg-red-500/10 px-3 py-1.5 text-sm text-red-200 hover:bg-red-500/20"
-        >
-          Reject
-        </button>
-      </form>
-    </article>
-  );
-}
-
-function LiveCard({ suggestion }: { suggestion: SuggestionRow }) {
-  return (
-    <article className="space-y-3 rounded-lg border border-border bg-card p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h3 className="text-base font-semibold">{suggestion.title}</h3>
-          <div className="flex flex-wrap items-center gap-2 text-xs text-white/50">
-            {suggestion.submitterName && suggestion.submitterSteamid ? (
-              <>
-                <span>from</span>
-                <UserName
-                  name={suggestion.submitterName}
-                  role={suggestion.submitterRole as UserRole | null}
-                  steamid={suggestion.submitterSteamid}
-                />
-                <RoleBadge role={suggestion.submitterRole as UserRole | null} />
-              </>
-            ) : (
-              <span>anonymous</span>
-            )}
-            <span>·</span>
-            <span>
-              {suggestion.voteCount > 0
-                ? `+${suggestion.voteCount}`
-                : suggestion.voteCount}
-              {" "}net · {suggestion.upCount}↑ / {suggestion.downCount}↓
-            </span>
-            {suggestion.approvedAt && (
-              <>
-                <span>·</span>
-                <span>
-                  approved {new Date(suggestion.approvedAt).toLocaleDateString()}
-                </span>
-              </>
-            )}
-          </div>
-        </div>
+      <div>
+        <h3 className="text-base font-semibold">{suggestion.title}</h3>
+        {submitterLine(suggestion)}
       </div>
 
       {suggestion.body && (
@@ -199,26 +83,146 @@ function LiveCard({ suggestion }: { suggestion: SuggestionRow }) {
           name="note"
           type="text"
           defaultValue={suggestion.creatorNote ?? ""}
-          placeholder="Update creator note (optional)"
+          placeholder="Creator note (optional, shown publicly)"
           className="min-w-[20ch] flex-1 rounded border border-border bg-background px-2 py-1.5 text-sm"
         />
+        {transitions.map((t) => (
+          <button
+            key={t.value}
+            type="submit"
+            name="status"
+            value={t.value}
+            className={`rounded-md px-3 py-1.5 text-sm font-medium ${t.style}`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </form>
+
+      <form action={deleteSuggestion}>
+        <input type="hidden" name="suggestionId" value={suggestion.id} />
         <button
           type="submit"
-          name="status"
-          value="implemented"
-          className="rounded-md bg-emerald-500 px-3 py-1.5 text-sm font-medium text-black hover:bg-emerald-400"
+          className="text-xs text-white/40 hover:text-red-300"
+          title="Hard delete — removes the suggestion row entirely, won't appear in any tab"
         >
-          Mark implemented
-        </button>
-        <button
-          type="submit"
-          name="status"
-          value="rejected"
-          className="rounded-md border border-red-500/40 bg-red-500/10 px-3 py-1.5 text-sm text-red-200 hover:bg-red-500/20"
-        >
-          Reject now
+          🗑 hard delete
         </button>
       </form>
     </article>
+  );
+}
+
+const APPROVE: Transition = {
+  label: "Approve",
+  value: "approved",
+  style: "bg-emerald-500 text-black hover:bg-emerald-400",
+};
+const REJECT: Transition = {
+  label: "Reject",
+  value: "rejected",
+  style: "border border-red-500/40 bg-red-500/10 text-red-200 hover:bg-red-500/20",
+};
+const MARK_IMPL: Transition = {
+  label: "Mark implemented",
+  value: "implemented",
+  style: "bg-emerald-500 text-black hover:bg-emerald-400",
+};
+const BACK_TO_APPROVED: Transition = {
+  label: "Back to approved",
+  value: "approved",
+  style: "border border-accent/60 bg-accent/15 text-accent hover:bg-accent/25",
+};
+
+export default async function AdminSuggestionsPage() {
+  const viewer = await getCurrentUser();
+  if (!isCreator(viewer?.role as UserRole | undefined)) {
+    return (
+      <div className="mx-auto max-w-xl rounded-lg border border-red-500/40 bg-red-500/10 p-6 text-sm">
+        <div className="text-lg font-semibold text-red-200">Creator only.</div>
+        <p className="mt-2 text-red-100/80">
+          Suggestion management is private to the Creator.
+        </p>
+      </div>
+    );
+  }
+
+  const [inbox, approved, implemented, rejected] = await Promise.all([
+    getPendingSuggestions(),
+    getApprovedSuggestions(viewer!.steamid),
+    getImplementedSuggestions(viewer!.steamid),
+    getRejectedSuggestions(viewer!.steamid),
+  ]);
+
+  return (
+    <div className="space-y-10">
+      <Section
+        title="Inbox"
+        subtitle="New private submissions. Approve to put on the public board."
+        suggestions={inbox}
+        transitions={[APPROVE, REJECT]}
+        emptyLabel="Inbox empty."
+      />
+      <Section
+        title="Live board"
+        subtitle="Approved and open for public upvotes."
+        suggestions={approved}
+        transitions={[MARK_IMPL, REJECT]}
+        emptyLabel="No approved suggestions yet."
+      />
+      <Section
+        title="Implemented"
+        subtitle="Shipped. Use Back to approved if you want to unmark."
+        suggestions={implemented}
+        transitions={[BACK_TO_APPROVED, REJECT]}
+        emptyLabel="Nothing implemented yet."
+      />
+      <Section
+        title="Rejected"
+        subtitle="Visible on the public Rejected tab. Back to approved revives; hard delete removes entirely."
+        suggestions={rejected}
+        transitions={[BACK_TO_APPROVED]}
+        emptyLabel="Nothing rejected."
+      />
+    </div>
+  );
+}
+
+function Section({
+  title,
+  subtitle,
+  suggestions,
+  transitions,
+  emptyLabel,
+}: {
+  title: string;
+  subtitle: string;
+  suggestions: SuggestionRow[];
+  transitions: Transition[];
+  emptyLabel: string;
+}) {
+  return (
+    <section className="space-y-4">
+      <header className="space-y-1 border-t border-border pt-6 first:border-t-0 first:pt-0">
+        <h2 className="text-xl font-semibold">
+          {title}{" "}
+          <span className="ml-1 font-mono text-xs text-white/40">
+            {suggestions.length}
+          </span>
+        </h2>
+        <p className="text-sm text-white/60">{subtitle}</p>
+      </header>
+      {suggestions.length === 0 ? (
+        <div className="rounded-md border border-border bg-card/60 px-5 py-4 text-sm text-white/60">
+          {emptyLabel}
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {suggestions.map((s) => (
+            <ActionCard key={s.id} suggestion={s} transitions={transitions} />
+          ))}
+        </div>
+      )}
+    </section>
   );
 }

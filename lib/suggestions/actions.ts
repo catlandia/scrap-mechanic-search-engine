@@ -124,6 +124,23 @@ export async function voteSuggestion(formData: FormData) {
   revalidatePath("/suggestions");
 }
 
+/**
+ * Creator-only hard reject: deletes the suggestion row (votes cascade via
+ * FK). Used when you don't even want it appearing in the Rejected tab.
+ */
+export async function deleteSuggestion(formData: FormData) {
+  await requireCreator();
+  const idRaw = String(formData.get("suggestionId") ?? "");
+  const id = Number(idRaw);
+  if (!Number.isInteger(id) || id <= 0) throw new Error("invalid_id");
+
+  const db = getDb();
+  await db.delete(featureSuggestions).where(eq(featureSuggestions.id, id));
+
+  revalidatePath("/admin/suggestions");
+  revalidatePath("/suggestions");
+}
+
 export async function setSuggestionStatus(formData: FormData) {
   const actor = await requireCreator();
   const idRaw = String(formData.get("suggestionId") ?? "");
