@@ -1,14 +1,4 @@
-import {
-  and,
-  asc,
-  desc,
-  eq,
-  ilike,
-  inArray,
-  or,
-  sql,
-  type SQL,
-} from "drizzle-orm";
+import { and, desc, eq, inArray, sql, type SQL } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { getDb } from "./client";
 import {
@@ -72,6 +62,7 @@ const cardColumns = {
 };
 
 export const SORT_MODES = [
+  "relevance",
   "newest",
   "oldest",
   "steam-newest",
@@ -88,6 +79,7 @@ export const SORT_MODES = [
 export type SortMode = (typeof SORT_MODES)[number];
 
 export const SORT_LABELS: Record<SortMode, string> = {
+  relevance: "Most relevant",
   newest: "Newest on site",
   oldest: "Oldest on site",
   "steam-newest": "Newest on Steam",
@@ -107,8 +99,17 @@ export function parseSortMode(raw: string | undefined | null): SortMode {
   return "newest";
 }
 
-function orderByForSort(sort: SortMode): SQL {
+function tsQueryExpr(q: string): SQL {
+  return sql`websearch_to_tsquery('english', ${q})`;
+}
+
+function orderByForSort(sort: SortMode, q?: string): SQL {
   switch (sort) {
+    case "relevance":
+      if (q && q.trim()) {
+        return sql`ts_rank_cd(${creations.searchVector}, ${tsQueryExpr(q.trim())}) DESC NULLS LAST`;
+      }
+      return sql`${creations.approvedAt} DESC NULLS LAST`;
     case "newest":
       return sql`${creations.approvedAt} DESC NULLS LAST`;
     case "oldest":
@@ -240,17 +241,15 @@ export async function searchApproved(
     where.push(inArray(creations.id, rows.map((r) => r.id)));
   }
 
-  if (filters.q && filters.q.trim()) {
-    const term = `%${filters.q.trim()}%`;
-    const cond = or(
-      ilike(creations.title, term),
-      ilike(creations.descriptionClean, term),
-    );
-    if (cond) where.push(cond);
+  const trimmedQ = filters.q?.trim() ?? "";
+  if (trimmedQ) {
+    where.push(sql`${creations.searchVector} @@ ${tsQueryExpr(trimmedQ)}`);
   }
 
   const condition = where.length === 1 ? where[0] : and(...where);
-  const orderBy = orderByForSort(filters.sort ?? "newest");
+  const effectiveSort: SortMode =
+    filters.sort ?? (trimmedQ ? "relevance" : "newest");
+  const orderBy = orderByForSort(effectiveSort, trimmedQ);
 
   const [countRow] = await db
     .select({ n: sql<number>`count(*)::int` })

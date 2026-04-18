@@ -70,7 +70,7 @@ Full-featured search with URL-based state (links are shareable).
 | `kind` | slug | Filter to one kind |
 | `category` | slug | Filter to one category |
 | `tags` | comma-separated slugs | ALL listed tags must match |
-| `q` | text | ILIKE search on title + descriptionClean |
+| `q` | text | Full-text search on title + descriptionClean (tsvector) |
 | `sort` | string | See sort modes below |
 | `page` | number | 1-indexed |
 
@@ -78,7 +78,8 @@ Full-featured search with URL-based state (links are shareable).
 
 | Value | Description |
 |---|---|
-| `newest` | `approvedAt DESC` (newest on site) |
+| `relevance` | `ts_rank_cd` DESC — only exposed when `q` is present, auto-selected as the default in that case |
+| `newest` | `approvedAt DESC` (newest on site) — default when `q` is empty |
 | `oldest` | `approvedAt ASC` |
 | `steam-newest` | `timeCreated DESC` (Steam upload date) |
 | `steam-oldest` | `timeCreated ASC` |
@@ -95,7 +96,7 @@ Site-rating sorts use a CASE expression so items below the 5-vote floor fall to 
 
 **Tag filtering logic:** All requested tag slugs must match — intersection, not union. Implemented as a `DISTINCT COUNT HAVING` subquery on `creationTags`.
 
-**Text search:** `ILIKE '%q%'` on title and descriptionClean. Full-text tsvector search is deferred (column exists in schema but ILIKE is used for now).
+**Text search:** Postgres tsvector (`searchVector` on `creations`, GIN-indexed). `q` is passed through `websearch_to_tsquery('english', …)` so users get phrase quotes, `OR`, and `-negation` for free. Ranking uses `ts_rank_cd`. The `english` dictionary means stems match (`cannon` matches `cannons`) but substrings don't (`cann` no longer matches `cannon` — revisit by appending `:*` with `to_tsquery` if that bites).
 
 ---
 

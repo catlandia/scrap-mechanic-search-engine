@@ -32,7 +32,7 @@ Main content table. One row per Steam Workshop item.
 | `shortId` | serial UNIQUE | User-facing numeric ID (used in `/creation/[id]` URLs) |
 | `title` | text | |
 | `descriptionRaw` | text | Original Steam BBCode markup |
-| `descriptionClean` | text | Stripped version; used for tagger + ILIKE search |
+| `descriptionClean` | text | Stripped version; feeds the tagger + `searchVector` |
 | `authorSteamid` | text | |
 | `authorName` | text | Resolved from Steam at ingest time |
 | `thumbnailUrl` | text | Hotlinked from Steam CDN |
@@ -56,8 +56,9 @@ Main content table. One row per Steam Workshop item.
 | `reviewedByUserId` | text NULL | Admin who approved/rejected |
 | `siteWeightedUp` | int | Denormalized from creationVotes (avoids GROUP BY on cards) |
 | `siteWeightedDown` | int | Same |
+| `searchVector` | tsvector | `GENERATED ALWAYS AS (to_tsvector('english', title \|\| ' ' \|\| descriptionClean)) STORED`. Postgres maintains it automatically on every insert/update — the ingest pipeline never touches it. |
 
-**Indexes:** `status`, `kind`, `approvedAt DESC`, `timeUpdated`, `authorSteamid`
+**Indexes:** `status`, `kind`, `approvedAt DESC`, `timeUpdated`, `authorSteamid`, `GIN(searchVector)`
 
 **Status lifecycle:**
 ```

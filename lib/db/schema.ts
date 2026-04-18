@@ -1,6 +1,8 @@
+import { sql } from "drizzle-orm";
 import {
   bigint,
   boolean,
+  customType,
   index,
   integer,
   jsonb,
@@ -11,6 +13,10 @@ import {
   text,
   timestamp,
 } from "drizzle-orm/pg-core";
+
+const tsvector = customType<{ data: string; driverData: string }>({
+  dataType: () => "tsvector",
+});
 
 export const CREATION_KINDS = [
   "blueprint",
@@ -108,6 +114,11 @@ export const creations = pgTable(
     // role breakdown is displayed separately.)
     siteWeightedUp: integer("site_weighted_up").notNull().default(0),
     siteWeightedDown: integer("site_weighted_down").notNull().default(0),
+    // Generated-stored: Postgres recomputes on every insert/update, so app
+    // code must never write to this column.
+    searchVector: tsvector("search_vector").generatedAlwaysAs(
+      sql`to_tsvector('english', coalesce(title, '') || ' ' || coalesce(description_clean, ''))`,
+    ),
   },
   (t) => [
     index("creations_status_idx").on(t.status),
@@ -115,6 +126,7 @@ export const creations = pgTable(
     index("creations_approved_at_idx").on(t.approvedAt.desc()),
     index("creations_time_updated_idx").on(t.timeUpdated),
     index("creations_author_idx").on(t.authorSteamid),
+    index("creations_search_vector_idx").using("gin", t.searchVector),
   ],
 );
 

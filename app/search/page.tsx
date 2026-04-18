@@ -30,7 +30,9 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean);
-  const sort = parseSortMode(sp.sort);
+  const hasQuery = Boolean(sp.q?.trim());
+  const defaultSort = hasQuery ? "relevance" : "newest";
+  const sort = sp.sort ? parseSortMode(sp.sort) : defaultSort;
   const pageIndex = Math.max(0, Number(sp.page ?? "1") - 1);
 
   const [allTags, allCategories, results] = await Promise.all([
@@ -58,7 +60,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
     if (sp.category) params.set("category", sp.category);
     if (sp.q) params.set("q", sp.q);
     if (tagSlugs.length > 0) params.set("tags", tagSlugs.join(","));
-    if (sort !== "newest") params.set("sort", sort);
+    if (sort !== defaultSort) params.set("sort", sort);
     if (targetPage > 0) params.set("page", String(targetPage + 1));
     const s = params.toString();
     return s ? `/search?${s}` : "/search";

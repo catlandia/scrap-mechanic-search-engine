@@ -3,8 +3,6 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { SORT_LABELS, SORT_MODES, type SortMode } from "@/lib/db/queries";
 
-const DEFAULT_SORT: SortMode = "newest";
-
 export function SortSelector({
   current,
   label = "Sort",
@@ -15,10 +13,15 @@ export function SortSelector({
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
+  const hasQuery = Boolean(searchParams.get("q")?.trim());
+  const defaultSort: SortMode = hasQuery ? "relevance" : "newest";
+  // Relevance is only meaningful when there's a text query — hide it otherwise
+  // so the dropdown can't land you on a sort mode that falls back to newest.
+  const visibleModes = SORT_MODES.filter((m) => m !== "relevance" || hasQuery);
 
   function setSort(value: SortMode) {
     const next = new URLSearchParams(searchParams.toString());
-    if (value === DEFAULT_SORT) {
+    if (value === defaultSort) {
       next.delete("sort");
     } else {
       next.set("sort", value);
@@ -36,7 +39,7 @@ export function SortSelector({
         onChange={(e) => setSort(e.target.value as SortMode)}
         className="rounded border border-border bg-background px-2 py-1 text-sm text-white focus:border-accent focus:outline-none"
       >
-        {SORT_MODES.map((m) => (
+        {visibleModes.map((m) => (
           <option key={m} value={m}>
             {SORT_LABELS[m]}
           </option>

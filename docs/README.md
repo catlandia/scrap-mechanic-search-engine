@@ -17,7 +17,7 @@
 
 ## Quick orientation
 
-- Current version: **V4.15** — rating-mode toggle, fixed 3-star bug, mobile drawer nav
+- Current version: **V4.16** — real full-text search (tsvector + GIN), `relevance` sort, ILIKE retired
 - Stack: Next.js 15 App Router · TypeScript · Tailwind v4 · Drizzle + Neon · iron-session · Steam OpenID
 - Hard constraint: everything must remain on **free tiers** — no paid APIs, no metered per-item costs
 - Transactions are **not available** (neon-http driver) — writes are sequential, partial state is accepted
@@ -33,4 +33,5 @@
 - **V4.12:** Character image filename hidden from network inspection. Image served via `/api/captcha/image` proxy route — actual path stored only in encrypted server-side session. Client never sees `Mechanic1.jpg` etc.
 - **V4.13:** Steam-workshop appid gate (rejects non-SM items on submission); notifications system with bell icon + unread badge; `/me/submissions` status page; captcha nonce-based cache-busting; captcha only gates Steam login rather than the whole site.
 - **V4.14:** Creator can clear user warnings from the admin user page.
+- **V4.16:** `/search` now runs on a real Postgres full-text index. `creations.search_vector` is a generated-stored tsvector over `title + description_clean`, backed by a GIN index; queries use `websearch_to_tsquery('english', q)` so users get phrase quotes / `OR` / `-negation` for free. A new `relevance` sort mode ranks with `ts_rank_cd` and becomes the default whenever `q` is present. The old ILIKE `%q%` path is gone — stems now match (`cannon`/`cannons`) but substrings don't (`cann` no longer matches `cannon`); revisit with `:*` prefix if that bites. Migration `0012_overrated_alex_power.sql` adds the column + index; no ingest-pipeline change needed because Postgres maintains the column itself.
 - **V4.15:** Rating-mode toggle (Steam/Site/Both) stored as cookie, applied across card + detail views. Fixed the "everything is 3 stars" bug — `StarRating` now computes raw `up/(up+down)` instead of trusting Steam's Wilson-smoothed `vote_score` (which regressed low-sample ratings toward 0.5); min-votes threshold raised from 5 to 10. Added `site-rating` / `site-least-rating` sort modes (5-vote floor). Queue reject action accepts an optional reason that surfaces in the submitter's rejection notification. Tightened appid check so a missing `consumer_appid` no longer slips through. Per-notification mark-read via `/api/notifications/[id]/click`. Rebuilt mobile header: sticky compact bar with logo + submit/heart/bell/avatar icons, hamburger opens a right-side drawer (portaled to `document.body` at `z-[100]`) with nav links, rating toggle, deep links (submissions, admin triage), and sign-out.

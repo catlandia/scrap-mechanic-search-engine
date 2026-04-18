@@ -28,7 +28,7 @@ The denormalized `siteWeightedUp/Down` columns avoid a GROUP BY join on every ca
 Returns `status=approved` creations ordered by `approvedAt DESC`. Used on the home page and `/new`.
 
 ### `getApprovedByKind(kind, { sort, limit, offset })`
-Filter by one `kind`, with 10 sort modes. Used on per-kind landing pages.
+Filter by one `kind`. Used on per-kind landing pages. Accepts any `SortMode` except `relevance` (which falls back to `newest` without a query string).
 
 ### `searchApproved(filters, page, pageSize)`
 
@@ -39,14 +39,14 @@ Full-featured search function. Accepts:
   kind?: string,          // filter to one kind
   categorySlug?: string,  // filter via creationCategories join
   tagSlugs?: string[],    // ALL must match (intersection)
-  q?: string,             // ILIKE on title + descriptionClean
-  sort?: SortMode,        // 10 modes
+  q?: string,             // tsvector @@ websearch_to_tsquery(q)
+  sort?: SortMode,        // defaults to "relevance" when q is set, else "newest"
 }
 ```
 
 **Tag intersection implementation:** Uses a subquery on `creationTags` with `COUNT(DISTINCT tag_id) = tagSlugs.length` — requires ALL requested tags to be present. Not a union.
 
-**Text search:** `ILIKE '%q%'` on `title` and `descriptionClean`. The `searchVector` tsvector column exists in schema but the code currently uses ILIKE. Upgrade path: swap for `searchVector @@ plainto_tsquery(q)`.
+**Text search:** `creations.searchVector @@ websearch_to_tsquery('english', q)`. `searchVector` is a generated-stored column maintained by Postgres, so there's nothing to keep in sync at the application layer. Relevance sort uses `ts_rank_cd(searchVector, websearch_to_tsquery('english', q))`.
 
 Returns: `{ items: CreationCardRow[], total: number, page: number, pageSize: number }`
 
