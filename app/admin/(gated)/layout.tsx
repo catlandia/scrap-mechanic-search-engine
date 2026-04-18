@@ -1,12 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
-import {
-  isCreator,
-  isEliteModerator,
-  isModerator,
-  ROLE_LABELS,
-} from "@/lib/auth/roles";
+import { isCreator, isModerator, ROLE_LABELS } from "@/lib/auth/roles";
 import { RoleBadge } from "@/components/RoleBadge";
 import type { UserRole } from "@/lib/db/schema";
 
@@ -14,11 +9,11 @@ const baseNav = [
   { href: "/admin/triage", label: "Triage" },
   { href: "/admin/queue", label: "Queue" },
   { href: "/admin/reports", label: "Reports" },
+  { href: "/admin/archive", label: "Archive" },
   { href: "/admin/add", label: "Add" },
   { href: "/admin/tags", label: "Tags" },
   { href: "/admin/ingest", label: "Ingest" },
 ];
-const eliteNav = [{ href: "/admin/archive", label: "Archive" }];
 const creatorNav = [
   { href: "/admin/suggestions", label: "Suggestions" },
   { href: "/admin/users", label: "Users" },
@@ -53,16 +48,6 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                 {item.label}
               </Link>
             ))}
-            {isEliteModerator(role) &&
-              eliteNav.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="text-amber-300 hover:text-amber-200"
-                >
-                  {item.label}
-                </Link>
-              ))}
             {isCreator(role) &&
               creatorNav.map((item) => (
                 <Link
