@@ -11,6 +11,7 @@ import {
   creations,
   reports,
   tags,
+  users,
 } from "@/lib/db/schema";
 import { runIngest } from "@/lib/ingest/pipeline";
 import { CREATION_KINDS } from "@/lib/db/schema";
@@ -539,6 +540,46 @@ export async function archiveFromReport(formData: FormData) {
   revalidatePath(`/creation/${row.creationId}`);
   revalidatePath("/");
   revalidatePath("/new");
+}
+
+const ASSIGNABLE_ROLES = ["user", "moderator", "elite_moderator"] as const;
+type AssignableRole = (typeof ASSIGNABLE_ROLES)[number];
+
+/**
+ * Creator-only role assignment. Moderators physically cannot call this —
+ * requireCreator() throws for them. The creator role itself is anchored by
+ * the CREATOR_STEAMID env var and cannot be granted or revoked through the UI.
+ */
+export async function setUserRole(formData: FormData) {
+  const actor = await requireCreator();
+  const targetSteamid = String(formData.get("steamid") ?? "").trim();
+  const rawRole = String(formData.get("role") ?? "").trim();
+
+  if (!targetSteamid) throw new Error("steamid required");
+  if (!(ASSIGNABLE_ROLES as readonly string[]).includes(rawRole)) {
+    throw new Error("invalid_role");
+  }
+  const newRole = rawRole as AssignableRole;
+
+  if (targetSteamid === actor.steamid) {
+    throw new Error("cannot_change_own_role");
+  }
+
+  const db = getDb();
+  const [target] = await db
+    .select({ role: users.role })
+    .from(users)
+    .where(eq(users.steamid, targetSteamid))
+    .limit(1);
+  if (!target) throw new Error("user_not_found");
+  if (target.role === "creator") throw new Error("cannot_modify_creator");
+
+  await db
+    .update(users)
+    .set({ role: newRole })
+    .where(eq(users.steamid, targetSteamid));
+
+  revalidatePath("/admin/users");
 }
 
 export async function createCategory(formData: FormData) {
