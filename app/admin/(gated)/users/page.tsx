@@ -1,6 +1,10 @@
 import Image from "next/image";
 import { desc } from "drizzle-orm";
-import { setUserRole } from "@/app/admin/actions";
+import {
+  grantBadgeAction,
+  revokeBadgeAction,
+  setUserRole,
+} from "@/app/admin/actions";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
 import { users } from "@/lib/db/schema";
@@ -11,6 +15,9 @@ import {
   ROLE_LABELS,
   ROLE_STYLES,
 } from "@/lib/auth/roles";
+import { BADGES } from "@/lib/badges/definitions";
+import { getBadgesForSteamIds } from "@/lib/badges/queries";
+import { BadgeList } from "@/components/BadgeList";
 import { RoleBadge } from "@/components/RoleBadge";
 import { UserName } from "@/components/UserName";
 import { UserModForms } from "@/components/UserModForms";
@@ -41,6 +48,7 @@ export default async function UsersAdminPage() {
 
   const db = getDb();
   const rows = await db.select().from(users).orderBy(desc(users.siteJoinedAt));
+  const badgesByUser = await getBadgesForSteamIds(rows.map((u) => u.steamid));
 
   const byRole: Record<UserRole, typeof rows> = {
     creator: [],
@@ -179,6 +187,10 @@ export default async function UsersAdminPage() {
                           warningsCount={u.warningsCount ?? 0}
                           bypassAgeGate={!!u.bypassAgeGate}
                         />
+                        <BadgeManager
+                          steamid={u.steamid}
+                          granted={badgesByUser.get(u.steamid) ?? []}
+                        />
                         {u.bannedUntil && u.bannedUntil > new Date() && (
                           <div className="text-[10px] text-red-300">
                             banned until {u.bannedUntil.toLocaleDateString()}
@@ -210,6 +222,74 @@ export default async function UsersAdminPage() {
         <RoleTotal count={byRole.moderator?.length ?? 0} role="moderator" />
         <RoleTotal count={byRole.user?.length ?? 0} role="user" />
       </section>
+    </div>
+  );
+}
+
+function BadgeManager({
+  steamid,
+  granted,
+}: {
+  steamid: string;
+  granted: Array<{ slug: string }>;
+}) {
+  const grantedSlugs = new Set(granted.map((b) => b.slug));
+  const ungranted = Object.values(BADGES).filter(
+    (b) => !grantedSlugs.has(b.slug),
+  );
+  return (
+    <div className="flex flex-col items-end gap-1 border-t border-border/60 pt-1">
+      <div className="text-[10px] uppercase tracking-wider text-foreground/40">
+        Badges
+      </div>
+      {granted.length > 0 && (
+        <div className="flex flex-wrap items-center justify-end gap-1">
+          {granted.map((g) => {
+            const def = BADGES[g.slug];
+            if (!def) return null;
+            return (
+              <form
+                key={g.slug}
+                action={revokeBadgeAction}
+                className="inline-flex"
+              >
+                <input type="hidden" name="steamid" value={steamid} />
+                <input type="hidden" name="slug" value={g.slug} />
+                <button
+                  type="submit"
+                  className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] leading-none hover:opacity-70 ${def.pill}`}
+                  title={`Click to revoke ${def.name}`}
+                >
+                  <span aria-hidden>{def.icon}</span>
+                  <span>{def.name}</span>
+                  <span aria-hidden className="opacity-60">
+                    ×
+                  </span>
+                </button>
+              </form>
+            );
+          })}
+        </div>
+      )}
+      {ungranted.length > 0 && (
+        <div className="flex flex-wrap items-center justify-end gap-1">
+          {ungranted.map((def) => (
+            <form key={def.slug} action={grantBadgeAction} className="inline-flex">
+              <input type="hidden" name="steamid" value={steamid} />
+              <input type="hidden" name="slug" value={def.slug} />
+              <button
+                type="submit"
+                className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-1.5 py-0.5 text-[10px] leading-none text-foreground/60 hover:border-accent hover:text-accent"
+                title={`Grant ${def.name} — ${def.description}`}
+              >
+                <span aria-hidden>+</span>
+                <span aria-hidden>{def.icon}</span>
+                <span>{def.name}</span>
+              </button>
+            </form>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

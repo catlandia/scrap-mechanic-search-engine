@@ -10,7 +10,9 @@ import { ProfileFavourites } from "@/components/profile/ProfileFavourites";
 import { SubmittedItems } from "@/components/profile/SubmittedItems";
 import { VoteHistory } from "@/components/profile/VoteHistory";
 import { ROLE_LABELS, ROLE_STYLES } from "@/lib/auth/roles";
+import { BadgeList } from "@/components/BadgeList";
 import { CommentSection } from "@/components/CommentSection";
+import { getUserBadges } from "@/lib/badges/queries";
 import { getProfileComments } from "@/lib/db/queries";
 import { getCurrentUser, isBanned, isMuted } from "@/lib/auth/session";
 import { isModerator } from "@/lib/auth/roles";
@@ -48,6 +50,7 @@ export default async function ProfilePage({ params }: { params: Params }) {
 
   const viewer = await getCurrentUser();
   const showModInfo = canSeeModInfo(viewer, user.steamid);
+  const badges = await getUserBadges(user.steamid);
 
   const role = user.role as UserRole;
   const style = ROLE_STYLES[role] ?? ROLE_STYLES.user;
@@ -105,6 +108,15 @@ export default async function ProfilePage({ params }: { params: Params }) {
           </div>
         </div>
       </header>
+
+      {badges.length > 0 && (
+        <section className="space-y-2">
+          <div className="text-xs uppercase tracking-widest text-foreground/40">
+            Badges
+          </div>
+          <BadgeList badges={badges.map((b) => b.def)} size="card" />
+        </section>
+      )}
 
       <section className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
         <Stat label="Site ID" value={`#${user.shortId}`} mono />

@@ -141,6 +141,13 @@
       "when": 1776565141169,
       "tag": "0019_chubby_frank_castle",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1776571730125,
+      "tag": "0020_medical_iron_patriot",
+      "breakpoints": true
     }
   ]
 }

@@ -4,6 +4,7 @@ import { getDb } from "@/lib/db/client";
 import { users, type NewUser, type UserRole } from "@/lib/db/schema";
 import { getUserSession } from "@/lib/auth/session";
 import { verifySteamAssertion } from "@/lib/auth/steam-openid";
+import { maybeAutoGrantBetatester } from "@/lib/badges/queries";
 import {
   getPlayerSummary,
   getSmPlaytimeMinutes,
@@ -73,6 +74,7 @@ export async function GET(req: NextRequest) {
     ? "creator"
     : existingRole ?? "user";
 
+  const siteJoinedAt = existing[0]?.siteJoinedAt ?? now;
   if (existing.length === 0) {
     await db.insert(users).values({
       ...baseRow,
@@ -92,6 +94,13 @@ export async function GET(req: NextRequest) {
         role: nextRole,
       })
       .where(eq(users.steamid, steamid));
+  }
+
+  // Best-effort: never let a badge grant failure block the sign-in flow.
+  try {
+    await maybeAutoGrantBetatester(steamid, siteJoinedAt);
+  } catch (err) {
+    console.error("badge auto-grant failed:", err);
   }
 
   const session = await getUserSession();

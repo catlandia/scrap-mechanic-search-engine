@@ -83,6 +83,8 @@ All helpers check `effectiveRole` (ban-aware), not `user.role` directly. **Every
 | `restoreFromArchive(id)` | Elite+ | Returns to approved, clears actioned reports |
 | `archiveFromReport(id, reportId)` | Elite+ | Archive + action the triggering report |
 | `deleteCommentFromReport(reportId)` | Mod+ | Soft-delete the reported comment + action the report |
+| `grantBadgeAction(steamid, slug)` | Creator | Grant one of the defined badges to a user |
+| `revokeBadgeAction(steamid, slug)` | Creator | Revoke a badge grant |
 | `deleteCreation(id)` | Creator | Permanent `status=deleted`, clears reports |
 
 ### User management (Creator-only)

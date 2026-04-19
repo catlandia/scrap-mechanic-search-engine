@@ -29,6 +29,8 @@ import {
 import { stripBBCode } from "@/lib/steam/bbcode";
 import { classify } from "@/lib/tagger/classify";
 import { broadcastToRole, createNotification } from "@/lib/db/notifications";
+import { BADGE_SLUGS } from "@/lib/badges/definitions";
+import { grantBadge, revokeBadge } from "@/lib/badges/queries";
 
 function parseKind(raw: FormDataEntryValue | null): string {
   const kind = String(raw ?? "other");
@@ -543,6 +545,38 @@ async function requireCreator() {
   if (isBanned(user)) throw new Error("banned");
   if (effectiveRole(user) !== "creator") throw new Error("not_creator");
   return user;
+}
+
+export async function grantBadgeAction(formData: FormData) {
+  const actor = await requireCreator();
+  const targetSteamid = String(formData.get("steamid") ?? "");
+  const slug = String(formData.get("slug") ?? "");
+  if (!/^\d{1,25}$/.test(targetSteamid)) throw new Error("invalid_steamid");
+  if (!BADGE_SLUGS.includes(slug)) throw new Error("unknown_badge");
+  const note = String(formData.get("note") ?? "").trim().slice(0, 200) || null;
+
+  await grantBadge({
+    userId: targetSteamid,
+    slug,
+    grantedByUserId: actor.steamid,
+    note,
+  });
+
+  revalidatePath("/admin/users");
+  revalidatePath(`/profile/${targetSteamid}`);
+}
+
+export async function revokeBadgeAction(formData: FormData) {
+  await requireCreator();
+  const targetSteamid = String(formData.get("steamid") ?? "");
+  const slug = String(formData.get("slug") ?? "");
+  if (!/^\d{1,25}$/.test(targetSteamid)) throw new Error("invalid_steamid");
+  if (!BADGE_SLUGS.includes(slug)) throw new Error("unknown_badge");
+
+  await revokeBadge(targetSteamid, slug);
+
+  revalidatePath("/admin/users");
+  revalidatePath(`/profile/${targetSteamid}`);
 }
 
 /**

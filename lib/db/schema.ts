@@ -538,6 +538,34 @@ export const notifications = pgTable(
   ],
 );
 
+// Badge slugs live in TypeScript (see lib/badges/definitions.ts) rather than
+// a badges table — the catalog is small and code-owned, so rows here are
+// just the grants themselves.
+export const userBadges = pgTable(
+  "user_badges",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.steamid, { onDelete: "cascade" }),
+    badgeSlug: text("badge_slug").notNull(),
+    grantedAt: timestamp("granted_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    // null = auto-granted by the system (e.g. beta-tester on sign-in).
+    grantedByUserId: text("granted_by_user_id").references(() => users.steamid, {
+      onDelete: "set null",
+    }),
+    note: text("note"),
+  },
+  (t) => [
+    primaryKey({ columns: [t.userId, t.badgeSlug] }),
+    index("user_badges_badge_idx").on(t.badgeSlug),
+  ],
+);
+
+export type UserBadge = typeof userBadges.$inferSelect;
+export type NewUserBadge = typeof userBadges.$inferInsert;
+
 export type Comment = typeof comments.$inferSelect;
 export type NewComment = typeof comments.$inferInsert;
 export type FeatureSuggestion = typeof featureSuggestions.$inferSelect;

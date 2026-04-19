@@ -266,6 +266,24 @@ Comments on creations **or** user profiles (exactly one target). Threaded up to 
 
 ---
 
+### `userBadges`
+
+Per-user grants of badges. Badge definitions (slug → name/icon/pill) live
+in `lib/badges/definitions.ts`, not this table.
+
+| Column | Type | Notes |
+|---|---|---|
+| `userId` | text → users.steamid | |
+| `badgeSlug` | text | One of the slugs in `BADGES` |
+| `grantedAt` | timestamptz | |
+| `grantedByUserId` | text NULL → users.steamid | Null = auto-granted by the system (e.g. betatester) |
+| `note` | text NULL | Optional moderator note (≤ 200 chars) |
+
+**PK:** `(userId, badgeSlug)`
+**Indexes:** `badgeSlug`
+
+---
+
 ### `commentVotes`
 
 Up/down votes on individual comments. Mirrors `creationVotes` shape.
