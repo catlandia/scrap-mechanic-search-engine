@@ -10,20 +10,31 @@ import type { RatingMode, Theme } from "@/lib/prefs";
 import { cn } from "@/lib/utils";
 
 type NavLink = { href: string; label: string };
+type NavItem =
+  | { kind: "link"; href: string; label: string }
+  | { kind: "group"; label: string; items: NavLink[] };
 
 export function MobileNav({
-  navLinks,
+  navItems,
   ratingMode,
   theme,
   extraLinks,
   signedIn,
 }: {
-  navLinks: NavLink[];
+  navItems: NavItem[];
   ratingMode: RatingMode;
   theme: Theme;
   extraLinks: NavLink[];
   signedIn: boolean;
 }) {
+  // Search keeps its accent tile at the top of the drawer. Pull it out of
+  // the nav items so it doesn't appear twice.
+  const hasSearch = navItems.some(
+    (i) => i.kind === "link" && i.href === "/search",
+  );
+  const itemsWithoutSearch = navItems.filter(
+    (i) => !(i.kind === "link" && i.href === "/search"),
+  );
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
@@ -147,9 +158,7 @@ export function MobileNav({
               </button>
             </div>
 
-            {/* Search is the most-used action, so pull it out of the nav list
-                and give it a distinct accent tile at the top of the drawer. */}
-            {navLinks.some((l) => l.href === "/search") && (
+            {hasSearch && (
               <div className="px-4 pt-3">
                 <Link
                   href="/search"
@@ -175,16 +184,31 @@ export function MobileNav({
             )}
 
             <nav className="flex flex-col py-2 text-base">
-              {navLinks
-                .filter((link) => link.href !== "/search")
-                .map((link) => (
+              {itemsWithoutSearch.map((item) =>
+                item.kind === "link" ? (
                   <MobileLink
-                    key={link.href}
-                    href={link.href}
-                    label={link.label}
-                    active={pathname === link.href}
+                    key={item.href}
+                    href={item.href}
+                    label={item.label}
+                    active={pathname === item.href}
                   />
-                ))}
+                ) : (
+                  <div key={item.label} className="mt-2">
+                    <div className="px-4 py-1 text-[11px] uppercase tracking-widest text-foreground/40">
+                      {item.label}
+                    </div>
+                    {item.items.map((sub) => (
+                      <MobileLink
+                        key={sub.href}
+                        href={sub.href}
+                        label={sub.label}
+                        active={pathname === sub.href}
+                        indented
+                      />
+                    ))}
+                  </div>
+                ),
+              )}
             </nav>
 
             {extraLinks.length > 0 && (
@@ -268,16 +292,19 @@ function MobileLink({
   href,
   label,
   active,
+  indented = false,
 }: {
   href: string;
   label: string;
   active: boolean;
+  indented?: boolean;
 }) {
   return (
     <Link
       href={href}
       className={cn(
-        "px-4 py-2.5 text-foreground/75 hover:bg-foreground/5 hover:text-foreground",
+        "py-2.5 text-foreground/75 hover:bg-foreground/5 hover:text-foreground",
+        indented ? "pl-8 pr-4 text-sm" : "px-4",
         active && "bg-accent/10 text-accent",
       )}
     >

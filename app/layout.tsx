@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { getCurrentUser } from "@/lib/auth/session";
 import { UserMenu } from "@/components/UserMenu";
 import { MobileNav } from "@/components/MobileNav";
+import { NavDropdown } from "@/components/NavDropdown";
 import { RatingModeToggle } from "@/components/RatingModeToggle";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { BetaBanner } from "@/components/BetaBanner";
@@ -42,8 +43,13 @@ export const metadata: Metadata = {
   },
 };
 
-const navLinks = [
-  { href: "/new", label: "Newest" },
+type NavItem =
+  | { kind: "link"; href: string; label: string }
+  | { kind: "group"; label: string; items: { href: string; label: string }[] };
+
+// Kind pages live under a single "Browse" dropdown on desktop (and a section
+// header on mobile) so the top bar stops at 6 items instead of 12.
+const browseItems = [
   { href: "/blueprints", label: "Blueprints" },
   { href: "/mods", label: "Mods" },
   { href: "/worlds", label: "Worlds" },
@@ -52,9 +58,15 @@ const navLinks = [
   { href: "/custom-games", label: "Custom Games" },
   { href: "/terrain", label: "Terrain" },
   { href: "/other", label: "Other" },
-  { href: "/creators", label: "Creators" },
-  { href: "/search", label: "Search" },
-  { href: "/suggestions", label: "Ideas" },
+];
+
+const navItems: NavItem[] = [
+  { kind: "link", href: "/new", label: "Newest" },
+  { kind: "group", label: "Browse", items: browseItems },
+  { kind: "link", href: "/search", label: "Search" },
+  { kind: "link", href: "/creators", label: "Creators" },
+  { kind: "link", href: "/suggestions", label: "Ideas" },
+  { kind: "link", href: "/submit", label: "Submit" },
 ];
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -78,9 +90,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const customColors = theme === "custom" ? await getCustomThemeColors() : null;
   const showAdminLink = !!user && isModerator(user.role as UserRole);
   const extraLinks = [
-    { href: "/settings", label: "Settings" },
+    { href: "/about", label: "About the site" },
     { href: "/guide", label: "How to use the site" },
-    { href: "/submit", label: "Submit a creation" },
+    { href: "/settings", label: "Settings" },
     ...(user ? [{ href: "/me/favourites", label: "Your favourites" }] : []),
     ...(user ? [{ href: "/me/notifications", label: "Notifications" }] : []),
     ...(user ? [{ href: "/me/submissions", label: "Your submissions" }] : []),
@@ -111,12 +123,24 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 <span className="text-foreground">/</span>Search
               </span>
             </Link>
-            <nav className="hidden flex-wrap gap-x-5 gap-y-1 text-sm text-foreground/70 sm:flex">
-              {navLinks.map((link) => (
-                <Link key={link.href} href={link.href} className="hover:text-foreground">
-                  {link.label}
-                </Link>
-              ))}
+            <nav className="hidden flex-wrap items-center gap-x-5 gap-y-1 text-sm text-foreground/70 sm:flex">
+              {navItems.map((item) =>
+                item.kind === "group" ? (
+                  <NavDropdown
+                    key={item.label}
+                    label={item.label}
+                    items={item.items}
+                  />
+                ) : (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="hover:text-foreground"
+                  >
+                    {item.label}
+                  </Link>
+                ),
+              )}
             </nav>
             <div className="ml-auto flex items-center gap-2 sm:gap-4">
               <GuideLink />
@@ -141,7 +165,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 </Link>
               )}
               <MobileNav
-                navLinks={navLinks}
+                navItems={navItems}
                 extraLinks={extraLinks}
                 ratingMode={ratingMode}
                 theme={theme}
