@@ -124,6 +124,27 @@ export async function startChallenge(): Promise<QuestionPayload> {
   return { options: q.options, questionNumber: 1, streak: 0, nonce: randomUUID() };
 }
 
+export async function skipChallenge(): Promise<{ ok: true }> {
+  // After one mistake the puzzle becomes busywork — we'd rather let the
+  // (likely human) visitor through than harden a barrier that already fails
+  // its purpose. Real bots hitting this endpoint still pay the iron-session
+  // round-trip without gaining any information about the puzzle pool.
+  const session = await getSession();
+  session.questions = undefined;
+  session.current = undefined;
+  session.streak = undefined;
+  await session.save();
+
+  const cookieStore = await cookies();
+  const verified = await getIronSession<BotVerifiedSession>(
+    cookieStore,
+    botVerifiedSessionOptions(requireSessionSecret()),
+  );
+  verified.verified = true;
+  await verified.save();
+  return { ok: true };
+}
+
 export async function submitAnswer(answer: string): Promise<AnswerResult> {
   const session = await getSession();
   const { questions, current = 0, streak = 0 } = session;

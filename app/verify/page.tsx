@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useRef, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { startChallenge, submitAnswer, type QuestionPayload } from "./actions";
+import { skipChallenge, startChallenge, submitAnswer, type QuestionPayload } from "./actions";
 
 type UIState =
   | { phase: "loading" }
@@ -33,6 +33,10 @@ function VerifyChallenge() {
   const [state, setState] = useState<UIState>({ phase: "loading" });
   const [isPending, startTransition] = useTransition();
   const [zoomed, setZoomed] = useState(false);
+  // Revealed once the visitor has missed a question at least once. The captcha
+  // is a soft barrier; forcing a perfect streak on every genuine user is hostile.
+  const [skipAvailable, setSkipAvailable] = useState(false);
+  const [skipping, setSkipping] = useState(false);
   const pendingTimers = useRef<number[]>([]);
   const zoomTriggerRef = useRef<HTMLButtonElement>(null);
   const zoomCloseRef = useRef<HTMLButtonElement>(null);
@@ -92,6 +96,7 @@ function VerifyChallenge() {
         const currentQ = (state as { phase: "question"; q: QuestionPayload }).q;
         const freshPromise = startChallenge();
         setState({ phase: "question", q: currentQ, flash: "wrong" });
+        setSkipAvailable(true);
         const fresh = await freshPromise;
         scheduleTimer(() => {
           setZoomed(false);
@@ -246,6 +251,36 @@ function VerifyChallenge() {
         <p className="text-center text-[11px] text-foreground/20">
           Only Scrap Mechanic players may enter
         </p>
+
+        {/* Skip escape hatch — fades in once the visitor has tripped up even
+            once. The captcha is a soft gate; we'd rather let a stumped human
+            through than waste their time. */}
+        <div
+          className={`flex justify-center transition-all duration-700 ease-out ${
+            skipAvailable
+              ? "pointer-events-auto translate-y-0 opacity-100"
+              : "pointer-events-none translate-y-2 opacity-0"
+          }`}
+          aria-hidden={!skipAvailable}
+        >
+          <button
+            type="button"
+            onClick={() => {
+              if (skipping) return;
+              setSkipping(true);
+              startTransition(async () => {
+                await skipChallenge();
+                setZoomed(false);
+                setState({ phase: "complete" });
+              });
+            }}
+            disabled={!skipAvailable || skipping}
+            tabIndex={skipAvailable ? 0 : -1}
+            className="rounded-full border border-foreground/15 bg-card/60 px-5 py-1.5 text-xs font-medium tracking-wide text-foreground/60 hover:border-accent/50 hover:text-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-60"
+          >
+            {skipping ? "Letting you in…" : "Skip the puzzle"}
+          </button>
+        </div>
       </div>
 
       {zoomed && (
