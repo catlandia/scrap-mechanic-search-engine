@@ -426,6 +426,11 @@ export interface TopCreatorRow {
   steamid: string;
   name: string | null;
   count: number;
+  // Populated when the creator has signed in to the site — uses their live
+  // persona + Steam avatar from the `users` table instead of the stale
+  // author_name cached on creation rows.
+  avatarUrl: string | null;
+  signedIn: boolean;
 }
 
 // All authors across both the primary `authorSteamid` axis and the co-author
@@ -441,6 +446,9 @@ export async function getTopCreators(
   const hasQ = trimmedQ.length > 0;
   const like = `%${trimmedQ}%`;
 
+  // The filter (`name ilike ?`) runs against the live users.persona_name when
+  // the creator has signed in, falling back to the cached creation author_name
+  // — searching by whichever name the visitor is most likely to know.
   const query = hasQ
     ? sql`
         with combined as (
@@ -456,15 +464,24 @@ export async function getTopCreators(
                  (elem->>'name')::text
           from ${creations} c, jsonb_array_elements(c.creators) as elem
           where c.status = 'approved'
+        ),
+        agg as (
+          select steamid,
+                 max(name) as cached_name,
+                 count(distinct creation_id)::int as count
+          from combined
+          where steamid is not null
+          group by steamid
         )
-        select steamid,
-               max(name) as name,
-               count(distinct creation_id)::int as count
-        from combined
-        where steamid is not null
-          and coalesce(name, '') ilike ${like}
-        group by steamid
-        order by count(distinct creation_id) desc, max(name) asc nulls last
+        select a.steamid,
+               coalesce(u.persona_name, a.cached_name) as name,
+               u.avatar_url as avatar_url,
+               (u.steamid is not null) as signed_in,
+               a.count
+        from agg a
+        left join ${users} u on u.steamid = a.steamid
+        where coalesce(u.persona_name, a.cached_name, '') ilike ${like}
+        order by a.count desc, name asc nulls last
         limit ${limit}
         offset ${offset}
       `
@@ -482,24 +499,42 @@ export async function getTopCreators(
                  (elem->>'name')::text
           from ${creations} c, jsonb_array_elements(c.creators) as elem
           where c.status = 'approved'
+        ),
+        agg as (
+          select steamid,
+                 max(name) as cached_name,
+                 count(distinct creation_id)::int as count
+          from combined
+          where steamid is not null
+          group by steamid
         )
-        select steamid,
-               max(name) as name,
-               count(distinct creation_id)::int as count
-        from combined
-        where steamid is not null
-        group by steamid
-        order by count(distinct creation_id) desc, max(name) asc nulls last
+        select a.steamid,
+               coalesce(u.persona_name, a.cached_name) as name,
+               u.avatar_url as avatar_url,
+               (u.steamid is not null) as signed_in,
+               a.count
+        from agg a
+        left join ${users} u on u.steamid = a.steamid
+        order by a.count desc, name asc nulls last
         limit ${limit}
         offset ${offset}
       `;
   const result = await db.execute(query);
-  return (result.rows as Array<{ steamid: string; name: string | null; count: number }>)
-    .map((r) => ({
-      steamid: r.steamid,
-      name: r.name ?? null,
-      count: r.count,
-    }));
+  return (
+    result.rows as Array<{
+      steamid: string;
+      name: string | null;
+      avatar_url: string | null;
+      signed_in: boolean;
+      count: number;
+    }>
+  ).map((r) => ({
+    steamid: r.steamid,
+    name: r.name ?? null,
+    avatarUrl: r.avatar_url ?? null,
+    signedIn: !!r.signed_in,
+    count: r.count,
+  }));
 }
 
 export async function getApprovedKindCounts(): Promise<Record<string, number>> {

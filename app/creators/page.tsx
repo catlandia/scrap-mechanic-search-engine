@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { getTopCreators } from "@/lib/db/queries";
 
@@ -88,16 +89,39 @@ export default async function CreatorsPage({
               <Link
                 href={`/author/${c.steamid}`}
                 className="flex items-center gap-3 rounded-lg border border-border bg-card/60 px-3 py-2.5 transition hover:border-accent hover:bg-card"
+                title={c.signedIn ? `${c.name ?? "?"} — on the site` : undefined}
               >
-                <span
-                  aria-hidden
-                  className="flex size-9 shrink-0 items-center justify-center rounded-full bg-accent/20 text-sm font-semibold text-accent"
-                >
-                  {(c.name ?? "?").charAt(0).toUpperCase()}
-                </span>
+                {c.avatarUrl ? (
+                  <Image
+                    src={c.avatarUrl}
+                    alt=""
+                    width={36}
+                    height={36}
+                    unoptimized
+                    className="size-9 shrink-0 rounded-full border border-accent/60"
+                  />
+                ) : (
+                  <span
+                    aria-hidden
+                    className="flex size-9 shrink-0 items-center justify-center rounded-full bg-accent/20 text-sm font-semibold text-accent"
+                  >
+                    {(c.name ?? "?").charAt(0).toUpperCase()}
+                  </span>
+                )}
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-medium text-foreground">
-                    {c.name ?? "(unknown)"}
+                  <div className="flex items-center gap-1.5">
+                    <span className="truncate text-sm font-medium text-foreground">
+                      {c.name ?? "(unknown)"}
+                    </span>
+                    {c.signedIn && (
+                      <span
+                        aria-label="Signed in to the site"
+                        title="Has a profile on the site"
+                        className="shrink-0 text-[10px] leading-none text-accent"
+                      >
+                        ●
+                      </span>
+                    )}
                   </div>
                   <div className="text-xs text-foreground/50">
                     {c.count} {c.count === 1 ? "creation" : "creations"}
