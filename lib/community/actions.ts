@@ -28,7 +28,7 @@ import {
   getPublishedFileDetails,
   resolvePlayerNames,
   steamUrlFor,
-  SCRAP_MECHANIC_APPID,
+  SCRAP_MECHANIC_APPIDS,
 } from "@/lib/steam/client";
 import { stripBBCode } from "@/lib/steam/bbcode";
 import { classify } from "@/lib/tagger/classify";
@@ -42,6 +42,27 @@ import { broadcastToRole } from "@/lib/db/notifications";
 
 const MIN_STEAM_AGE_DAYS = 7;
 
+/**
+ * Turn gate error codes into messages safe to show the user. Keeps the thrown
+ * codes short and machine-readable while the UI stays readable.
+ */
+function friendlyGateError(code: string): string {
+  switch (code) {
+    case "signed_out":
+      return "You need to sign in with Steam first.";
+    case "banned":
+      return "Your account is currently banned.";
+    case "muted":
+      return "Your account is currently muted.";
+    case "steam_too_new":
+      return "Your Steam account needs to be at least 7 days old.";
+    case "steam_age_unknown":
+      return "We couldn't verify your Steam account age because your Steam profile is private. Make your profile public or ask a moderator to allow you through.";
+    default:
+      return code;
+  }
+}
+
 async function requireVotingUser() {
   const user = await getCurrentUser();
   if (!user) throw new Error("signed_out");
@@ -52,7 +73,12 @@ async function requireVotingUser() {
   if (user.mutedUntil && user.mutedUntil.getTime() > now) {
     throw new Error("muted");
   }
-  if (user.steamCreatedAt && !user.bypassAgeGate) {
+  if (!user.bypassAgeGate) {
+    if (!user.steamCreatedAt) {
+      // Private Steam profile → we can't verify age, so treat as young.
+      // Creator can flip bypassAgeGate for trusted users via /admin/users.
+      throw new Error("steam_age_unknown");
+    }
     const ageDays = (now - user.steamCreatedAt.getTime()) / 86_400_000;
     if (ageDays < MIN_STEAM_AGE_DAYS) {
       throw new Error("steam_too_new");
@@ -422,7 +448,7 @@ export async function submitCreation(formData: FormData): Promise<SubmitResult> 
     user = await requireVotingUser();
   } catch (err) {
     const code = err instanceof Error ? err.message : "failed";
-    return { ok: false, error: code };
+    return { ok: false, error: friendlyGateError(code) };
   }
 
   const db = getDb();
@@ -464,8 +490,31 @@ export async function submitCreation(formData: FormData): Promise<SubmitResult> 
   if (item.result != null && item.result !== 1) {
     return { ok: false, error: `Steam rejected the lookup (result=${item.result}).` };
   }
-  if (item.consumer_appid !== SCRAP_MECHANIC_APPID) {
+  // ISteamRemoteStorage returns `creator_app_id`; QueryFiles returns
+  // `consumer_appid`. Accept either, and only reject the item if whichever
+  // is present isn't in the SM appid set. If BOTH are missing (older
+  // responses), fall back to a Scrap Mechanic kind tag check — better to
+  // let a mis-tagged item land in triage than to reject every submission.
+  const appidCandidate = item.creator_app_id ?? item.consumer_appid;
+  if (appidCandidate != null && !SCRAP_MECHANIC_APPIDS.includes(appidCandidate)) {
     return { ok: false, error: "That item isn't from the Scrap Mechanic Workshop." };
+  }
+  if (appidCandidate == null) {
+    const tagNamesLower = (item.tags ?? []).map((t) => t.tag.toLowerCase());
+    const hasSmKindTag = tagNamesLower.some((t) =>
+      [
+        "blueprint",
+        "mod",
+        "world",
+        "challenge pack",
+        "tile",
+        "custom game",
+        "terrain assets",
+      ].includes(t),
+    );
+    if (!hasSmKindTag) {
+      return { ok: false, error: "That item isn't from the Scrap Mechanic Workshop." };
+    }
   }
 
   const tagNames = (item.tags ?? []).map((t) => t.tag);

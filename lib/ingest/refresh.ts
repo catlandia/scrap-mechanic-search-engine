@@ -1,10 +1,15 @@
-import { eq, inArray } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import { creations } from "@/lib/db/schema";
-import { getPublishedFileDetails, type PublishedFile } from "@/lib/steam/client";
+import {
+  fetchWorkshopContributors,
+  getPublishedFileDetails,
+  type PublishedFile,
+} from "@/lib/steam/client";
 
 export interface RefreshResult {
   refreshed: number;
+  contributorsFilled: number;
   errors: string[];
 }
 
@@ -50,5 +55,46 @@ export async function runRefresh(batchSize = 100): Promise<RefreshResult> {
     }
   }
 
-  return { refreshed, errors };
+  // Second pass: backfill multi-creator attribution for items whose scrape
+  // failed previously (creators column is an empty array). Capped so the
+  // weekly cron stays inside Vercel's serverless function timeout. Over
+  // several runs the whole catalog catches up.
+  const contributorsFilled = await refreshMissingCreators(50);
+
+  return { refreshed, contributorsFilled, errors };
+}
+
+/**
+ * Scrape multi-creator attribution for up to `limit` approved creations that
+ * currently have an empty `creators` array. Runs sequentially with a small
+ * delay so steamcommunity.com isn't hammered.
+ */
+export async function refreshMissingCreators(limit: number): Promise<number> {
+  const apiKey = process.env.STEAM_API_KEY;
+  if (!apiKey) return 0;
+  const db = getDb();
+  const rows = await db
+    .select({ id: creations.id })
+    .from(creations)
+    .where(
+      sql`${creations.status} = 'approved' and jsonb_array_length(${creations.creators}) = 0`,
+    )
+    .limit(limit);
+  let updated = 0;
+  for (const { id } of rows) {
+    try {
+      const contributors = await fetchWorkshopContributors(apiKey, id);
+      if (contributors.length > 0) {
+        await db
+          .update(creations)
+          .set({ creators: contributors })
+          .where(eq(creations.id, id));
+        updated += 1;
+      }
+    } catch {
+      // best-effort; next refresh run will retry
+    }
+    await new Promise((r) => setTimeout(r, 200));
+  }
+  return updated;
 }

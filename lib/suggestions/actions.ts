@@ -27,7 +27,8 @@ async function requireActiveUser() {
   const now = Date.now();
   if (user.bannedUntil && user.bannedUntil.getTime() > now) throw new Error("banned");
   if (user.mutedUntil && user.mutedUntil.getTime() > now) throw new Error("muted");
-  if (user.steamCreatedAt && !user.bypassAgeGate) {
+  if (!user.bypassAgeGate) {
+    if (!user.steamCreatedAt) throw new Error("steam_age_unknown");
     const ageDays = (now - user.steamCreatedAt.getTime()) / 86_400_000;
     if (ageDays < MIN_STEAM_AGE_DAYS) throw new Error("steam_too_new");
   }
@@ -93,7 +94,20 @@ export async function submitSuggestion(formData: FormData): Promise<{ ok: boolea
     revalidatePath("/admin/suggestions");
     return { ok: true };
   } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : "failed" };
+    const code = err instanceof Error ? err.message : "failed";
+    const friendly =
+      code === "steam_too_new"
+        ? "Your Steam account needs to be at least 7 days old to post an idea."
+        : code === "steam_age_unknown"
+          ? "We couldn't verify your Steam account age because your Steam profile is private. Make your profile public or ask a moderator to allow you through."
+          : code === "signed_out"
+            ? "You need to sign in first."
+            : code === "banned"
+              ? "Your account is currently banned."
+              : code === "muted"
+                ? "Your account is currently muted."
+                : code;
+    return { ok: false, error: friendly };
   }
 }
 

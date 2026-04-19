@@ -84,8 +84,8 @@ Community members can submit Steam Workshop items for admin review.
 - Must be logged in
 - Must not be banned
 - Must not be muted
-- Steam account must be ≥ 7 days old (prevents fresh sock-puppet accounts)
-- Item must belong to the Scrap Mechanic Workshop (`consumer_appid === 387990`) — items from other games (and items where Steam omits the field) are rejected. Previously a missing `consumer_appid` was allowed through; tightened in V4.15 so the check now requires an explicit match.
+- Steam account must be ≥ 7 days old (prevents fresh sock-puppet accounts). If the user's Steam profile is private and hides `timecreated`, the gate **blocks them** (treated as unknown-age) unless the creator has flipped `bypassAgeGate` on their user row via `/admin/users`. Pre-V5.5 the null case leaked through — that was the bug several people pointed out.
+- Item must belong to the Scrap Mechanic Workshop. Valid appids: **387990** (base game — blueprints, worlds, tiles, terrain) or **588870** (Scrap Mechanic Workshop tool — custom games, mods). The gate reads `creator_app_id` (`ISteamRemoteStorage/GetPublishedFileDetails`) or `consumer_appid` (`QueryFiles`) — whichever Steam returns. If both are missing, we fall back to checking the item's Steam tags for one of the SM kind labels (Blueprint / Mod / World / Challenge Pack / Tile / Custom Game / Terrain Assets) before rejecting. Pre-V5.5 only `consumer_appid === 387990` was accepted, which rejected every legitimate SM item the gate saw (that endpoint doesn't return that field).
 
 **Flow:**
 1. User pastes a Steam Workshop URL or ID

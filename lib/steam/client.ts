@@ -1,6 +1,15 @@
 import { z } from "zod";
 
 export const SCRAP_MECHANIC_APPID = 387990;
+/**
+ * Scrap Mechanic workshop items carry one of two Steam appids depending on
+ * which tool published them:
+ *   387990 — the base Scrap Mechanic game (blueprints, worlds, tiles, terrain)
+ *   588870 — Scrap Mechanic Workshop (custom games, mods distributed via the
+ *            separate "Scrap Mechanic Workshop" tool)
+ * Legitimate SM items may have either. We accept both on submission.
+ */
+export const SCRAP_MECHANIC_APPIDS: readonly number[] = [387990, 588870];
 const STEAM_BASE = "https://api.steampowered.com";
 
 export const STEAM_KIND_TAGS = {
@@ -49,7 +58,11 @@ const PublishedFileSchema = z
     time_updated: z.number().optional(),
     visibility: z.number().optional(),
     banned: looseBool.optional(),
+    // ISteamRemoteStorage/GetPublishedFileDetails returns `creator_app_id`.
+    // IPublishedFileService/QueryFiles returns `consumer_appid`. Normalise
+    // both into the same field so callers can rely on a single source.
     consumer_appid: z.number().optional(),
+    creator_app_id: z.number().optional(),
     subscriptions: z.number().optional(),
     favorited: z.number().optional(),
     lifetime_subscriptions: z.number().optional(),
@@ -261,20 +274,31 @@ export async function fetchWorkshopContributors(
   publishedFileId: string,
 ): Promise<Array<{ steamid: string; name: string }>> {
   const url = `https://steamcommunity.com/sharedfiles/filedetails/?id=${publishedFileId}`;
-  let html: string;
-  try {
-    const res = await fetch(url, {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (compatible; SmseIngest/1.0; +https://scrap-mechanic-search-engine.vercel.app)",
-      },
-      cache: "no-store",
-    });
-    if (!res.ok) return [];
-    html = await res.text();
-  } catch {
-    return [];
+  // One-retry + backoff on transient Steam hiccups. Without this, the bulk
+  // backfill lost ~60% of rows to occasional 5xx / aborts. The extra call on
+  // failure is cheap relative to the cost of re-scraping the whole catalog.
+  let html: string | null = null;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const res = await fetch(url, {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (compatible; SmseIngest/1.0; +https://scrap-mechanic-search-engine.vercel.app)",
+        },
+        cache: "no-store",
+      });
+      if (!res.ok) throw new Error(`http_${res.status}`);
+      html = await res.text();
+      break;
+    } catch {
+      if (attempt === 0) {
+        await new Promise((r) => setTimeout(r, 500));
+        continue;
+      }
+      return [];
+    }
   }
+  if (!html) return [];
 
   const start = html.indexOf('class="creatorsBlock"');
   if (start < 0) return [];

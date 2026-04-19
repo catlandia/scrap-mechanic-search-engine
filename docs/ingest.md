@@ -24,7 +24,7 @@ Both endpoints check `Authorization: Bearer <CRON_SECRET>` before running.
 3. Checks each item against the **follow-count gate** (`passesFollowGate`) — items below the threshold for their kind are silently skipped.
 4. Skips items that already have a decided status (`approved`, `rejected`, `archived`, `deleted`) to save Steam API quota.
 5. Resolves author display names in batches via `ISteamUser/GetPlayerSummaries`.
-6. For **new rows only**, also scrapes the Workshop page HTML for multi-creator attribution via `fetchWorkshopContributors` (3-at-a-time concurrency). Steam's API returns one primary creator, but the rendered page often lists 2–10 contributors — those go into `creations.creators jsonb`.
+6. For **new rows only**, also scrapes the Workshop page HTML for multi-creator attribution via `fetchWorkshopContributors` (3-at-a-time concurrency). Steam's API returns one primary creator, but the rendered page often lists 2–10 contributors — those go into `creations.creators jsonb`. The scraper retries once on transient failures (~500ms backoff). Items that still fail are left with an empty array and picked up by the weekly refresh cron (`refreshMissingCreators`, up to 50 per run).
 7. Upserts into `creations` with `status='pending'`.
 8. For **new rows only**, runs the tagger and inserts `creationTags` rows with `confirmed=false`. Existing tag rows are left untouched so admin confirmations survive re-ingest.
 9. Writes an `ingestRuns` row with counts and any errors.
