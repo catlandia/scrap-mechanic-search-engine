@@ -200,3 +200,25 @@ html[data-theme="default"] .text-accent {
 html[data-theme="default"] .hover\:text-accent:hover {
   color: oklch(0.45 0.22 48);
 }
+
+/* Chip fill opacity bump for the light default. `bg-accent/15` and
+   `bg-emerald-500/10` hold pill surfaces (confirmed tag, community tag at
+   threshold, success banners, MobileNav search tile, etc.). The /10–/15
+   washes blend into the near-white body, leaving the already-darkened
+   text-accent / remapped text-emerald inside with weak contrast against
+   the pill. Bumping the fill alpha — not the text colour — keeps the
+   chip aesthetic but pushes the surface contrast over the "readable"
+   line. Hover targets are bumped proportionally so hover stays louder
+   than rest. Dark-family themes keep the original /10–/15 subtlety. */
+html[data-theme="default"] .bg-accent\/15 {
+  background-color: color-mix(in oklch, var(--color-accent) 28%, transparent);
+}
+html[data-theme="default"] .hover\:bg-accent\/25:hover {
+  background-color: color-mix(in oklch, var(--color-accent) 42%, transparent);
+}
+html[data-theme="default"] .bg-emerald-500\/10 {
+  background-color: color-mix(in oklch, oklch(0.72 0.17 150) 22%, transparent);
+}
+html[data-theme="default"] .hover\:bg-emerald-500\/20:hover {
+  background-color: color-mix(in oklch, oklch(0.72 0.17 150) 36%, transparent);
+}
