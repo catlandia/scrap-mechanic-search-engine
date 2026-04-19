@@ -24,8 +24,21 @@ import { thresholdsForKind } from "./thresholds";
 
 export interface IngestOptions {
   kinds?: SteamKind[];
+  /** Maximum pages fetched per kind — the hard ceiling. */
   pagesPerKind?: number;
+  /** Page size passed to Steam; defaults to 50 which is the API max. */
   numPerPage?: number;
+  /**
+   * Once this many genuinely new (not already in DB) items have been
+   * collected for a given kind, stop paging that kind even if we haven't
+   * hit `pagesPerKind`. 0 = no early stop (scan to the ceiling — what
+   * manual admin runs want when they're deliberately digging deep).
+   *
+   * Daily cron passes a non-zero value so pages filled entirely with
+   * already-decided items don't silently burn the new-items budget —
+   * we keep digging deeper until the page yields fresh discoveries.
+   */
+  minNewPerKind?: number;
 }
 
 export interface IngestResult {
@@ -135,11 +148,15 @@ export async function runIngest(options: IngestOptions = {}): Promise<IngestResu
 
   const db = getDb();
   const kinds = options.kinds ?? ALL_KINDS;
-  // Daily cron sticks to 1 page per kind; /admin/ingest lets you dial this up
-  // for manual catch-up runs. Skipping already-decided items below means a
-  // higher value actually digs deeper instead of re-scanning the same top.
-  const pagesPerKind = options.pagesPerKind ?? 1;
+  // Hard ceiling on pages fetched per kind. Cron now gets a generous ceiling
+  // because the early-stop logic below keeps us from actually fetching them
+  // unless needed — the ceiling only kicks in when the Workshop has a lot
+  // of already-decided items stacked at the top.
+  const pagesPerKind = options.pagesPerKind ?? 5;
   const numPerPage = options.numPerPage ?? 50;
+  // 0 means "no early stop" — used by manual admin runs where the moderator
+  // explicitly asked to dig a specific depth.
+  const minNewPerKind = options.minNewPerKind ?? 0;
 
   // Preload ids of items we've already approved, rejected, or creator-deleted
   // so ingest skips them completely — both the QueryFiles processing and the
@@ -159,6 +176,15 @@ export async function runIngest(options: IngestOptions = {}): Promise<IngestResu
     );
   const alreadyDecided = new Set(decidedRows.map((r) => r.id));
 
+  // Pending items are allowed through the loop so they get a fresh stats
+  // update, but they shouldn't count as "new discoveries" for the
+  // early-stop threshold — they were already pulled in on a previous run.
+  const pendingRows = await db
+    .select({ id: creations.id })
+    .from(creations)
+    .where(eq(creations.status, "pending"));
+  const alreadyKnown = new Set(pendingRows.map((r) => r.id));
+
   const [run] = await db
     .insert(ingestRuns)
     .values({ startedAt: new Date(), fetched: 0, newItems: 0 })
@@ -173,6 +199,12 @@ export async function runIngest(options: IngestOptions = {}): Promise<IngestResu
   for (const kind of kinds) {
     const requiredTag = STEAM_KIND_TAGS[kind];
     let cursor = "*";
+    // Items already in the DB (as "pending" — the only status that escapes
+    // `alreadyDecided`) don't count as new discoveries even though they pass
+    // the filters, because they were already pulled in on a previous run.
+    // We track fresh-for-us insert candidates per-kind so early-stop is
+    // driven by real new work, not re-surfaced pending items.
+    let novelForKind = 0;
     try {
       for (let page = 0; page < pagesPerKind; page += 1) {
         const { items, nextCursor } = await queryFiles({
@@ -198,9 +230,21 @@ export async function runIngest(options: IngestOptions = {}): Promise<IngestResu
             kind: detectedKind,
             descriptionClean: stripBBCode(descRaw),
           });
+          // Only truly novel items (never seen, not even as pending) count
+          // toward the early-stop threshold. An already-pending item passes
+          // the filters and refreshes its stats but doesn't consume the new
+          // quota the user complained about.
+          if (!alreadyKnown.has(item.publishedfileid)) {
+            novelForKind += 1;
+          }
         }
         if (!nextCursor || nextCursor === cursor) break;
         cursor = nextCursor;
+        // Early-stop: once we've pulled enough novel items for this kind,
+        // don't burn more Steam API calls paging through the rest of the
+        // trending list. A manual admin run passes minNewPerKind=0 to
+        // disable this.
+        if (minNewPerKind > 0 && novelForKind >= minNewPerKind) break;
       }
     } catch (err) {
       errors.push({ kind, message: err instanceof Error ? err.message : String(err) });

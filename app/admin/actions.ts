@@ -252,7 +252,9 @@ export async function triggerIngest(formData?: FormData): Promise<void> {
       pagesPerKind = parsed;
     }
   }
-  await runIngest({ pagesPerKind });
+  // Manual admin runs explicitly want to dig the depth the moderator typed —
+  // no early-stop. The cron path opts into minNewPerKind; this one doesn't.
+  await runIngest({ pagesPerKind, minNewPerKind: 0 });
   revalidatePath("/admin/queue");
   revalidatePath("/admin/triage");
   revalidatePath("/admin/ingest");

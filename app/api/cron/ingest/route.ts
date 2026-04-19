@@ -24,7 +24,16 @@ async function handle(req: NextRequest) {
   }
 
   try {
-    const result = await runIngest({});
+    // Cron gets the adaptive config: dig up to 5 pages per kind but stop
+    // early as soon as we've found 5 novel items. When the top of the
+    // trending list is entirely already-decided / already-pending, this
+    // keeps looking until we actually find new work — fixing the silent
+    // "0 new items" runs that used to happen when the top of Workshop
+    // was saturated with things we'd already processed.
+    const result = await runIngest({
+      pagesPerKind: 5,
+      minNewPerKind: 5,
+    });
     return NextResponse.json({ ok: true, ...result });
   } catch (err) {
     console.error("[cron/ingest] failed:", err);
