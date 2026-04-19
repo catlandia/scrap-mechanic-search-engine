@@ -422,6 +422,86 @@ export async function getAuthorCreations(
     .offset(offset);
 }
 
+export interface TopCreatorRow {
+  steamid: string;
+  name: string | null;
+  count: number;
+}
+
+// All authors across both the primary `authorSteamid` axis and the co-author
+// `creators[]` jsonb axis, counted distinctly by creation id so a person who
+// appears as both primary and co-author on the same item doesn't double-
+// count. Optional `q` filters by case-insensitive name substring.
+export async function getTopCreators(
+  opts: { q?: string; limit?: number; offset?: number } = {},
+): Promise<TopCreatorRow[]> {
+  const db = getDb();
+  const { q = "", limit = 60, offset = 0 } = opts;
+  const trimmedQ = q.trim();
+  const hasQ = trimmedQ.length > 0;
+  const like = `%${trimmedQ}%`;
+
+  const query = hasQ
+    ? sql`
+        with combined as (
+          select id as creation_id,
+                 ${creations.authorSteamid} as steamid,
+                 ${creations.authorName} as name
+          from ${creations}
+          where ${creations.status} = 'approved'
+            and ${creations.authorSteamid} is not null
+          union
+          select c.id,
+                 (elem->>'steamid')::text,
+                 (elem->>'name')::text
+          from ${creations} c, jsonb_array_elements(c.creators) as elem
+          where c.status = 'approved'
+        )
+        select steamid,
+               max(name) as name,
+               count(distinct creation_id)::int as count
+        from combined
+        where steamid is not null
+          and coalesce(name, '') ilike ${like}
+        group by steamid
+        order by count(distinct creation_id) desc, max(name) asc nulls last
+        limit ${limit}
+        offset ${offset}
+      `
+    : sql`
+        with combined as (
+          select id as creation_id,
+                 ${creations.authorSteamid} as steamid,
+                 ${creations.authorName} as name
+          from ${creations}
+          where ${creations.status} = 'approved'
+            and ${creations.authorSteamid} is not null
+          union
+          select c.id,
+                 (elem->>'steamid')::text,
+                 (elem->>'name')::text
+          from ${creations} c, jsonb_array_elements(c.creators) as elem
+          where c.status = 'approved'
+        )
+        select steamid,
+               max(name) as name,
+               count(distinct creation_id)::int as count
+        from combined
+        where steamid is not null
+        group by steamid
+        order by count(distinct creation_id) desc, max(name) asc nulls last
+        limit ${limit}
+        offset ${offset}
+      `;
+  const result = await db.execute(query);
+  return (result.rows as Array<{ steamid: string; name: string | null; count: number }>)
+    .map((r) => ({
+      steamid: r.steamid,
+      name: r.name ?? null,
+      count: r.count,
+    }));
+}
+
 export async function getApprovedKindCounts(): Promise<Record<string, number>> {
   const db = getDb();
   const rows = await db

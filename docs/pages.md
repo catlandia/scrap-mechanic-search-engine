@@ -18,6 +18,7 @@ All public pages are in `app/` using Next.js 15 App Router. Server Components by
 | `/custom-games` | `app/[kind]/page.tsx` | |
 | `/terrain` | `app/[kind]/page.tsx` | |
 | `/search` | `app/search/page.tsx` | Full filter UI |
+| `/creators` | `app/creators/page.tsx` | All Workshop authors ranked by creation count, name-searchable |
 | `/creation/[id]` | `app/creation/[id]/page.tsx` | Accepts shortId or publishedfileid |
 | `/profile/[steamid]` | `app/profile/[steamid]/page.tsx` | User profile |
 | `/author/[steamid]` | `app/author/[steamid]/page.tsx` | Creator's items |
@@ -32,6 +33,7 @@ All public pages are in `app/` using Next.js 15 App Router. Server Components by
 | `/settings/theme` | `app/settings/theme/page.tsx` | Custom theme editor |
 | `/terms` | `app/terms/page.tsx` | Terms of use |
 | `/privacy` | `app/privacy/page.tsx` | Privacy policy |
+| `/about` | `app/about/page.tsx` | Curation criteria — explains thresholds + admin review + community submission path |
 
 **Indexing:** `/me/*`, `/verify`, `/auth/*`, `/profile/[steamid]`, `/suggestions/new`, and `/submit` are all `noindex`. `robots.ts` disallows the same set plus `/admin/` and `/api/`.
 

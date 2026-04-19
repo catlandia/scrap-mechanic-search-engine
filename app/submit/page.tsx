@@ -68,6 +68,13 @@ export default async function SubmitPage() {
           Submitted items go into the mod triage queue. They appear publicly
           once approved; the cron won&apos;t also try to re-ingest them.
         </p>
+        <p className="mt-2 text-foreground/50">
+          Curious what gets in and why?{" "}
+          <Link href="/about" className="text-accent hover:underline">
+            How it works
+          </Link>
+          .
+        </p>
       </div>
     </div>
   );

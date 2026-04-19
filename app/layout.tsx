@@ -52,6 +52,7 @@ const navLinks = [
   { href: "/custom-games", label: "Custom Games" },
   { href: "/terrain", label: "Terrain" },
   { href: "/other", label: "Other" },
+  { href: "/creators", label: "Creators" },
   { href: "/search", label: "Search" },
   { href: "/suggestions", label: "Ideas" },
 ];
@@ -157,6 +158,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           </p>
           <p className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
             <span>Made by CybeSlime2077.</span>
+            <Link href="/about" className="hover:text-foreground">
+              About
+            </Link>
             <Link href="/guide" className="hover:text-foreground">
               Guide
             </Link>
