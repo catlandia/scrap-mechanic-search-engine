@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toggleFavourite } from "@/lib/community/actions";
+import { Spinner } from "@/components/Spinner";
 import { cn } from "@/lib/utils";
 
 export function FavouriteButton({
@@ -49,7 +50,11 @@ export function FavouriteButton({
       )}
       title={signedIn ? "Favourite this creation" : "Sign in to favourite"}
     >
-      <span aria-hidden>{favourited ? "♥" : "♡"}</span>
+      {isPending ? (
+        <Spinner size="xs" />
+      ) : (
+        <span aria-hidden>{favourited ? "♥" : "♡"}</span>
+      )}
       {favourited ? "Favourited" : "Favourite"}
     </button>
   );
