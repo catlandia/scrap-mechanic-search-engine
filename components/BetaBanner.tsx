@@ -41,8 +41,10 @@ export function BetaBanner() {
           Beta 2.0
         </span>
         <span className="text-foreground/70">
-          Polish pass complete — threads, votes, reports, profile walls,
-          creators directory, badges, and an easier nav.
+          <span className="font-semibold text-amber-200">New:</span>{" "}
+          comment threads &amp; votes, profile walls, creators directory,
+          badges, prefix search, simpler nav. Rough edges remain — keep the
+          feedback coming.
         </span>
         <Link
           href="/about"
