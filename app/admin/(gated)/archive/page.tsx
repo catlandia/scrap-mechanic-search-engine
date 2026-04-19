@@ -123,6 +123,7 @@ export default async function ArchivePage() {
                         <input type="hidden" name="creationId" value={c.id} />
                         <FormSubmitButton
                           pendingLabel="Restoring…"
+                          toastSuccess="Restored to public."
                           className="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-3 py-1.5 text-sm font-medium text-emerald-200 hover:bg-emerald-500/20"
                         >
                           Restore to public
@@ -134,6 +135,7 @@ export default async function ArchivePage() {
                         <input type="hidden" name="creationId" value={c.id} />
                         <FormSubmitButton
                           pendingLabel="Deleting…"
+                          toastSuccess="Creation permanently deleted."
                           className="rounded-md border border-red-500/40 bg-red-500/10 px-3 py-1.5 text-sm font-medium text-red-200 hover:bg-red-500/20"
                         >
                           Permanently delete

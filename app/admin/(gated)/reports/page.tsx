@@ -153,6 +153,7 @@ export default async function ReportsQueuePage() {
                     <input type="hidden" name="reportId" value={f.id} />
                     <FormSubmitButton
                       pendingLabel="Clearing…"
+                      toastSuccess="Flag cleared."
                       className="rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground/70 hover:border-emerald-400/60 hover:text-emerald-200"
                     >
                       Clear flag
@@ -226,6 +227,7 @@ function CreationReportCard({ r }: { r: ModReportRow }) {
               <input type="hidden" name="reportId" value={r.id} />
               <FormSubmitButton
                 pendingLabel="Clearing…"
+                toastSuccess="Report cleared."
                 className="rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground/70 hover:border-foreground/50 hover:text-foreground"
               >
                 Clear
@@ -244,6 +246,7 @@ function CreationReportCard({ r }: { r: ModReportRow }) {
               />
               <FormSubmitButton
                 pendingLabel="Filing…"
+                toastSuccess="Creation flagged with mod note."
                 className="rounded-md bg-amber-500 px-3 py-1.5 text-sm font-medium text-black hover:bg-amber-400"
               >
                 Action
@@ -263,6 +266,7 @@ function CreationReportCard({ r }: { r: ModReportRow }) {
             />
             <FormSubmitButton
               pendingLabel="Archiving…"
+              toastSuccess="Creation archived — broadcast sent to elite mods."
               className="rounded-md border border-red-500/60 bg-red-500/20 px-3 py-1.5 text-sm font-medium text-red-200 hover:bg-red-500/30"
             >
               Archive creation
@@ -325,6 +329,7 @@ function CommentReportCard({ r }: { r: ModReportRow }) {
           <input type="hidden" name="reportId" value={r.id} />
           <FormSubmitButton
             pendingLabel="Clearing…"
+            toastSuccess="Report cleared."
             className="rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground/70 hover:border-foreground/50 hover:text-foreground"
           >
             Clear
@@ -343,6 +348,7 @@ function CommentReportCard({ r }: { r: ModReportRow }) {
           />
           <FormSubmitButton
             pendingLabel="Deleting…"
+            toastSuccess="Comment deleted."
             className="rounded-md border border-red-500/60 bg-red-500/20 px-3 py-1.5 text-sm font-medium text-red-200 hover:bg-red-500/30"
           >
             Delete comment

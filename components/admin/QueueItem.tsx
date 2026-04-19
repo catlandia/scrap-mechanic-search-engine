@@ -8,6 +8,7 @@ import {
   saveCreationTags,
 } from "@/app/admin/actions";
 import { Spinner } from "@/components/Spinner";
+import { useToast } from "@/components/Toast";
 import { cn } from "@/lib/utils";
 
 type QueueAction = "approve" | "reject" | "save";
@@ -71,6 +72,13 @@ export function QueueItem({ creation, suggested, allTags, allCategories }: Props
   const formRef = useRef<HTMLFormElement>(null);
   const [pendingAction, setPendingAction] = useState<QueueAction | null>(null);
   const [isPending, startTransition] = useTransition();
+  const toast = useToast();
+
+  const successCopy: Record<QueueAction, string> = {
+    approve: `Approved "${creation.title}".`,
+    reject: `Rejected "${creation.title}".`,
+    save: "Tag edits saved.",
+  };
 
   // Each of the three action buttons wraps its own server action in a
   // transition so we can (a) spin the specific button the moderator hit
@@ -83,6 +91,11 @@ export function QueueItem({ creation, suggested, allTags, allCategories }: Props
     startTransition(async () => {
       try {
         await action(fd);
+        toast.success(successCopy[which]);
+      } catch (err) {
+        toast.error(
+          err instanceof Error ? err.message : "Action failed.",
+        );
       } finally {
         setPendingAction(null);
       }

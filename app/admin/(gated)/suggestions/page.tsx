@@ -93,6 +93,7 @@ function ActionCard({
             name="status"
             value={t.value}
             pendingLabel={`${t.label}…`}
+            toastSuccess={`${t.label}: done.`}
             className={`rounded-md px-3 py-1.5 text-sm font-medium ${t.style}`}
           >
             {t.label}
@@ -104,6 +105,7 @@ function ActionCard({
         <input type="hidden" name="suggestionId" value={suggestion.id} />
         <FormSubmitButton
           pendingLabel="Deleting…"
+          toastSuccess="Suggestion hard-deleted."
           className="text-xs text-foreground/40 hover:text-red-300"
           title="Hard delete — removes the suggestion row entirely, won't appear in any tab"
         >

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { confirmCreationTag } from "@/app/admin/actions";
 import { Spinner } from "@/components/Spinner";
+import { useToast } from "@/components/Toast";
 
 /**
  * Creator-only "✓ force" next to any community-sourced tag on /creation/[id].
@@ -20,6 +21,7 @@ export function CreatorTagForceConfirmButton({
   tagName: string;
 }) {
   const router = useRouter();
+  const toast = useToast();
   const [isPending, startTransition] = useTransition();
 
   function handleClick() {
@@ -30,8 +32,11 @@ export function CreatorTagForceConfirmButton({
       try {
         await confirmCreationTag(fd);
         router.refresh();
+        toast.success(`Force-confirmed "${tagName}".`);
       } catch (err) {
-        console.error(err);
+        toast.error(
+          err instanceof Error ? err.message : "Couldn't confirm tag.",
+        );
       }
     });
   }

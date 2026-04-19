@@ -50,6 +50,7 @@ export default async function IngestPage() {
           <FormSubmitButton
             pendingLabel="Running…"
             spinnerSize="sm"
+            toastSuccess="Ingest run complete — see the table for counts."
             className="rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-black hover:bg-accent-strong"
           >
             Run ingest now

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { deleteCreation } from "@/app/admin/actions";
 import { Spinner } from "@/components/Spinner";
+import { useToast } from "@/components/Toast";
 import { cn } from "@/lib/utils";
 
 const CONFIRM_WINDOW_MS = 5000;
@@ -21,6 +22,7 @@ export function DeleteCreationButton({
   creationTitle: string;
 }) {
   const router = useRouter();
+  const toast = useToast();
   const [armed, setArmed] = useState(false);
   const [isPending, startTransition] = useTransition();
   const timerRef = useRef<number | null>(null);
@@ -44,10 +46,13 @@ export function DeleteCreationButton({
     startTransition(async () => {
       try {
         await deleteCreation(fd);
+        toast.success(`Permanently deleted "${creationTitle}".`);
         router.push("/");
         router.refresh();
       } catch (err) {
-        console.error(err);
+        toast.error(
+          err instanceof Error ? err.message : "Couldn't delete creation.",
+        );
         setArmed(false);
       }
     });

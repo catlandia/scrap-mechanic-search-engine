@@ -59,6 +59,7 @@ export function UserModForms({
               <input type="hidden" name="steamid" value={targetSteamid} />
               <FormSubmitButton
                 pendingLabel="Unmuting…"
+                toastSuccess="User unmuted."
                 className="rounded border border-sky-500/40 bg-sky-500/10 px-2 py-0.5 text-sky-200 hover:bg-sky-500/20"
               >
                 Unmute
@@ -80,6 +81,7 @@ export function UserModForms({
           <input type="hidden" name="steamid" value={targetSteamid} />
           <FormSubmitButton
             pendingLabel="Clearing…"
+            toastSuccess="Warnings cleared."
             className="rounded border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-amber-200 hover:bg-amber-500/20"
             title={`Clear all ${warningsCount} warning${warningsCount === 1 ? "" : "s"}`}
           >
@@ -93,6 +95,11 @@ export function UserModForms({
           <input type="hidden" name="on" value={bypassAgeGate ? "0" : "1"} />
           <FormSubmitButton
             pendingLabel="Saving…"
+            toastSuccess={
+              bypassAgeGate
+                ? "Age-gate bypass revoked."
+                : "Age-gate bypass granted."
+            }
             className={cn(
               "rounded px-2 py-0.5",
               bypassAgeGate
@@ -116,6 +123,7 @@ export function UserModForms({
               <input type="hidden" name="steamid" value={targetSteamid} />
               <FormSubmitButton
                 pendingLabel="Unbanning…"
+                toastSuccess="User unbanned."
                 className="rounded border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-emerald-200 hover:bg-emerald-500/20"
               >
                 Unban
@@ -135,6 +143,7 @@ export function UserModForms({
               <input type="hidden" name="steamid" value={targetSteamid} />
               <FormSubmitButton
                 pendingLabel="Clearing…"
+                toastSuccess="Hard ban cleared."
                 className="rounded border border-emerald-500/60 bg-emerald-500/15 px-2 py-0.5 text-emerald-200 hover:bg-emerald-500/25"
                 title="Remove the hard ban — Steam ID can sign in again"
               >
@@ -236,6 +245,7 @@ function ModActionForm({
       />
       <FormSubmitButton
         pendingLabel={`${label}…`}
+        toastSuccess={`${label} applied.`}
         className={cn("rounded px-2 py-1 text-xs font-medium", accent)}
       >
         {label}

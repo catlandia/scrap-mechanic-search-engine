@@ -120,6 +120,7 @@ async function AutograntSection({ slug }: { slug: string }) {
         </label>
         <FormSubmitButton
           pendingLabel="Adding…"
+          toastSuccess="Added to autogrant list."
           className="rounded bg-accent px-3 py-1.5 text-sm font-medium text-black hover:bg-accent-strong"
         >
           Add
@@ -181,6 +182,7 @@ async function AutograntSection({ slug }: { slug: string }) {
                   <input type="hidden" name="steamid" value={r.steamid} />
                   <FormSubmitButton
                     pendingLabel="Removing…"
+                    toastSuccess="Removed from autogrant list."
                     className="rounded border border-border bg-background px-2.5 py-1 text-xs text-foreground/60 hover:border-red-500/60 hover:text-red-300"
                     title="Remove from autogrant list (does not revoke existing grant)"
                   >

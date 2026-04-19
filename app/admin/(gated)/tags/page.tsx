@@ -67,6 +67,7 @@ export default async function TagsPage() {
           />
           <FormSubmitButton
             pendingLabel="Saving…"
+            toastSuccess="Category saved."
             className="rounded bg-accent px-3 py-1 text-sm font-medium text-black"
           >
             Add / update category
@@ -135,6 +136,7 @@ export default async function TagsPage() {
           </select>
           <FormSubmitButton
             pendingLabel="Saving…"
+            toastSuccess="Tag saved."
             className="rounded bg-accent px-3 py-1 text-sm font-medium text-black"
           >
             Add / update tag
