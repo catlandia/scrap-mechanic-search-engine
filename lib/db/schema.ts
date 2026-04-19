@@ -136,6 +136,9 @@ export const creations = pgTable(
     index("creations_time_updated_idx").on(t.timeUpdated),
     index("creations_author_idx").on(t.authorSteamid),
     index("creations_search_vector_idx").using("gin", t.searchVector),
+    // GIN on creators jsonb so /author/[steamid] queries using @> for
+    // contributor lookup stay cheap as the catalog grows.
+    index("creations_creators_idx").using("gin", t.creators),
   ],
 );
 

@@ -322,21 +322,41 @@ export interface AuthorProfile {
   count: number;
 }
 
+/**
+ * Match expression: this steamid is EITHER the primary `authorSteamid` OR
+ * listed in the `creators` jsonb array. Co-authors on collaboration items
+ * (scraped from the Workshop sidebar) must appear on /author/[steamid]
+ * too, otherwise clicking a contributor name leads to an empty page.
+ */
+function authorMatch(steamid: string): SQL {
+  return sql`(${creations.authorSteamid} = ${steamid} or ${creations.creators} @> ${JSON.stringify([{ steamid }])}::jsonb)`;
+}
+
 export async function getAuthorProfile(steamid: string): Promise<AuthorProfile | null> {
   const db = getDb();
-  const rows = await db
+  const [row] = await db
     .select({
-      authorName: creations.authorName,
       count: sql<number>`count(*)::int`,
+      // Prefer the primary authorName on rows where this steamid is primary;
+      // fall back to the name stored inside the creators array for the
+      // matching steamid (so contributors get a name even when they've
+      // never been a primary author).
+      authorName: sql<string | null>`
+        coalesce(
+          max(case when ${creations.authorSteamid} = ${steamid} then ${creations.authorName} end),
+          max((
+            select elem->>'name'
+            from jsonb_array_elements(${creations.creators}) as elem
+            where elem->>'steamid' = ${steamid}
+            limit 1
+          ))
+        )
+      `,
     })
     .from(creations)
-    .where(
-      and(eq(creations.status, "approved"), eq(creations.authorSteamid, steamid)),
-    )
-    .groupBy(creations.authorName)
-    .limit(1);
-  if (rows.length === 0) return null;
-  return { steamid, authorName: rows[0].authorName, count: rows[0].count };
+    .where(and(eq(creations.status, "approved"), authorMatch(steamid)));
+  if (!row || row.count === 0) return null;
+  return { steamid, authorName: row.authorName ?? null, count: row.count };
 }
 
 export async function getAuthorCreations(
@@ -348,9 +368,7 @@ export async function getAuthorCreations(
   return db
     .select(cardColumns)
     .from(creations)
-    .where(
-      and(eq(creations.status, "approved"), eq(creations.authorSteamid, steamid)),
-    )
+    .where(and(eq(creations.status, "approved"), authorMatch(steamid)))
     .orderBy(orderByForSort(sort))
     .limit(limit)
     .offset(offset);

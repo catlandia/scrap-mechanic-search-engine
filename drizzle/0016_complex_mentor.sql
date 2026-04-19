@@ -1,0 +1,1 @@
+CREATE INDEX "creations_creators_idx" ON "creations" USING gin ("creators");
