@@ -1,9 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { removeCreationTag } from "@/app/admin/actions";
 import { Spinner } from "@/components/Spinner";
+import { useToast } from "@/components/Toast";
+import { cn } from "@/lib/utils";
+
+const CONFIRM_WINDOW_MS = 4000;
 
 /**
  * Tiny × the Creator sees next to each visible tag on /creation/[id].
@@ -20,19 +24,46 @@ export function CreatorTagRemoveButton({
   tagName: string;
 }) {
   const router = useRouter();
+  const toast = useToast();
   const [isPending, startTransition] = useTransition();
+  // Two-step arm: first click tints the button red and shows a pulsing
+  // "confirm?" state; second click within CONFIRM_WINDOW_MS actually
+  // removes. Replaces the old window.confirm dialog which jarred the
+  // page and couldn't be styled.
+  const [armed, setArmed] = useState(false);
+  const disarmTimer = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (disarmTimer.current) window.clearTimeout(disarmTimer.current);
+    };
+  }, []);
 
   function handleClick() {
-    if (!window.confirm(`Remove "${tagName}" from this creation?`)) return;
+    if (!armed) {
+      setArmed(true);
+      if (disarmTimer.current) window.clearTimeout(disarmTimer.current);
+      disarmTimer.current = window.setTimeout(
+        () => setArmed(false),
+        CONFIRM_WINDOW_MS,
+      );
+      return;
+    }
+    if (disarmTimer.current) window.clearTimeout(disarmTimer.current);
     const fd = new FormData();
     fd.append("creationId", creationId);
     fd.append("tagId", String(tagId));
     startTransition(async () => {
       try {
         await removeCreationTag(fd);
+        setArmed(false);
         router.refresh();
+        toast.success(`Removed tag "${tagName}".`);
       } catch (err) {
-        console.error(err);
+        setArmed(false);
+        toast.error(
+          err instanceof Error ? err.message : "Couldn't remove tag.",
+        );
       }
     });
   }
@@ -43,11 +74,20 @@ export function CreatorTagRemoveButton({
       onClick={handleClick}
       disabled={isPending}
       aria-busy={isPending}
-      aria-label={`Remove ${tagName}`}
-      title="Remove tag (Creator)"
-      className="ml-1 inline-flex items-center text-[11px] text-foreground/40 hover:text-red-300 disabled:opacity-50"
+      aria-label={armed ? `Confirm remove ${tagName}` : `Remove ${tagName}`}
+      title={
+        armed
+          ? `Click again within 4s to remove "${tagName}" (Creator)`
+          : "Remove tag (Creator)"
+      }
+      className={cn(
+        "ml-1 inline-flex items-center rounded text-[11px] disabled:opacity-50",
+        armed
+          ? "animate-pulse px-1 text-red-300"
+          : "text-foreground/40 hover:text-red-300",
+      )}
     >
-      {isPending ? <Spinner size="xs" /> : "×"}
+      {isPending ? <Spinner size="xs" /> : armed ? "×?" : "×"}
     </button>
   );
 }
