@@ -3,6 +3,7 @@
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { deleteCategory } from "@/app/admin/actions";
+import { Spinner } from "@/components/Spinner";
 
 export function DeleteCategoryButton({
   categoryId,
@@ -42,11 +43,12 @@ export function DeleteCategoryButton({
       type="button"
       onClick={handleClick}
       disabled={isPending}
+      aria-busy={isPending}
       aria-label={`Delete category ${categoryName}`}
       title="Delete category"
-      className="rounded border border-border bg-background px-1.5 py-0.5 text-xs text-foreground/50 hover:border-red-500/60 hover:text-red-300 disabled:opacity-50"
+      className="inline-flex items-center rounded border border-border bg-background px-1.5 py-0.5 text-xs text-foreground/50 hover:border-red-500/60 hover:text-red-300 disabled:opacity-50"
     >
-      {isPending ? "…" : "×"}
+      {isPending ? <Spinner size="xs" /> : "×"}
     </button>
   );
 }

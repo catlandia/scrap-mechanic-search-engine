@@ -1,13 +1,16 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useRef, useState, useTransition } from "react";
 import {
   approveCreation,
   rejectCreation,
   saveCreationTags,
 } from "@/app/admin/actions";
+import { Spinner } from "@/components/Spinner";
 import { cn } from "@/lib/utils";
+
+type QueueAction = "approve" | "reject" | "save";
 
 const KIND_OPTIONS = [
   { value: "blueprint", label: "Blueprint" },
@@ -65,6 +68,26 @@ export function QueueItem({ creation, suggested, allTags, allCategories }: Props
   );
   const [kind, setKind] = useState(creation.kind);
   const [expanded, setExpanded] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  const [pendingAction, setPendingAction] = useState<QueueAction | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  // Each of the three action buttons wraps its own server action in a
+  // transition so we can (a) spin the specific button the moderator hit
+  // and (b) disable the others while it's in flight, without running
+  // three competing submissions if they click twice.
+  function dispatch(action: (fd: FormData) => Promise<unknown>, which: QueueAction) {
+    if (!formRef.current) return;
+    const fd = new FormData(formRef.current);
+    setPendingAction(which);
+    startTransition(async () => {
+      try {
+        await action(fd);
+      } finally {
+        setPendingAction(null);
+      }
+    });
+  }
   const confidenceByTag = new Map(suggested.map((s) => [s.tagId, s.confidence ?? 0]));
   const sourceByTag = new Map(suggested.map((s) => [s.tagId, s.source]));
 
@@ -97,7 +120,11 @@ export function QueueItem({ creation, suggested, allTags, allCategories }: Props
       : description;
 
   return (
-    <form className="grid gap-4 rounded-lg border border-border bg-card p-4 lg:grid-cols-[240px,1fr]">
+    <form
+      ref={formRef}
+      onSubmit={(e) => e.preventDefault()}
+      className="grid gap-4 rounded-lg border border-border bg-card p-4 lg:grid-cols-[240px,1fr]"
+    >
       <input type="hidden" name="creationId" value={creation.id} />
       <input type="hidden" name="kind" value={kind} />
       {[...selected].map((id) => (
@@ -216,11 +243,14 @@ export function QueueItem({ creation, suggested, allTags, allCategories }: Props
 
         <div className="flex flex-wrap gap-2 pt-2">
           <button
-            type="submit"
-            formAction={approveCreation}
-            className="rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-black hover:bg-accent-strong"
+            type="button"
+            onClick={() => dispatch(approveCreation, "approve")}
+            disabled={isPending}
+            aria-busy={pendingAction === "approve"}
+            className="inline-flex items-center gap-1.5 rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-black hover:bg-accent-strong disabled:opacity-60 disabled:cursor-wait"
           >
-            Approve
+            {pendingAction === "approve" && <Spinner size="xs" />}
+            {pendingAction === "approve" ? "Approving…" : "Approve"}
           </button>
           <input
             type="text"
@@ -230,18 +260,24 @@ export function QueueItem({ creation, suggested, allTags, allCategories }: Props
             className="min-w-[220px] flex-1 rounded-md border border-border bg-background px-2 py-1.5 text-sm text-foreground placeholder:text-foreground/30 focus:border-accent focus:outline-none"
           />
           <button
-            type="submit"
-            formAction={rejectCreation}
-            className="rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground/70 hover:border-red-400 hover:text-red-300"
+            type="button"
+            onClick={() => dispatch(rejectCreation, "reject")}
+            disabled={isPending}
+            aria-busy={pendingAction === "reject"}
+            className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground/70 hover:border-red-400 hover:text-red-300 disabled:opacity-60 disabled:cursor-wait"
           >
-            Reject
+            {pendingAction === "reject" && <Spinner size="xs" />}
+            {pendingAction === "reject" ? "Rejecting…" : "Reject"}
           </button>
           <button
-            type="submit"
-            formAction={saveCreationTags}
-            className="rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground/70 hover:border-foreground/50 hover:text-foreground"
+            type="button"
+            onClick={() => dispatch(saveCreationTags, "save")}
+            disabled={isPending}
+            aria-busy={pendingAction === "save"}
+            className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground/70 hover:border-foreground/50 hover:text-foreground disabled:opacity-60 disabled:cursor-wait"
           >
-            Save edits
+            {pendingAction === "save" && <Spinner size="xs" />}
+            {pendingAction === "save" ? "Saving…" : "Save edits"}
           </button>
         </div>
       </div>

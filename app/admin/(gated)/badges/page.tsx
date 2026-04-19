@@ -16,6 +16,7 @@ import { getDb } from "@/lib/db/client";
 import { users } from "@/lib/db/schema";
 import type { UserRole } from "@/lib/db/schema";
 import { UserName } from "@/components/UserName";
+import { FormSubmitButton } from "@/components/FormSubmitButton";
 
 export const dynamic = "force-dynamic";
 
@@ -117,12 +118,12 @@ async function AutograntSection({ slug }: { slug: string }) {
             className="w-full rounded border border-border bg-background px-2 py-1.5 text-sm"
           />
         </label>
-        <button
-          type="submit"
+        <FormSubmitButton
+          pendingLabel="Adding…"
           className="rounded bg-accent px-3 py-1.5 text-sm font-medium text-black hover:bg-accent-strong"
         >
           Add
-        </button>
+        </FormSubmitButton>
       </form>
 
       {rows.length === 0 ? (
@@ -178,13 +179,13 @@ async function AutograntSection({ slug }: { slug: string }) {
                 <form action={removeInfluencerAutograntAction}>
                   <input type="hidden" name="slug" value={slug} />
                   <input type="hidden" name="steamid" value={r.steamid} />
-                  <button
-                    type="submit"
+                  <FormSubmitButton
+                    pendingLabel="Removing…"
                     className="rounded border border-border bg-background px-2.5 py-1 text-xs text-foreground/60 hover:border-red-500/60 hover:text-red-300"
                     title="Remove from autogrant list (does not revoke existing grant)"
                   >
                     Remove
-                  </button>
+                  </FormSubmitButton>
                 </form>
               </li>
             );

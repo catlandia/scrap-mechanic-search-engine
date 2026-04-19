@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { deleteCreation } from "@/app/admin/actions";
+import { Spinner } from "@/components/Spinner";
 import { cn } from "@/lib/utils";
 
 const CONFIRM_WINDOW_MS = 5000;
@@ -69,7 +70,7 @@ export function DeleteCreationButton({
           : "border-red-500/40 bg-red-500/10 text-red-200 hover:bg-red-500/20",
       )}
     >
-      <span aria-hidden>🗑</span>
+      {isPending ? <Spinner size="xs" /> : <span aria-hidden>🗑</span>}
       {isPending
         ? "Deleting…"
         : armed

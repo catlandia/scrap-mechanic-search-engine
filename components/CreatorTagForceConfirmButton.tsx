@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { confirmCreationTag } from "@/app/admin/actions";
+import { Spinner } from "@/components/Spinner";
 
 /**
  * Creator-only "✓ force" next to any community-sourced tag on /creation/[id].
@@ -40,11 +41,12 @@ export function CreatorTagForceConfirmButton({
       type="button"
       onClick={handleClick}
       disabled={isPending}
+      aria-busy={isPending}
       aria-label={`Force-confirm ${tagName}`}
       title="Force-confirm (Creator): make this tag public immediately"
-      className="ml-1 text-[11px] text-foreground/40 hover:text-emerald-300 disabled:opacity-50"
+      className="ml-1 inline-flex items-center text-[11px] text-foreground/40 hover:text-emerald-300 disabled:opacity-50"
     >
-      ✓
+      {isPending ? <Spinner size="xs" /> : "✓"}
     </button>
   );
 }

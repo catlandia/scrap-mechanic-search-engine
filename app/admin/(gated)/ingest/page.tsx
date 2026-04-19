@@ -2,6 +2,7 @@ import { desc } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import { ingestRuns } from "@/lib/db/schema";
 import { triggerIngest } from "@/app/admin/actions";
+import { FormSubmitButton } from "@/components/FormSubmitButton";
 
 export const dynamic = "force-dynamic";
 
@@ -46,12 +47,13 @@ export default async function IngestPage() {
               className="w-20 rounded border border-border bg-background px-2 py-1 text-sm text-foreground"
             />
           </label>
-          <button
-            type="submit"
+          <FormSubmitButton
+            pendingLabel="Running…"
+            spinnerSize="sm"
             className="rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-black hover:bg-accent-strong"
           >
             Run ingest now
-          </button>
+          </FormSubmitButton>
         </form>
       </header>
 

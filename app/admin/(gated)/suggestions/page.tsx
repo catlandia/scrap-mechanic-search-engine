@@ -12,6 +12,7 @@ import { isCreator } from "@/lib/auth/roles";
 import { RoleBadge } from "@/components/RoleBadge";
 import { UserName } from "@/components/UserName";
 import type { UserRole } from "@/lib/db/schema";
+import { FormSubmitButton } from "@/components/FormSubmitButton";
 
 export const dynamic = "force-dynamic";
 
@@ -87,27 +88,27 @@ function ActionCard({
           className="min-w-[20ch] flex-1 rounded border border-border bg-background px-2 py-1.5 text-sm"
         />
         {transitions.map((t) => (
-          <button
+          <FormSubmitButton
             key={t.value}
-            type="submit"
             name="status"
             value={t.value}
+            pendingLabel={`${t.label}…`}
             className={`rounded-md px-3 py-1.5 text-sm font-medium ${t.style}`}
           >
             {t.label}
-          </button>
+          </FormSubmitButton>
         ))}
       </form>
 
       <form action={deleteSuggestion}>
         <input type="hidden" name="suggestionId" value={suggestion.id} />
-        <button
-          type="submit"
+        <FormSubmitButton
+          pendingLabel="Deleting…"
           className="text-xs text-foreground/40 hover:text-red-300"
           title="Hard delete — removes the suggestion row entirely, won't appear in any tab"
         >
           🗑 hard delete
-        </button>
+        </FormSubmitButton>
       </form>
     </article>
   );

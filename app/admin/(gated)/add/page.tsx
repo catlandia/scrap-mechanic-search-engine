@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { addCreation } from "@/app/admin/actions";
+import { FormSubmitButton } from "@/components/FormSubmitButton";
 
 export const dynamic = "force-dynamic";
 
@@ -93,12 +94,13 @@ export default async function AddPage({
           </span>
         </label>
 
-        <button
-          type="submit"
+        <FormSubmitButton
+          pendingLabel="Fetching from Steam…"
+          spinnerSize="sm"
           className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-black hover:bg-accent-strong"
         >
           Add to site
-        </button>
+        </FormSubmitButton>
       </form>
 
       <div className="rounded-md border border-border bg-card/40 p-4 text-xs text-foreground/60">

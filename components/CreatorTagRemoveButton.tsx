@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { removeCreationTag } from "@/app/admin/actions";
+import { Spinner } from "@/components/Spinner";
 
 /**
  * Tiny × the Creator sees next to each visible tag on /creation/[id].
@@ -41,11 +42,12 @@ export function CreatorTagRemoveButton({
       type="button"
       onClick={handleClick}
       disabled={isPending}
+      aria-busy={isPending}
       aria-label={`Remove ${tagName}`}
       title="Remove tag (Creator)"
-      className="ml-1 text-[11px] text-foreground/40 hover:text-red-300 disabled:opacity-50"
+      className="ml-1 inline-flex items-center text-[11px] text-foreground/40 hover:text-red-300 disabled:opacity-50"
     >
-      ×
+      {isPending ? <Spinner size="xs" /> : "×"}
     </button>
   );
 }

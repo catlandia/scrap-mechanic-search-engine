@@ -21,6 +21,7 @@ import { BadgeList } from "@/components/BadgeList";
 import { RoleBadge } from "@/components/RoleBadge";
 import { UserName } from "@/components/UserName";
 import { UserModForms } from "@/components/UserModForms";
+import { FormSubmitButton } from "@/components/FormSubmitButton";
 
 export const dynamic = "force-dynamic";
 
@@ -164,12 +165,12 @@ export default async function UsersAdminPage() {
                               </option>
                             ))}
                           </select>
-                          <button
-                            type="submit"
+                          <FormSubmitButton
+                            pendingLabel="Saving…"
                             className="rounded bg-accent px-2.5 py-1 text-xs font-medium text-black hover:bg-accent-strong"
                           >
                             Save
-                          </button>
+                          </FormSubmitButton>
                         </form>
                         <UserModForms
                           targetSteamid={u.steamid}
@@ -255,9 +256,8 @@ function BadgeManager({
               >
                 <input type="hidden" name="steamid" value={steamid} />
                 <input type="hidden" name="slug" value={g.slug} />
-                <button
-                  type="submit"
-                  className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] leading-none hover:opacity-70 ${def.pill}`}
+                <FormSubmitButton
+                  className={`rounded-full border px-1.5 py-0.5 text-[10px] leading-none hover:opacity-70 ${def.pill}`}
                   title={`Click to revoke ${def.name}`}
                 >
                   <span aria-hidden>{def.icon}</span>
@@ -265,7 +265,7 @@ function BadgeManager({
                   <span aria-hidden className="opacity-60">
                     ×
                   </span>
-                </button>
+                </FormSubmitButton>
               </form>
             );
           })}
@@ -277,15 +277,14 @@ function BadgeManager({
             <form key={def.slug} action={grantBadgeAction} className="inline-flex">
               <input type="hidden" name="steamid" value={steamid} />
               <input type="hidden" name="slug" value={def.slug} />
-              <button
-                type="submit"
-                className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-1.5 py-0.5 text-[10px] leading-none text-foreground/60 hover:border-accent hover:text-accent"
+              <FormSubmitButton
+                className="rounded-full border border-border bg-card px-1.5 py-0.5 text-[10px] leading-none text-foreground/60 hover:border-accent hover:text-accent"
                 title={`Grant ${def.name} — ${def.description}`}
               >
                 <span aria-hidden>+</span>
                 <span aria-hidden>{def.icon}</span>
                 <span>{def.name}</span>
-              </button>
+              </FormSubmitButton>
             </form>
           ))}
         </div>

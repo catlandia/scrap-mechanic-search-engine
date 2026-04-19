@@ -13,6 +13,7 @@ import {
   isEliteModerator,
   isModerator,
 } from "@/lib/auth/roles";
+import { FormSubmitButton } from "@/components/FormSubmitButton";
 
 export const dynamic = "force-dynamic";
 
@@ -120,23 +121,23 @@ export default async function ArchivePage() {
                     {viewerCanRestore && (
                       <form action={restoreFromArchive}>
                         <input type="hidden" name="creationId" value={c.id} />
-                        <button
-                          type="submit"
+                        <FormSubmitButton
+                          pendingLabel="Restoring…"
                           className="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-3 py-1.5 text-sm font-medium text-emerald-200 hover:bg-emerald-500/20"
                         >
                           Restore to public
-                        </button>
+                        </FormSubmitButton>
                       </form>
                     )}
                     {viewerIsCreator && (
                       <form action={deleteCreation}>
                         <input type="hidden" name="creationId" value={c.id} />
-                        <button
-                          type="submit"
+                        <FormSubmitButton
+                          pendingLabel="Deleting…"
                           className="rounded-md border border-red-500/40 bg-red-500/10 px-3 py-1.5 text-sm font-medium text-red-200 hover:bg-red-500/20"
                         >
                           Permanently delete
-                        </button>
+                        </FormSubmitButton>
                       </form>
                     )}
                   </div>

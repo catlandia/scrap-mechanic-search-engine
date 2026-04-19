@@ -5,6 +5,7 @@ import { DeleteCategoryButton } from "@/components/admin/DeleteCategoryButton";
 import { getCurrentUser } from "@/lib/auth/session";
 import { effectiveRole, isCreator } from "@/lib/auth/roles";
 import { TagChipEditable } from "@/components/admin/TagChipEditable";
+import { FormSubmitButton } from "@/components/FormSubmitButton";
 
 export const dynamic = "force-dynamic";
 
@@ -64,9 +65,12 @@ export default async function TagsPage() {
             placeholder="Description (optional)"
             className="rounded border border-border bg-background px-2 py-1 text-sm sm:col-span-1"
           />
-          <button type="submit" className="rounded bg-accent px-3 py-1 text-sm font-medium text-black">
+          <FormSubmitButton
+            pendingLabel="Saving…"
+            className="rounded bg-accent px-3 py-1 text-sm font-medium text-black"
+          >
             Add / update category
-          </button>
+          </FormSubmitButton>
         </form>
         <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {allCategories.map((c) => (
@@ -129,9 +133,12 @@ export default async function TagsPage() {
               </option>
             ))}
           </select>
-          <button type="submit" className="rounded bg-accent px-3 py-1 text-sm font-medium text-black">
+          <FormSubmitButton
+            pendingLabel="Saving…"
+            className="rounded bg-accent px-3 py-1 text-sm font-medium text-black"
+          >
             Add / update tag
-          </button>
+          </FormSubmitButton>
         </form>
 
         <div className="space-y-4">

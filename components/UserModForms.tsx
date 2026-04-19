@@ -12,6 +12,7 @@ import {
   setAgeGateBypass,
   warnUser,
 } from "@/app/admin/actions";
+import { FormSubmitButton } from "@/components/FormSubmitButton";
 import { cn } from "@/lib/utils";
 
 const DURATION_OPTIONS = [
@@ -56,12 +57,12 @@ export function UserModForms({
           {isCurrentlyMuted ? (
             <form action={clearMute}>
               <input type="hidden" name="steamid" value={targetSteamid} />
-              <button
-                type="submit"
+              <FormSubmitButton
+                pendingLabel="Unmuting…"
                 className="rounded border border-sky-500/40 bg-sky-500/10 px-2 py-0.5 text-sky-200 hover:bg-sky-500/20"
               >
                 Unmute
-              </button>
+              </FormSubmitButton>
             </form>
           ) : (
             <button
@@ -77,21 +78,21 @@ export function UserModForms({
       {viewerIsCreator && warningsCount > 0 && (
         <form action={clearWarnings}>
           <input type="hidden" name="steamid" value={targetSteamid} />
-          <button
-            type="submit"
+          <FormSubmitButton
+            pendingLabel="Clearing…"
             className="rounded border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-amber-200 hover:bg-amber-500/20"
             title={`Clear all ${warningsCount} warning${warningsCount === 1 ? "" : "s"}`}
           >
             Clear warnings
-          </button>
+          </FormSubmitButton>
         </form>
       )}
       {viewerIsCreator && (
         <form action={setAgeGateBypass}>
           <input type="hidden" name="steamid" value={targetSteamid} />
           <input type="hidden" name="on" value={bypassAgeGate ? "0" : "1"} />
-          <button
-            type="submit"
+          <FormSubmitButton
+            pendingLabel="Saving…"
             className={cn(
               "rounded px-2 py-0.5",
               bypassAgeGate
@@ -105,7 +106,7 @@ export function UserModForms({
             }
           >
             {bypassAgeGate ? "Revoke age bypass" : "Allow young account"}
-          </button>
+          </FormSubmitButton>
         </form>
       )}
       {viewerIsCreator && (
@@ -113,12 +114,12 @@ export function UserModForms({
           {isCurrentlyBanned ? (
             <form action={clearBan}>
               <input type="hidden" name="steamid" value={targetSteamid} />
-              <button
-                type="submit"
+              <FormSubmitButton
+                pendingLabel="Unbanning…"
                 className="rounded border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-emerald-200 hover:bg-emerald-500/20"
               >
                 Unban
-              </button>
+              </FormSubmitButton>
             </form>
           ) : (
             <button
@@ -132,13 +133,13 @@ export function UserModForms({
           {isCurrentlyHardBanned ? (
             <form action={clearHardBan}>
               <input type="hidden" name="steamid" value={targetSteamid} />
-              <button
-                type="submit"
+              <FormSubmitButton
+                pendingLabel="Clearing…"
                 className="rounded border border-emerald-500/60 bg-emerald-500/15 px-2 py-0.5 text-emerald-200 hover:bg-emerald-500/25"
                 title="Remove the hard ban — Steam ID can sign in again"
               >
                 Clear hard ban
-              </button>
+              </FormSubmitButton>
             </form>
           ) : (
             <button
@@ -233,12 +234,12 @@ function ModActionForm({
         }
         className="flex-1 min-w-[12ch] rounded border border-border bg-background px-2 py-1 text-xs"
       />
-      <button
-        type="submit"
+      <FormSubmitButton
+        pendingLabel={`${label}…`}
         className={cn("rounded px-2 py-1 text-xs font-medium", accent)}
       >
         {label}
-      </button>
+      </FormSubmitButton>
       <button
         type="button"
         onClick={onDone}

@@ -11,6 +11,7 @@ import {
 import { RoleBadge } from "@/components/RoleBadge";
 import { UserName } from "@/components/UserName";
 import type { UserRole } from "@/lib/db/schema";
+import { FormSubmitButton } from "@/components/FormSubmitButton";
 
 export const dynamic = "force-dynamic";
 
@@ -150,12 +151,12 @@ export default async function ReportsQueuePage() {
 
                   <form action={clearReport} className="pt-1">
                     <input type="hidden" name="reportId" value={f.id} />
-                    <button
-                      type="submit"
+                    <FormSubmitButton
+                      pendingLabel="Clearing…"
                       className="rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground/70 hover:border-emerald-400/60 hover:text-emerald-200"
                     >
                       Clear flag
-                    </button>
+                    </FormSubmitButton>
                   </form>
                 </div>
               </article>
@@ -223,12 +224,12 @@ function CreationReportCard({ r }: { r: ModReportRow }) {
           <div className="flex flex-wrap items-center gap-2">
             <form action={clearReport}>
               <input type="hidden" name="reportId" value={r.id} />
-              <button
-                type="submit"
+              <FormSubmitButton
+                pendingLabel="Clearing…"
                 className="rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground/70 hover:border-foreground/50 hover:text-foreground"
               >
                 Clear
-              </button>
+              </FormSubmitButton>
             </form>
             <form
               action={actionReport}
@@ -241,12 +242,12 @@ function CreationReportCard({ r }: { r: ModReportRow }) {
                 placeholder="Mod note (shown publicly)"
                 className="flex-1 rounded border border-border bg-background px-2 py-1.5 text-sm"
               />
-              <button
-                type="submit"
+              <FormSubmitButton
+                pendingLabel="Filing…"
                 className="rounded-md bg-amber-500 px-3 py-1.5 text-sm font-medium text-black hover:bg-amber-400"
               >
                 Action
-              </button>
+              </FormSubmitButton>
             </form>
           </div>
           <form
@@ -260,12 +261,12 @@ function CreationReportCard({ r }: { r: ModReportRow }) {
               placeholder="Archive note (optional)"
               className="flex-1 rounded border border-red-500/30 bg-red-500/5 px-2 py-1.5 text-sm"
             />
-            <button
-              type="submit"
+            <FormSubmitButton
+              pendingLabel="Archiving…"
               className="rounded-md border border-red-500/60 bg-red-500/20 px-3 py-1.5 text-sm font-medium text-red-200 hover:bg-red-500/30"
             >
               Archive creation
-            </button>
+            </FormSubmitButton>
           </form>
         </div>
       </div>
@@ -322,12 +323,12 @@ function CommentReportCard({ r }: { r: ModReportRow }) {
       <div className="flex flex-wrap items-center gap-2 pt-1">
         <form action={clearReport}>
           <input type="hidden" name="reportId" value={r.id} />
-          <button
-            type="submit"
+          <FormSubmitButton
+            pendingLabel="Clearing…"
             className="rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground/70 hover:border-foreground/50 hover:text-foreground"
           >
             Clear
-          </button>
+          </FormSubmitButton>
         </form>
         <form
           action={deleteCommentFromReport}
@@ -340,12 +341,12 @@ function CommentReportCard({ r }: { r: ModReportRow }) {
             placeholder="Mod note (internal)"
             className="flex-1 rounded border border-red-500/30 bg-red-500/5 px-2 py-1.5 text-sm"
           />
-          <button
-            type="submit"
+          <FormSubmitButton
+            pendingLabel="Deleting…"
             className="rounded-md border border-red-500/60 bg-red-500/20 px-3 py-1.5 text-sm font-medium text-red-200 hover:bg-red-500/30"
           >
             Delete comment
-          </button>
+          </FormSubmitButton>
         </form>
       </div>
     </article>
