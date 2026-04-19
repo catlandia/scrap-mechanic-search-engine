@@ -8,14 +8,14 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <article className="mx-auto max-w-3xl space-y-6 text-sm leading-relaxed text-white/80">
+    <article className="mx-auto max-w-3xl space-y-6 text-sm leading-relaxed text-foreground/80">
       <header className="space-y-2">
-        <h1 className="text-3xl font-bold text-white">Privacy</h1>
-        <p className="text-white/50">Last updated April 2026.</p>
+        <h1 className="text-3xl font-bold text-foreground">Privacy</h1>
+        <p className="text-foreground/50">Last updated April 2026.</p>
       </header>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold text-white">The short version</h2>
+        <h2 className="text-lg font-semibold text-foreground">The short version</h2>
         <p>
           This is a community-run, non-commercial directory of Scrap Mechanic
           Workshop creations. We don&apos;t sell data, we don&apos;t run ads, we
@@ -25,9 +25,9 @@ export default function PrivacyPage() {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold text-white">What we store</h2>
+        <h2 className="text-lg font-semibold text-foreground">What we store</h2>
         <p>If you sign in with Steam, we save:</p>
-        <ul className="list-disc space-y-1 pl-6 text-white/70">
+        <ul className="list-disc space-y-1 pl-6 text-foreground/70">
           <li>Your public SteamID, persona name, and avatar URL.</li>
           <li>
             Your Steam account age and Scrap Mechanic playtime — these come from
@@ -45,26 +45,26 @@ export default function PrivacyPage() {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold text-white">Cookies</h2>
-        <ul className="list-disc space-y-1 pl-6 text-white/70">
+        <h2 className="text-lg font-semibold text-foreground">Cookies</h2>
+        <ul className="list-disc space-y-1 pl-6 text-foreground/70">
           <li>
-            <code className="text-white">smse_session</code> — signed-in session,
+            <code className="text-foreground">smse_session</code> — signed-in session,
             expires after a week of inactivity.
           </li>
           <li>
-            <code className="text-white">smse_captcha</code> — short-lived
+            <code className="text-foreground">smse_captcha</code> — short-lived
             (30&nbsp;min) state for the anti-bot challenge.
           </li>
           <li>
-            <code className="text-white">bot_verified</code> — set after you
+            <code className="text-foreground">bot_verified</code> — set after you
             pass the challenge, lasts 30 days.
           </li>
           <li>
-            <code className="text-white">smse_rating_mode</code> — remembers
+            <code className="text-foreground">smse_rating_mode</code> — remembers
             whether you prefer Steam ratings, site ratings, or both.
           </li>
           <li>
-            <code className="text-white">smse_theme</code> — remembers your
+            <code className="text-foreground">smse_theme</code> — remembers your
             chosen colour theme.
           </li>
         </ul>
@@ -75,8 +75,8 @@ export default function PrivacyPage() {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold text-white">Where the data lives</h2>
-        <ul className="list-disc space-y-1 pl-6 text-white/70">
+        <h2 className="text-lg font-semibold text-foreground">Where the data lives</h2>
+        <ul className="list-disc space-y-1 pl-6 text-foreground/70">
           <li>Database: Neon (serverless Postgres, free tier).</li>
           <li>Hosting: Vercel.</li>
           <li>Workshop metadata &amp; thumbnails: Steam (hotlinked).</li>
@@ -88,8 +88,8 @@ export default function PrivacyPage() {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold text-white">Your controls</h2>
-        <ul className="list-disc space-y-1 pl-6 text-white/70">
+        <h2 className="text-lg font-semibold text-foreground">Your controls</h2>
+        <ul className="list-disc space-y-1 pl-6 text-foreground/70">
           <li>
             Stop using the site any time — logged-out visitors leave no
             identifying data.
@@ -112,7 +112,7 @@ export default function PrivacyPage() {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold text-white">Changes</h2>
+        <h2 className="text-lg font-semibold text-foreground">Changes</h2>
         <p>
           If this policy meaningfully changes, the update will be announced in
           the site&apos;s release notes. This page will always show the latest

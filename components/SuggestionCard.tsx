@@ -72,8 +72,8 @@ export function SuggestionCard({
       )}
     >
       {readOnly ? (
-        <div className="flex flex-col items-center justify-center px-1 text-xs text-white/40">
-          <span className="font-mono text-sm text-white/50">
+        <div className="flex flex-col items-center justify-center px-1 text-xs text-foreground/40">
+          <span className="font-mono text-sm text-foreground/50">
             {net > 0 ? `+${net}` : net}
           </span>
           <span className="text-[10px] uppercase tracking-wider">closed</span>
@@ -93,7 +93,7 @@ export function SuggestionCard({
                 ? "text-emerald-300"
                 : net < 0
                   ? "text-red-300"
-                  : "text-white/60",
+                  : "text-foreground/60",
             )}
             title={`${up} up · ${down} down`}
           >
@@ -123,11 +123,11 @@ export function SuggestionCard({
           )}
         </div>
         {suggestion.body && (
-          <p className="whitespace-pre-wrap text-sm text-white/70">
+          <p className="whitespace-pre-wrap text-sm text-foreground/70">
             {suggestion.body}
           </p>
         )}
-        <div className="flex flex-wrap items-center gap-2 text-xs text-white/40">
+        <div className="flex flex-wrap items-center gap-2 text-xs text-foreground/40">
           {suggestion.submitterName && suggestion.submitterSteamid ? (
             <>
               <span>by</span>
@@ -149,7 +149,7 @@ export function SuggestionCard({
               </span>
             </>
           )}
-          <span className="text-white/30">
+          <span className="text-foreground/30">
             · {up}↑ / {down}↓
           </span>
         </div>
@@ -189,7 +189,7 @@ function VoteArrow({
         "flex size-8 items-center justify-center rounded-md border text-base transition disabled:opacity-50",
         active
           ? activeColor
-          : "border-border bg-background text-white/60 hover:border-white/30 hover:text-white",
+          : "border-border bg-background text-foreground/60 hover:border-foreground/30 hover:text-foreground",
       )}
     >
       {dir === "up" ? "▲" : "▼"}

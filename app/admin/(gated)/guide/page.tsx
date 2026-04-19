@@ -36,22 +36,22 @@ export default async function AdminGuidePage() {
   ];
 
   return (
-    <article className="mx-auto max-w-3xl space-y-10 text-sm leading-relaxed text-white/80">
+    <article className="mx-auto max-w-3xl space-y-10 text-sm leading-relaxed text-foreground/80">
       <header className="space-y-2">
         <p className="text-xs uppercase tracking-widest text-accent">
           Admin guide
         </p>
-        <h1 className="text-3xl font-bold text-white">
+        <h1 className="text-3xl font-bold text-foreground">
           How to use your moderation tools
         </h1>
-        <p className="text-white/60">
+        <p className="text-foreground/60">
           Only sections for your current tier are shown. Elite moderators and
           the creator inherit everything in the tier(s) below theirs.
         </p>
       </header>
 
       <nav className="rounded-md border border-border bg-card/60 px-4 py-3">
-        <p className="mb-2 text-xs uppercase tracking-widest text-white/40">
+        <p className="mb-2 text-xs uppercase tracking-widest text-foreground/40">
           On this page
         </p>
         <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
@@ -61,7 +61,7 @@ export default async function AdminGuidePage() {
               <li key={t.id}>
                 <a
                   href={`#${t.id}`}
-                  className="text-white/70 hover:text-accent"
+                  className="text-foreground/70 hover:text-accent"
                 >
                   {t.label}
                 </a>
@@ -94,7 +94,7 @@ function Section({
     mod: "border-sky-500/40 bg-sky-500/5",
     elite: "border-amber-500/40 bg-amber-500/5",
     creator: "border-purple-500/40 bg-purple-500/5",
-    rules: "border-white/15 bg-white/[0.02]",
+    rules: "border-foreground/15 bg-white/[0.02]",
   } as const;
   const tierLabels = {
     mod: "Moderator",
@@ -108,8 +108,8 @@ function Section({
       className={`space-y-4 rounded-md border ${tierStyles[tier]} px-5 py-5 scroll-mt-20`}
     >
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-xl font-semibold text-white">{title}</h2>
-        <span className="text-[10px] uppercase tracking-widest text-white/50">
+        <h2 className="text-xl font-semibold text-foreground">{title}</h2>
+        <span className="text-[10px] uppercase tracking-widest text-foreground/50">
           {tierLabels[tier]}
         </span>
       </div>
@@ -127,8 +127,8 @@ function Step({
 }) {
   return (
     <div className="space-y-1.5">
-      <h3 className="text-sm font-semibold text-white">{title}</h3>
-      <div className="space-y-1.5 text-white/70">{children}</div>
+      <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+      <div className="space-y-1.5 text-foreground/70">{children}</div>
     </div>
   );
 }
@@ -156,20 +156,20 @@ function ModeratorSection() {
           thumbnail, title, Steam metadata, and auto-suggested tags with
           confidence scores.
         </p>
-        <ul className="list-disc space-y-1 pl-5 text-white/70">
+        <ul className="list-disc space-y-1 pl-5 text-foreground/70">
           <li>
-            <strong className="text-white">Approve</strong> — sets the item to
+            <strong className="text-foreground">Approve</strong> — sets the item to
             <code className="mx-1 rounded bg-black/40 px-1">approved</code> and
             confirms any tags you&apos;ve ticked. Approved items go public
             immediately.
           </li>
           <li>
-            <strong className="text-white">Quick Approve</strong> — publishes
+            <strong className="text-foreground">Quick Approve</strong> — publishes
             the item without confirming tags. The auto-suggestions stay as
             unconfirmed community candidates; voters decide visibility.
           </li>
           <li>
-            <strong className="text-white">Reject</strong> — marks the item
+            <strong className="text-foreground">Reject</strong> — marks the item
             rejected (won&apos;t be re-ingested). The &quot;Reason&quot; field
             is optional; if filled, it&apos;s appended to the submitter&apos;s
             rejection notification — helpful for user-submitted items, rarely
@@ -207,8 +207,8 @@ function ModeratorSection() {
           Building, Mechanism, etc.). Don&apos;t create a category just for
           one tag.
         </p>
-        <p className="text-white/60">
-          <strong className="text-white">Editing an existing tag</strong> (fix
+        <p className="text-foreground/60">
+          <strong className="text-foreground">Editing an existing tag</strong> (fix
           a misspelled slug, re-bucket it under a different category) is
           creator-only — click any tag chip on the page to open an inline
           edit form. Slug changes break any bookmarked{" "}
@@ -227,13 +227,13 @@ function ModeratorSection() {
           <code className="rounded bg-black/40 px-1">cleared</code> or{" "}
           <code className="rounded bg-black/40 px-1">actioned</code>.
         </p>
-        <ul className="list-disc space-y-1 pl-5 text-white/70">
+        <ul className="list-disc space-y-1 pl-5 text-foreground/70">
           <li>
-            <strong className="text-white">Clear</strong> — the report is
+            <strong className="text-foreground">Clear</strong> — the report is
             baseless or already handled. Creation stays public.
           </li>
           <li>
-            <strong className="text-white">Archive from report</strong> — (elite+)
+            <strong className="text-foreground">Archive from report</strong> — (elite+)
             removes the creation from the site and actions the report in one
             step. If you&apos;re a regular mod and the creation genuinely
             needs to come down, clear the report and ask an elite to handle
@@ -255,7 +255,7 @@ function ModeratorSection() {
           warnings before escalating to a mute or ban.
         </p>
         <p>Good first warning uses:</p>
-        <ul className="list-disc space-y-1 pl-5 text-white/70">
+        <ul className="list-disc space-y-1 pl-5 text-foreground/70">
           <li>Mildly off-topic comments or misleading tags</li>
           <li>Low-quality submissions that don&apos;t meet the bar yet</li>
           <li>Borderline hostile tone in a comment thread</li>
@@ -304,7 +304,7 @@ function ModeratorSection() {
 function EliteSection() {
   return (
     <Section id="elite" title="Elite moderator tools" tier="elite">
-      <p className="text-white/70">
+      <p className="text-foreground/70">
         As an elite moderator you get everything a regular moderator has,
         plus the ability to remove content from the site and mute users. Use
         these sparingly — they&apos;re visible to the creator and to every
@@ -367,7 +367,7 @@ function EliteSection() {
 function CreatorSection() {
   return (
     <Section id="creator" title="Creator tools" tier="creator">
-      <p className="text-white/70">
+      <p className="text-foreground/70">
         You have everything in the lower tiers plus site-wide overrides.
         These actions are often irreversible — read each one twice.
       </p>
@@ -378,9 +378,9 @@ function CreatorSection() {
             /admin/users
           </Link>{" "}
           groups users by role. Promote a trusted community member to{" "}
-          <strong className="text-white">Moderator</strong> (triage +
+          <strong className="text-foreground">Moderator</strong> (triage +
           warnings) or{" "}
-          <strong className="text-white">Elite Moderator</strong> (adds
+          <strong className="text-foreground">Elite Moderator</strong> (adds
           archive + mute). You cannot assign the creator role from the UI —
           it&apos;s owned by the{" "}
           <code className="rounded bg-black/40 px-1">CREATOR_STEAMID</code>{" "}
@@ -389,30 +389,30 @@ function CreatorSection() {
       </Step>
 
       <Step title="Bans (temporary, permanent, hard)">
-        <ul className="list-disc space-y-1 pl-5 text-white/70">
+        <ul className="list-disc space-y-1 pl-5 text-foreground/70">
           <li>
-            <strong className="text-white">Temporary ban</strong> — pick a
+            <strong className="text-foreground">Temporary ban</strong> — pick a
             duration in days. Ban ends on its own when the date elapses; the
             user regains full access automatically.
           </li>
           <li>
-            <strong className="text-white">Permanent ban</strong> — sets the
+            <strong className="text-foreground">Permanent ban</strong> — sets the
             ban expiry to 9999-12-31. The user still has a session cookie
             but every write is blocked and they render as ghost in the UI.
           </li>
           <li>
-            <strong className="text-white">Hard ban</strong> — the nuclear
+            <strong className="text-foreground">Hard ban</strong> — the nuclear
             option. Blocks sign-in entirely at the Steam return handler.
             Existing sessions die immediately; the user can&apos;t log back
             in on the same SteamID. Use only for egregious abuse.
           </li>
           <li>
-            <strong className="text-white">Clear warnings</strong> — wipes a
+            <strong className="text-foreground">Clear warnings</strong> — wipes a
             user&apos;s warnings count and warning note. Useful when a user
             has reformed and you want the slate clean.
           </li>
           <li>
-            <strong className="text-white">Allow young account / Revoke age bypass</strong>{" "}
+            <strong className="text-foreground">Allow young account / Revoke age bypass</strong>{" "}
             — toggle the 7-day Steam account-age gate for a specific user.
             Flip on for trusted community members whose Steam account is
             fresh. The gate stays on by default for everyone else; bypass is
@@ -453,35 +453,35 @@ function CreatorSection() {
           </Link>{" "}
           has four buckets:
         </p>
-        <ul className="list-disc space-y-1 pl-5 text-white/70">
+        <ul className="list-disc space-y-1 pl-5 text-foreground/70">
           <li>
-            <strong className="text-white">Inbox</strong> —{" "}
+            <strong className="text-foreground">Inbox</strong> —{" "}
             <code className="rounded bg-black/40 px-1">submitted</code> ideas
             waiting for a decision. Approve (goes to the live board where
             people vote) or reject (killed with an optional reason that&apos;s
             shown to the submitter).
           </li>
           <li>
-            <strong className="text-white">Live board</strong> — public,
+            <strong className="text-foreground">Live board</strong> — public,
             taking votes. Mark as{" "}
-            <strong className="text-white">Implemented</strong> when you
+            <strong className="text-foreground">Implemented</strong> when you
             actually ship the feature (sends a notification to the
             submitter — a small dopamine hit that keeps people engaged).
           </li>
           <li>
-            <strong className="text-white">Implemented</strong> / <strong className="text-white">Rejected</strong> — archival states. Anything can be
+            <strong className="text-foreground">Implemented</strong> / <strong className="text-foreground">Rejected</strong> — archival states. Anything can be
             reverted to{" "}
             <code className="rounded bg-black/40 px-1">approved</code> if you
             change your mind.
           </li>
         </ul>
         <p>
-          Every card has a <strong className="text-white">Creator note</strong>{" "}
+          Every card has a <strong className="text-foreground">Creator note</strong>{" "}
           field — inline editable, shown publicly on the live board. Use it
           to explain a rejection or a deferred decision.
         </p>
         <p>
-          <strong className="text-white">Hard delete</strong> (🗑) permanently
+          <strong className="text-foreground">Hard delete</strong> (🗑) permanently
           wipes a suggestion and its votes. No audit trail. Only use for
           spam, abuse, or duplicates.
         </p>
@@ -505,34 +505,34 @@ function CreatorSection() {
 function HouseRules() {
   return (
     <Section id="house-rules" title="House rules" tier="rules">
-      <p className="text-white/70">
+      <p className="text-foreground/70">
         A few principles that apply to every mod tier. Non-binding — use
         your judgement — but breaking them repeatedly is how a community
         loses trust in its mod team.
       </p>
-      <ul className="list-disc space-y-2 pl-5 text-white/70">
+      <ul className="list-disc space-y-2 pl-5 text-foreground/70">
         <li>
-          <strong className="text-white">Warn before you mute, mute before you ban.</strong>{" "}
+          <strong className="text-foreground">Warn before you mute, mute before you ban.</strong>{" "}
           Every user deserves one chance to correct their behaviour before
           silencing, and a time-boxed silence before a full ban.
         </li>
         <li>
-          <strong className="text-white">Leave a paper trail.</strong> Every
+          <strong className="text-foreground">Leave a paper trail.</strong> Every
           mute, ban, and hard delete gets a note (mute reason, ban reason,
           warning note). Future-you and other mods will thank you.
         </li>
         <li>
-          <strong className="text-white">Don&apos;t moderate content you have a stake in.</strong>{" "}
+          <strong className="text-foreground">Don&apos;t moderate content you have a stake in.</strong>{" "}
           If a comment is about your own submission, ask another mod to
           handle it. Conflict of interest is obvious even when you mean well.
         </li>
         <li>
-          <strong className="text-white">Quick Approve when confident, full triage when unsure.</strong>{" "}
+          <strong className="text-foreground">Quick Approve when confident, full triage when unsure.</strong>{" "}
           The tag-queue backstop will catch mistakes; don&apos;t make the
           triage queue your bottleneck.
         </li>
         <li>
-          <strong className="text-white">Hard ban is forever.</strong> Once
+          <strong className="text-foreground">Hard ban is forever.</strong> Once
           set, the user cannot sign in again with that Steam account. Save
           it for abuse that would otherwise warrant a police report — slurs,
           targeted harassment, sexual content involving minors, etc.

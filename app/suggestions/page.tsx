@@ -62,7 +62,7 @@ export default async function SuggestionsPage({
             Feature suggestions
           </p>
           <h1 className="text-3xl font-bold">Ideas board</h1>
-          <p className="text-sm text-white/60">
+          <p className="text-sm text-foreground/60">
             Ideas the Creator has reviewed. Upvote the ones you want first.
             Rejected ideas stay visible so you can see what didn&apos;t make
             the cut and why.
@@ -93,7 +93,7 @@ export default async function SuggestionsPage({
       </nav>
 
       {suggestions.length === 0 ? (
-        <div className="rounded-md border border-border bg-card/60 px-5 py-8 text-center text-sm text-white/60">
+        <div className="rounded-md border border-border bg-card/60 px-5 py-8 text-center text-sm text-foreground/60">
           {tab === "rejected"
             ? "No rejected ideas yet."
             : tab === "implemented"
@@ -135,11 +135,11 @@ function TabLink({
         "-mb-px border-b-2 px-3 py-2 font-medium transition",
         active
           ? "border-accent text-accent"
-          : "border-transparent text-white/60 hover:text-white",
+          : "border-transparent text-foreground/60 hover:text-foreground",
       )}
     >
       {label}{" "}
-      <span className="ml-1 font-mono text-xs text-white/40">{count}</span>
+      <span className="ml-1 font-mono text-xs text-foreground/40">{count}</span>
     </Link>
   );
 }

@@ -73,19 +73,19 @@ export default async function ProfilePage({ params }: { params: Params }) {
             width={96}
             height={96}
             unoptimized
-            className="size-24 rounded-lg border border-white/10"
+            className="size-24 rounded-lg border border-foreground/10"
           />
         ) : (
-          <div className="size-24 rounded-lg bg-white/5" />
+          <div className="size-24 rounded-lg bg-foreground/5" />
         )}
         <div className="space-y-2">
           <h1 className={`text-3xl font-bold ${style.name}`}>
             <UserName name={user.personaName} role={role} bold />
           </h1>
-          <div className="flex flex-wrap items-center gap-2 text-xs text-white/50">
+          <div className="flex flex-wrap items-center gap-2 text-xs text-foreground/50">
             <RoleBadge role={role} />
             {role === "user" && (
-              <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-wider text-white/50">
+              <span className="rounded-full border border-foreground/10 bg-foreground/5 px-2 py-0.5 text-[10px] uppercase tracking-wider text-foreground/50">
                 {ROLE_LABELS.user}
               </span>
             )}
@@ -162,9 +162,9 @@ export default async function ProfilePage({ params }: { params: Params }) {
 function Stat({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
   return (
     <div className="rounded-md border border-border bg-card/60 px-3 py-2">
-      <div className="text-[10px] uppercase tracking-widest text-white/40">{label}</div>
+      <div className="text-[10px] uppercase tracking-widest text-foreground/40">{label}</div>
       <div
-        className={`mt-0.5 ${mono ? "font-mono text-[11px]" : "text-base"} text-white`}
+        className={`mt-0.5 ${mono ? "font-mono text-[11px]" : "text-base"} text-foreground`}
       >
         {value}
       </div>

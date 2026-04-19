@@ -16,7 +16,7 @@ export default async function AddPage({
     <div className="mx-auto max-w-2xl space-y-6">
       <header className="space-y-1">
         <h1 className="text-2xl font-semibold">Add a creation</h1>
-        <p className="text-sm text-white/60">
+        <p className="text-sm text-foreground/60">
           Pull in a Steam Workshop item by URL or published-file ID, bypassing the
           follow-count filter. Use this for small gems the cron wouldn&apos;t grab
           on its own.
@@ -63,7 +63,7 @@ export default async function AddPage({
         className="space-y-4 rounded-lg border border-border bg-card p-5"
       >
         <label className="block">
-          <span className="mb-1 block text-sm text-white/70">
+          <span className="mb-1 block text-sm text-foreground/70">
             Steam Workshop URL or published-file ID
           </span>
           <input
@@ -83,10 +83,10 @@ export default async function AddPage({
             className="mt-0.5 accent-accent"
           />
           <span>
-            <span className="font-medium text-white">
+            <span className="font-medium text-foreground">
               Approve immediately
             </span>
-            <span className="block text-xs text-white/50">
+            <span className="block text-xs text-foreground/50">
               Item skips the triage queue and appears on the public site right away.
               Auto-tags are confirmed as-is. Uncheck to send it to triage instead.
             </span>
@@ -101,14 +101,14 @@ export default async function AddPage({
         </button>
       </form>
 
-      <div className="rounded-md border border-border bg-card/40 p-4 text-xs text-white/60">
-        <div className="font-medium text-white/70">Accepted forms</div>
+      <div className="rounded-md border border-border bg-card/40 p-4 text-xs text-foreground/60">
+        <div className="font-medium text-foreground/70">Accepted forms</div>
         <ul className="mt-2 space-y-1 font-mono">
           <li>https://steamcommunity.com/sharedfiles/filedetails/?id=3706129300</li>
           <li>https://steamcommunity.com/workshop/filedetails/?id=3706129300</li>
           <li>3706129300</li>
         </ul>
-        <p className="mt-3 text-white/50">
+        <p className="mt-3 text-foreground/50">
           Re-adding an existing item with &quot;Approve immediately&quot; will
           override any earlier rejection and confirm its existing tags.
         </p>

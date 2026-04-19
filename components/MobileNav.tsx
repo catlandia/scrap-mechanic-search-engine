@@ -78,7 +78,7 @@ export function MobileNav({
         aria-expanded={open}
         aria-controls="mobile-drawer-panel"
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex size-9 items-center justify-center rounded-md border border-border text-white/70 hover:text-white sm:hidden"
+        className="inline-flex size-9 items-center justify-center rounded-md border border-border text-foreground/70 hover:text-foreground sm:hidden"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -116,9 +116,9 @@ export function MobileNav({
             onClick={() => setOpen(false)}
             className="absolute inset-0 bg-black/70 backdrop-blur-sm"
           />
-          <div className="absolute right-0 top-0 flex h-full w-[85%] max-w-sm flex-col overflow-y-auto border-l border-white/10 bg-background shadow-xl">
-            <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
-              <span className="text-xs uppercase tracking-widest text-white/50">
+          <div className="absolute right-0 top-0 flex h-full w-[85%] max-w-sm flex-col overflow-y-auto border-l border-foreground/10 bg-background shadow-xl">
+            <div className="flex items-center justify-between border-b border-foreground/10 px-4 py-3">
+              <span className="text-xs uppercase tracking-widest text-foreground/50">
                 Menu
               </span>
               <button
@@ -126,7 +126,7 @@ export function MobileNav({
                 type="button"
                 aria-label="Close menu"
                 onClick={() => setOpen(false)}
-                className="text-white/60 hover:text-white"
+                className="text-foreground/60 hover:text-foreground"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -186,7 +186,7 @@ export function MobileNav({
 
             {extraLinks.length > 0 && (
               <>
-                <div className="mx-4 border-t border-white/10" />
+                <div className="mx-4 border-t border-foreground/10" />
                 <nav className="flex flex-col py-2 text-base">
                   {extraLinks.map((link) => (
                     <MobileLink
@@ -200,25 +200,31 @@ export function MobileNav({
               </>
             )}
 
-            <div className="mx-4 border-t border-white/10" />
+            <div className="mx-4 border-t border-foreground/10" />
             <div className="flex flex-col gap-3 px-4 py-4">
-              <div className="text-[11px] uppercase tracking-widest text-white/40">
+              <div className="text-[11px] uppercase tracking-widest text-foreground/40">
                 Ratings
               </div>
               <RatingModeToggle current={ratingMode} />
             </div>
 
-            <div className="mx-4 border-t border-white/10" />
+            <div className="mx-4 border-t border-foreground/10" />
             <div className="flex flex-col gap-3 px-4 py-4">
-              <div className="text-[11px] uppercase tracking-widest text-white/40">
+              <div className="text-[11px] uppercase tracking-widest text-foreground/40">
                 Theme
               </div>
               <ThemeToggle current={theme} />
+              <Link
+                href="/settings/theme"
+                className="text-xs text-accent hover:underline"
+              >
+                Customize your theme →
+              </Link>
             </div>
 
             {!signedIn && (
               <>
-                <div className="mx-4 border-t border-white/10" />
+                <div className="mx-4 border-t border-foreground/10" />
                 <div className="px-4 py-4">
                   <Link
                     href="/auth/steam/login"
@@ -232,7 +238,7 @@ export function MobileNav({
 
             {signedIn && (
               <>
-                <div className="mx-4 border-t border-white/10" />
+                <div className="mx-4 border-t border-foreground/10" />
                 <form
                   action="/auth/logout"
                   method="post"
@@ -240,7 +246,7 @@ export function MobileNav({
                 >
                   <button
                     type="submit"
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-white/60 hover:text-white"
+                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground/60 hover:text-foreground"
                   >
                     Sign out
                   </button>
@@ -268,7 +274,7 @@ function MobileLink({
     <Link
       href={href}
       className={cn(
-        "px-4 py-2.5 text-white/75 hover:bg-white/5 hover:text-white",
+        "px-4 py-2.5 text-foreground/75 hover:bg-foreground/5 hover:text-foreground",
         active && "bg-accent/10 text-accent",
       )}
     >

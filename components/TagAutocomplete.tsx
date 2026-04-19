@@ -127,7 +127,7 @@ export function TagAutocomplete({
           className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-md border border-border bg-black/95 shadow-xl backdrop-blur"
         >
           {loading && suggestions.length === 0 && (
-            <li className="px-3 py-2 text-xs text-white/40">Searching…</li>
+            <li className="px-3 py-2 text-xs text-foreground/40">Searching…</li>
           )}
           {suggestions.map((t, i) => (
             <li key={t.id} role="none">
@@ -145,11 +145,11 @@ export function TagAutocomplete({
                   "flex w-full items-center justify-between gap-3 px-3 py-1.5 text-left text-sm transition",
                   i === activeIndex
                     ? "bg-accent/20 text-accent"
-                    : "text-white/80 hover:bg-white/5",
+                    : "text-foreground/80 hover:bg-foreground/5",
                 )}
               >
                 <span>{t.name}</span>
-                <span className="text-[10px] text-white/40">
+                <span className="text-[10px] text-foreground/40">
                   {t.usage.toLocaleString()}
                   {t.usage === 1 ? " use" : " uses"}
                 </span>

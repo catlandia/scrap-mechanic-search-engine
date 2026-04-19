@@ -36,7 +36,7 @@ export function SuggestionForm() {
         className="space-y-3 rounded-lg border border-border bg-card p-4"
       >
         <label className="block">
-          <span className="mb-1 block text-sm text-white/70">
+          <span className="mb-1 block text-sm text-foreground/70">
             Short title
           </span>
           <input
@@ -49,7 +49,7 @@ export function SuggestionForm() {
           />
         </label>
         <label className="block">
-          <span className="mb-1 block text-sm text-white/70">
+          <span className="mb-1 block text-sm text-foreground/70">
             Details (optional)
           </span>
           <textarea
@@ -61,7 +61,7 @@ export function SuggestionForm() {
             className="w-full rounded border border-border bg-background px-3 py-2 text-sm focus:border-accent focus:outline-none"
           />
         </label>
-        <div className="flex items-center justify-between text-xs text-white/40">
+        <div className="flex items-center justify-between text-xs text-foreground/40">
           <span>{body.length}/2000</span>
           <button
             type="submit"

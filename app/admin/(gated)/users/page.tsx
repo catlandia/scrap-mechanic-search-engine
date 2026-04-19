@@ -57,7 +57,7 @@ export default async function UsersAdminPage() {
     <div className="space-y-8">
       <header className="space-y-1">
         <h1 className="text-2xl font-semibold">Users & roles</h1>
-        <p className="text-sm text-white/60">
+        <p className="text-sm text-foreground/60">
           Grant or revoke Moderator / Elite Moderator. The Creator role is
           anchored by the <code className="rounded bg-black/40 px-1">CREATOR_STEAMID</code>
           {" "}env var and can&apos;t be changed from the UI. Your own role is
@@ -65,9 +65,12 @@ export default async function UsersAdminPage() {
         </p>
       </header>
 
-      <section className="overflow-hidden rounded-lg border border-border">
-        <table className="w-full text-sm">
-          <thead className="bg-card text-left text-xs uppercase tracking-wide text-white/50">
+      {/* overflow-x-auto lets mobile users swipe sideways to reach ban/mute/
+          hard-ban buttons without rotating the phone. min-w guarantees the
+          table keeps a usable layout even on very narrow viewports. */}
+      <section className="overflow-x-auto rounded-lg border border-border">
+        <table className="w-full min-w-[52rem] text-sm">
+          <thead className="bg-card text-left text-xs uppercase tracking-wide text-foreground/50">
             <tr>
               <th className="px-3 py-2">User</th>
               <th className="px-3 py-2">Role</th>
@@ -78,7 +81,7 @@ export default async function UsersAdminPage() {
           <tbody>
             {rows.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-3 py-6 text-center text-white/50">
+                <td colSpan={4} className="px-3 py-6 text-center text-foreground/50">
                   No users yet.
                 </td>
               </tr>
@@ -99,10 +102,10 @@ export default async function UsersAdminPage() {
                           width={28}
                           height={28}
                           unoptimized
-                          className="size-7 rounded-full border border-white/10"
+                          className="size-7 rounded-full border border-foreground/10"
                         />
                       ) : (
-                        <div className="size-7 rounded-full bg-white/10" />
+                        <div className="size-7 rounded-full bg-foreground/10" />
                       )}
                       <div className="flex min-w-0 flex-col">
                         <UserName
@@ -111,7 +114,7 @@ export default async function UsersAdminPage() {
                           steamid={u.steamid}
                           bold
                         />
-                        <span className="font-mono text-[10px] text-white/35">
+                        <span className="font-mono text-[10px] text-foreground/35">
                           #{u.shortId} · {u.steamid}
                         </span>
                       </div>
@@ -120,21 +123,21 @@ export default async function UsersAdminPage() {
                   <td className={`px-3 py-2 ${rowStyle.name}`}>
                     <RoleBadge role={role} />
                     {role === "user" && (
-                      <span className="ml-1 text-xs text-white/50">
+                      <span className="ml-1 text-xs text-foreground/50">
                         {ROLE_LABELS.user}
                       </span>
                     )}
                   </td>
-                  <td className="px-3 py-2 text-xs text-white/50">
+                  <td className="px-3 py-2 text-xs text-foreground/50">
                     {u.siteJoinedAt?.toLocaleDateString() ?? "—"}
                   </td>
                   <td className="px-3 py-2 text-right">
                     {isTargetCreator ? (
-                      <span className="text-xs text-white/40">
+                      <span className="text-xs text-foreground/40">
                         Creator role — immutable
                       </span>
                     ) : isSelf ? (
-                      <span className="text-xs text-white/40">That&apos;s you</span>
+                      <span className="text-xs text-foreground/40">That&apos;s you</span>
                     ) : (
                       <div className="flex flex-col items-end gap-1">
                         <form
@@ -215,7 +218,7 @@ function RoleTotal({ count, role }: { count: number; role: UserRole }) {
   const style = ROLE_STYLES[role];
   return (
     <div className="rounded-md border border-border bg-card/60 px-3 py-2">
-      <div className="text-[10px] uppercase tracking-widest text-white/40">
+      <div className="text-[10px] uppercase tracking-widest text-foreground/40">
         {ROLE_LABELS[role]}
       </div>
       <div className={`mt-0.5 text-xl font-semibold ${style.name}`}>

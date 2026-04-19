@@ -32,12 +32,12 @@ export default async function ReportsQueuePage() {
         <header className="flex flex-wrap items-baseline justify-between gap-3">
           <div>
             <h1 className="text-2xl font-semibold">Report queue</h1>
-            <p className="text-sm text-white/60">
+            <p className="text-sm text-foreground/60">
               Open reports. Clear to dismiss, or Action to mark the creation
               publicly with a moderator note.
             </p>
           </div>
-          <span className="text-sm text-white/50">
+          <span className="text-sm text-foreground/50">
             {rows.length} open
           </span>
         </header>
@@ -90,7 +90,7 @@ export default async function ReportsQueuePage() {
                       href={r.creationSteamUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-xs text-white/40 hover:text-accent"
+                      className="text-xs text-foreground/40 hover:text-accent"
                     >
                       steam ↗
                     </a>
@@ -100,9 +100,9 @@ export default async function ReportsQueuePage() {
                   </span>
                 </div>
 
-                <div className="text-xs text-white/50">
+                <div className="text-xs text-foreground/50">
                   {r.source === "auto" ? (
-                    <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-0.5">
+                    <span className="inline-flex items-center gap-1 rounded-full border border-foreground/10 bg-foreground/5 px-2 py-0.5">
                       🤖 auto-filed
                     </span>
                   ) : r.reporterName ? (
@@ -121,13 +121,13 @@ export default async function ReportsQueuePage() {
                   ) : (
                     "reported"
                   )}
-                  <span className="ml-2 text-white/30">
+                  <span className="ml-2 text-foreground/30">
                     · {new Date(r.createdAt).toLocaleString()}
                   </span>
                 </div>
 
                 {r.customText && (
-                  <p className="whitespace-pre-wrap rounded border border-border bg-background px-3 py-2 text-sm text-white/70">
+                  <p className="whitespace-pre-wrap rounded border border-border bg-background px-3 py-2 text-sm text-foreground/70">
                     {r.customText}
                   </p>
                 )}
@@ -138,7 +138,7 @@ export default async function ReportsQueuePage() {
                       <input type="hidden" name="reportId" value={r.id} />
                       <button
                         type="submit"
-                        className="rounded-md border border-border bg-background px-3 py-1.5 text-sm text-white/70 hover:border-white/50 hover:text-white"
+                        className="rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground/70 hover:border-foreground/50 hover:text-foreground"
                       >
                         Clear
                       </button>
@@ -192,16 +192,16 @@ export default async function ReportsQueuePage() {
         <header className="flex flex-wrap items-baseline justify-between gap-3 border-t border-border pt-6">
           <div>
             <h2 className="text-xl font-semibold">Currently flagged</h2>
-            <p className="text-sm text-white/60">
+            <p className="text-sm text-foreground/60">
               Creations with a public moderator flag. Clear the flag to remove
               the public badge — the report itself moves to &quot;cleared&quot;.
             </p>
           </div>
-          <span className="text-sm text-white/50">{flagged.length} flagged</span>
+          <span className="text-sm text-foreground/50">{flagged.length} flagged</span>
         </header>
 
         {flagged.length === 0 ? (
-          <div className="rounded-md border border-border bg-card/60 px-5 py-4 text-sm text-white/50">
+          <div className="rounded-md border border-border bg-card/60 px-5 py-4 text-sm text-foreground/50">
             No creations are currently flagged.
           </div>
         ) : (
@@ -245,12 +245,12 @@ export default async function ReportsQueuePage() {
                   </div>
 
                   {f.resolverNote && (
-                    <p className="whitespace-pre-wrap rounded border border-border bg-background px-3 py-2 text-sm text-white/70">
+                    <p className="whitespace-pre-wrap rounded border border-border bg-background px-3 py-2 text-sm text-foreground/70">
                       {f.resolverNote}
                     </p>
                   )}
 
-                  <div className="flex flex-wrap items-center gap-2 text-xs text-white/50">
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-foreground/50">
                     {f.resolverName ? (
                       <>
                         flagged by{" "}
@@ -265,7 +265,7 @@ export default async function ReportsQueuePage() {
                       <span>flagged</span>
                     )}
                     {f.resolvedAt && (
-                      <span className="text-white/30">
+                      <span className="text-foreground/30">
                         · {new Date(f.resolvedAt).toLocaleString()}
                       </span>
                     )}
@@ -275,7 +275,7 @@ export default async function ReportsQueuePage() {
                     <input type="hidden" name="reportId" value={f.id} />
                     <button
                       type="submit"
-                      className="rounded-md border border-border bg-background px-3 py-1.5 text-xs text-white/70 hover:border-emerald-400/60 hover:text-emerald-200"
+                      className="rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground/70 hover:border-emerald-400/60 hover:text-emerald-200"
                     >
                       Clear flag
                     </button>

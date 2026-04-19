@@ -39,14 +39,14 @@ export function CreationCard({
               className="object-cover transition group-hover:scale-105"
             />
           ) : (
-            <div className="flex h-full items-center justify-center text-sm text-white/30">
+            <div className="flex h-full items-center justify-center text-sm text-foreground/30">
               no thumbnail
             </div>
           )}
-          <span className="absolute left-2 top-2 rounded bg-black/70 px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-white/80">
+          <span className="absolute left-2 top-2 rounded bg-black/70 px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-foreground/80">
             {kindLabel}
           </span>
-          <span className="absolute right-2 top-2 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-mono text-white/70">
+          <span className="absolute right-2 top-2 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-mono text-foreground/70">
             #{creation.shortId}
           </span>
           {creation.uploadedByUserId && (
@@ -80,7 +80,7 @@ export function CreationCard({
         </div>
       </Link>
       <div className="flex items-center justify-between gap-2 px-3 pb-3 pt-0.5">
-        <div className="min-w-0 truncate text-xs text-white/50">
+        <div className="min-w-0 truncate text-xs text-foreground/50">
           {creation.authorName && creation.authorSteamid ? (
             <>
               by{" "}
@@ -97,7 +97,7 @@ export function CreationCard({
             "\u00A0"
           )}
         </div>
-        <div className="flex shrink-0 gap-2 text-[11px] text-white/45">
+        <div className="flex shrink-0 gap-2 text-[11px] text-foreground/45">
           <span title="Subscribers">{creation.subscriptions.toLocaleString()}↓</span>
           <span title="Favourites">{creation.favorites.toLocaleString()}★</span>
         </div>
@@ -131,7 +131,7 @@ export function CreationGrid({
 }) {
   if (items.length === 0) {
     return (
-      <div className="rounded-md border border-border bg-card/60 px-5 py-8 text-center text-sm text-white/50">
+      <div className="rounded-md border border-border bg-card/60 px-5 py-8 text-center text-sm text-foreground/50">
         No approved creations match these filters yet.
       </div>
     );

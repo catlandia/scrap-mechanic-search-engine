@@ -73,7 +73,7 @@ export function CreationVotePanel({
           color="orange"
           tag="site"
         />
-        <div className="font-mono text-[10px] text-white/40">
+        <div className="font-mono text-[10px] text-foreground/40">
           {breakdown.up.toLocaleString()} up · {breakdown.down.toLocaleString()} down
         </div>
         <RoleBreakdown breakdown={breakdown} direction="both" className="mt-0.5" />
@@ -106,7 +106,7 @@ function VoteButton({
         "flex size-9 items-center justify-center rounded-md border text-lg transition disabled:opacity-50",
         active
           ? activeColor
-          : "border-border bg-card text-white/60 hover:border-white/40 hover:text-white",
+          : "border-border bg-card text-foreground/60 hover:border-foreground/40 hover:text-foreground",
       )}
       aria-label={direction === "up" ? "Upvote" : "Downvote"}
       aria-pressed={active}

@@ -68,7 +68,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <span className="text-sm uppercase tracking-widest text-accent">Admin</span>
           <nav className="flex flex-wrap gap-4 text-sm">
             {baseNav.map((item) => (
-              <Link key={item.href} href={item.href} className="text-white/70 hover:text-white">
+              <Link key={item.href} href={item.href} className="text-foreground/70 hover:text-foreground">
                 {item.label}
               </Link>
             ))}
@@ -84,7 +84,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               ))}
           </nav>
         </div>
-        <div className="flex items-center gap-3 text-xs text-white/50">
+        <div className="flex items-center gap-3 text-xs text-foreground/50">
           <RoleBadge role={role ?? (user.role as UserRole)} />
           <span>{user.personaName}</span>
         </div>

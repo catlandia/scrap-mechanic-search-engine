@@ -123,12 +123,12 @@ export default async function QueuePage() {
       <header className="flex flex-wrap items-baseline justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">Tagging queue</h1>
-          <p className="text-sm text-white/60">
+          <p className="text-sm text-foreground/60">
             Approved creations that don&apos;t yet have any public tag.
             Confirm at least one tag and the item drops off this list.
           </p>
         </div>
-        <span className="text-sm text-white/50">
+        <span className="text-sm text-foreground/50">
           Showing {pending.length}, newest approved first.
         </span>
       </header>
@@ -166,7 +166,7 @@ function EmptyState() {
       <div className="text-lg font-semibold">All approved items have tags.</div>
       <div className="mt-1 text-emerald-100/80">
         Nothing needs tag work right now. Triage more items from{" "}
-        <a href="/admin/triage" className="underline hover:text-white">
+        <a href="/admin/triage" className="underline hover:text-foreground">
           /admin/triage
         </a>{" "}
         or wait for the next ingest.

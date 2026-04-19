@@ -25,7 +25,7 @@ export default async function IngestPage() {
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold">Ingest runs</h1>
-          <p className="text-sm text-white/50">
+          <p className="text-sm text-foreground/50">
             Most recent 20 runs. Already-approved and already-rejected items
             are skipped entirely, so bumping pages-per-kind digs deeper into
             the Workshop trending list instead of re-scanning the top.
@@ -35,7 +35,7 @@ export default async function IngestPage() {
           action={triggerIngest}
           className="flex items-end gap-2 rounded-md border border-border bg-card p-3"
         >
-          <label className="flex flex-col gap-1 text-xs text-white/60">
+          <label className="flex flex-col gap-1 text-xs text-foreground/60">
             Pages per kind
             <input
               type="number"
@@ -43,7 +43,7 @@ export default async function IngestPage() {
               min={1}
               max={20}
               defaultValue={5}
-              className="w-20 rounded border border-border bg-background px-2 py-1 text-sm text-white"
+              className="w-20 rounded border border-border bg-background px-2 py-1 text-sm text-foreground"
             />
           </label>
           <button
@@ -57,7 +57,7 @@ export default async function IngestPage() {
 
       <div className="overflow-hidden rounded-md border border-border">
         <table className="w-full text-sm">
-          <thead className="bg-card text-left text-xs uppercase tracking-wide text-white/50">
+          <thead className="bg-card text-left text-xs uppercase tracking-wide text-foreground/50">
             <tr>
               <th className="px-3 py-2">Started</th>
               <th className="px-3 py-2">Duration</th>
@@ -69,7 +69,7 @@ export default async function IngestPage() {
           <tbody>
             {runs.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-3 py-4 text-center text-white/50">
+                <td colSpan={5} className="px-3 py-4 text-center text-foreground/50">
                   No runs yet.
                 </td>
               </tr>
@@ -78,16 +78,16 @@ export default async function IngestPage() {
               const errorCount = Array.isArray(r.errors) ? r.errors.length : 0;
               return (
                 <tr key={r.id} className="border-t border-border">
-                  <td className="px-3 py-2 text-white/80">
+                  <td className="px-3 py-2 text-foreground/80">
                     {r.startedAt?.toISOString().replace("T", " ").slice(0, 19)}
                   </td>
-                  <td className="px-3 py-2 text-white/60">
+                  <td className="px-3 py-2 text-foreground/60">
                     {formatDuration(r.startedAt, r.endedAt)}
                   </td>
                   <td className="px-3 py-2">{r.fetched}</td>
                   <td className="px-3 py-2">{r.newItems}</td>
                   <td
-                    className={errorCount > 0 ? "px-3 py-2 text-red-400" : "px-3 py-2 text-white/60"}
+                    className={errorCount > 0 ? "px-3 py-2 text-red-400" : "px-3 py-2 text-foreground/60"}
                   >
                     {errorCount}
                   </td>

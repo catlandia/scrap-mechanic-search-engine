@@ -69,7 +69,7 @@ export function CommentSection({
     <section className="space-y-4">
       <div className="flex items-baseline justify-between">
         <h2 className="text-lg font-semibold">Comments</h2>
-        <span className="text-xs text-white/40">
+        <span className="text-xs text-foreground/40">
           {comments.filter((c) => !c.deletedAt).length} total
         </span>
       </div>
@@ -84,7 +84,7 @@ export function CommentSection({
             placeholder="Share thoughts, ask a question, drop a tip…"
             className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:border-accent focus:outline-none"
           />
-          <div className="flex items-center justify-between gap-2 text-xs text-white/40">
+          <div className="flex items-center justify-between gap-2 text-xs text-foreground/40">
             <div>{error && <span className="text-red-300">{error}</span>}</div>
             <div className="flex items-center gap-2">
               <span>{body.length}/2000</span>
@@ -99,7 +99,7 @@ export function CommentSection({
           </div>
         </form>
       ) : (
-        <div className="rounded-md border border-border bg-card/60 px-4 py-3 text-sm text-white/60">
+        <div className="rounded-md border border-border bg-card/60 px-4 py-3 text-sm text-foreground/60">
           {viewerSteamid
             ? "You can't comment right now — check your profile for a warning / mute / ban."
             : "Sign in with Steam to join the discussion."}
@@ -116,7 +116,7 @@ export function CommentSection({
 
       <ul className="space-y-3">
         {comments.length === 0 && (
-          <li className="rounded border border-border bg-card/60 px-4 py-3 text-sm text-white/50">
+          <li className="rounded border border-border bg-card/60 px-4 py-3 text-sm text-foreground/50">
             No comments yet. Be first.
           </li>
         )}
@@ -154,7 +154,7 @@ function CommentItem({
 
   if (comment.deletedAt) {
     return (
-      <li className="rounded-md border border-border bg-card/40 px-3 py-2 text-xs text-white/40 italic">
+      <li className="rounded-md border border-border bg-card/40 px-3 py-2 text-xs text-foreground/40 italic">
         [deleted]
       </li>
     );
@@ -169,13 +169,13 @@ function CommentItem({
           width={32}
           height={32}
           unoptimized
-          className="size-8 shrink-0 rounded-full border border-white/10"
+          className="size-8 shrink-0 rounded-full border border-foreground/10"
         />
       ) : (
-        <div className="size-8 shrink-0 rounded-full bg-white/10" />
+        <div className="size-8 shrink-0 rounded-full bg-foreground/10" />
       )}
       <div className="min-w-0 flex-1 space-y-1">
-        <div className="flex flex-wrap items-center gap-2 text-xs text-white/50">
+        <div className="flex flex-wrap items-center gap-2 text-xs text-foreground/50">
           <UserName
             name={comment.authorName}
             role={authorRole}
@@ -194,14 +194,14 @@ function CommentItem({
               onClick={() => onDelete(comment.id)}
               disabled={pending}
               className={cn(
-                "ml-auto text-xs text-white/40 hover:text-red-300",
+                "ml-auto text-xs text-foreground/40 hover:text-red-300",
               )}
             >
               delete
             </button>
           )}
         </div>
-        <p className="whitespace-pre-wrap text-sm text-white/85">
+        <p className="whitespace-pre-wrap text-sm text-foreground/85">
           {comment.body}
         </p>
       </div>

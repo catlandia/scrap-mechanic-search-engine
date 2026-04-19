@@ -38,7 +38,7 @@ export async function VoteHistory({
 
   return (
     <section className="rounded-md border border-border bg-card/60 px-4 py-5">
-      <div className="mb-3 text-[10px] uppercase tracking-widest text-white/40">
+      <div className="mb-3 text-[10px] uppercase tracking-widest text-foreground/40">
         Vote history
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -46,8 +46,8 @@ export async function VoteHistory({
           const { voteValue, ...creation } = row;
           const isUp = voteValue > 0;
           const badgeClass = isUp
-            ? "bg-emerald-500/80 text-white"
-            : "bg-red-500/80 text-white";
+            ? "bg-emerald-500/80 text-foreground"
+            : "bg-red-500/80 text-foreground";
           return (
             <div key={creation.id} className="relative">
               <CreationCard creation={creation} ratingMode={ratingMode} />

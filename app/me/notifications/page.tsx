@@ -44,8 +44,8 @@ const TIER_LABEL: Record<NotificationTier, string> = {
 
 const TIER_TAB_TONE: Record<NotificationTier, { active: string; idle: string }> = {
   user: {
-    active: "border-white text-white",
-    idle: "border-transparent text-white/50 hover:text-white",
+    active: "border-foreground text-foreground",
+    idle: "border-transparent text-foreground/50 hover:text-foreground",
   },
   moderator: {
     active: "border-sky-300 text-sky-200",
@@ -102,7 +102,7 @@ export default async function NotificationsPage({
       <header>
         <p className="text-sm uppercase tracking-widest text-accent">Your activity</p>
         <h1 className="text-3xl font-bold">Notifications</h1>
-        <p className="text-sm text-white/60">
+        <p className="text-sm text-foreground/60">
           {visibleTiers.length > 1
             ? "Your personal events plus anything your role tier needs you to know about."
             : "Updates on your submissions, suggestions, and ideas."}
@@ -131,7 +131,7 @@ export default async function NotificationsPage({
               >
                 {TIER_LABEL[t]}
                 {unread > 0 && (
-                  <span className="rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-semibold text-white">
+                  <span className="rounded-full bg-foreground/15 px-2 py-0.5 text-[10px] font-semibold text-foreground">
                     {unread > 99 ? "99+" : unread}
                   </span>
                 )}
@@ -142,11 +142,11 @@ export default async function NotificationsPage({
       )}
 
       {notifications.length === 0 ? (
-        <div className="rounded-md border border-border bg-card/60 px-5 py-8 text-center text-sm text-white/60">
+        <div className="rounded-md border border-border bg-card/60 px-5 py-8 text-center text-sm text-foreground/60">
           {emptyCopyFor(activeTier)}
         </div>
       ) : (
-        <ul className="divide-y divide-white/5 rounded-xl border border-border bg-card/40">
+        <ul className="divide-y divide-foreground/5 rounded-xl border border-border bg-card/40">
           {notifications.map((n) => (
             <li
               key={n.id}
@@ -156,9 +156,9 @@ export default async function NotificationsPage({
                 {TYPE_ICONS[n.type] ?? "🔔"}
               </span>
               <div className="min-w-0 flex-1">
-                <p className="font-medium text-white/90">{n.title}</p>
-                {n.body && <p className="mt-0.5 text-sm text-white/60">{n.body}</p>}
-                <p className="mt-1 text-xs text-white/30">
+                <p className="font-medium text-foreground/90">{n.title}</p>
+                {n.body && <p className="mt-0.5 text-sm text-foreground/60">{n.body}</p>}
+                <p className="mt-1 text-xs text-foreground/30">
                   {n.createdAt.toLocaleDateString(undefined, {
                     year: "numeric",
                     month: "short",
@@ -183,7 +183,7 @@ export default async function NotificationsPage({
       )}
 
       <div className="flex gap-4 text-sm">
-        <Link href="/me/submissions" className="text-white/50 hover:text-white">
+        <Link href="/me/submissions" className="text-foreground/50 hover:text-foreground">
           ← My submissions
         </Link>
       </div>

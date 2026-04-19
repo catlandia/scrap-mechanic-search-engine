@@ -32,12 +32,12 @@ export function SortSelector({
   }
 
   return (
-    <label className="flex items-center gap-2 text-sm text-white/60">
+    <label className="flex items-center gap-2 text-sm text-foreground/60">
       {label}
       <select
         value={current}
         onChange={(e) => setSort(e.target.value as SortMode)}
-        className="rounded border border-border bg-background px-2 py-1 text-sm text-white focus:border-accent focus:outline-none"
+        className="rounded border border-border bg-background px-2 py-1 text-sm text-foreground focus:border-accent focus:outline-none"
       >
         {visibleModes.map((m) => (
           <option key={m} value={m}>

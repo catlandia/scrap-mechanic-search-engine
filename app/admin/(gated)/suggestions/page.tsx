@@ -23,7 +23,7 @@ type Transition = {
 
 function submitterLine(s: SuggestionRow) {
   return (
-    <div className="flex flex-wrap items-center gap-2 text-xs text-white/50">
+    <div className="flex flex-wrap items-center gap-2 text-xs text-foreground/50">
       {s.submitterName && s.submitterSteamid ? (
         <>
           <span>from</span>
@@ -66,7 +66,7 @@ function ActionCard({
       </div>
 
       {suggestion.body && (
-        <p className="whitespace-pre-wrap rounded border border-border bg-background px-3 py-2 text-sm text-white/80">
+        <p className="whitespace-pre-wrap rounded border border-border bg-background px-3 py-2 text-sm text-foreground/80">
           {suggestion.body}
         </p>
       )}
@@ -103,7 +103,7 @@ function ActionCard({
         <input type="hidden" name="suggestionId" value={suggestion.id} />
         <button
           type="submit"
-          className="text-xs text-white/40 hover:text-red-300"
+          className="text-xs text-foreground/40 hover:text-red-300"
           title="Hard delete — removes the suggestion row entirely, won't appear in any tab"
         >
           🗑 hard delete
@@ -206,14 +206,14 @@ function Section({
       <header className="space-y-1 border-t border-border pt-6 first:border-t-0 first:pt-0">
         <h2 className="text-xl font-semibold">
           {title}{" "}
-          <span className="ml-1 font-mono text-xs text-white/40">
+          <span className="ml-1 font-mono text-xs text-foreground/40">
             {suggestions.length}
           </span>
         </h2>
-        <p className="text-sm text-white/60">{subtitle}</p>
+        <p className="text-sm text-foreground/60">{subtitle}</p>
       </header>
       {suggestions.length === 0 ? (
-        <div className="rounded-md border border-border bg-card/60 px-5 py-4 text-sm text-white/60">
+        <div className="rounded-md border border-border bg-card/60 px-5 py-4 text-sm text-foreground/60">
           {emptyLabel}
         </div>
       ) : (

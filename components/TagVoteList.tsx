@@ -8,6 +8,7 @@ import { suggestTag, voteTag } from "@/lib/community/actions";
 import { cn } from "@/lib/utils";
 import { breakdownTitle } from "@/components/RoleBreakdown";
 import { TagAutocomplete, type TagSuggestion } from "@/components/TagAutocomplete";
+import { CreatorTagForceConfirmButton } from "@/components/CreatorTagForceConfirmButton";
 
 interface TagChipState {
   viewerVote: -1 | 0 | 1;
@@ -18,10 +19,12 @@ export function TagVoteList({
   creationId,
   tags,
   signedIn,
+  viewerIsCreator = false,
 }: {
   creationId: string;
   tags: TagWithVotes[];
   signedIn: boolean;
+  viewerIsCreator?: boolean;
 }) {
   const router = useRouter();
   const [stateByTag, setStateByTag] = useState<Record<number, TagChipState>>(
@@ -86,7 +89,7 @@ export function TagVoteList({
   if (tags.length === 0) {
     return (
       <div className="space-y-3">
-        <div className="text-sm text-white/40">
+        <div className="text-sm text-foreground/40">
           No tags yet. Type a tag name below to suggest one — your vote
           counts as the first upvote.
         </div>
@@ -131,16 +134,16 @@ export function TagVoteList({
               href={`/search?tags=${t.slug}`}
               className={cn(
                 "font-medium",
-                t.confirmed ? "text-accent" : "text-white/80 hover:text-accent",
+                t.confirmed ? "text-accent" : "text-foreground/80 hover:text-accent",
               )}
             >
               {t.name}
             </Link>
-            <span className="select-none font-mono text-[10px] text-white/50">
+            <span className="select-none font-mono text-[10px] text-foreground/50">
               {net >= 0 ? `+${net}` : net}
             </span>
             {elevatedUp > 0 && (
-              <span className="flex items-center gap-0.5 text-[9px] text-white/40">
+              <span className="flex items-center gap-0.5 text-[9px] text-foreground/40">
                 {t.modUp > 0 && (
                   <span className="text-sky-300" title={`${t.modUp} moderator${t.modUp === 1 ? "" : "s"} upvoted`}>
                     {t.modUp}m
@@ -181,13 +184,20 @@ export function TagVoteList({
                     : "Downvote this tag"
                 }
               />
+              {viewerIsCreator && !t.confirmed && (
+                <CreatorTagForceConfirmButton
+                  creationId={creationId}
+                  tagId={t.tagId}
+                  tagName={t.name}
+                />
+              )}
             </div>
           </li>
         );
       })}
     </ul>
       <div>
-        <div className="mb-1 text-[10px] uppercase tracking-widest text-white/40">
+        <div className="mb-1 text-[10px] uppercase tracking-widest text-foreground/40">
           Suggest another tag
         </div>
         <TagAutocomplete
@@ -230,7 +240,7 @@ function VoteArrow({
       aria-pressed={active}
       className={cn(
         "flex size-5 items-center justify-center rounded text-[10px] transition disabled:opacity-40",
-        active ? activeColor : "text-white/40 hover:text-white",
+        active ? activeColor : "text-foreground/40 hover:text-foreground",
       )}
     >
       {dir === "up" ? "▲" : "▼"}

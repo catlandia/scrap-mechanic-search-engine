@@ -10,7 +10,7 @@ import { BetaBanner } from "@/components/BetaBanner";
 import { GuideLink } from "@/components/GuideLink";
 import { getUnreadNotificationCountsByTier } from "@/lib/db/queries";
 import type { NotificationTier } from "@/lib/db/schema";
-import { getRatingMode, getTheme } from "@/lib/prefs.server";
+import { getCustomThemeColors, getRatingMode, getTheme } from "@/lib/prefs.server";
 import { isModerator } from "@/lib/auth/roles";
 import type { UserRole } from "@/lib/db/schema";
 import "./globals.css";
@@ -71,6 +71,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   }
   const ratingMode = await getRatingMode();
   const theme = await getTheme();
+  const customColors = theme === "custom" ? await getCustomThemeColors() : null;
   const showAdminLink = !!user && isModerator(user.role as UserRole);
   const extraLinks = [
     { href: "/guide", label: "How to use the site" },
@@ -83,9 +84,21 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang="en" className="dark" data-theme={theme}>
+      <head>
+        {/* When the user has picked a custom theme, inject their colours into
+            the `[data-theme="custom"]` selector. Values are hex-only (regex
+            validated before the cookie is written) so interpolation is safe. */}
+        {theme === "custom" && customColors && (
+          <style
+            dangerouslySetInnerHTML={{
+              __html: `html[data-theme="custom"]{--color-background:${customColors.background};--color-foreground:${customColors.foreground};--color-card:${customColors.card};--color-card-hover:${customColors.card};--color-muted:${customColors.foreground};--color-accent:${customColors.accent};--color-accent-strong:${customColors.accent};--color-border:${customColors.border};}`,
+            }}
+          />
+        )}
+      </head>
       <body className="min-h-screen bg-background text-foreground antialiased">
         <BetaBanner />
-        <header className="sticky top-0 z-30 border-b border-white/10 bg-black/80 backdrop-blur supports-[backdrop-filter]:bg-black/60">
+        <header className="sticky top-0 z-30 border-b border-foreground/10 bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70">
           <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3 sm:flex-wrap sm:gap-x-6 sm:gap-y-2">
             <Link href="/" className="flex shrink-0 items-center gap-2 hover:opacity-80">
               <img src="/logo.png" alt="Scrap Mechanic" className="h-8 w-auto" />
@@ -93,9 +106,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 <span className="text-foreground">/</span>Search
               </span>
             </Link>
-            <nav className="hidden flex-wrap gap-x-5 gap-y-1 text-sm text-white/70 sm:flex">
+            <nav className="hidden flex-wrap gap-x-5 gap-y-1 text-sm text-foreground/70 sm:flex">
               {navLinks.map((link) => (
-                <Link key={link.href} href={link.href} className="hover:text-white">
+                <Link key={link.href} href={link.href} className="hover:text-foreground">
                   {link.label}
                 </Link>
               ))}
@@ -133,27 +146,30 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           </div>
         </header>
         <main className="mx-auto max-w-6xl px-4 py-6 sm:py-10">{children}</main>
-        <footer className="mx-auto max-w-6xl px-4 py-10 text-xs text-white/50">
+        <footer className="mx-auto max-w-6xl px-4 py-10 text-xs text-foreground/50">
           <p>
             Not affiliated with Axolot Games. Data pulled from the Steam Web API. Sign-in
             uses Steam OpenID — we only ever see your public SteamID, never your password.
           </p>
           <p className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
             <span>Made by CybeSlime2077.</span>
-            <Link href="/guide" className="hover:text-white">
+            <Link href="/guide" className="hover:text-foreground">
               Guide
             </Link>
-            <Link href="/terms" className="hover:text-white">
+            <Link href="/settings/theme" className="hover:text-foreground">
+              Theme
+            </Link>
+            <Link href="/terms" className="hover:text-foreground">
               Terms
             </Link>
-            <Link href="/privacy" className="hover:text-white">
+            <Link href="/privacy" className="hover:text-foreground">
               Privacy
             </Link>
             <a
               href="https://github.com/catlandia/scrap-mechanic-search-engine"
               target="_blank"
               rel="noreferrer"
-              className="hover:text-white"
+              className="hover:text-foreground"
             >
               GitHub
             </a>

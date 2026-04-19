@@ -11,16 +11,16 @@ export const metadata: Metadata = {
 
 export default function GuidePage() {
   return (
-    <article className="mx-auto max-w-3xl space-y-8 text-sm leading-relaxed text-white/80">
+    <article className="mx-auto max-w-3xl space-y-8 text-sm leading-relaxed text-foreground/80">
       <GuideSeenMarker />
       <header className="space-y-2">
         <p className="text-xs uppercase tracking-widest text-accent">
           Quick guide
         </p>
-        <h1 className="text-3xl font-bold text-white">
+        <h1 className="text-3xl font-bold text-foreground">
           How to use the site
         </h1>
-        <p className="text-white/60">
+        <p className="text-foreground/60">
           A curated directory of Scrap Mechanic Steam Workshop creations.
           Here&apos;s what you can do in about sixty seconds.
         </p>
@@ -75,7 +75,7 @@ export default function GuidePage() {
           three Scrap Mechanic characters out of a line-up to confirm
           you&apos;re not a bot.
         </p>
-        <p className="text-white/50">
+        <p className="text-foreground/50">
           Accounts less than 7 days old can&apos;t submit items or features —
           a soft filter against throwaway spam accounts.
         </p>
@@ -105,7 +105,7 @@ export default function GuidePage() {
           &quot;Suggest another tag&quot; box; your suggestion counts as the
           first upvote.
         </p>
-        <p className="text-white/50">
+        <p className="text-foreground/50">
           A suggested tag becomes publicly visible once it has 3 net upvotes
           or a moderator confirms it.
         </p>
@@ -145,11 +145,11 @@ export default function GuidePage() {
         </p>
       </Section>
 
-      <section className="space-y-3 rounded-md border border-white/10 bg-card/60 px-5 py-4">
-        <h2 className="text-sm font-semibold uppercase tracking-widest text-white/60">
+      <section className="space-y-3 rounded-md border border-foreground/10 bg-card/60 px-5 py-4">
+        <h2 className="text-sm font-semibold uppercase tracking-widest text-foreground/60">
           Good to know
         </h2>
-        <ul className="list-disc space-y-1 pl-5 text-white/70">
+        <ul className="list-disc space-y-1 pl-5 text-foreground/70">
           <li>
             The site is still in beta — bugs happen. If you spot one, open an
             issue on{" "}
@@ -195,7 +195,7 @@ function Section({
 }) {
   return (
     <section className="space-y-3">
-      <h2 className="flex items-baseline gap-3 text-lg font-semibold text-white">
+      <h2 className="flex items-baseline gap-3 text-lg font-semibold text-foreground">
         <span className="inline-flex size-7 flex-none items-center justify-center rounded-full border border-accent/50 bg-accent/10 text-xs text-accent">
           {n}
         </span>

@@ -27,9 +27,9 @@ type TierStyle = {
 const TIER_STYLES: Record<NotificationTier, TierStyle> = {
   user: {
     tier: "user",
-    activeClass: "text-white/80",
-    idleClass: "text-white/50 hover:text-white",
-    badgeClass: "bg-white text-black",
+    activeClass: "text-foreground/80",
+    idleClass: "text-foreground/50 hover:text-foreground",
+    badgeClass: "bg-foreground text-background",
     label: "Personal notifications",
   },
   moderator: {
@@ -78,7 +78,7 @@ export function UserMenu({
         <>
           <Link
             href="/submit"
-            className="text-white/60 hover:text-white"
+            className="text-foreground/60 hover:text-foreground"
             title="Submit"
           >
             <svg
@@ -98,7 +98,7 @@ export function UserMenu({
           </Link>
           <Link
             href="/me/favourites"
-            className="text-white/60 hover:text-white"
+            className="text-foreground/60 hover:text-foreground"
             title="Favourites"
           >
             <svg
@@ -124,7 +124,7 @@ export function UserMenu({
       {isModerator(role) && (
         <Link
           href="/admin/triage"
-          className="hidden text-white/60 hover:text-white sm:inline"
+          className="hidden text-foreground/60 hover:text-foreground sm:inline"
         >
           Admin
         </Link>
@@ -149,11 +149,11 @@ export function UserMenu({
               "size-7 rounded-full border",
               banned
                 ? "border-red-500/70 opacity-60 grayscale"
-                : "border-white/10",
+                : "border-foreground/10",
             )}
           />
         ) : (
-          <div className="size-7 rounded-full bg-white/10" />
+          <div className="size-7 rounded-full bg-foreground/10" />
         )}
         <span
           className={cn(
@@ -174,7 +174,7 @@ export function UserMenu({
       <form action="/auth/logout" method="post" className="hidden sm:block">
         <button
           type="submit"
-          className="text-xs text-white/40 hover:text-white/70"
+          className="text-xs text-foreground/40 hover:text-foreground/70"
           title="Sign out"
         >
           sign out

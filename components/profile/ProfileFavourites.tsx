@@ -12,7 +12,7 @@ export async function ProfileFavourites({ steamid }: { steamid: string }) {
 
   return (
     <section className="space-y-3 rounded-md border border-border bg-card/60 px-4 py-5">
-      <h2 className="text-xs uppercase tracking-widest text-white/40">
+      <h2 className="text-xs uppercase tracking-widest text-foreground/40">
         Favourites
       </h2>
       <CreationGrid items={items} ratingMode={ratingMode} />

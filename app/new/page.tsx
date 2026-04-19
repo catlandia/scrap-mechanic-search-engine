@@ -30,7 +30,7 @@ export default async function NewestPage({ searchParams }: { searchParams: Searc
       <header className="flex items-baseline justify-between">
         <div>
           <h1 className="text-3xl font-bold">Newest additions</h1>
-          <p className="text-sm text-white/60">
+          <p className="text-sm text-foreground/60">
             Creations most recently approved, across every workshop kind.
           </p>
         </div>
@@ -38,11 +38,11 @@ export default async function NewestPage({ searchParams }: { searchParams: Searc
 
       <CreationGrid items={displayed} ratingMode={ratingMode} />
 
-      <nav className="flex items-center justify-between pt-4 text-sm text-white/60">
+      <nav className="flex items-center justify-between pt-4 text-sm text-foreground/60">
         {pageIndex > 0 ? (
           <Link
             href={`/new?page=${pageIndex}`}
-            className="rounded border border-border px-3 py-1 hover:text-white"
+            className="rounded border border-border px-3 py-1 hover:text-foreground"
           >
             ← Newer
           </Link>
@@ -53,7 +53,7 @@ export default async function NewestPage({ searchParams }: { searchParams: Searc
         {hasNext ? (
           <Link
             href={`/new?page=${pageIndex + 2}`}
-            className="rounded border border-border px-3 py-1 hover:text-white"
+            className="rounded border border-border px-3 py-1 hover:text-foreground"
           >
             Older →
           </Link>

@@ -33,7 +33,7 @@ export function SubmitCreationForm() {
         className="space-y-3 rounded-lg border border-border bg-card p-4"
       >
         <label className="block">
-          <span className="mb-1 block text-sm text-white/70">
+          <span className="mb-1 block text-sm text-foreground/70">
             Steam Workshop URL or published-file ID
           </span>
           <input

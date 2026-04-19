@@ -14,8 +14,8 @@ const STATUS_LABELS: Record<string, { label: string; className: string }> = {
   pending:  { label: "Pending review", className: "border-yellow-500/40 bg-yellow-500/10 text-yellow-300" },
   approved: { label: "Approved",       className: "border-green-500/40 bg-green-500/10 text-green-300" },
   rejected: { label: "Not accepted",   className: "border-red-500/40 bg-red-500/10 text-red-300" },
-  archived: { label: "Archived",       className: "border-white/20 bg-white/5 text-white/50" },
-  deleted:  { label: "Deleted",        className: "border-white/20 bg-white/5 text-white/30 line-through" },
+  archived: { label: "Archived",       className: "border-foreground/20 bg-foreground/5 text-foreground/50" },
+  deleted:  { label: "Deleted",        className: "border-foreground/20 bg-foreground/5 text-foreground/30 line-through" },
 };
 
 export default async function SubmissionsPage() {
@@ -29,20 +29,20 @@ export default async function SubmissionsPage() {
       <header>
         <p className="text-sm uppercase tracking-widest text-accent">Your activity</p>
         <h1 className="text-3xl font-bold">My Submissions</h1>
-        <p className="text-sm text-white/60">
+        <p className="text-sm text-foreground/60">
           Workshop items you&apos;ve submitted for review. Newest first.
         </p>
       </header>
 
       {items.length === 0 ? (
-        <div className="rounded-md border border-border bg-card/60 px-5 py-8 text-center text-sm text-white/60">
+        <div className="rounded-md border border-border bg-card/60 px-5 py-8 text-center text-sm text-foreground/60">
           You haven&apos;t submitted anything yet.{" "}
           <Link href="/submit" className="text-accent hover:underline">
             Submit a creation
           </Link>
         </div>
       ) : (
-        <ul className="divide-y divide-white/5 rounded-xl border border-border bg-card/40">
+        <ul className="divide-y divide-foreground/5 rounded-xl border border-border bg-card/40">
           {items.map((item) => {
             const st = STATUS_LABELS[item.status] ?? STATUS_LABELS.pending;
             return (
@@ -60,12 +60,12 @@ export default async function SubmissionsPage() {
                     {item.status === "approved" ? (
                       <Link
                         href={`/creation/${item.shortId}`}
-                        className="font-medium text-white hover:underline truncate"
+                        className="font-medium text-foreground hover:underline truncate"
                       >
                         {item.title}
                       </Link>
                     ) : (
-                      <span className="font-medium text-white/80 truncate">{item.title}</span>
+                      <span className="font-medium text-foreground/80 truncate">{item.title}</span>
                     )}
                     <span
                       className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${st.className}`}
@@ -73,7 +73,7 @@ export default async function SubmissionsPage() {
                       {st.label}
                     </span>
                   </div>
-                  <p className="mt-0.5 text-xs text-white/40 capitalize">
+                  <p className="mt-0.5 text-xs text-foreground/40 capitalize">
                     {item.kind} · submitted{" "}
                     {item.ingestedAt.toLocaleDateString(undefined, {
                       year: "numeric",
@@ -86,7 +86,7 @@ export default async function SubmissionsPage() {
                   href={item.steamUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="shrink-0 text-xs text-white/30 hover:text-white/70"
+                  className="shrink-0 text-xs text-foreground/30 hover:text-foreground/70"
                 >
                   Steam ↗
                 </a>

@@ -36,7 +36,7 @@ export function GuideLink() {
       className={
         highlight
           ? "relative hidden items-center gap-1.5 rounded-md border border-accent/60 bg-accent/15 px-3 py-1.5 text-sm font-medium text-accent shadow-[0_0_12px_-2px_rgba(251,191,36,0.4)] hover:bg-accent/25 sm:inline-flex"
-          : "hidden items-center rounded-md border border-transparent px-3 py-1.5 text-sm font-medium text-white/70 hover:border-white/15 hover:text-white sm:inline-flex"
+          : "hidden items-center rounded-md border border-transparent px-3 py-1.5 text-sm font-medium text-foreground/70 hover:border-foreground/15 hover:text-foreground sm:inline-flex"
       }
     >
       <span aria-hidden="true">?</span>

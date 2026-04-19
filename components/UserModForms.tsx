@@ -46,7 +46,7 @@ export function UserModForms({
     <div className="flex flex-wrap items-center justify-end gap-1 text-xs">
       <button
         type="button"
-        className="rounded border border-border bg-background px-2 py-0.5 text-white/60 hover:border-amber-400/60 hover:text-amber-200"
+        className="rounded border border-border bg-background px-2 py-0.5 text-foreground/60 hover:border-amber-400/60 hover:text-amber-200"
         onClick={() => setOpen(open === "warn" ? null : "warn")}
       >
         Warn
@@ -66,7 +66,7 @@ export function UserModForms({
           ) : (
             <button
               type="button"
-              className="rounded border border-border bg-background px-2 py-0.5 text-white/60 hover:border-sky-400/60 hover:text-sky-200"
+              className="rounded border border-border bg-background px-2 py-0.5 text-foreground/60 hover:border-sky-400/60 hover:text-sky-200"
               onClick={() => setOpen(open === "mute" ? null : "mute")}
             >
               Mute
@@ -96,7 +96,7 @@ export function UserModForms({
               "rounded px-2 py-0.5",
               bypassAgeGate
                 ? "border border-emerald-500/40 bg-emerald-500/10 text-emerald-200 hover:bg-emerald-500/20"
-                : "border border-border bg-background text-white/60 hover:border-emerald-400/60 hover:text-emerald-200",
+                : "border border-border bg-background text-foreground/60 hover:border-emerald-400/60 hover:text-emerald-200",
             )}
             title={
               bypassAgeGate
@@ -123,7 +123,7 @@ export function UserModForms({
           ) : (
             <button
               type="button"
-              className="rounded border border-border bg-background px-2 py-0.5 text-white/60 hover:border-red-400/60 hover:text-red-200"
+              className="rounded border border-border bg-background px-2 py-0.5 text-foreground/60 hover:border-red-400/60 hover:text-red-200"
               onClick={() => setOpen(open === "ban" ? null : "ban")}
             >
               Ban
@@ -195,7 +195,7 @@ function ModActionForm({
   const reasonName = variant === "warn" ? "note" : "reason";
   const accent =
     variant === "ban" || variant === "hardban"
-      ? "bg-red-500/80 hover:bg-red-500 text-white"
+      ? "bg-red-500/80 hover:bg-red-500 text-foreground"
       : variant === "mute"
         ? "bg-sky-500/80 hover:bg-sky-500 text-black"
         : "bg-amber-500/80 hover:bg-amber-500 text-black";
@@ -242,7 +242,7 @@ function ModActionForm({
       <button
         type="button"
         onClick={onDone}
-        className="text-[10px] text-white/40 hover:text-white"
+        className="text-[10px] text-foreground/40 hover:text-foreground"
       >
         cancel
       </button>

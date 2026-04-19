@@ -62,7 +62,7 @@ export default async function HomePage() {
         <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
           Find the good stuff from the Workshop.
         </h1>
-        <p className="max-w-2xl text-lg text-white/70">
+        <p className="max-w-2xl text-lg text-foreground/70">
           Hand-curated Blueprints, Mods, Worlds, and more. Combine tags like{" "}
           <Link href="/search?tags=house,car" className="text-accent hover:underline">
             house + car
@@ -79,14 +79,14 @@ export default async function HomePage() {
         <section className="space-y-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-5 py-4 text-sm">
           <div className="font-medium text-amber-200">Database not reachable.</div>
           <div className="font-mono text-xs text-amber-100/80">{dbError}</div>
-          <div className="text-white/60">
+          <div className="text-foreground/60">
             Check that <code className="rounded bg-black/40 px-1">DATABASE_URL</code> is set in
             Vercel and migrations have been applied (
             <code className="rounded bg-black/40 px-1">npm run db:migrate</code>).
           </div>
         </section>
       ) : !hasAny ? (
-        <section className="rounded-md border border-border bg-card/60 px-5 py-8 text-sm text-white/60">
+        <section className="rounded-md border border-border bg-card/60 px-5 py-8 text-sm text-foreground/60">
           No approved creations yet. Kick off an ingest and review the queue.
         </section>
       ) : (

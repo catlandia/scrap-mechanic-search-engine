@@ -38,13 +38,13 @@ export function BetaBanner() {
         <span className="font-semibold uppercase tracking-wider text-amber-300">
           Beta
         </span>
-        <span className="text-white/70">
+        <span className="text-foreground/70">
           This site is still in testing. Expect rough edges and occasional
           data changes.
         </span>
         <Link
           href="/guide"
-          className="text-amber-200 underline underline-offset-2 hover:text-white"
+          className="text-amber-200 underline underline-offset-2 hover:text-foreground"
         >
           Quick guide →
         </Link>
@@ -52,7 +52,7 @@ export function BetaBanner() {
           type="button"
           onClick={dismiss}
           aria-label="Dismiss beta notice"
-          className="ml-auto rounded px-1 text-white/60 hover:text-white"
+          className="ml-auto rounded px-1 text-foreground/60 hover:text-foreground"
         >
           ×
         </button>

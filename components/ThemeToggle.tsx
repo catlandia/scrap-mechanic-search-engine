@@ -13,7 +13,7 @@ export function ThemeToggle({ current }: { current: Theme }) {
     <form
       action="/api/prefs/theme"
       method="post"
-      className="flex items-center gap-1 text-[11px] text-white/50"
+      className="flex items-center gap-1 text-[11px] text-foreground/50"
     >
       <input type="hidden" name="next" value={nextUrl} />
       <span className="hidden uppercase tracking-wider sm:inline">Theme:</span>
@@ -33,7 +33,7 @@ export function ThemeToggle({ current }: { current: Theme }) {
               "px-2 py-0.5 text-[11px] transition",
               t === current
                 ? "bg-accent/20 text-accent"
-                : "text-white/55 hover:bg-white/5 hover:text-white",
+                : "text-foreground/55 hover:bg-foreground/5 hover:text-foreground",
             )}
           >
             {THEME_LABELS[t]}

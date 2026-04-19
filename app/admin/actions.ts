@@ -208,6 +208,31 @@ export async function saveCreationTags(formData: FormData) {
   revalidatePath("/admin/queue");
 }
 
+/**
+ * Mark a single tag as admin-confirmed on a creation — the inline
+ * counterpart to the bulk saveCreationTags. Used from the creation detail
+ * page so creators / mods can force a community tag visible without
+ * waiting for the +3 vote threshold.
+ */
+export async function confirmCreationTag(formData: FormData) {
+  await requireMod();
+  const db = getDb();
+  const creationId = String(formData.get("creationId") ?? "");
+  const tagIdRaw = String(formData.get("tagId") ?? "");
+  const tagId = Number(tagIdRaw);
+  if (!creationId || !Number.isInteger(tagId) || tagId <= 0) {
+    throw new Error("invalid_args");
+  }
+  await db
+    .update(creationTags)
+    .set({ confirmed: true, rejected: false })
+    .where(
+      and(eq(creationTags.creationId, creationId), eq(creationTags.tagId, tagId)),
+    );
+  revalidatePath(`/creation/${creationId}`);
+  revalidatePath("/admin/queue");
+}
+
 export async function triggerIngest(formData?: FormData): Promise<void> {
   await requireMod();
   let pagesPerKind: number | undefined;

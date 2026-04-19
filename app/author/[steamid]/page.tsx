@@ -72,7 +72,7 @@ export default async function AuthorPage({
         <div className="space-y-1">
           <p className="text-sm uppercase tracking-widest text-accent">Author</p>
           <h1 className="text-3xl font-bold">{profile.authorName ?? "Unknown author"}</h1>
-          <p className="text-sm text-white/60">
+          <p className="text-sm text-foreground/60">
             {profile.count} approved creation{profile.count === 1 ? "" : "s"} on the site ·{" "}
             <a
               href={`https://steamcommunity.com/profiles/${steamid}`}
@@ -91,11 +91,11 @@ export default async function AuthorPage({
 
       <CreationGrid items={displayed} ratingMode={ratingMode} />
 
-      <nav className="flex items-center justify-between pt-2 text-sm text-white/60">
+      <nav className="flex items-center justify-between pt-2 text-sm text-foreground/60">
         {pageIndex > 0 ? (
           <Link
             href={`/author/${steamid}?page=${pageIndex}`}
-            className="rounded border border-border px-3 py-1 hover:text-white"
+            className="rounded border border-border px-3 py-1 hover:text-foreground"
           >
             ← Newer
           </Link>
@@ -106,7 +106,7 @@ export default async function AuthorPage({
         {hasNext ? (
           <Link
             href={`/author/${steamid}?page=${pageIndex + 2}`}
-            className="rounded border border-border px-3 py-1 hover:text-white"
+            className="rounded border border-border px-3 py-1 hover:text-foreground"
           >
             Older →
           </Link>

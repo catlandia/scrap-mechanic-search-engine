@@ -42,8 +42,8 @@ export function TagChipEditable({
       open={open}
       onToggle={(e) => setOpen((e.target as HTMLDetailsElement).open)}
     >
-      <summary className="cursor-pointer list-none rounded-md px-2.5 py-0.5 text-white/80 hover:bg-white/5 group-open:rounded-b-none group-open:border-b group-open:border-border">
-        {tag.name} <span className="text-white/40">· {tag.slug}</span>
+      <summary className="cursor-pointer list-none rounded-md px-2.5 py-0.5 text-foreground/80 hover:bg-foreground/5 group-open:rounded-b-none group-open:border-b group-open:border-border">
+        {tag.name} <span className="text-foreground/40">· {tag.slug}</span>
         <span className="ml-2 text-[10px] text-purple-300 group-open:hidden">
           edit
         </span>
@@ -51,7 +51,7 @@ export function TagChipEditable({
       <form action={formAction} className="grid gap-2 p-3 sm:grid-cols-4">
         <input type="hidden" name="tagId" value={tag.id} />
         <label className="space-y-1">
-          <span className="block text-[10px] uppercase tracking-wider text-white/40">
+          <span className="block text-[10px] uppercase tracking-wider text-foreground/40">
             Name
           </span>
           <input
@@ -62,7 +62,7 @@ export function TagChipEditable({
           />
         </label>
         <label className="space-y-1">
-          <span className="block text-[10px] uppercase tracking-wider text-white/40">
+          <span className="block text-[10px] uppercase tracking-wider text-foreground/40">
             Slug
           </span>
           <input
@@ -73,7 +73,7 @@ export function TagChipEditable({
           />
         </label>
         <label className="space-y-1">
-          <span className="block text-[10px] uppercase tracking-wider text-white/40">
+          <span className="block text-[10px] uppercase tracking-wider text-foreground/40">
             Category
           </span>
           <select

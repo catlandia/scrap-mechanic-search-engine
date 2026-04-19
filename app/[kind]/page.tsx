@@ -96,7 +96,7 @@ export default async function KindPage({
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div className="space-y-1">
           <h1 className="text-3xl font-bold">{entry.label}</h1>
-          <p className="text-sm text-white/60">{entry.description}</p>
+          <p className="text-sm text-foreground/60">{entry.description}</p>
         </div>
         <Suspense>
           <SortSelector current={sort} />
@@ -105,9 +105,9 @@ export default async function KindPage({
 
       <CreationGrid items={displayed} ratingMode={ratingMode} />
 
-      <nav className="flex items-center justify-between pt-4 text-sm text-white/60">
+      <nav className="flex items-center justify-between pt-4 text-sm text-foreground/60">
         {pageIndex > 0 ? (
-          <Link href={qs({ page: pageIndex })} className="rounded border border-border px-3 py-1 hover:text-white">
+          <Link href={qs({ page: pageIndex })} className="rounded border border-border px-3 py-1 hover:text-foreground">
             ← Newer
           </Link>
         ) : (
@@ -117,7 +117,7 @@ export default async function KindPage({
         {hasNext ? (
           <Link
             href={qs({ page: pageIndex + 2 })}
-            className="rounded border border-border px-3 py-1 hover:text-white"
+            className="rounded border border-border px-3 py-1 hover:text-foreground"
           >
             Older →
           </Link>

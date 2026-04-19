@@ -150,15 +150,15 @@ export default async function CreationDetailPage({ params }: { params: Params })
 
   return (
     <article className="mx-auto max-w-4xl space-y-6">
-      <Link href="/new" className="text-sm text-white/60 hover:text-accent">
+      <Link href="/new" className="text-sm text-foreground/60 hover:text-accent">
         ← Back to newest
       </Link>
 
       <header className="space-y-2">
-        <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-widest text-white/50">
+        <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-widest text-foreground/50">
           <span className="rounded bg-accent/20 px-2 py-0.5 text-accent">{kindLabel}</span>
           {categories.map((c) => (
-            <Link key={c.id} href={`/search?category=${c.slug}`} className="hover:text-white">
+            <Link key={c.id} href={`/search?category=${c.slug}`} className="hover:text-foreground">
               {c.name}
             </Link>
           ))}
@@ -174,7 +174,7 @@ export default async function CreationDetailPage({ params }: { params: Params })
           );
           if (uniqueScraped.length > 1) {
             return (
-              <p className="text-sm text-white/60">
+              <p className="text-sm text-foreground/60">
                 by{" "}
                 {uniqueScraped.map((c, i) => (
                   <span key={c.steamid}>
@@ -192,7 +192,7 @@ export default async function CreationDetailPage({ params }: { params: Params })
           }
           if (creation.authorName) {
             return (
-              <p className="text-sm text-white/60">
+              <p className="text-sm text-foreground/60">
                 by{" "}
                 {creation.authorSteamid ? (
                   <Link
@@ -209,16 +209,16 @@ export default async function CreationDetailPage({ params }: { params: Params })
           }
           return null;
         })()}
-        <div className="flex flex-wrap gap-4 pt-1 font-mono text-[11px] text-white/45">
+        <div className="flex flex-wrap gap-4 pt-1 font-mono text-[11px] text-foreground/45">
           <span>
-            <span className="text-white/35">ID:</span> #{creation.shortId}
+            <span className="text-foreground/35">ID:</span> #{creation.shortId}
           </span>
           <span>
-            <span className="text-white/35">Steam:</span> {creation.id}
+            <span className="text-foreground/35">Steam:</span> {creation.id}
           </span>
         </div>
         {uploader && (
-          <p className="flex flex-wrap items-center gap-2 text-xs text-white/60">
+          <p className="flex flex-wrap items-center gap-2 text-xs text-foreground/60">
             <span className="rounded bg-purple-500/20 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-purple-200">
               Community added
             </span>
@@ -248,7 +248,7 @@ export default async function CreationDetailPage({ params }: { params: Params })
         </div>
       )}
 
-      <div className="grid gap-4 text-sm text-white/60 sm:grid-cols-2 md:grid-cols-3">
+      <div className="grid gap-4 text-sm text-foreground/60 sm:grid-cols-2 md:grid-cols-3">
         <Stat label="Subscribers" value={creation.subscriptions.toLocaleString()} />
         <SplitStat
           label="Favourites"
@@ -272,7 +272,7 @@ export default async function CreationDetailPage({ params }: { params: Params })
       <div className="grid gap-4 sm:grid-cols-2">
         {showSteamRating && (
           <div className="rounded-md border border-border bg-card/60 px-3 py-2">
-            <div className="text-[10px] uppercase tracking-widest text-white/40">
+            <div className="text-[10px] uppercase tracking-widest text-foreground/40">
               Steam rating
             </div>
             <div className="mt-1 flex flex-col gap-0.5">
@@ -286,7 +286,7 @@ export default async function CreationDetailPage({ params }: { params: Params })
               />
               {creation.voteScore != null &&
                 ((creation.votesUp ?? 0) + (creation.votesDown ?? 0)) >= 10 && (
-                  <div className="text-[10px] text-white/50">
+                  <div className="text-[10px] text-foreground/50">
                     {sentimentLabel(
                       (creation.votesUp ?? 0) /
                         Math.max(1, (creation.votesUp ?? 0) + (creation.votesDown ?? 0)),
@@ -300,7 +300,7 @@ export default async function CreationDetailPage({ params }: { params: Params })
         )}
         {showSiteRating && (
           <div className="rounded-md border border-border bg-card/60 px-3 py-2">
-            <div className="text-[10px] uppercase tracking-widest text-white/40">
+            <div className="text-[10px] uppercase tracking-widest text-foreground/40">
               Site rating
             </div>
             <div className="mt-1 flex flex-col gap-0.5">
@@ -313,7 +313,7 @@ export default async function CreationDetailPage({ params }: { params: Params })
                 showLabel={true}
               />
               {siteScore != null && (
-                <div className="text-[10px] text-white/50">
+                <div className="text-[10px] text-foreground/50">
                   {sentimentLabel(siteScore)} · {siteTotal.toLocaleString()} votes
                 </div>
               )}
@@ -356,7 +356,7 @@ export default async function CreationDetailPage({ params }: { params: Params })
 
       {displayTags.length > 0 && (
         <div>
-          <div className="mb-1.5 text-[10px] uppercase tracking-widest text-white/40">
+          <div className="mb-1.5 text-[10px] uppercase tracking-widest text-foreground/40">
             Tags
           </div>
           <div className="flex flex-wrap gap-1.5">
@@ -368,7 +368,7 @@ export default async function CreationDetailPage({ params }: { params: Params })
                 >
                   <Link
                     href={`/search?tags=${t.slug}`}
-                    className="text-white/70 hover:text-accent"
+                    className="text-foreground/70 hover:text-accent"
                   >
                     {t.name}
                   </Link>
@@ -388,10 +388,10 @@ export default async function CreationDetailPage({ params }: { params: Params })
 
       <div>
         <div className="mb-1.5 flex items-baseline justify-between">
-          <div className="text-[10px] uppercase tracking-widest text-white/40">
+          <div className="text-[10px] uppercase tracking-widest text-foreground/40">
             Vote on tags
           </div>
-          <div className="text-[10px] text-white/30">
+          <div className="text-[10px] text-foreground/30">
             Community tags appear publicly at +3 net votes.
           </div>
         </div>
@@ -399,10 +399,11 @@ export default async function CreationDetailPage({ params }: { params: Params })
           creationId={creation.id}
           tags={votableTags}
           signedIn={!!viewer}
+          viewerIsCreator={viewerIsCreator}
         />
       </div>
 
-      <p className="whitespace-pre-wrap text-base leading-relaxed text-white/80">
+      <p className="whitespace-pre-wrap text-base leading-relaxed text-foreground/80">
         {creation.descriptionClean || "(no description)"}
       </p>
 
@@ -420,8 +421,8 @@ export default async function CreationDetailPage({ params }: { params: Params })
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-md border border-border bg-card/60 px-3 py-2">
-      <div className="text-[10px] uppercase tracking-widest text-white/40">{label}</div>
-      <div className="mt-0.5 text-base font-medium text-white">{value}</div>
+      <div className="text-[10px] uppercase tracking-widest text-foreground/40">{label}</div>
+      <div className="mt-0.5 text-base font-medium text-foreground">{value}</div>
     </div>
   );
 }
@@ -437,19 +438,19 @@ function SplitStat({
 }) {
   return (
     <div className="rounded-md border border-border bg-card/60 px-3 py-2">
-      <div className="text-[10px] uppercase tracking-widest text-white/40">{label}</div>
+      <div className="text-[10px] uppercase tracking-widest text-foreground/40">{label}</div>
       <div className="mt-1 grid grid-cols-2 gap-2">
         <div title={a.hint}>
           <div className="text-[9px] uppercase tracking-wider text-emerald-400/70">
             {a.sublabel}
           </div>
-          <div className="text-base font-medium text-white">{a.value}</div>
+          <div className="text-base font-medium text-foreground">{a.value}</div>
         </div>
         <div title={b.hint}>
           <div className="text-[9px] uppercase tracking-wider text-orange-400/80">
             {b.sublabel}
           </div>
-          <div className="text-base font-medium text-white">{b.value}</div>
+          <div className="text-base font-medium text-foreground">{b.value}</div>
         </div>
       </div>
     </div>

@@ -45,7 +45,7 @@ export function FavouriteButton({
         "inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm font-medium transition disabled:opacity-50",
         favourited
           ? "border-rose-400/60 bg-rose-500/20 text-rose-200 hover:bg-rose-500/25"
-          : "border-border bg-card text-white/70 hover:border-rose-400/60 hover:text-rose-200",
+          : "border-border bg-card text-foreground/70 hover:border-rose-400/60 hover:text-rose-200",
       )}
       title={signedIn ? "Favourite this creation" : "Sign in to favourite"}
     >

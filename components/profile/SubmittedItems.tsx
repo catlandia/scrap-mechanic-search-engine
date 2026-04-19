@@ -25,7 +25,7 @@ export async function SubmittedItems({ steamid }: { steamid: string }) {
 
   return (
     <section className="space-y-3 rounded-md border border-border bg-card/60 px-4 py-5">
-      <h2 className="text-xs uppercase tracking-widest text-white/40">
+      <h2 className="text-xs uppercase tracking-widest text-foreground/40">
         Submitted to the site
       </h2>
       <CreationGrid items={rows} ratingMode={ratingMode} />

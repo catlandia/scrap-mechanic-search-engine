@@ -123,11 +123,11 @@ export function QueueItem({ creation, suggested, allTags, allCategories }: Props
           href={creation.steamUrl}
           target="_blank"
           rel="noreferrer"
-          className="block text-xs text-white/60 hover:text-accent"
+          className="block text-xs text-foreground/60 hover:text-accent"
         >
           steamcommunity.com →
         </a>
-        <div className="text-xs text-white/50">
+        <div className="text-xs text-foreground/50">
           {creation.subscriptions.toLocaleString()} subs ·{" "}
           {creation.favorites.toLocaleString()} favs
           {creation.voteScore != null && ` · ${Math.round(creation.voteScore * 100)}%`}
@@ -139,7 +139,7 @@ export function QueueItem({ creation, suggested, allTags, allCategories }: Props
           <div className="min-w-0">
             <h3 className="truncate text-lg font-semibold">{creation.title}</h3>
             {creation.authorName && (
-              <p className="text-xs text-white/50">by {creation.authorName}</p>
+              <p className="text-xs text-foreground/50">by {creation.authorName}</p>
             )}
           </div>
           <select
@@ -155,7 +155,7 @@ export function QueueItem({ creation, suggested, allTags, allCategories }: Props
           </select>
         </div>
 
-        <p className="whitespace-pre-wrap text-sm text-white/70">{shortDesc}</p>
+        <p className="whitespace-pre-wrap text-sm text-foreground/70">{shortDesc}</p>
         {description.length > 240 && (
           <button
             type="button"
@@ -167,7 +167,7 @@ export function QueueItem({ creation, suggested, allTags, allCategories }: Props
         )}
 
         {creation.steamTags.length > 0 && (
-          <div className="text-xs text-white/40">
+          <div className="text-xs text-foreground/40">
             Steam tags: {creation.steamTags.join(", ")}
           </div>
         )}
@@ -178,7 +178,7 @@ export function QueueItem({ creation, suggested, allTags, allCategories }: Props
             if (!bucket || bucket.length === 0) return null;
             return (
               <div key={String(catId ?? "none")}>
-                <div className="mb-1 text-xs uppercase tracking-wide text-white/40">
+                <div className="mb-1 text-xs uppercase tracking-wide text-foreground/40">
                   {catId === null ? "Uncategorised" : categoryNameById.get(catId)}
                 </div>
                 <div className="flex flex-wrap gap-1.5">
@@ -195,7 +195,7 @@ export function QueueItem({ creation, suggested, allTags, allCategories }: Props
                           "rounded-full border px-2.5 py-0.5 text-xs transition",
                           active
                             ? "border-accent bg-accent/20 text-accent"
-                            : "border-border bg-background text-white/60 hover:border-white/30",
+                            : "border-border bg-background text-foreground/60 hover:border-foreground/30",
                         )}
                         title={
                           conf != null
@@ -227,19 +227,19 @@ export function QueueItem({ creation, suggested, allTags, allCategories }: Props
             name="reason"
             maxLength={300}
             placeholder="Rejection reason (optional, shown to submitter)"
-            className="min-w-[220px] flex-1 rounded-md border border-border bg-background px-2 py-1.5 text-sm text-white placeholder:text-white/30 focus:border-accent focus:outline-none"
+            className="min-w-[220px] flex-1 rounded-md border border-border bg-background px-2 py-1.5 text-sm text-foreground placeholder:text-foreground/30 focus:border-accent focus:outline-none"
           />
           <button
             type="submit"
             formAction={rejectCreation}
-            className="rounded-md border border-border bg-background px-3 py-1.5 text-sm text-white/70 hover:border-red-400 hover:text-red-300"
+            className="rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground/70 hover:border-red-400 hover:text-red-300"
           >
             Reject
           </button>
           <button
             type="submit"
             formAction={saveCreationTags}
-            className="rounded-md border border-border bg-background px-3 py-1.5 text-sm text-white/70 hover:border-white/50 hover:text-white"
+            className="rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground/70 hover:border-foreground/50 hover:text-foreground"
           >
             Save edits
           </button>

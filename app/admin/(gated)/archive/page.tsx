@@ -46,7 +46,7 @@ export default async function ArchivePage() {
     <div className="space-y-6">
       <header className="space-y-1">
         <h1 className="text-2xl font-semibold">Archive</h1>
-        <p className="text-sm text-white/60">
+        <p className="text-sm text-foreground/60">
           Creations that were public and have been pulled. Moderators can
           view; elite moderators and the Creator can restore. Only the
           Creator can permanently delete — perma-deleted items can never be
@@ -93,7 +93,7 @@ export default async function ArchivePage() {
                     <div className="truncate font-medium">
                       #{c.shortId} — {c.title}
                     </div>
-                    <div className="text-xs text-white/40">
+                    <div className="text-xs text-foreground/40">
                       {c.authorName ? `by ${c.authorName} · ` : ""}
                       archived{" "}
                       {c.reviewedAt
@@ -105,13 +105,13 @@ export default async function ArchivePage() {
                     href={c.steamUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-xs text-white/40 hover:text-accent"
+                    className="text-xs text-foreground/40 hover:text-accent"
                   >
                     steam ↗
                   </a>
                 </div>
 
-                <p className="line-clamp-2 text-sm text-white/60">
+                <p className="line-clamp-2 text-sm text-foreground/60">
                   {c.descriptionClean?.slice(0, 240) || "(no description)"}
                 </p>
 

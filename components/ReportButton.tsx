@@ -35,7 +35,7 @@ export function ReportButton({
         onClick={() =>
           router.push(`/auth/steam/login?next=/creation/${creationId}`)
         }
-        className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-sm text-white/60 transition hover:border-amber-400/60 hover:text-amber-200"
+        className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-sm text-foreground/60 transition hover:border-amber-400/60 hover:text-amber-200"
       >
         <span aria-hidden>⚠</span>
         Report
@@ -60,7 +60,7 @@ export function ReportButton({
           "inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm transition",
           open
             ? "border-amber-400/60 bg-amber-500/15 text-amber-200"
-            : "border-border bg-card text-white/70 hover:border-amber-400/60 hover:text-amber-200",
+            : "border-border bg-card text-foreground/70 hover:border-amber-400/60 hover:text-amber-200",
         )}
       >
         <span aria-hidden>⚠</span>
@@ -89,8 +89,8 @@ export function ReportButton({
           }}
           className="absolute left-0 top-full z-20 mt-2 w-[min(22rem,90vw)] space-y-3 rounded-md border border-border bg-black/90 p-4 shadow-xl backdrop-blur"
         >
-          <div className="text-sm font-medium text-white">Report this creation</div>
-          <label className="block text-xs text-white/60">
+          <div className="text-sm font-medium text-foreground">Report this creation</div>
+          <label className="block text-xs text-foreground/60">
             <span className="mb-1 block">Reason</span>
             <select
               value={reason}
@@ -104,7 +104,7 @@ export function ReportButton({
               ))}
             </select>
           </label>
-          <label className="block text-xs text-white/60">
+          <label className="block text-xs text-foreground/60">
             <span className="mb-1 block">
               Details{reason === "other" ? " (required)" : " (optional)"}
             </span>
@@ -121,7 +121,7 @@ export function ReportButton({
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="rounded border border-border px-3 py-1 text-xs text-white/60 hover:text-white"
+              className="rounded border border-border px-3 py-1 text-xs text-foreground/60 hover:text-foreground"
             >
               Cancel
             </button>

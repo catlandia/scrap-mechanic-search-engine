@@ -22,7 +22,7 @@ export default async function SubmitPage() {
           Submit a creation
         </p>
         <h1 className="text-3xl font-bold">Suggest a Workshop item</h1>
-        <p className="text-sm text-white/60">
+        <p className="text-sm text-foreground/60">
           Got a gem the cron hasn&apos;t found yet? Submit any Steam Workshop
           URL or id — a moderator will review it and it&apos;ll land on the
           public feed with a{" "}
@@ -35,7 +35,7 @@ export default async function SubmitPage() {
 
       {!user ? (
         <div className="rounded-md border border-border bg-card/60 px-5 py-4 text-sm">
-          <div className="text-white/80">
+          <div className="text-foreground/80">
             You need to be signed in to submit.
           </div>
           <Link
@@ -57,14 +57,14 @@ export default async function SubmitPage() {
         <SubmitCreationForm />
       )}
 
-      <div className="rounded-md border border-border bg-card/40 p-4 text-xs text-white/60">
-        <div className="font-medium text-white/70">Accepted forms</div>
+      <div className="rounded-md border border-border bg-card/40 p-4 text-xs text-foreground/60">
+        <div className="font-medium text-foreground/70">Accepted forms</div>
         <ul className="mt-2 space-y-1 font-mono">
           <li>https://steamcommunity.com/sharedfiles/filedetails/?id=3706129300</li>
           <li>https://steamcommunity.com/workshop/filedetails/?id=3706129300</li>
           <li>3706129300</li>
         </ul>
-        <p className="mt-3 text-white/50">
+        <p className="mt-3 text-foreground/50">
           Submitted items go into the mod triage queue. They appear publicly
           once approved; the cron won&apos;t also try to re-ingest them.
         </p>

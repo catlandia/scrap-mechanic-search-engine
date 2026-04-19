@@ -16,7 +16,7 @@ export default function VerifyPage() {
       <meta name="robots" content="noindex, nofollow" />
       <Suspense fallback={
         <div className="flex min-h-screen items-center justify-center bg-background">
-          <p className="text-white/40 animate-pulse">Loading challenge…</p>
+          <p className="text-foreground/40 animate-pulse">Loading challenge…</p>
         </div>
       }>
         <VerifyChallenge />
@@ -119,7 +119,7 @@ function VerifyChallenge() {
   if (state.phase === "loading") {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
-        <p className="text-white/40 animate-pulse">Loading challenge…</p>
+        <p className="text-foreground/40 animate-pulse">Loading challenge…</p>
       </div>
     );
   }
@@ -130,7 +130,7 @@ function VerifyChallenge() {
         <div className="text-center space-y-3">
           <div className="text-5xl">⚙️</div>
           <h1 className="text-2xl font-bold text-accent">You're in!</h1>
-          <p className="text-white/50 text-sm">Welcome to the Workshop…</p>
+          <p className="text-foreground/50 text-sm">Welcome to the Workshop…</p>
         </div>
       </div>
     );
@@ -153,7 +153,7 @@ function VerifyChallenge() {
           <h1 className="text-2xl font-bold tracking-tight">
             Are you a <span className="text-accent">Mechanic</span>?
           </h1>
-          <p className="text-sm text-white/50">
+          <p className="text-sm text-foreground/50">
             Identify the character to enter the Workshop
           </p>
         </div>
@@ -168,11 +168,11 @@ function VerifyChallenge() {
                   ? "bg-accent"
                   : n === q.questionNumber
                   ? "bg-accent/60"
-                  : "bg-white/10"
+                  : "bg-foreground/10"
               }`}
             />
           ))}
-          <span className="ml-2 text-xs text-white/40">{q.questionNumber}/3</span>
+          <span className="ml-2 text-xs text-foreground/40">{q.questionNumber}/3</span>
         </div>
 
         {/* Image — served through /api/captcha/image so filename is never exposed.
@@ -183,7 +183,7 @@ function VerifyChallenge() {
           type="button"
           onClick={() => setZoomed(true)}
           aria-label="Tap to zoom in on the image"
-          className={`group relative block w-full overflow-hidden rounded-xl border border-white/10 bg-black/40 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent ${flashClass}`}
+          className={`group relative block w-full overflow-hidden rounded-xl border border-foreground/10 bg-black/40 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent ${flashClass}`}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -209,7 +209,7 @@ function VerifyChallenge() {
             </svg>
             Tap to zoom
           </span>
-          <span className="pointer-events-none absolute bottom-2 right-3 hidden text-[11px] text-white/40 select-none sm:inline">
+          <span className="pointer-events-none absolute bottom-2 right-3 hidden text-[11px] text-foreground/40 select-none sm:inline">
             Who is this?
           </span>
         </button>
@@ -221,7 +221,7 @@ function VerifyChallenge() {
               key={opt}
               onClick={() => handleAnswer(opt)}
               disabled={isPending || !!flash}
-              className="rounded-lg border border-white/10 bg-card px-4 py-3 text-sm font-medium text-white/80
+              className="rounded-lg border border-foreground/10 bg-card px-4 py-3 text-sm font-medium text-foreground/80
                 hover:border-accent hover:text-accent hover:bg-accent/5
                 disabled:opacity-50 disabled:cursor-not-allowed
                 transition-colors duration-150"
@@ -243,7 +243,7 @@ function VerifyChallenge() {
         )}
 
         {/* Hint */}
-        <p className="text-center text-[11px] text-white/20">
+        <p className="text-center text-[11px] text-foreground/20">
           Only Scrap Mechanic players may enter
         </p>
       </div>

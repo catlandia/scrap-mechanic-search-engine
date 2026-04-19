@@ -20,12 +20,12 @@ export default async function NewSuggestionPage() {
       <header className="space-y-1">
         <Link
           href="/suggestions"
-          className="text-sm text-white/60 hover:text-accent"
+          className="text-sm text-foreground/60 hover:text-accent"
         >
           ← Ideas board
         </Link>
         <h1 className="text-3xl font-bold">Suggest a feature</h1>
-        <p className="text-sm text-white/60">
+        <p className="text-sm text-foreground/60">
           Suggestions go privately to the Creator first. Approved ones land on
           the public board where everyone can upvote.
         </p>
@@ -33,7 +33,7 @@ export default async function NewSuggestionPage() {
 
       {!user ? (
         <div className="rounded-md border border-border bg-card/60 px-5 py-4 text-sm">
-          <div className="text-white/80">
+          <div className="text-foreground/80">
             Sign in to submit a suggestion.
           </div>
           <Link

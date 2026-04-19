@@ -37,24 +37,24 @@ export default async function FavouritesPage({
       <header>
         <p className="text-sm uppercase tracking-widest text-accent">Your collection</p>
         <h1 className="text-3xl font-bold">Favourites</h1>
-        <p className="text-sm text-white/60">
+        <p className="text-sm text-foreground/60">
           Creations you&apos;ve hearted. Newest favourites first.
         </p>
       </header>
 
       {displayed.length === 0 ? (
-        <div className="rounded-md border border-border bg-card/60 px-5 py-8 text-center text-sm text-white/60">
+        <div className="rounded-md border border-border bg-card/60 px-5 py-8 text-center text-sm text-foreground/60">
           No favourites yet. Click the heart on any creation to add it here.
         </div>
       ) : (
         <CreationGrid items={displayed} ratingMode={ratingMode} />
       )}
 
-      <nav className="flex items-center justify-between pt-2 text-sm text-white/60">
+      <nav className="flex items-center justify-between pt-2 text-sm text-foreground/60">
         {pageIndex > 0 ? (
           <a
             href={`/me/favourites?page=${pageIndex}`}
-            className="rounded border border-border px-3 py-1 hover:text-white"
+            className="rounded border border-border px-3 py-1 hover:text-foreground"
           >
             ← Newer
           </a>
@@ -65,7 +65,7 @@ export default async function FavouritesPage({
         {hasNext ? (
           <a
             href={`/me/favourites?page=${pageIndex + 2}`}
-            className="rounded border border-border px-3 py-1 hover:text-white"
+            className="rounded border border-border px-3 py-1 hover:text-foreground"
           >
             Older →
           </a>

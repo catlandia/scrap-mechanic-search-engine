@@ -156,7 +156,7 @@ export function TriageStack({
       <div className="mx-auto max-w-xl space-y-4 rounded-lg border border-border bg-card p-8 text-center">
         <div className="text-5xl">🎉</div>
         <h1 className="text-2xl font-semibold">Queue is clear.</h1>
-        <p className="text-white/60">
+        <p className="text-foreground/60">
           No pending creations right now. Run an ingest from{" "}
           <Link href="/admin/ingest" className="text-accent hover:underline">
             /admin/ingest
@@ -169,7 +169,7 @@ export function TriageStack({
 
   if (index >= buffer.length) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center text-white/60">
+      <div className="flex min-h-[60vh] items-center justify-center text-foreground/60">
         Loading next batch…
       </div>
     );
@@ -180,7 +180,7 @@ export function TriageStack({
       <header className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
         <div>
           <h1 className="text-2xl font-semibold">Triage</h1>
-          <p className="text-xs text-white/50">
+          <p className="text-xs text-foreground/50">
             Approve pushes the item to the public site without tagging.
             Untagged items land in{" "}
             <Link href="/admin/queue" className="text-accent hover:underline">
@@ -190,8 +190,8 @@ export function TriageStack({
             +3.
           </p>
         </div>
-        <div className="text-sm text-white/60">
-          <span className="font-medium text-white">{remaining}</span> of{" "}
+        <div className="text-sm text-foreground/60">
+          <span className="font-medium text-foreground">{remaining}</span> of{" "}
           {totalPending} in this batch
         </div>
       </header>
@@ -339,11 +339,11 @@ function TriageCardView({
               draggable={false}
             />
           ) : (
-            <div className="flex h-full items-center justify-center text-white/30">
+            <div className="flex h-full items-center justify-center text-foreground/30">
               no thumbnail
             </div>
           )}
-          <span className="absolute left-3 top-3 rounded bg-black/70 px-2 py-0.5 text-xs uppercase tracking-wider text-white/80">
+          <span className="absolute left-3 top-3 rounded bg-black/70 px-2 py-0.5 text-xs uppercase tracking-wider text-foreground/80">
             {kindLabel}
           </span>
           <div
@@ -368,7 +368,7 @@ function TriageCardView({
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div className="min-w-0">
               <h2 className="truncate text-xl font-semibold">{card.title}</h2>
-              <div className="text-xs text-white/50">
+              <div className="text-xs text-foreground/50">
                 {card.authorName ? `by ${card.authorName} · ` : ""}
                 {card.subscriptions.toLocaleString()} subs ·{" "}
                 {card.favorites.toLocaleString()} favs
@@ -380,7 +380,7 @@ function TriageCardView({
               href={card.steamUrl}
               target="_blank"
               rel="noreferrer"
-              className="rounded border border-border px-2 py-1 text-xs text-white/60 hover:border-accent hover:text-accent"
+              className="rounded border border-border px-2 py-1 text-xs text-foreground/60 hover:border-accent hover:text-accent"
             >
               Steam ↗
             </a>
@@ -398,12 +398,12 @@ function TriageCardView({
               ))}
             </div>
           ) : (
-            <div className="text-xs text-white/40">
+            <div className="text-xs text-foreground/40">
               no auto-tags — consider rejecting or opening in /admin/queue to tag manually
             </div>
           )}
 
-          <p className="whitespace-pre-wrap text-sm leading-relaxed text-white/70">
+          <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/70">
             {card.description || "(no description)"}
           </p>
         </div>
@@ -429,8 +429,8 @@ function ActionButton({
     variant === "approve"
       ? "bg-emerald-500 text-black hover:bg-emerald-400"
       : variant === "reject"
-        ? "bg-red-500 text-white hover:bg-red-400"
-        : "bg-white/10 text-white/80 hover:bg-white/20";
+        ? "bg-red-500 text-foreground hover:bg-red-400"
+        : "bg-foreground/10 text-foreground/80 hover:bg-foreground/20";
   return (
     <button
       type="button"

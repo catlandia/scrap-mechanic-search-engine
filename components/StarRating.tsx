@@ -72,7 +72,7 @@ export function StarRating({
 
   if (effectiveScore == null || !hasEnoughVotes) {
     return (
-      <div className={cn("text-[11px] italic text-white/30", className)}>
+      <div className={cn("text-[11px] italic text-foreground/30", className)}>
         {totalVotes > 0
           ? `${tag ? `${tag}: ` : ""}only ${totalVotes} vote${totalVotes === 1 ? "" : "s"}`
           : tag
@@ -97,7 +97,7 @@ export function StarRating({
         )}
         aria-label={`${label}, ${Math.round(pct)} percent positive`}
       >
-        <span className="text-white/15">★★★★★</span>
+        <span className="text-foreground/15">★★★★★</span>
         <span
           className={cn(
             "absolute inset-y-0 left-0 overflow-hidden",
@@ -110,9 +110,9 @@ export function StarRating({
         </span>
       </div>
       {showLabel && (
-        <span className="text-[11px] font-medium text-white/60">
+        <span className="text-[11px] font-medium text-foreground/60">
           {Math.round(pct)}%
-          {tag ? <span className="ml-1 text-white/40">{tag}</span> : null}
+          {tag ? <span className="ml-1 text-foreground/40">{tag}</span> : null}
         </span>
       )}
     </div>

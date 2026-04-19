@@ -8,14 +8,14 @@ export const metadata: Metadata = {
 
 export default function TermsPage() {
   return (
-    <article className="mx-auto max-w-3xl space-y-6 text-sm leading-relaxed text-white/80">
+    <article className="mx-auto max-w-3xl space-y-6 text-sm leading-relaxed text-foreground/80">
       <header className="space-y-2">
-        <h1 className="text-3xl font-bold text-white">Terms of use</h1>
-        <p className="text-white/50">Last updated April 2026.</p>
+        <h1 className="text-3xl font-bold text-foreground">Terms of use</h1>
+        <p className="text-foreground/50">Last updated April 2026.</p>
       </header>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold text-white">What this site is</h2>
+        <h2 className="text-lg font-semibold text-foreground">What this site is</h2>
         <p>
           Scrap Mechanic Search Engine is a free, community-run directory that
           links to Steam Workshop creations for the game Scrap Mechanic. We are
@@ -26,7 +26,7 @@ export default function TermsPage() {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold text-white">Account</h2>
+        <h2 className="text-lg font-semibold text-foreground">Account</h2>
         <p>
           Signing in uses Steam OpenID — we never see your Steam password. By
           signing in you agree to these terms and to our{" "}
@@ -38,9 +38,9 @@ export default function TermsPage() {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold text-white">Community rules</h2>
+        <h2 className="text-lg font-semibold text-foreground">Community rules</h2>
         <p>When posting comments, tags, suggestions, or submissions:</p>
-        <ul className="list-disc space-y-1 pl-6 text-white/70">
+        <ul className="list-disc space-y-1 pl-6 text-foreground/70">
           <li>Be decent. No harassment, slurs, or threats.</li>
           <li>No spam, ads, or off-topic content.</li>
           <li>
@@ -59,7 +59,7 @@ export default function TermsPage() {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold text-white">Your content</h2>
+        <h2 className="text-lg font-semibold text-foreground">Your content</h2>
         <p>
           Comments and suggestions you post stay credited to your persona name
           and may be kept in threaded form even after you leave, so ongoing
@@ -70,7 +70,7 @@ export default function TermsPage() {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold text-white">
+        <h2 className="text-lg font-semibold text-foreground">
           Workshop content and takedowns
         </h2>
         <p>
@@ -91,7 +91,7 @@ export default function TermsPage() {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold text-white">No warranty</h2>
+        <h2 className="text-lg font-semibold text-foreground">No warranty</h2>
         <p>
           The site is provided as-is. Features can change or disappear, the
           site can go down, data can be wrong. Don&apos;t rely on it for
@@ -100,7 +100,7 @@ export default function TermsPage() {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold text-white">Changes</h2>
+        <h2 className="text-lg font-semibold text-foreground">Changes</h2>
         <p>
           We may update these terms. Material changes will be noted in the
           release notes. Continued use after a change means you accept the

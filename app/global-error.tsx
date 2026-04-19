@@ -24,14 +24,14 @@ export default function GlobalError({
             <div aria-hidden className="text-3xl">
               ⚠
             </div>
-            <h1 className="text-xl font-semibold text-white">
+            <h1 className="text-xl font-semibold text-foreground">
               Something went wrong.
             </h1>
-            <p className="text-sm text-white/70">
+            <p className="text-sm text-foreground/70">
               A fatal error prevented the page from loading. Please try again.
             </p>
             {error.digest && (
-              <p className="text-[11px] text-white/40">ref: {error.digest}</p>
+              <p className="text-[11px] text-foreground/40">ref: {error.digest}</p>
             )}
             <button
               type="button"

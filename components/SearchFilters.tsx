@@ -88,7 +88,7 @@ export function SearchFilters({ allTags, allCategories }: Props) {
   return (
     <aside className="space-y-5 rounded-lg border border-border bg-card/60 p-4 text-sm">
       <div className="space-y-2">
-        <label className="block text-xs uppercase tracking-widest text-white/50">Search</label>
+        <label className="block text-xs uppercase tracking-widest text-foreground/50">Search</label>
         <form
           role="search"
           aria-label="Search creations"
@@ -109,7 +109,7 @@ export function SearchFilters({ allTags, allCategories }: Props) {
       </div>
 
       <div className="space-y-2">
-        <div className="text-xs uppercase tracking-widest text-white/50">Kind</div>
+        <div className="text-xs uppercase tracking-widest text-foreground/50">Kind</div>
         <div className="flex flex-wrap gap-1.5">
           {KIND_OPTIONS.map((k) => (
             <button
@@ -121,7 +121,7 @@ export function SearchFilters({ allTags, allCategories }: Props) {
                 "rounded-full border px-2.5 py-0.5 text-xs transition",
                 kind === k.value
                   ? "border-accent bg-accent/20 text-accent"
-                  : "border-border bg-background text-white/60 hover:border-white/30",
+                  : "border-border bg-background text-foreground/60 hover:border-foreground/30",
               )}
             >
               {k.label}
@@ -131,7 +131,7 @@ export function SearchFilters({ allTags, allCategories }: Props) {
       </div>
 
       <div className="space-y-2">
-        <div className="text-xs uppercase tracking-widest text-white/50">Category</div>
+        <div className="text-xs uppercase tracking-widest text-foreground/50">Category</div>
         <div className="flex flex-wrap gap-1.5">
           <button
             type="button"
@@ -141,7 +141,7 @@ export function SearchFilters({ allTags, allCategories }: Props) {
               "rounded-full border px-2.5 py-0.5 text-xs transition",
               !categorySlug
                 ? "border-accent bg-accent/20 text-accent"
-                : "border-border bg-background text-white/60 hover:border-white/30",
+                : "border-border bg-background text-foreground/60 hover:border-foreground/30",
             )}
           >
             All
@@ -156,7 +156,7 @@ export function SearchFilters({ allTags, allCategories }: Props) {
                 "rounded-full border px-2.5 py-0.5 text-xs transition",
                 categorySlug === c.slug
                   ? "border-accent bg-accent/20 text-accent"
-                  : "border-border bg-background text-white/60 hover:border-white/30",
+                  : "border-border bg-background text-foreground/60 hover:border-foreground/30",
               )}
             >
               {c.name}
@@ -167,14 +167,14 @@ export function SearchFilters({ allTags, allCategories }: Props) {
 
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <div className="text-xs uppercase tracking-widest text-white/50">
+          <div className="text-xs uppercase tracking-widest text-foreground/50">
             Tags
           </div>
           {tagSlugs.length > 0 && (
             <button
               type="button"
               onClick={() => update({ tags: null })}
-              className="text-[11px] text-white/60 hover:text-white"
+              className="text-[11px] text-foreground/60 hover:text-foreground"
             >
               clear selection
             </button>
@@ -193,7 +193,7 @@ export function SearchFilters({ allTags, allCategories }: Props) {
           if (!bucket || bucket.length === 0) return null;
           return (
             <div key={c.slug} className="space-y-1">
-              <div className="text-[11px] uppercase text-white/40">{c.name}</div>
+              <div className="text-[11px] uppercase text-foreground/40">{c.name}</div>
               <div className="flex flex-wrap gap-1.5">
                 {bucket.map((t) => {
                   const active = tagSet.has(t.slug);
@@ -207,7 +207,7 @@ export function SearchFilters({ allTags, allCategories }: Props) {
                         "rounded-full border px-2.5 py-0.5 text-xs transition",
                         active
                           ? "border-accent bg-accent/20 text-accent"
-                          : "border-border bg-background text-white/60 hover:border-white/30",
+                          : "border-border bg-background text-foreground/60 hover:border-foreground/30",
                       )}
                     >
                       {t.name}

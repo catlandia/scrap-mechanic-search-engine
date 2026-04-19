@@ -84,7 +84,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
         <header className="flex flex-wrap items-baseline justify-between gap-3">
           <h1 className="text-2xl font-semibold">Search</h1>
           <div className="flex items-center gap-4">
-            <p className="text-sm text-white/50">
+            <p className="text-sm text-foreground/50">
               {results.total} result{results.total === 1 ? "" : "s"}
             </p>
             <Suspense>
@@ -96,11 +96,11 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
         <CreationGrid items={results.items} ratingMode={ratingMode} />
 
         {totalPages > 1 && (
-          <nav className="flex items-center justify-between pt-2 text-sm text-white/60">
+          <nav className="flex items-center justify-between pt-2 text-sm text-foreground/60">
             {pageIndex > 0 ? (
               <Link
                 href={pageHref(pageIndex - 1)}
-                className="rounded border border-border px-3 py-1 hover:text-white"
+                className="rounded border border-border px-3 py-1 hover:text-foreground"
               >
                 ← Previous
               </Link>
@@ -113,7 +113,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
             {pageIndex + 1 < totalPages ? (
               <Link
                 href={pageHref(pageIndex + 1)}
-                className="rounded border border-border px-3 py-1 hover:text-white"
+                className="rounded border border-border px-3 py-1 hover:text-foreground"
               >
                 Next →
               </Link>
