@@ -39,14 +39,18 @@ export function CreationCard({
               className="object-cover transition group-hover:scale-105"
             />
           ) : (
-            <div className="flex h-full items-center justify-center text-sm text-foreground/30">
+            // Always-dark placeholder — explicit white text regardless of theme.
+            <div className="flex h-full items-center justify-center text-sm text-white/40">
               no thumbnail
             </div>
           )}
-          <span className="absolute left-2 top-2 rounded bg-black/70 px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-foreground/80">
+          {/* Kind + ID badges sit on top of the thumbnail (always dark), so
+              their text must be white in every theme — theme-adaptive tokens
+              were rendering as dark-on-dark in the light default. */}
+          <span className="absolute left-2 top-2 rounded bg-black/70 px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-white/90">
             {kindLabel}
           </span>
-          <span className="absolute right-2 top-2 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-mono text-foreground/70">
+          <span className="absolute right-2 top-2 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-mono text-white/80">
             #{creation.shortId}
           </span>
           {creation.uploadedByUserId && (

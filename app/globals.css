@@ -140,17 +140,38 @@ html[data-theme="default"] .hover\:text-red-200:hover,
 html[data-theme="default"] .hover\:text-red-300:hover {
   color: #7f1d1d;
 }
-/* Muted placeholder text — the /20, /30 shades on a light bg become
-   almost invisible. Bump the alpha floor so they stay legible. */
+/* Muted placeholder text — the /20..55 shades on a light bg become
+   hard to read. Bump the alpha floor so metadata stays legible. */
 html[data-theme="default"] .text-foreground\/20 {
-  color: color-mix(in oklch, var(--color-foreground) 45%, transparent);
+  color: color-mix(in oklch, var(--color-foreground) 50%, transparent);
 }
 html[data-theme="default"] .text-foreground\/30 {
-  color: color-mix(in oklch, var(--color-foreground) 55%, transparent);
+  color: color-mix(in oklch, var(--color-foreground) 60%, transparent);
 }
 html[data-theme="default"] .text-foreground\/35 {
-  color: color-mix(in oklch, var(--color-foreground) 55%, transparent);
+  color: color-mix(in oklch, var(--color-foreground) 60%, transparent);
 }
 html[data-theme="default"] .text-foreground\/40 {
-  color: color-mix(in oklch, var(--color-foreground) 60%, transparent);
+  color: color-mix(in oklch, var(--color-foreground) 65%, transparent);
+}
+html[data-theme="default"] .text-foreground\/45 {
+  color: color-mix(in oklch, var(--color-foreground) 70%, transparent);
+}
+html[data-theme="default"] .text-foreground\/50 {
+  color: color-mix(in oklch, var(--color-foreground) 72%, transparent);
+}
+html[data-theme="default"] .text-foreground\/55 {
+  color: color-mix(in oklch, var(--color-foreground) 75%, transparent);
+}
+
+/* `text-accent` on a `bg-accent/20` pill is the common kind/category chip
+   pattern. In dark themes orange-on-pale-orange has enough contrast because
+   the surrounding body is dark, but on the light default the pill and the
+   text collapse into each other. Darken the text token only (leaves button
+   fills and accent strokes alone — those still use --color-accent). */
+html[data-theme="default"] .text-accent {
+  color: oklch(0.52 0.22 48);
+}
+html[data-theme="default"] .hover\:text-accent:hover {
+  color: oklch(0.45 0.22 48);
 }
