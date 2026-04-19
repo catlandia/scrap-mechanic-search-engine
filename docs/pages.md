@@ -107,7 +107,9 @@ Full-featured search with URL-based state (links are shareable).
 
 Site-rating sorts use a CASE expression so items below the 5-vote floor fall to `NULLS LAST`, preventing a single upvote from dominating the ranking.
 
-**Tag filtering logic:** All requested tag slugs must match — intersection, not union. Implemented as a `DISTINCT COUNT HAVING` subquery on `creationTags`.
+**Tag filtering logic:** All requested tag slugs in `?tags=` must match — intersection. Implemented as a `DISTINCT COUNT HAVING` subquery on `creationTags`.
+
+**Negative tag filters:** `?exclude=<slug,slug>` drops any creation carrying at least one of those tags. Combines with `tags` — e.g. `?tags=car&exclude=mod` returns cars that aren't mod-class. Single-click a chip on the sidebar to include, double-click to exclude. A tag is never in both sets at once; hand-crafted URLs that list the same slug in both get the exclude side.
 
 **Text search:** Postgres tsvector (`searchVector` on `creations`, GIN-indexed). `q` is compiled in `tsQueryExpr` as the OR of two subqueries: `websearch_to_tsquery('english', q)` (phrase quotes, `OR`, `-negation`) plus a prefix pass `to_tsquery('english', 'word1:* & word2:* & …')` built from the `\w+` tokens of the input. That way stems match (`cannon`/`cannons`) AND early-typing prefixes match (`cann` finds `cannon`) without losing the websearch syntax goodies. Ranking uses `ts_rank_cd` against the websearch side only so prefix-only matches don't dominate complete hits.
 

@@ -44,7 +44,12 @@ export function SearchFilters({ allTags, allCategories }: Props) {
     const raw = searchParams.get("tags") ?? "";
     return raw.split(",").map((s) => s.trim()).filter(Boolean);
   }, [searchParams]);
+  const excludeSlugs = useMemo(() => {
+    const raw = searchParams.get("exclude") ?? "";
+    return raw.split(",").map((s) => s.trim()).filter(Boolean);
+  }, [searchParams]);
   const tagSet = useMemo(() => new Set(tagSlugs), [tagSlugs]);
+  const excludeSet = useMemo(() => new Set(excludeSlugs), [excludeSlugs]);
 
   const update = useCallback(
     (patch: Record<string, string | null>) => {
@@ -60,12 +65,24 @@ export function SearchFilters({ allTags, allCategories }: Props) {
     [router, searchParams],
   );
 
-  function toggleTag(slug: string) {
-    const current = new Set(tagSlugs);
-    if (current.has(slug)) current.delete(slug);
-    else current.add(slug);
-    const next = Array.from(current).join(",");
-    update({ tags: next || null });
+  // Tag tri-state:
+  //   neutral → click → included  → click → neutral
+  //   neutral → dblclick → excluded → dblclick → neutral
+  //   included → dblclick → excluded (switch)
+  //   excluded → click → included   (switch)
+  // A tag never exists in both sets at once.
+  function cycleTag(slug: string, to: "include" | "exclude") {
+    const nextInclude = new Set(tagSlugs);
+    const nextExclude = new Set(excludeSlugs);
+    nextInclude.delete(slug);
+    nextExclude.delete(slug);
+    if (to === "include" && !tagSet.has(slug)) nextInclude.add(slug);
+    else if (to === "exclude" && !excludeSet.has(slug)) nextExclude.add(slug);
+    update({
+      tags: nextInclude.size > 0 ? Array.from(nextInclude).join(",") : null,
+      exclude:
+        nextExclude.size > 0 ? Array.from(nextExclude).join(",") : null,
+    });
   }
 
   const [tagFilter, setTagFilter] = useState("");
@@ -170,16 +187,21 @@ export function SearchFilters({ allTags, allCategories }: Props) {
           <div className="text-xs uppercase tracking-widest text-foreground/50">
             Tags
           </div>
-          {tagSlugs.length > 0 && (
+          {(tagSlugs.length > 0 || excludeSlugs.length > 0) && (
             <button
               type="button"
-              onClick={() => update({ tags: null })}
+              onClick={() => update({ tags: null, exclude: null })}
               className="text-[11px] text-foreground/60 hover:text-foreground"
             >
               clear selection
             </button>
           )}
         </div>
+        <p className="text-[11px] text-foreground/45">
+          <span className="text-foreground/65">Click</span> to include,{" "}
+          <span className="text-foreground/65">double-click</span> to exclude.
+          Mix them — e.g. <em>car</em> but not <em>mod</em>.
+        </p>
         <input
           type="text"
           value={tagFilter}
@@ -196,20 +218,45 @@ export function SearchFilters({ allTags, allCategories }: Props) {
               <div className="text-[11px] uppercase text-foreground/40">{c.name}</div>
               <div className="flex flex-wrap gap-1.5">
                 {bucket.map((t) => {
-                  const active = tagSet.has(t.slug);
+                  const included = tagSet.has(t.slug);
+                  const excluded = excludeSet.has(t.slug);
                   return (
                     <button
                       key={t.slug}
                       type="button"
-                      onClick={() => toggleTag(t.slug)}
-                      aria-pressed={active}
+                      onClick={() => cycleTag(t.slug, "include")}
+                      onDoubleClick={() => cycleTag(t.slug, "exclude")}
+                      aria-pressed={included}
+                      aria-label={
+                        excluded
+                          ? `${t.name} (excluded — click to include, double-click to clear)`
+                          : included
+                            ? `${t.name} (included — click to clear, double-click to exclude)`
+                            : `${t.name} (click to include, double-click to exclude)`
+                      }
+                      title={
+                        excluded
+                          ? "Excluded. Click to include, double-click to clear."
+                          : included
+                            ? "Included. Click to clear, double-click to exclude."
+                            : "Click to include, double-click to exclude."
+                      }
                       className={cn(
-                        "rounded-full border px-2.5 py-0.5 text-xs transition",
-                        active
-                          ? "border-accent bg-accent/20 text-accent"
-                          : "border-border bg-background text-foreground/60 hover:border-foreground/30",
+                        "rounded-full border px-2.5 py-0.5 text-xs transition select-none",
+                        included &&
+                          "border-accent bg-accent/20 text-accent",
+                        excluded &&
+                          "border-red-500/60 bg-red-500/15 text-red-300 line-through decoration-red-400/60",
+                        !included &&
+                          !excluded &&
+                          "border-border bg-background text-foreground/60 hover:border-foreground/30",
                       )}
                     >
+                      {excluded && (
+                        <span aria-hidden className="mr-0.5 font-mono">
+                          ¬
+                        </span>
+                      )}
                       {t.name}
                     </button>
                   );

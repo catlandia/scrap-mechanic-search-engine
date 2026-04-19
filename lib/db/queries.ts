@@ -232,6 +232,10 @@ export interface SearchFilters {
   kind?: string;
   categorySlug?: string;
   tagSlugs?: string[];
+  // Creations that carry any of these tags are filtered OUT. Combines with
+  // tagSlugs: e.g. tagSlugs=['car'] + excludeTagSlugs=['mod'] → cars that
+  // aren't mod-class creations.
+  excludeTagSlugs?: string[];
   q?: string;
   sort?: SortMode;
 }
@@ -290,6 +294,27 @@ export async function searchApproved(
       );
     if (rows.length === 0) return { items: [], total: 0, page, pageSize };
     where.push(inArray(creations.id, rows.map((r) => r.id)));
+  }
+
+  // Exclude: OR semantics — a creation matching ANY of the excluded tags is
+  // dropped. Silently drop slugs that don't resolve (user might have an
+  // outdated URL referencing a deleted tag; no reason to blank the results).
+  if (filters.excludeTagSlugs && filters.excludeTagSlugs.length > 0) {
+    const excludeIds = await tagIdsForSlugs(filters.excludeTagSlugs);
+    if (excludeIds.length > 0) {
+      const excluded = await db
+        .selectDistinct({ id: creationTags.creationId })
+        .from(creationTags)
+        .where(inArray(creationTags.tagId, excludeIds));
+      if (excluded.length > 0) {
+        where.push(
+          sql`${creations.id} NOT IN (${sql.join(
+            excluded.map((r) => sql`${r.id}`),
+            sql`, `,
+          )})`,
+        );
+      }
+    }
   }
 
   if (filters.categorySlug) {
