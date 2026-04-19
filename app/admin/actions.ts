@@ -611,6 +611,10 @@ export async function addInfluencerAutograntAction(formData: FormData) {
   const label = String(formData.get("label") ?? "").trim().slice(0, 200) || null;
   const steamid = await parseSteamInput(raw);
   if (!steamid) throw new Error("could_not_resolve_steamid");
+  // Defensive: the creator shouldn't autogrant themselves. They can
+  // manually grant via /admin/users for a one-off (the catalog includes
+  // manual-only badges too), but the influencer allowlist is for others.
+  if (steamid === actor.steamid) throw new Error("cannot_autogrant_self");
 
   await addAutogrant({
     slug,
@@ -1130,9 +1134,16 @@ export async function muteUser(formData: FormData) {
 export async function clearMute(formData: FormData) {
   await requireEliteMod();
   const steamid = String(formData.get("steamid") ?? "").trim();
-  if (!steamid) throw new Error("steamid required");
+  if (!/^\d{1,25}$/.test(steamid)) throw new Error("invalid_steamid");
 
   const db = getDb();
+  const [target] = await db
+    .select({ steamid: users.steamid })
+    .from(users)
+    .where(eq(users.steamid, steamid))
+    .limit(1);
+  if (!target) throw new Error("user_not_found");
+
   await db
     .update(users)
     .set({ mutedUntil: null, muteReason: null })

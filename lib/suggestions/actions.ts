@@ -99,7 +99,7 @@ export async function submitSuggestion(formData: FormData): Promise<{ ok: boolea
       code === "steam_too_new"
         ? "Your Steam account needs to be at least 7 days old to post an idea."
         : code === "steam_age_unknown"
-          ? "We couldn't verify your Steam account age because your Steam profile is private. Make your profile public or ask a moderator to allow you through."
+          ? "We couldn't verify your Steam account age because your Steam profile is private. Make your profile public, or send a moderator an appeal at /verify/appeal and they'll flip the gate on your account."
           : code === "signed_out"
             ? "You need to sign in first."
             : code === "banned"

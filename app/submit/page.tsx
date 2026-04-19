@@ -12,6 +12,16 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
+const MIN_STEAM_AGE_DAYS = 7;
+
+function isAgeGated(user: NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>): boolean {
+  if (user.bypassAgeGate) return false;
+  if (!user.steamCreatedAt) return true; // private profile — unknown
+  const ageDays =
+    (Date.now() - user.steamCreatedAt.getTime()) / 86_400_000;
+  return ageDays < MIN_STEAM_AGE_DAYS;
+}
+
 export default async function SubmitPage() {
   const user = await getCurrentUser();
 
@@ -52,6 +62,29 @@ export default async function SubmitPage() {
       ) : isMuted(user) ? (
         <div className="rounded-md border border-sky-500/40 bg-sky-500/10 px-5 py-4 text-sm text-sky-200">
           You&apos;re currently muted — submissions are disabled.
+        </div>
+      ) : isAgeGated(user) ? (
+        <div className="space-y-3 rounded-md border border-amber-500/40 bg-amber-500/10 px-5 py-4 text-sm">
+          <div className="font-semibold text-amber-200">
+            We couldn&apos;t verify your Steam account age.
+          </div>
+          <p className="text-foreground/70">
+            {user.steamCreatedAt == null
+              ? "Your Steam profile is private, so timecreated is hidden — we can't tell if your account is at least 7 days old."
+              : "Your Steam account is less than 7 days old."}
+            {" "}Submissions stay closed until we can verify you.
+          </p>
+          <p className="text-foreground/70">
+            If you&apos;d rather keep your profile private, send a moderator a
+            quick appeal and they&apos;ll flip the gate on your account
+            manually.
+          </p>
+          <Link
+            href="/verify/appeal"
+            className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-medium text-black hover:bg-accent-strong"
+          >
+            Appeal the age gate →
+          </Link>
         </div>
       ) : (
         <SubmitCreationForm />

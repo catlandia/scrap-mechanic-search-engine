@@ -21,7 +21,7 @@ import {
   users,
   type ReportReason,
 } from "@/lib/db/schema";
-import { isModerator } from "@/lib/auth/roles";
+import { effectiveRole, isModerator } from "@/lib/auth/roles";
 import type { UserRole } from "@/lib/db/schema";
 import {
   detectKind,
@@ -58,7 +58,7 @@ function friendlyGateError(code: string): string {
     case "steam_too_new":
       return "Your Steam account needs to be at least 7 days old.";
     case "steam_age_unknown":
-      return "We couldn't verify your Steam account age because your Steam profile is private. Make your profile public or ask a moderator to allow you through.";
+      return "We couldn't verify your Steam account age because your Steam profile is private. Make your profile public, or send a moderator an appeal at /verify/appeal and they'll flip the gate on your account.";
     default:
       return code;
   }
@@ -447,6 +447,32 @@ export async function postComment(formData: FormData): Promise<void> {
 
   const db = getDb();
 
+  // Verify the target is something the user is allowed to post on. Without
+  // this, a determined user could post to a pending/archived/rejected
+  // creation by crafting a direct action call (the UI doesn't expose the
+  // path, but the server action is reachable). FK already handles the
+  // "nonexistent" case.
+  if (creationId) {
+    const [target] = await db
+      .select({ status: creations.status })
+      .from(creations)
+      .where(eq(creations.id, creationId))
+      .limit(1);
+    if (!target || target.status !== "approved") {
+      throw new Error("target_not_postable");
+    }
+  } else if (profileSteamid) {
+    const [owner] = await db
+      .select({ hardBanned: users.hardBanned })
+      .from(users)
+      .where(eq(users.steamid, profileSteamid))
+      .limit(1);
+    if (!owner) throw new Error("target_not_postable");
+    // Hard-banned owners lose their wall — they can't see anything on this
+    // site anyway, and their wall shouldn't accept new posts.
+    if (owner.hardBanned) throw new Error("target_not_postable");
+  }
+
   // Rate limit: 1 comment per 30 seconds per user.
   const [recent] = await db
     .select({ n: sql<number>`count(*)::int` })
@@ -587,7 +613,9 @@ export async function deleteComment(formData: FormData): Promise<void> {
   if (!row) throw new Error("comment_not_found");
 
   const isOwner = row.userId === user.steamid;
-  const isMod = isModerator(user.role as UserRole);
+  // effectiveRole() strips mod powers while a user is time-banned, so a
+  // mid-ban moderator can't still delete comments.
+  const isMod = isModerator(effectiveRole(user));
   if (!isOwner && !isMod) throw new Error("forbidden");
 
   await db

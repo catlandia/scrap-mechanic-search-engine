@@ -17,13 +17,14 @@
 
 ## Quick orientation
 
-- Current version: **V7.0 — Beta 2.0**
+- Current version: **V7.1 — Beta 2.0 + age-gate appeal flow + security hardening**
 - Stack: Next.js 15 App Router · TypeScript · Tailwind v4 · Drizzle + Neon · iron-session · Steam OpenID
 - Hard constraint: everything must remain on **free tiers** — no paid APIs, no metered per-item costs
 - Transactions are **not available** (neon-http driver) — writes are sequential, partial state is accepted
 
-## Recent changes (V4.6–7.0)
+## Recent changes (V4.6–7.1)
 
+- **V7.1 — age-gate appeal flow + security hardening.** Pre-launch follow-up to V7.0. (1) **Appeal flow** — legit users with private Steam profiles (where `timecreated` is hidden) were hitting a dead end: the age gate fail-closes, blocking submit/comment/vote/suggest with no in-site way to reach a mod. New `/verify/appeal` route takes a short written appeal and broadcasts `mod_age_gate_appeal` to the moderator tier with the user's steamid + message. Rate-limited to 1 per 24 h. Not age-gated itself (would defeat the purpose). The `/submit` page now detects the age-gate state server-side and shows a dedicated appeal panel instead of letting the user hit the vague error at form submit. Gate error strings on every action now point at `/verify/appeal` directly. (2) **Security audit fixes** from a focused pre-launch review: `deleteComment` now computes moderator authority via `effectiveRole()` instead of raw `user.role`, so a time-banned mod correctly loses delete powers while the ban is active. `postComment` now verifies the target creation is `approved` (or the target profile owner exists and isn't hard-banned) before inserting — previously a user could post to a pending/archived item by crafting a direct action call since the UI never exposed the path. `addInfluencerAutograntAction` rejects self-grants. `clearMute` now regex-validates steamid and throws `user_not_found` if the row doesn't exist, matching `muteUser`'s behavior. The rest of the audit findings were either false positives (the agent misread ownership checks) or defense-in-depth already covered by FKs.
 - **V7.0 — Beta 2.0 polish pass.** Audit-driven cleanup across theme consistency, empty/error/loading states, and code quality before the next public milestone.
   - **Theme:** extended `globals.css`'s V5.6 default-theme remap to also catch alpha variants (`text-red-100/80`, `text-emerald-200/70`, etc.) via attribute selectors, so admin pages and error cards stop going dark-on-dark on the light default. Fixed a stray `bg-white/[0.02]` hardcode on the mod guide.
   - **Loading:** added `loading.tsx` skeletons for `/new`, `/[kind]`, `/search`, and `/creators` — slow-query routes now show a stable header + placeholder grid instead of a blank viewport while the server awaits Neon. New shared `GridSkeleton` / `HeaderSkeleton` in `components/GridSkeleton.tsx`.

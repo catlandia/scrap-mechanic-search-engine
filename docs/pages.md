@@ -34,6 +34,7 @@ All public pages are in `app/` using Next.js 15 App Router. Server Components by
 | `/terms` | `app/terms/page.tsx` | Terms of use |
 | `/privacy` | `app/privacy/page.tsx` | Privacy policy |
 | `/about` | `app/about/page.tsx` | Curation criteria — explains thresholds + admin review + community submission path |
+| `/verify/appeal` | `app/verify/appeal/page.tsx` | Age-gate appeal form. Sign-in gated but NOT age-gated — private-profile users need it. Broadcasts `mod_age_gate_appeal` to moderator tier with the user's steamid + message. Rate-limited to 1 per 24 h. Noindex. |
 
 **Indexing:** `/me/*`, `/verify`, `/auth/*`, `/profile/[steamid]`, `/suggestions/new`, and `/submit` are all `noindex`. `robots.ts` disallows the same set plus `/admin/` and `/api/`.
 
