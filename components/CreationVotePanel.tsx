@@ -8,6 +8,7 @@ import { StarRating } from "@/components/StarRating";
 import type { RoleVoteBreakdown } from "@/lib/db/queries";
 import { RoleBreakdown } from "@/components/RoleBreakdown";
 import { Spinner } from "@/components/Spinner";
+import { useToast } from "@/components/Toast";
 
 export function CreationVotePanel({
   creationId,
@@ -21,6 +22,7 @@ export function CreationVotePanel({
   signedIn: boolean;
 }) {
   const router = useRouter();
+  const toast = useToast();
   const [userVote, setUserVote] = useState<-1 | 0 | 1>(initialUserVote);
   const [isPending, startTransition] = useTransition();
   // Which button the user just clicked. Drives the inline spinner so the
@@ -46,7 +48,18 @@ export function CreationVotePanel({
         router.refresh();
       } catch (err) {
         setUserVote(prev);
-        console.error(err);
+        const msg = err instanceof Error ? err.message : "Couldn't record vote.";
+        // Surface the specific rate-limit / auth reasons instead of the
+        // console-only silence this used to have.
+        toast.error(
+          msg === "rate_limited"
+            ? "Too many votes — slow down for a minute."
+            : msg === "signed_out"
+              ? "Sign in with Steam to vote."
+              : msg === "cannot_self_vote"
+                ? "You can't vote on your own creation."
+                : msg,
+        );
       } finally {
         setPendingDir(null);
       }

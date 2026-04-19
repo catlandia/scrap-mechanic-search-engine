@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { reportCreation } from "@/lib/community/actions";
 import { Spinner } from "@/components/Spinner";
+import { useToast } from "@/components/Toast";
 import { cn } from "@/lib/utils";
 
 const REPORT_REASON_OPTIONS: { value: string; label: string }[] = [
@@ -22,6 +23,7 @@ export function ReportButton({
   signedIn: boolean;
 }) {
   const router = useRouter();
+  const toast = useToast();
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState("wrong_tags");
   const [customText, setCustomText] = useState("");
@@ -81,10 +83,11 @@ export function ReportButton({
                 await reportCreation(fd);
                 setSubmitted(true);
                 router.refresh();
+                toast.success("Report sent to moderators.");
               } catch (err) {
-                setError(
-                  err instanceof Error ? err.message : "failed",
-                );
+                const msg = err instanceof Error ? err.message : "failed";
+                setError(msg);
+                toast.error(msg);
               }
             });
           }}

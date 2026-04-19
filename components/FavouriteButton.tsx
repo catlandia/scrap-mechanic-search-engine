@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toggleFavourite } from "@/lib/community/actions";
 import { Spinner } from "@/components/Spinner";
+import { useToast } from "@/components/Toast";
 import { cn } from "@/lib/utils";
 
 export function FavouriteButton({
@@ -16,6 +17,7 @@ export function FavouriteButton({
   signedIn: boolean;
 }) {
   const router = useRouter();
+  const toast = useToast();
   const [favourited, setFavourited] = useState(initialFavourited);
   const [isPending, startTransition] = useTransition();
 
@@ -30,9 +32,14 @@ export function FavouriteButton({
       try {
         const result = await toggleFavourite(creationId);
         setFavourited(result.favourited);
+        toast.success(
+          result.favourited ? "Added to your favourites." : "Removed from favourites.",
+        );
       } catch (err) {
         setFavourited(prev);
-        console.error(err);
+        toast.error(
+          err instanceof Error ? err.message : "Couldn't update favourite.",
+        );
       }
     });
   }

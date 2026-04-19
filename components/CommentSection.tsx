@@ -13,6 +13,7 @@ import type { CreationCommentRow } from "@/lib/db/queries";
 import { RoleBadge } from "@/components/RoleBadge";
 import { UserName } from "@/components/UserName";
 import { Spinner } from "@/components/Spinner";
+import { useToast } from "@/components/Toast";
 import { cn } from "@/lib/utils";
 import type { UserRole } from "@/lib/db/schema";
 
@@ -86,6 +87,7 @@ export function CommentSection({
   heading?: string;
 }) {
   const router = useRouter();
+  const toast = useToast();
   const [body, setBody] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -115,6 +117,7 @@ export function CommentSection({
         await postComment(fd);
         setBody("");
         router.refresh();
+        toast.success("Comment posted.");
       } catch (err) {
         setError(err instanceof Error ? err.message : "failed");
       }
@@ -132,6 +135,7 @@ export function CommentSection({
           await postComment(fd);
           setReplyingTo(null);
           router.refresh();
+          toast.success("Reply posted.");
           resolve();
         } catch (err) {
           reject(err);
@@ -149,15 +153,21 @@ export function CommentSection({
         router.refresh();
       } catch (err) {
         const msg = err instanceof Error ? err.message : "failed";
-        if (msg === "cannot_self_vote") {
-          setVoteError("You can't vote on your own comment.");
-        } else if (msg === "rate_limited") {
-          setVoteError("Too many votes — slow down for a minute.");
-        } else if (msg.startsWith("signed_out") || msg.startsWith("banned") || msg.startsWith("muted")) {
-          setVoteError("You can't vote right now.");
-        } else {
-          setVoteError(msg);
-        }
+        const friendly =
+          msg === "cannot_self_vote"
+            ? "You can't vote on your own comment."
+            : msg === "rate_limited"
+              ? "Too many votes — slow down for a minute."
+              : msg.startsWith("signed_out") ||
+                  msg.startsWith("banned") ||
+                  msg.startsWith("muted")
+                ? "You can't vote right now."
+                : msg;
+        // Keep the inline voteError div for accessible live-region
+        // announcement, but also pop a toast so the feedback is visible
+        // even when the user isn't looking at the top of the comment list.
+        setVoteError(friendly);
+        toast.error(friendly);
       } finally {
         setPendingAction(null);
       }
@@ -174,11 +184,12 @@ export function CommentSection({
         await deleteComment(fd);
         setConfirmingDeleteId(null);
         router.refresh();
+        toast.success("Comment deleted.");
       } catch (err) {
-        console.error(err);
-        setDeleteError(
-          err instanceof Error ? err.message : "Failed to delete comment.",
-        );
+        const msg =
+          err instanceof Error ? err.message : "Failed to delete comment.";
+        setDeleteError(msg);
+        toast.error(msg);
       } finally {
         setPendingAction(null);
       }
@@ -621,6 +632,7 @@ function ReportForm({
   onCancel: () => void;
 }) {
   const router = useRouter();
+  const toast = useToast();
   const [reason, setReason] = useState("spam");
   const [customText, setCustomText] = useState("");
   const [err, setErr] = useState<string | null>(null);
@@ -649,6 +661,7 @@ function ReportForm({
             await reportComment(fd);
             setSubmitted(true);
             router.refresh();
+            toast.success("Report sent to moderators.");
             setTimeout(onDone, 1500);
           } catch (e) {
             const msg = e instanceof Error ? e.message : "failed";

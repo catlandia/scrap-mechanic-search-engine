@@ -4,9 +4,11 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { submitSuggestion } from "@/lib/suggestions/actions";
 import { Spinner } from "@/components/Spinner";
+import { useToast } from "@/components/Toast";
 
 export function SuggestionForm() {
   const router = useRouter();
+  const toast = useToast();
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [result, setResult] = useState<{ ok: boolean; error?: string } | null>(
@@ -26,6 +28,9 @@ export function SuggestionForm() {
         setTitle("");
         setBody("");
         router.refresh();
+        toast.success("Idea sent to the Creator.");
+      } else if (r.error) {
+        toast.error(r.error);
       }
     });
   }

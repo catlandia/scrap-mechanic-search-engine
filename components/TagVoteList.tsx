@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { breakdownTitle } from "@/components/RoleBreakdown";
 import { TagAutocomplete, type TagSuggestion } from "@/components/TagAutocomplete";
 import { CreatorTagForceConfirmButton } from "@/components/CreatorTagForceConfirmButton";
+import { useToast } from "@/components/Toast";
 
 interface TagChipState {
   viewerVote: -1 | 0 | 1;
@@ -27,6 +28,7 @@ export function TagVoteList({
   viewerIsCreator?: boolean;
 }) {
   const router = useRouter();
+  const toast = useToast();
   const [stateByTag, setStateByTag] = useState<Record<number, TagChipState>>(
     () => {
       const init: Record<number, TagChipState> = {};
@@ -58,7 +60,12 @@ export function TagVoteList({
           ...prev,
           [tagId]: { viewerVote: current, pending: false },
         }));
-        console.error(err);
+        const msg = err instanceof Error ? err.message : "Couldn't record vote.";
+        toast.error(
+          msg === "rate_limited"
+            ? "Too many tag votes — slow down for a minute."
+            : msg,
+        );
       } finally {
         setStateByTag((prev) => ({
           ...prev,
@@ -81,8 +88,14 @@ export function TagVoteList({
     try {
       await suggestTag(fd);
       router.refresh();
+      toast.success(`Suggested "${pick.name}" — your vote is the first upvote.`);
     } catch (err) {
-      console.error(err);
+      const msg = err instanceof Error ? err.message : "Couldn't suggest tag.";
+      toast.error(
+        msg === "rate_limited"
+          ? "Too many tag suggestions — slow down for a minute."
+          : msg,
+      );
     }
   }
 

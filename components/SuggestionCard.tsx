@@ -6,6 +6,7 @@ import { voteSuggestion, type SuggestionRow } from "@/lib/suggestions/actions";
 import { RoleBadge } from "@/components/RoleBadge";
 import { UserName } from "@/components/UserName";
 import { Spinner } from "@/components/Spinner";
+import { useToast } from "@/components/Toast";
 import type { UserRole } from "@/lib/db/schema";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +20,7 @@ export function SuggestionCard({
   readOnly?: boolean;
 }) {
   const router = useRouter();
+  const toast = useToast();
   const [userVote, setUserVote] = useState<-1 | 0 | 1>(suggestion.viewerVote);
   const [net, setNet] = useState(suggestion.voteCount);
   const [up, setUp] = useState(suggestion.upCount);
@@ -58,7 +60,14 @@ export function SuggestionCard({
         setNet((n) => n - netDelta);
         setUp((n) => n - upDelta);
         setDown((n) => n - downDelta);
-        console.error(err);
+        const msg = err instanceof Error ? err.message : "Couldn't record vote.";
+        toast.error(
+          msg === "rate_limited"
+            ? "Too many votes — slow down for a minute."
+            : msg === "not_votable"
+              ? "This idea isn't open for voting."
+              : msg,
+        );
       } finally {
         setPendingDir(null);
       }

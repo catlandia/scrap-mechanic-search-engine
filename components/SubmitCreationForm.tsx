@@ -5,9 +5,11 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { submitCreation, type SubmitResult } from "@/lib/community/actions";
 import { Spinner } from "@/components/Spinner";
+import { useToast } from "@/components/Toast";
 
 export function SubmitCreationForm() {
   const router = useRouter();
+  const toast = useToast();
   const [input, setInput] = useState("");
   const [result, setResult] = useState<SubmitResult | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -23,6 +25,9 @@ export function SubmitCreationForm() {
       if (r.ok) {
         setInput("");
         router.refresh();
+        toast.success(`${r.title} queued for mod review.`);
+      } else if (r.error) {
+        toast.error(r.error);
       }
     });
   }
