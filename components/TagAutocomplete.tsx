@@ -8,6 +8,7 @@ export interface TagSuggestion {
   slug: string;
   name: string;
   categoryId: number | null;
+  categoryName: string | null;
   usage: number;
 }
 
@@ -148,7 +149,14 @@ export function TagAutocomplete({
                     : "text-foreground/80 hover:bg-foreground/5",
                 )}
               >
-                <span>{t.name}</span>
+                <span>
+                  {t.name}
+                  {t.categoryName && (
+                    <span className="ml-1 text-foreground/45">
+                      ({t.categoryName})
+                    </span>
+                  )}
+                </span>
                 <span className="text-[10px] text-foreground/40">
                   {t.usage.toLocaleString()}
                   {t.usage === 1 ? " use" : " uses"}

@@ -138,6 +138,11 @@ export function TagVoteList({
               )}
             >
               {t.name}
+              {t.categoryName && (
+                <span className="ml-1 font-normal text-foreground/45">
+                  ({t.categoryName})
+                </span>
+              )}
             </Link>
             <span className="select-none font-mono text-[10px] text-foreground/50">
               {net >= 0 ? `+${net}` : net}

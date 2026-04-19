@@ -64,7 +64,7 @@ Returns all visible tags for a creation with vote breakdowns:
 
 ```ts
 {
-  tagId, tagSlug, tagName, categoryId,
+  tagId, tagSlug, tagName, categoryId, categoryName,
   source, confirmed, rejected,
   upvotes, downvotes,                    // overall counts
   viewerVote,                            // -1 | 0 | 1 for the current viewer

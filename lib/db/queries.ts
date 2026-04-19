@@ -676,6 +676,7 @@ export interface TagWithVotes extends RoleVoteBreakdown {
   slug: string;
   name: string;
   categoryId: number | null;
+  categoryName: string | null;
   source: string;
   confirmed: boolean;
   rejected: boolean;
@@ -695,12 +696,14 @@ export async function getCreationTagsWithVotes(
       slug: tags.slug,
       name: tags.name,
       categoryId: tags.categoryId,
+      categoryName: categories.name,
       source: creationTags.source,
       confirmed: creationTags.confirmed,
       rejected: creationTags.rejected,
     })
     .from(creationTags)
     .innerJoin(tags, eq(creationTags.tagId, tags.id))
+    .leftJoin(categories, eq(categories.id, tags.categoryId))
     .where(eq(creationTags.creationId, creationId));
 
   if (creationTagRows.length === 0) return [];
@@ -745,6 +748,7 @@ export async function getCreationTagsWithVotes(
       slug: r.slug,
       name: r.name,
       categoryId: r.categoryId,
+      categoryName: r.categoryName ?? null,
       source: r.source,
       confirmed: r.confirmed,
       rejected: r.rejected,

@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { and, asc, eq, ilike, inArray, sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
-import { creationTags, creations, tags } from "@/lib/db/schema";
+import { categories, creationTags, creations, tags } from "@/lib/db/schema";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -23,8 +23,15 @@ export async function GET(req: NextRequest) {
   const db = getDb();
 
   const matched = await db
-    .select({ id: tags.id, slug: tags.slug, name: tags.name, categoryId: tags.categoryId })
+    .select({
+      id: tags.id,
+      slug: tags.slug,
+      name: tags.name,
+      categoryId: tags.categoryId,
+      categoryName: categories.name,
+    })
     .from(tags)
+    .leftJoin(categories, eq(categories.id, tags.categoryId))
     .where(
       q
         ? sql`(${tags.name} ILIKE ${`%${q}%`} OR ${tags.slug} ILIKE ${`%${q}%`})`
@@ -60,6 +67,7 @@ export async function GET(req: NextRequest) {
     slug: t.slug,
     name: t.name,
     categoryId: t.categoryId,
+    categoryName: t.categoryName ?? null,
     usage: usageByTag.get(t.id) ?? 0,
   }));
 
