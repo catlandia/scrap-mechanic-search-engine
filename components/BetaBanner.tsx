@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 
 // Bump the version suffix whenever banner copy meaningfully changes — a new
 // key re-shows the banner to users who dismissed the previous message.
-const DISMISS_KEY = "smse_beta_dismissed_v2";
+const DISMISS_KEY = "smse_beta_dismissed_v2_1";
 
 export function BetaBanner() {
   const [hidden, setHidden] = useState(true);
@@ -38,20 +38,20 @@ export function BetaBanner() {
     >
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2 text-xs sm:text-sm">
         <span className="font-semibold uppercase tracking-wider text-amber-300">
-          Beta 2.0
+          Beta 2.1
         </span>
         <span className="text-foreground/70">
           <span className="font-semibold text-amber-200">New:</span>{" "}
-          comment threads &amp; votes, profile walls, creators directory,
-          badges, prefix search, simpler nav. Rough edges remain — keep the
-          feedback coming.
+          loading spinners and toasts everywhere, rewritten guide with a
+          glossary, a live ingest progress bar, and a{" "}
+          <Link
+            href="/changelog"
+            className="text-amber-200 underline underline-offset-2 hover:text-foreground"
+          >
+            changelog page
+          </Link>
+          . See the rest under What&apos;s new.
         </span>
-        <Link
-          href="/about"
-          className="text-amber-200 underline underline-offset-2 hover:text-foreground"
-        >
-          How it works →
-        </Link>
         <button
           type="button"
           onClick={dismiss}

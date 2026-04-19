@@ -152,8 +152,11 @@ function EntryCard({ entry }: { entry: ChangelogEntryRow }) {
             >
               {entry.tier === "update" ? "Update" : "Patch"}
             </span>
-            {published && (
-              <time className="text-xs text-foreground/50" dateTime={entry.publishedAt?.toISOString?.()}>
+            {published && entry.publishedAt && (
+              <time
+                className="text-xs text-foreground/50"
+                dateTime={entry.publishedAt.toISOString()}
+              >
                 {published}
               </time>
             )}

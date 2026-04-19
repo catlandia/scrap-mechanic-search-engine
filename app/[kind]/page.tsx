@@ -14,6 +14,10 @@ import type { CreationKind } from "@/lib/db/schema";
 import { getRatingMode } from "@/lib/prefs.server";
 
 export const dynamic = "force-dynamic";
+// Reject unknown slugs with a real 404 instead of rendering the not-found
+// page at status 200. Only slugs enumerated in generateStaticParams() below
+// are accepted; anything else gets the framework 404 response code.
+export const dynamicParams = false;
 
 const SLUG_TO_KIND: Record<string, { kind: CreationKind; label: string; description: string }> = {
   blueprints: {

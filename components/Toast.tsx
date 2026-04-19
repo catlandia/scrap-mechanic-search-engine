@@ -120,6 +120,18 @@ function ToastItem({
   // keyed off state avoids importing a real animation library.
   const [entered, setEntered] = useState(false);
   const [leaving, setLeaving] = useState(false);
+  // Exit-animation timer; tracked in a ref so unmount (or a second click)
+  // can cancel it instead of leaving orphaned setTimeouts behind.
+  const exitTimerRef = useRef<number | null>(null);
+
+  function scheduleExit() {
+    setLeaving(true);
+    if (exitTimerRef.current) window.clearTimeout(exitTimerRef.current);
+    exitTimerRef.current = window.setTimeout(() => {
+      exitTimerRef.current = null;
+      onDismiss();
+    }, 200);
+  }
 
   useEffect(() => {
     const raf = window.requestAnimationFrame(() => setEntered(true));
@@ -127,17 +139,17 @@ function ToastItem({
   }, []);
 
   useEffect(() => {
-    const t = window.setTimeout(() => {
-      setLeaving(true);
-      window.setTimeout(onDismiss, 200);
-    }, DEFAULT_TTL_MS);
-    return () => window.clearTimeout(t);
-  }, [onDismiss]);
-
-  function handleClick() {
-    setLeaving(true);
-    window.setTimeout(onDismiss, 200);
-  }
+    const autoTimer = window.setTimeout(scheduleExit, DEFAULT_TTL_MS);
+    return () => {
+      window.clearTimeout(autoTimer);
+      if (exitTimerRef.current) {
+        window.clearTimeout(exitTimerRef.current);
+        exitTimerRef.current = null;
+      }
+    };
+    // Intentionally run once per toast mount; scheduleExit reads fresh refs.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const toneStyles: Record<ToastTone, string> = {
     success: "border-emerald-500/40 bg-emerald-500/15 text-emerald-100",
@@ -150,38 +162,38 @@ function ToastItem({
     info: "i",
   };
 
+  // Live-region responsibilities live on the outer wrapper, not the
+  // interactive <button>: assistive tech shouldn't be told a dismiss
+  // button *is* a status/alert — only that there's a new one to announce.
   return (
-    <button
-      type="button"
-      onClick={handleClick}
-      // role/live hint: success & info are advisory (status), errors are
-      // interruptive (alert). Keeps screen readers from shouting success
-      // messages while still announcing failures promptly.
+    <div
       role={toast.tone === "error" ? "alert" : "status"}
       aria-live={toast.tone === "error" ? "assertive" : "polite"}
-      className={cn(
-        "pointer-events-auto flex w-full items-start gap-3 rounded-lg border px-4 py-3 text-sm shadow-lg backdrop-blur transition-all duration-200 ease-out",
-        toneStyles[toast.tone],
-        entered && !leaving
-          ? "translate-y-0 opacity-100"
-          : "translate-y-2 opacity-0",
-      )}
-      title="Dismiss"
+      className="pointer-events-none w-full"
     >
-      <span
-        aria-hidden
-        className="mt-0.5 inline-flex size-5 shrink-0 items-center justify-center rounded-full border border-current/40 text-xs font-bold"
+      <button
+        type="button"
+        onClick={scheduleExit}
+        aria-label="Dismiss notification"
+        className={cn(
+          "pointer-events-auto flex w-full items-start gap-3 rounded-lg border px-4 py-3 text-sm shadow-lg backdrop-blur transition-all duration-200 ease-out",
+          toneStyles[toast.tone],
+          entered && !leaving
+            ? "translate-y-0 opacity-100"
+            : "translate-y-2 opacity-0",
+        )}
       >
-        {icon[toast.tone]}
-      </span>
-      <span className="min-w-0 flex-1 text-left">{toast.message}</span>
-      <span
-        aria-hidden
-        className="shrink-0 text-xs opacity-50"
-        title="Dismiss"
-      >
-        ×
-      </span>
-    </button>
+        <span
+          aria-hidden
+          className="mt-0.5 inline-flex size-5 shrink-0 items-center justify-center rounded-full border border-current/40 text-xs font-bold"
+        >
+          {icon[toast.tone]}
+        </span>
+        <span className="min-w-0 flex-1 text-left">{toast.message}</span>
+        <span aria-hidden className="shrink-0 text-xs opacity-50">
+          ×
+        </span>
+      </button>
+    </div>
   );
 }
