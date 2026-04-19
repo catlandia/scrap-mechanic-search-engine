@@ -55,44 +55,47 @@ export async function runRefresh(batchSize = 100): Promise<RefreshResult> {
     }
   }
 
-  // Second pass: backfill multi-creator attribution for items whose scrape
-  // failed previously (creators column is an empty array). Capped so the
-  // weekly cron stays inside Vercel's serverless function timeout. Over
-  // several runs the whole catalog catches up.
-  const contributorsFilled = await refreshMissingCreators(50);
+  // Second pass: rotate through the catalog and re-scrape multi-creator
+  // attribution. Ordered by creatorsRefreshedAt ASC NULLS FIRST so never-
+  // scraped rows come first, then the oldest-refreshed. Capped to keep
+  // the cron inside Vercel's function timeout; the whole catalog cycles
+  // over a few weeks.
+  const contributorsFilled = await refreshStaleCreators(100);
 
   return { refreshed, contributorsFilled, errors };
 }
 
 /**
- * Scrape multi-creator attribution for up to `limit` approved creations that
- * currently have an empty `creators` array. Runs sequentially with a small
- * delay so steamcommunity.com isn't hammered.
+ * Re-scrape multi-creator attribution for up to `limit` approved creations,
+ * preferring rows that have never been scraped or were scraped longest ago.
+ * Always writes back even when the scrape returns the same contributors —
+ * the timestamp update is what keeps the rotation moving.
  */
-export async function refreshMissingCreators(limit: number): Promise<number> {
+export async function refreshStaleCreators(limit: number): Promise<number> {
   const apiKey = process.env.STEAM_API_KEY;
   if (!apiKey) return 0;
   const db = getDb();
   const rows = await db
     .select({ id: creations.id })
     .from(creations)
-    .where(
-      sql`${creations.status} = 'approved' and jsonb_array_length(${creations.creators}) = 0`,
-    )
+    .where(eq(creations.status, "approved"))
+    .orderBy(sql`${creations.creatorsRefreshedAt} asc nulls first`)
     .limit(limit);
   let updated = 0;
   for (const { id } of rows) {
     try {
       const contributors = await fetchWorkshopContributors(apiKey, id);
-      if (contributors.length > 0) {
-        await db
-          .update(creations)
-          .set({ creators: contributors })
-          .where(eq(creations.id, id));
-        updated += 1;
-      }
+      await db
+        .update(creations)
+        .set({
+          creators: contributors,
+          creatorsRefreshedAt: new Date(),
+        })
+        .where(eq(creations.id, id));
+      updated += 1;
     } catch {
-      // best-effort; next refresh run will retry
+      // best-effort; next refresh run will retry. Timestamp stays null so
+      // this row gets re-tried first on the next pass.
     }
     await new Promise((r) => setTimeout(r, 200));
   }

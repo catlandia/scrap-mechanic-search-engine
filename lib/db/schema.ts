@@ -96,6 +96,11 @@ export const creations = pgTable(
       .$type<Array<{ steamid: string; name: string }>>()
       .notNull()
       .default([]),
+    // Timestamp of the most recent `fetchWorkshopContributors` call. The
+    // weekly refresh cron orders by this ASC-NULLS-FIRST to rotate through
+    // the catalog, so every item eventually gets a fresh scrape even if
+    // its contributor list stays the same.
+    creatorsRefreshedAt: timestamp("creators_refreshed_at", { withTimezone: true }),
     thumbnailUrl: text("thumbnail_url"),
     steamUrl: text("steam_url").notNull(),
     fileSizeBytes: bigint("file_size_bytes", { mode: "number" }),
