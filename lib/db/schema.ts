@@ -384,7 +384,7 @@ export const comments = pgTable(
     userId: text("user_id")
       .notNull()
       .references(() => users.steamid, { onDelete: "cascade" }),
-    // Reserved for future threading; not a FK to keep drizzle-kit happy.
+    // Self-reference to parent; not a FK to keep drizzle-kit happy.
     parentId: integer("parent_id"),
     body: text("body").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true })
@@ -393,10 +393,35 @@ export const comments = pgTable(
     editedAt: timestamp("edited_at", { withTimezone: true }),
     deletedAt: timestamp("deleted_at", { withTimezone: true }),
     deletedByUserId: text("deleted_by_user_id"),
+    // Denormalized vote tallies — kept in sync by voteComment's recompute.
+    // Lets card rendering stay a single join instead of a per-comment
+    // aggregate on every load.
+    votesUp: integer("votes_up").notNull().default(0),
+    votesDown: integer("votes_down").notNull().default(0),
   },
   (t) => [
     index("comments_creation_idx").on(t.creationId),
     index("comments_user_idx").on(t.userId),
+  ],
+);
+
+export const commentVotes = pgTable(
+  "comment_votes",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.steamid, { onDelete: "cascade" }),
+    commentId: integer("comment_id")
+      .notNull()
+      .references(() => comments.id, { onDelete: "cascade" }),
+    value: integer("value").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.userId, t.commentId] }),
+    index("comment_votes_comment_idx").on(t.commentId),
   ],
 );
 

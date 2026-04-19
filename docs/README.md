@@ -17,13 +17,14 @@
 
 ## Quick orientation
 
-- Current version: **V5.7** — threaded comments (3 levels), reply notifications
+- Current version: **V5.8** — up/down votes on comments
 - Stack: Next.js 15 App Router · TypeScript · Tailwind v4 · Drizzle + Neon · iron-session · Steam OpenID
 - Hard constraint: everything must remain on **free tiers** — no paid APIs, no metered per-item costs
 - Transactions are **not available** (neon-http driver) — writes are sequential, partial state is accepted
 
-## Recent changes (V4.6–5.7)
+## Recent changes (V4.6–5.8)
 
+- **V5.8 — up/down votes on comments.** Completes the community-voting triad alongside creation votes and tag votes. New `commentVotes` table `(userId, commentId)` mirroring `creationVotes`'s shape; denormalized `comments.votesUp` / `comments.votesDown` kept in sync by the vote action so card rendering stays a single join. Server rejects self-votes (`cannot_self_vote`) and votes on deleted comments — deliberately no notification to the comment author because, at any appreciable scale, every ▲ would spam a bell and users would mute the tier. Arrows hidden on the viewer's own comments and for signed-out viewers; the tally is still shown. Share the 30/60s rate-limit bucket with the other vote actions. Migration `0018_motionless_surge.sql` creates the table and adds the two denorm columns.
 - **V5.7 — threaded comments.** The `comments.parentId` column has existed in the schema since V3.0 but was never wired up, so the thread on every creation was a flat list — you couldn't reply to a specific comment, only tack a new top-level comment onto the creation. Now the reply button is live. Depth is capped at 3 levels (root / reply / sub-reply); the cap is enforced in `postComment` by walking up ancestors on the server rather than trusting a client-side depth value. Rendering builds a tree in `CommentSection.tsx`: root comments newest-first so fresh discussion surfaces, replies within a thread oldest-first so the conversation reads top-to-bottom. Replying to someone else's comment fires a `comment_reply` notification in the user tier with a deep link to `#comment-<id>` on the creation page; self-replies don't notify. No schema change — column was already there.
 
 

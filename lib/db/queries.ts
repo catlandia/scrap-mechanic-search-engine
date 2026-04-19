@@ -3,6 +3,7 @@ import { alias } from "drizzle-orm/pg-core";
 import { getDb } from "./client";
 import {
   categories,
+  commentVotes,
   comments,
   creationCategories,
   creationTags,
@@ -792,16 +793,20 @@ export interface CreationCommentRow {
   authorName: string;
   authorAvatarUrl: string | null;
   authorRole: string;
+  votesUp: number;
+  votesDown: number;
+  viewerVote: -1 | 0 | 1;
 }
 
 // Returned oldest-first so the tree-builder on the client has stable ordering;
 // the client reverses root-level order afterwards to put newest threads on top.
 export async function getCreationComments(
   creationId: string,
+  viewerSteamid: string | null,
   limit = 200,
 ): Promise<CreationCommentRow[]> {
   const db = getDb();
-  return db
+  const rows = await db
     .select({
       id: comments.id,
       creationId: comments.creationId,
@@ -814,12 +819,35 @@ export async function getCreationComments(
       authorName: users.personaName,
       authorAvatarUrl: users.avatarUrl,
       authorRole: users.role,
+      votesUp: comments.votesUp,
+      votesDown: comments.votesDown,
     })
     .from(comments)
     .innerJoin(users, eq(users.steamid, comments.userId))
     .where(eq(comments.creationId, creationId))
     .orderBy(comments.createdAt)
     .limit(limit);
+
+  if (!viewerSteamid || rows.length === 0) {
+    return rows.map((r) => ({ ...r, viewerVote: 0 as const }));
+  }
+
+  const commentIds = rows.map((r) => r.id);
+  const voteRows = await db
+    .select({ commentId: commentVotes.commentId, value: commentVotes.value })
+    .from(commentVotes)
+    .where(
+      and(
+        eq(commentVotes.userId, viewerSteamid),
+        inArray(commentVotes.commentId, commentIds),
+      ),
+    );
+  const voteByComment = new Map(voteRows.map((v) => [v.commentId, v.value]));
+  return rows.map((r) => {
+    const v = voteByComment.get(r.id);
+    const viewerVote: -1 | 0 | 1 = v === 1 ? 1 : v === -1 ? -1 : 0;
+    return { ...r, viewerVote };
+  });
 }
 
 export async function getUserFavourites(

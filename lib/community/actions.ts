@@ -7,6 +7,7 @@ import { getDb } from "@/lib/db/client";
 import { sql } from "drizzle-orm";
 import {
   categories,
+  commentVotes,
   comments,
   creationCategories,
   creations,
@@ -688,6 +689,83 @@ export async function submitCreation(formData: FormData): Promise<SubmitResult> 
     publishedFileId: item.publishedfileid,
     title: item.title || "(untitled)",
   };
+}
+
+export async function voteComment(
+  commentId: number,
+  value: -1 | 0 | 1,
+): Promise<void> {
+  const user = await requireVotingUser();
+  if (!Number.isInteger(commentId) || commentId <= 0) {
+    throw new Error("invalid_comment_id");
+  }
+  if (isInMemoryRateLimited(`voteComment:${user.steamid}`, 30, 60_000)) {
+    throw new Error("rate_limited");
+  }
+  const db = getDb();
+
+  const [row] = await db
+    .select({
+      userId: comments.userId,
+      creationId: comments.creationId,
+      deletedAt: comments.deletedAt,
+    })
+    .from(comments)
+    .where(eq(comments.id, commentId))
+    .limit(1);
+  if (!row) throw new Error("comment_not_found");
+  if (row.deletedAt) throw new Error("comment_deleted");
+  if (row.userId === user.steamid) throw new Error("cannot_self_vote");
+
+  const [existing] = await db
+    .select({ value: commentVotes.value })
+    .from(commentVotes)
+    .where(
+      and(
+        eq(commentVotes.userId, user.steamid),
+        eq(commentVotes.commentId, commentId),
+      ),
+    )
+    .limit(1);
+
+  if (value === 0 && !existing) return;
+  if (value !== 0 && existing && existing.value === value) return;
+
+  if (value === 0) {
+    await db
+      .delete(commentVotes)
+      .where(
+        and(
+          eq(commentVotes.userId, user.steamid),
+          eq(commentVotes.commentId, commentId),
+        ),
+      );
+  } else {
+    await db
+      .insert(commentVotes)
+      .values({ userId: user.steamid, commentId, value })
+      .onConflictDoUpdate({
+        target: [commentVotes.userId, commentVotes.commentId],
+        set: { value, createdAt: new Date() },
+      });
+  }
+
+  const tallies = await db
+    .select({ value: commentVotes.value })
+    .from(commentVotes)
+    .where(eq(commentVotes.commentId, commentId));
+  let up = 0;
+  let down = 0;
+  for (const t of tallies) {
+    if (t.value > 0) up += 1;
+    else if (t.value < 0) down += 1;
+  }
+  await db
+    .update(comments)
+    .set({ votesUp: up, votesDown: down })
+    .where(eq(comments.id, commentId));
+
+  revalidatePath(`/creation/${row.creationId}`);
 }
 
 export async function voteTag(

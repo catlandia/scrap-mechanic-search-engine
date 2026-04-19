@@ -259,6 +259,24 @@ Comments on creations. Threaded up to 3 levels deep via `parentId`.
 | `editedAt` | timestamptz NULL | |
 | `deletedAt` | timestamptz NULL | Soft delete |
 | `deletedByUserId` | text NULL | Who deleted it |
+| `votesUp` | int NOT NULL default 0 | Denorm of commentVotes > 0 |
+| `votesDown` | int NOT NULL default 0 | Denorm of commentVotes < 0 |
+
+---
+
+### `commentVotes`
+
+Up/down votes on individual comments. Mirrors `creationVotes` shape.
+
+| Column | Type | Notes |
+|---|---|---|
+| `userId` | text → users.steamid | |
+| `commentId` | int → comments.id | |
+| `value` | int | `+1` or `-1`; `0` deletes the row |
+| `createdAt` | timestamptz | |
+
+**PK:** `(userId, commentId)`
+**Indexes:** `commentId`
 
 **Indexes:** `creationId`, `userId`
 

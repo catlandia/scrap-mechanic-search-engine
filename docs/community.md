@@ -34,6 +34,8 @@ Users can comment on any approved creation.
 
 **Threading:** Replies are three levels deep (root → reply → sub-reply), enforced in `postComment` via `MAX_REPLY_DEPTH=2` — the action walks up ancestors to compute the proposed depth and rejects anything that would go deeper. The cap keeps replies readable on mobile. Rendering builds a tree in `CommentSection.tsx`: root comments newest-first, replies oldest-first (reading order). Replying to a comment inserts a `comment_reply` notification (tier `user`) for the parent author; self-replies don't notify. Notification links deep-link to `#comment-<id>` on the creation detail page. An orphaned reply (parent hard-deleted or outside the fetch window) renders at root level rather than disappearing.
 
+**Comment votes:** Each comment has ▲/▼ arrows showing the viewer's current vote plus a net-score (`+3`, `0`, `-2`) colour-coded emerald / muted / red. Stored in `commentVotes` table `(userId, commentId)` PK. Totals are denormalized into `comments.votesUp` / `comments.votesDown` — `voteComment` recounts the per-comment rows and writes both columns after each change, matching the `creationVotes` pattern. Cannot vote on your own comment (server rejects with `cannot_self_vote`) or on a deleted comment. Same 30 votes / 60 s / user rate-limit bucket as the other vote actions. Silent — no notification to the comment author (would be noisy at scale). Signed-out or self-authored comments still render the tally, just without the arrows.
+
 ---
 
 ## Creation Votes

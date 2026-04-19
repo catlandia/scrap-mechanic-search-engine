@@ -113,7 +113,7 @@ export default async function CreationDetailPage({ params }: { params: Params })
     getCreationVoteBreakdown(creation.id),
     getCreationSiteCounts(creation.id),
     getPublicReportBadge(creation.id),
-    getCreationComments(creation.id, 100),
+    getCreationComments(creation.id, viewer?.steamid ?? null),
     creation.uploadedByUserId
       ? getDb()
           .select()

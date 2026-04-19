@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
-import { deleteComment, postComment } from "@/lib/community/actions";
+import { deleteComment, postComment, voteComment } from "@/lib/community/actions";
 import type { CreationCommentRow } from "@/lib/db/queries";
 import { RoleBadge } from "@/components/RoleBadge";
 import { UserName } from "@/components/UserName";
@@ -58,6 +58,7 @@ export function CommentSection({
   const [body, setBody] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [voteError, setVoteError] = useState<string | null>(null);
   const [replyingTo, setReplyingTo] = useState<number | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -99,6 +100,27 @@ export function CommentSection({
           reject(err);
         }
       });
+    });
+  }
+
+  function handleVote(commentId: number, next: -1 | 0 | 1) {
+    setVoteError(null);
+    startTransition(async () => {
+      try {
+        await voteComment(commentId, next);
+        router.refresh();
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "failed";
+        if (msg === "cannot_self_vote") {
+          setVoteError("You can't vote on your own comment.");
+        } else if (msg === "rate_limited") {
+          setVoteError("Too many votes — slow down for a minute.");
+        } else if (msg.startsWith("signed_out") || msg.startsWith("banned") || msg.startsWith("muted")) {
+          setVoteError("You can't vote right now.");
+        } else {
+          setVoteError(msg);
+        }
+      }
     });
   }
 
@@ -158,10 +180,15 @@ export function CommentSection({
         </div>
       )}
 
-      <div role="status" aria-live="polite">
+      <div role="status" aria-live="polite" className="space-y-2">
         {deleteError && (
           <div className="rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs text-red-200">
             {deleteError}
+          </div>
+        )}
+        {voteError && (
+          <div className="rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs text-red-200">
+            {voteError}
           </div>
         )}
       </div>
@@ -184,6 +211,7 @@ export function CommentSection({
             setReplyingTo={setReplyingTo}
             onReply={handleReply}
             onDelete={handleDelete}
+            onVote={handleVote}
             pending={isPending}
           />
         ))}
@@ -202,6 +230,7 @@ function CommentNode({
   setReplyingTo,
   onReply,
   onDelete,
+  onVote,
   pending,
 }: {
   node: Node;
@@ -213,12 +242,17 @@ function CommentNode({
   setReplyingTo: (id: number | null) => void;
   onReply: (parentId: number, body: string) => Promise<void>;
   onDelete: (id: number) => void;
+  onVote: (id: number, value: -1 | 0 | 1) => void;
   pending: boolean;
 }) {
   const isOwner = viewerSteamid === node.authorSteamid;
   const canDelete = !node.deletedAt && (isOwner || viewerIsMod);
   const canReply = viewerCanPost && !node.deletedAt && depth < MAX_DEPTH;
+  // Hide vote controls on the viewer's own comment and on deleted ones;
+  // signed-out viewers still see the counts but not the arrows.
+  const canVote = viewerCanPost && !node.deletedAt && !isOwner;
   const authorRole = node.authorRole as UserRole;
+  const net = node.votesUp - node.votesDown;
 
   return (
     <li id={`comment-${node.id}`} className="space-y-2">
@@ -254,6 +288,13 @@ function CommentNode({
                 {new Date(node.createdAt).toLocaleString()}
               </time>
               <div className="ml-auto flex items-center gap-3">
+                <CommentVoteControl
+                  net={net}
+                  viewerVote={node.viewerVote}
+                  canVote={canVote}
+                  onVote={(v) => onVote(node.id, v)}
+                  pending={pending}
+                />
                 {canReply && (
                   <button
                     type="button"
@@ -308,12 +349,71 @@ function CommentNode({
               setReplyingTo={setReplyingTo}
               onReply={onReply}
               onDelete={onDelete}
+              onVote={onVote}
               pending={pending}
             />
           ))}
         </ul>
       )}
     </li>
+  );
+}
+
+function CommentVoteControl({
+  net,
+  viewerVote,
+  canVote,
+  onVote,
+  pending,
+}: {
+  net: number;
+  viewerVote: -1 | 0 | 1;
+  canVote: boolean;
+  onVote: (v: -1 | 0 | 1) => void;
+  pending: boolean;
+}) {
+  const netColor =
+    net > 0 ? "text-emerald-400" : net < 0 ? "text-red-300" : "text-foreground/50";
+  // Signed-out / own-comment viewers see the tally but no arrows.
+  if (!canVote) {
+    return (
+      <span className={cn("text-xs tabular-nums", netColor)} aria-label={`${net} net votes`}>
+        {net > 0 ? `+${net}` : net}
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1 text-xs">
+      <button
+        type="button"
+        aria-label="Upvote comment"
+        aria-pressed={viewerVote === 1}
+        disabled={pending}
+        onClick={() => onVote(viewerVote === 1 ? 0 : 1)}
+        className={cn(
+          "rounded px-1 leading-none hover:text-emerald-400 disabled:opacity-50",
+          viewerVote === 1 ? "text-emerald-400" : "text-foreground/40",
+        )}
+      >
+        ▲
+      </button>
+      <span className={cn("tabular-nums", netColor)}>
+        {net > 0 ? `+${net}` : net}
+      </span>
+      <button
+        type="button"
+        aria-label="Downvote comment"
+        aria-pressed={viewerVote === -1}
+        disabled={pending}
+        onClick={() => onVote(viewerVote === -1 ? 0 : -1)}
+        className={cn(
+          "rounded px-1 leading-none hover:text-red-300 disabled:opacity-50",
+          viewerVote === -1 ? "text-red-300" : "text-foreground/40",
+        )}
+      >
+        ▼
+      </button>
+    </span>
   );
 }
 
