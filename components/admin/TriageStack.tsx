@@ -339,11 +339,11 @@ function TriageCardView({
               draggable={false}
             />
           ) : (
-            <div className="flex h-full items-center justify-center text-foreground/30">
+            <div className="flex h-full items-center justify-center text-white/50">
               no thumbnail
             </div>
           )}
-          <span className="absolute left-3 top-3 rounded bg-black/70 px-2 py-0.5 text-xs uppercase tracking-wider text-foreground/80">
+          <span className="absolute left-3 top-3 rounded bg-black/70 px-2 py-0.5 text-xs uppercase tracking-wider text-white/90">
             {kindLabel}
           </span>
           <div
