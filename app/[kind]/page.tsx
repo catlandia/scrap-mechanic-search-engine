@@ -14,10 +14,13 @@ import type { CreationKind } from "@/lib/db/schema";
 import { getRatingMode } from "@/lib/prefs.server";
 
 export const dynamic = "force-dynamic";
-// Reject unknown slugs with a real 404 instead of rendering the not-found
-// page at status 200. Only slugs enumerated in generateStaticParams() below
-// are accepted; anything else gets the framework 404 response code.
-export const dynamicParams = false;
+// Note: unknown single-segment slugs render the not-found page at status
+// 200 rather than a real 404. Tried combining this with
+// `export const dynamicParams = false` and it broke even the known slugs
+// (500s in production). The `notFound()` call at the bottom still shows
+// the right not-found page to humans; only search-engine status codes
+// are affected. Acceptable for now — revisit when we find a Next 15
+// incantation that does both at once.
 
 const SLUG_TO_KIND: Record<string, { kind: CreationKind; label: string; description: string }> = {
   blueprints: {
