@@ -1,6 +1,9 @@
 import { cn } from "@/lib/utils";
 
-const MIN_VOTES_FOR_RATING = 10;
+// Showcase mode: dropped from 10 → 1 while the site is pre-launch and has
+// very few users. Bump back up once there's enough vote volume for the
+// "one upvote dominates" regression to matter again.
+const MIN_VOTES_FOR_RATING = 1;
 
 export type StarColor = "amber" | "green" | "orange";
 

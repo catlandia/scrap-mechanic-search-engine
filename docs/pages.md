@@ -102,10 +102,10 @@ Full-featured search with URL-based state (links are shareable).
 | `least-favorites` | Fewest favourites (Steam) |
 | `rating` | Highest rated (Steam) — `vote_score DESC` |
 | `least-rating` | Lowest rated (Steam) |
-| `site-rating` | Highest rated (Site) — `site_weighted_up / (up+down)` DESC, ≥5 votes required |
-| `site-least-rating` | Lowest rated (Site), ≥5 votes required |
+| `site-rating` | Highest rated (Site) — `site_weighted_up / (up+down)` DESC, ≥1 vote (showcase mode) |
+| `site-least-rating` | Lowest rated (Site), ≥1 vote (showcase mode) |
 
-Site-rating sorts use a CASE expression so items below the 5-vote floor fall to `NULLS LAST`, preventing a single upvote from dominating the ranking.
+Site-rating sorts use a CASE expression so items below the vote floor fall to `NULLS LAST`, preventing a single upvote from dominating the ranking. Floor is currently **1 vote** (showcase mode while pre-launch — `SITE_RATING_MIN_VOTES` in `lib/db/queries.ts`); designed to live around 5 once vote volume catches up.
 
 **Tag filtering logic:** All requested tag slugs in `?tags=` must match — intersection. Implemented as a `DISTINCT COUNT HAVING` subquery on `creationTags`.
 
@@ -214,7 +214,7 @@ The file is split intentionally:
 
 Mixing the two in one file (as the initial implementation did) crashes the production build because webpack refuses to bundle `next/headers` into a client module.
 
-`StarRating` (`components/StarRating.tsx`) prefers a raw `up / (up+down)` ratio over Steam's Wilson-smoothed `vote_score` whenever both counts are available — this avoids the "everything is 3 stars" regression where low-sample Steam scores collapse toward 0.5. Rating rendering requires ≥10 total votes; below that the component shows `unrated` or `only N votes`.
+`StarRating` (`components/StarRating.tsx`) prefers a raw `up / (up+down)` ratio over Steam's Wilson-smoothed `vote_score` whenever both counts are available — this avoids the "everything is 3 stars" regression where low-sample Steam scores collapse toward 0.5. Rating rendering requires ≥1 total vote (showcase mode — `MIN_VOTES_FOR_RATING` in `components/StarRating.tsx`; designed to live around 10 once vote volume catches up). Below the threshold the component shows `unrated` or `only N votes`.
 
 ---
 
