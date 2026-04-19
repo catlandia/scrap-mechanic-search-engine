@@ -102,10 +102,10 @@ Full-featured search with URL-based state (links are shareable).
 | `least-favorites` | Fewest favourites (Steam) |
 | `rating` | Highest rated (Steam) — `vote_score DESC` |
 | `least-rating` | Lowest rated (Steam) |
-| `site-rating` | Highest rated (Site) — `site_weighted_up / (up+down)` DESC, ≥1 vote (showcase mode) |
-| `site-least-rating` | Lowest rated (Site), ≥1 vote (showcase mode) |
+| `site-rating` | Highest upvote score (Site) — `(site_weighted_up - site_weighted_down) DESC` |
+| `site-least-rating` | Lowest upvote score (Site) — `(site_weighted_up - site_weighted_down) ASC` |
 
-Site-rating sorts use a CASE expression so items below the vote floor fall to `NULLS LAST`, preventing a single upvote from dominating the ranking. Floor is currently **1 vote** (showcase mode while pre-launch — `SITE_RATING_MIN_VOTES` in `lib/db/queries.ts`); designed to live around 5 once vote volume catches up.
+Site-upvote sorts order by net score (`up - down`). No vote floor — zero-vote items land at 0 and mix with the tail, which is fine because 100↑/10↓ still beats 5↑/0↓ on raw net score (the ratio-based sort it replaced was gated behind a min-votes floor to avoid single-vote domination; net score doesn't have that pathology).
 
 **Tag filtering logic:** All requested tag slugs in `?tags=` must match — intersection. Implemented as a `DISTINCT COUNT HAVING` subquery on `creationTags`.
 

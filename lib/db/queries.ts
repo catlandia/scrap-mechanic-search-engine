@@ -92,8 +92,8 @@ export const SORT_LABELS: Record<SortMode, string> = {
   "least-favorites": "Fewest favourites (Steam)",
   rating: "Highest rated (Steam)",
   "least-rating": "Lowest rated (Steam)",
-  "site-rating": "Highest rated (Site)",
-  "site-least-rating": "Lowest rated (Site)",
+  "site-rating": "Highest upvote score (Site)",
+  "site-least-rating": "Lowest upvote score (Site)",
 };
 
 export function parseSortMode(raw: string | undefined | null): SortMode {
@@ -127,11 +127,6 @@ function tsQueryExpr(q: string): SQL {
   return sql`(websearch_to_tsquery('english', ${q}) || to_tsquery('english', ${prefix}))`;
 }
 
-// Floor below which site-rating sorts drop a row to NULLS LAST so a single
-// early vote can't dominate. Showcase mode: dropped from 5 → 1 while the
-// site is pre-launch. Bump back once vote volume justifies it.
-const SITE_RATING_MIN_VOTES = 1;
-
 function orderByForSort(sort: SortMode, q?: string): SQL {
   switch (sort) {
     case "relevance":
@@ -159,10 +154,13 @@ function orderByForSort(sort: SortMode, q?: string): SQL {
       return sql`${creations.voteScore} DESC NULLS LAST`;
     case "least-rating":
       return sql`${creations.voteScore} ASC NULLS LAST`;
+    // Net upvote score (up - down). Simpler and more legible than the
+    // old ratio-with-floor: 100↑/10↓ beats 5↑/0↓, items with zero votes
+    // land at 0 and mix with the tail rather than being gated out.
     case "site-rating":
-      return sql`CASE WHEN ${creations.siteWeightedUp} + ${creations.siteWeightedDown} >= ${SITE_RATING_MIN_VOTES} THEN ${creations.siteWeightedUp}::float / NULLIF(${creations.siteWeightedUp} + ${creations.siteWeightedDown}, 0) ELSE NULL END DESC NULLS LAST`;
+      return sql`(${creations.siteWeightedUp} - ${creations.siteWeightedDown}) DESC`;
     case "site-least-rating":
-      return sql`CASE WHEN ${creations.siteWeightedUp} + ${creations.siteWeightedDown} >= ${SITE_RATING_MIN_VOTES} THEN ${creations.siteWeightedUp}::float / NULLIF(${creations.siteWeightedUp} + ${creations.siteWeightedDown}, 0) ELSE NULL END ASC NULLS LAST`;
+      return sql`(${creations.siteWeightedUp} - ${creations.siteWeightedDown}) ASC`;
   }
 }
 
