@@ -144,15 +144,44 @@ export function MobileNav({
               </button>
             </div>
 
+            {/* Search is the most-used action, so pull it out of the nav list
+                and give it a distinct accent tile at the top of the drawer. */}
+            {navLinks.some((l) => l.href === "/search") && (
+              <div className="px-4 pt-3">
+                <Link
+                  href="/search"
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-3 rounded-lg border border-accent/50 bg-accent/15 px-4 py-3 text-base font-semibold text-accent transition hover:bg-accent/25"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    className="size-5"
+                    aria-hidden
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M9 3.5a5.5 5.5 0 1 0 3.356 9.857l3.644 3.643a.75.75 0 1 0 1.06-1.06l-3.643-3.644A5.5 5.5 0 0 0 9 3.5zM5 9a4 4 0 1 1 8 0 4 4 0 0 1-8 0z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  <span>Search the workshop</span>
+                </Link>
+              </div>
+            )}
+
             <nav className="flex flex-col py-2 text-base">
-              {navLinks.map((link) => (
-                <MobileLink
-                  key={link.href}
-                  href={link.href}
-                  label={link.label}
-                  active={pathname === link.href}
-                />
-              ))}
+              {navLinks
+                .filter((link) => link.href !== "/search")
+                .map((link) => (
+                  <MobileLink
+                    key={link.href}
+                    href={link.href}
+                    label={link.label}
+                    active={pathname === link.href}
+                  />
+                ))}
             </nav>
 
             {extraLinks.length > 0 && (

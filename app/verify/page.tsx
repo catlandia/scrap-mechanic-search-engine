@@ -176,29 +176,29 @@ function VerifyChallenge() {
         </div>
 
         {/* Image — served through /api/captcha/image so filename is never exposed.
-            Click/tap opens a zoomed overlay so small characters are findable on mobile. */}
+            object-contain + natural aspect so mobile users don't lose the sides
+            of the ~3:1 panoramic screenshots. Click/tap opens a zoomed overlay. */}
         <button
           ref={zoomTriggerRef}
           type="button"
           onClick={() => setZoomed(true)}
-          aria-label="Zoom in on the image"
-          className={`group relative block w-full overflow-hidden rounded-xl border border-white/10 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent ${flashClass}`}
+          aria-label="Tap to zoom in on the image"
+          className={`group relative block w-full overflow-hidden rounded-xl border border-white/10 bg-black/40 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent ${flashClass}`}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             key={q.nonce}
             src={`/api/captcha/image?n=${q.nonce}`}
             alt="Who is this?"
-            className="w-full object-cover"
-            style={{ maxHeight: "280px", objectPosition: "center" }}
+            className="mx-auto block h-auto w-full max-h-[60vh] object-contain"
             draggable={false}
           />
-          <span className="pointer-events-none absolute bottom-2 left-2 inline-flex items-center gap-1 rounded bg-black/60 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-white/80 opacity-80 group-hover:opacity-100">
+          <span className="pointer-events-none absolute bottom-2 left-2 inline-flex items-center gap-1 rounded bg-black/70 px-2 py-1 text-[11px] font-semibold uppercase tracking-wider text-white shadow-sm sm:text-[10px] sm:font-medium">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 20 20"
               fill="currentColor"
-              className="size-3"
+              className="size-4 sm:size-3"
               aria-hidden
             >
               <path
@@ -209,7 +209,7 @@ function VerifyChallenge() {
             </svg>
             Tap to zoom
           </span>
-          <span className="pointer-events-none absolute bottom-2 right-3 text-[11px] text-white/30 select-none">
+          <span className="pointer-events-none absolute bottom-2 right-3 hidden text-[11px] text-white/40 select-none sm:inline">
             Who is this?
           </span>
         </button>

@@ -11,6 +11,7 @@ import {
 import { stripBBCode } from "@/lib/steam/bbcode";
 import {
   detectKind,
+  fetchWorkshopContributors,
   queryFiles,
   resolvePlayerNames,
   STEAM_KIND_TAGS,
@@ -75,6 +76,7 @@ function passesFollowGate(item: PublishedFile, kind: string): boolean {
 function buildRow(
   collected: CollectedItem,
   authorName: string | null,
+  creators: Array<{ steamid: string; name: string }> = [],
 ): NewCreation {
   const { item, kind, descriptionClean } = collected;
   const tagNames = (item.tags ?? []).map((t) => t.tag);
@@ -85,6 +87,7 @@ function buildRow(
     descriptionClean,
     authorSteamid: item.creator ?? null,
     authorName,
+    creators,
     thumbnailUrl: item.preview_url ?? null,
     steamUrl: steamUrlFor(item.publishedfileid),
     fileSizeBytes:
@@ -102,6 +105,28 @@ function buildRow(
     steamTags: tagNames,
     kind,
   };
+}
+
+/**
+ * Run `fn` across `items` with at most `limit` concurrent in-flight promises.
+ * Used to scrape Steam HTML pages for contributors without flooding their CDN.
+ */
+async function parallelLimit<T, R>(
+  items: T[],
+  limit: number,
+  fn: (item: T) => Promise<R>,
+): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  let next = 0;
+  async function worker() {
+    while (true) {
+      const i = next++;
+      if (i >= items.length) return;
+      results[i] = await fn(items[i]);
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, () => worker()));
+  return results;
 }
 
 export async function runIngest(options: IngestOptions = {}): Promise<IngestResult> {
@@ -218,8 +243,26 @@ export async function runIngest(options: IngestOptions = {}): Promise<IngestResu
   }
 
   if (toInsert.length > 0) {
-    const rows = toInsert.map((c) =>
-      buildRow(c, (c.item.creator && nameMap.get(c.item.creator)) ?? null),
+    // Scrape multi-creator attribution from the rendered Workshop page —
+    // Steam's API only exposes the primary creator. Cap concurrency so we
+    // don't hammer steamcommunity.com; best-effort per item.
+    const contributorsByItem = await parallelLimit(
+      toInsert,
+      3,
+      async (c) => {
+        try {
+          return await fetchWorkshopContributors(apiKey, c.item.publishedfileid);
+        } catch {
+          return [];
+        }
+      },
+    );
+    const rows = toInsert.map((c, i) =>
+      buildRow(
+        c,
+        (c.item.creator && nameMap.get(c.item.creator)) ?? null,
+        contributorsByItem[i] ?? [],
+      ),
     );
     try {
       await db.insert(creations).values(rows);

@@ -247,6 +247,98 @@ export function steamUrlFor(publishedFileId: string): string {
   return `https://steamcommunity.com/sharedfiles/filedetails/?id=${publishedFileId}`;
 }
 
+/**
+ * Steam's public API only returns a single `creator` per workshop item, but
+ * the web UI renders every contributor in a `<div class="creatorsBlock">`
+ * sidebar. Scrape it and return the full list, resolving vanity URLs to
+ * numeric steamids via ResolveVanityURL.
+ *
+ * Returns an empty array on network / parse failure — callers should fall
+ * back to the API's single `creator` field.
+ */
+export async function fetchWorkshopContributors(
+  apiKey: string,
+  publishedFileId: string,
+): Promise<Array<{ steamid: string; name: string }>> {
+  const url = `https://steamcommunity.com/sharedfiles/filedetails/?id=${publishedFileId}`;
+  let html: string;
+  try {
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (compatible; SmseIngest/1.0; +https://scrap-mechanic-search-engine.vercel.app)",
+      },
+      cache: "no-store",
+    });
+    if (!res.ok) return [];
+    html = await res.text();
+  } catch {
+    return [];
+  }
+
+  const start = html.indexOf('class="creatorsBlock"');
+  if (start < 0) return [];
+  const slice = html.slice(start, start + 20000);
+
+  type Raw = { profileLink: string; name: string };
+  const raws: Raw[] = [];
+  // Each contributor = one friendBlock div with a persona suffix and an
+  // <a class="friendBlockLinkOverlay" href="PROFILE_URL"> plus a <div
+  // class="friendBlockContent">PERSONA<br>.
+  const blockRe = /class="friendBlock persona[^"]*"[\s\S]*?class="friendBlockLinkOverlay" href="([^"]+)"[\s\S]*?class="friendBlockContent">\s*([^<\r\n]+)</g;
+  let m: RegExpExecArray | null;
+  while ((m = blockRe.exec(slice)) !== null) {
+    raws.push({ profileLink: m[1], name: m[2].trim() });
+  }
+  if (raws.length === 0) return [];
+
+  // Split numeric steamids from vanity URLs. Numeric go straight through;
+  // vanities go through ResolveVanityURL.
+  const resolved: Array<{ steamid: string; name: string }> = [];
+  const toResolve: Array<{ vanity: string; name: string }> = [];
+  for (const r of raws) {
+    const numeric = /\/profiles\/(\d+)/.exec(r.profileLink);
+    if (numeric) {
+      resolved.push({ steamid: numeric[1], name: r.name });
+      continue;
+    }
+    const vanity = /\/id\/([^/?#"]+)/.exec(r.profileLink);
+    if (vanity) toResolve.push({ vanity: vanity[1], name: r.name });
+  }
+  for (const v of toResolve) {
+    const sid = await resolveVanityUrl(apiKey, v.vanity);
+    if (sid) resolved.push({ steamid: sid, name: v.name });
+  }
+  // De-dupe by steamid in case the HTML lists the same profile twice.
+  const seen = new Set<string>();
+  return resolved.filter((c) => {
+    if (seen.has(c.steamid)) return false;
+    seen.add(c.steamid);
+    return true;
+  });
+}
+
+async function resolveVanityUrl(
+  apiKey: string,
+  vanity: string,
+): Promise<string | null> {
+  const params = new URLSearchParams({ key: apiKey, vanityurl: vanity });
+  const url = `${STEAM_BASE}/ISteamUser/ResolveVanityURL/v1/?${params.toString()}`;
+  try {
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) return null;
+    const json = (await res.json()) as {
+      response?: { steamid?: string; success?: number };
+    };
+    if (json.response?.success === 1 && json.response.steamid) {
+      return json.response.steamid;
+    }
+  } catch {
+    // swallow — callers fall back to API's primary creator
+  }
+  return null;
+}
+
 export function detectKind(steamTags: string[]): SteamKind | "other" {
   const lowered = new Set(steamTags.map((t) => t.toLowerCase()));
   for (const [kind, tag] of Object.entries(STEAM_KIND_TAGS) as [SteamKind, string][]) {

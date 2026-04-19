@@ -164,21 +164,51 @@ export default async function CreationDetailPage({ params }: { params: Params })
           ))}
         </div>
         <h1 className="text-3xl font-bold">{creation.title}</h1>
-        {creation.authorName && (
-          <p className="text-sm text-white/60">
-            by{" "}
-            {creation.authorSteamid ? (
-              <Link
-                href={`/author/${creation.authorSteamid}`}
-                className="text-accent hover:underline"
-              >
-                {creation.authorName}
-              </Link>
-            ) : (
-              creation.authorName
-            )}
-          </p>
-        )}
+        {(() => {
+          // Prefer the scraped multi-creator list when Steam's sidebar showed
+          // more than the single API-returned creator. Fall back to the
+          // legacy single-author byline for items with no scrape data.
+          const scraped = creation.creators ?? [];
+          const uniqueScraped = scraped.filter(
+            (c, i) => scraped.findIndex((x) => x.steamid === c.steamid) === i,
+          );
+          if (uniqueScraped.length > 1) {
+            return (
+              <p className="text-sm text-white/60">
+                by{" "}
+                {uniqueScraped.map((c, i) => (
+                  <span key={c.steamid}>
+                    {i > 0 && (i === uniqueScraped.length - 1 ? " & " : ", ")}
+                    <Link
+                      href={`/author/${c.steamid}`}
+                      className="text-accent hover:underline"
+                    >
+                      {c.name}
+                    </Link>
+                  </span>
+                ))}
+              </p>
+            );
+          }
+          if (creation.authorName) {
+            return (
+              <p className="text-sm text-white/60">
+                by{" "}
+                {creation.authorSteamid ? (
+                  <Link
+                    href={`/author/${creation.authorSteamid}`}
+                    className="text-accent hover:underline"
+                  >
+                    {creation.authorName}
+                  </Link>
+                ) : (
+                  creation.authorName
+                )}
+              </p>
+            );
+          }
+          return null;
+        })()}
         <div className="flex flex-wrap gap-4 pt-1 font-mono text-[11px] text-white/45">
           <span>
             <span className="text-white/35">ID:</span> #{creation.shortId}

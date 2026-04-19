@@ -20,6 +20,7 @@ import { effectiveRole, isModerator } from "@/lib/auth/roles";
 import type { UserRole } from "@/lib/db/schema";
 import {
   detectKind,
+  fetchWorkshopContributors,
   getPublishedFileDetails,
   resolvePlayerNames,
   steamUrlFor,
@@ -361,6 +362,12 @@ export async function addCreation(formData: FormData) {
           // resolving names is best-effort
         }
       }
+      let creators: Array<{ steamid: string; name: string }> = [];
+      try {
+        creators = await fetchWorkshopContributors(apiKey, item.publishedfileid);
+      } catch {
+        // scraping is best-effort — falls back to single author
+      }
 
       const db = getDb();
       const existingRows = await db
@@ -377,6 +384,7 @@ export async function addCreation(formData: FormData) {
         descriptionClean: descClean,
         authorSteamid: item.creator ?? null,
         authorName,
+        creators,
         thumbnailUrl: item.preview_url ?? null,
         steamUrl: steamUrlFor(item.publishedfileid),
         fileSizeBytes:
@@ -410,6 +418,7 @@ export async function addCreation(formData: FormData) {
             descriptionRaw: baseRow.descriptionRaw,
             descriptionClean: baseRow.descriptionClean,
             authorName: baseRow.authorName,
+            creators: baseRow.creators,
             thumbnailUrl: baseRow.thumbnailUrl,
             timeUpdated: baseRow.timeUpdated,
             voteScore: baseRow.voteScore,

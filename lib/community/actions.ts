@@ -24,6 +24,7 @@ import { isModerator } from "@/lib/auth/roles";
 import type { UserRole } from "@/lib/db/schema";
 import {
   detectKind,
+  fetchWorkshopContributors,
   getPublishedFileDetails,
   resolvePlayerNames,
   steamUrlFor,
@@ -481,6 +482,13 @@ export async function submitCreation(formData: FormData): Promise<SubmitResult> 
       /* best-effort */
     }
   }
+  // Multi-creator scrape (see fetchWorkshopContributors). Best-effort.
+  let creators: Array<{ steamid: string; name: string }> = [];
+  try {
+    creators = await fetchWorkshopContributors(apiKey, item.publishedfileid);
+  } catch {
+    /* best-effort — falls back to single author */
+  }
 
   await db.insert(creations).values({
     id: item.publishedfileid,
@@ -489,6 +497,7 @@ export async function submitCreation(formData: FormData): Promise<SubmitResult> 
     descriptionClean: descClean,
     authorSteamid: item.creator ?? null,
     authorName,
+    creators,
     thumbnailUrl: item.preview_url ?? null,
     steamUrl: steamUrlFor(item.publishedfileid),
     fileSizeBytes:

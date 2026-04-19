@@ -87,6 +87,15 @@ export const creations = pgTable(
     descriptionClean: text("description_clean").notNull().default(""),
     authorSteamid: text("author_steamid"),
     authorName: text("author_name"),
+    // Multi-creator attribution. Steam's API only returns the single primary
+    // `creator` field, but many workshop items are collaborations with 2–10
+    // contributors shown in the rendered Workshop page. Scraped at ingest
+    // time from the sidebar HTML; resolved to {steamid, name}. Empty array
+    // means "only the primary author" or "scrape failed".
+    creators: jsonb("creators")
+      .$type<Array<{ steamid: string; name: string }>>()
+      .notNull()
+      .default([]),
     thumbnailUrl: text("thumbnail_url"),
     steamUrl: text("steam_url").notNull(),
     fileSizeBytes: bigint("file_size_bytes", { mode: "number" }),
