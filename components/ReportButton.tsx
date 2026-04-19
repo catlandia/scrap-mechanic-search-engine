@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { reportCreation } from "@/lib/community/actions";
+import { Spinner } from "@/components/Spinner";
 import { cn } from "@/lib/utils";
 
 const REPORT_REASON_OPTIONS: { value: string; label: string }[] = [
@@ -131,8 +132,9 @@ export function ReportButton({
                 isPending ||
                 (reason === "other" && !customText.trim())
               }
-              className="rounded bg-amber-500 px-3 py-1 text-xs font-medium text-black hover:bg-amber-400 disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded bg-amber-500 px-3 py-1 text-xs font-medium text-black hover:bg-amber-400 disabled:opacity-50"
             >
+              {isPending && <Spinner size="xs" />}
               {isPending ? "Submitting…" : "Submit report"}
             </button>
           </div>

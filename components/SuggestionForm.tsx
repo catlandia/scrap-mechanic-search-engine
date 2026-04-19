@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { submitSuggestion } from "@/lib/suggestions/actions";
+import { Spinner } from "@/components/Spinner";
 
 export function SuggestionForm() {
   const router = useRouter();
@@ -66,8 +67,9 @@ export function SuggestionForm() {
           <button
             type="submit"
             disabled={isPending || !title.trim()}
-            className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-black hover:bg-accent-strong disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-md bg-accent px-4 py-2 text-sm font-medium text-black hover:bg-accent-strong disabled:opacity-50"
           >
+            {isPending && <Spinner size="sm" />}
             {isPending ? "Sending…" : "Send to Creator"}
           </button>
         </div>

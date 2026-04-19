@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import { voteSuggestion, type SuggestionRow } from "@/lib/suggestions/actions";
 import { RoleBadge } from "@/components/RoleBadge";
 import { UserName } from "@/components/UserName";
+import { Spinner } from "@/components/Spinner";
 import type { UserRole } from "@/lib/db/schema";
 import { cn } from "@/lib/utils";
 
@@ -23,6 +24,7 @@ export function SuggestionCard({
   const [up, setUp] = useState(suggestion.upCount);
   const [down, setDown] = useState(suggestion.downCount);
   const [isPending, startTransition] = useTransition();
+  const [pendingDir, setPendingDir] = useState<"up" | "down" | null>(null);
   const implemented = suggestion.status === "implemented";
   const rejected = suggestion.status === "rejected";
 
@@ -41,6 +43,7 @@ export function SuggestionCard({
     setNet((n) => n + netDelta);
     setUp((n) => n + upDelta);
     setDown((n) => n + downDelta);
+    setPendingDir(target === 1 ? "up" : "down");
 
     const fd = new FormData();
     fd.append("suggestionId", String(suggestion.id));
@@ -56,6 +59,8 @@ export function SuggestionCard({
         setUp((n) => n - upDelta);
         setDown((n) => n - downDelta);
         console.error(err);
+      } finally {
+        setPendingDir(null);
       }
     });
   }
@@ -84,6 +89,7 @@ export function SuggestionCard({
             dir="up"
             active={userVote === 1}
             disabled={isPending}
+            busy={pendingDir === "up"}
             onClick={() => cast(1)}
           />
           <div
@@ -103,6 +109,7 @@ export function SuggestionCard({
             dir="down"
             active={userVote === -1}
             disabled={isPending}
+            busy={pendingDir === "down"}
             onClick={() => cast(-1)}
           />
         </div>
@@ -168,11 +175,13 @@ function VoteArrow({
   dir,
   active,
   disabled,
+  busy,
   onClick,
 }: {
   dir: "up" | "down";
   active: boolean;
   disabled: boolean;
+  busy: boolean;
   onClick: () => void;
 }) {
   const activeColor =
@@ -185,14 +194,15 @@ function VoteArrow({
       onClick={onClick}
       disabled={disabled}
       aria-label={dir === "up" ? "Upvote suggestion" : "Downvote suggestion"}
+      aria-busy={busy}
       className={cn(
-        "flex size-8 items-center justify-center rounded-md border text-base transition disabled:opacity-50",
+        "flex size-8 items-center justify-center rounded-md border text-base transition disabled:opacity-50 disabled:cursor-wait",
         active
           ? activeColor
           : "border-border bg-background text-foreground/60 hover:border-foreground/30 hover:text-foreground",
       )}
     >
-      {dir === "up" ? "▲" : "▼"}
+      {busy ? <Spinner size="sm" /> : dir === "up" ? "▲" : "▼"}
     </button>
   );
 }

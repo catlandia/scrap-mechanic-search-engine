@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { submitCreation, type SubmitResult } from "@/lib/community/actions";
+import { Spinner } from "@/components/Spinner";
 
 export function SubmitCreationForm() {
   const router = useRouter();
@@ -50,8 +51,9 @@ export function SubmitCreationForm() {
         <button
           type="submit"
           disabled={isPending || !input.trim()}
-          className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-black hover:bg-accent-strong disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-md bg-accent px-4 py-2 text-sm font-medium text-black hover:bg-accent-strong disabled:opacity-50"
         >
+          {isPending && <Spinner size="sm" />}
           {isPending ? "Submitting…" : "Submit for review"}
         </button>
       </form>
