@@ -38,7 +38,7 @@ import {
   countSubmissionsByUserSince,
   isInMemoryRateLimited,
 } from "@/lib/rate-limit";
-import { broadcastToRole } from "@/lib/db/notifications";
+import { broadcastToRole, createNotification } from "@/lib/db/notifications";
 
 const MIN_STEAM_AGE_DAYS = 7;
 
@@ -345,11 +345,22 @@ export async function suggestTag(formData: FormData): Promise<void> {
 }
 
 const MAX_COMMENT_LENGTH = 2000;
+// Tree depth allowed: 0 (root) / 1 (reply) / 2 (sub-reply). Beyond two
+// indentation steps the column gets too narrow to be readable on mobile.
+const MAX_REPLY_DEPTH = 2;
 
 export async function postComment(formData: FormData): Promise<void> {
   const user = await requireVotingUser();
   const creationId = String(formData.get("creationId") ?? "");
   const body = String(formData.get("body") ?? "").trim();
+  const parentIdRaw = formData.get("parentId");
+  const parentId =
+    parentIdRaw != null && String(parentIdRaw) !== ""
+      ? Number(parentIdRaw)
+      : null;
+  if (parentId != null && (!Number.isInteger(parentId) || parentId <= 0)) {
+    throw new Error("invalid_parent_id");
+  }
 
   if (!creationId) throw new Error("creationId required");
   if (!body) throw new Error("body_empty");
@@ -371,11 +382,72 @@ export async function postComment(formData: FormData): Promise<void> {
     throw new Error("rate_limited: wait 30s between comments");
   }
 
-  await db.insert(comments).values({
-    creationId,
-    userId: user.steamid,
-    body,
-  });
+  let parentAuthorId: string | null = null;
+  if (parentId != null) {
+    const [parent] = await db
+      .select({
+        id: comments.id,
+        creationId: comments.creationId,
+        parentId: comments.parentId,
+        userId: comments.userId,
+        deletedAt: comments.deletedAt,
+      })
+      .from(comments)
+      .where(eq(comments.id, parentId))
+      .limit(1);
+    if (!parent) throw new Error("parent_not_found");
+    if (parent.creationId !== creationId) throw new Error("parent_mismatch");
+    if (parent.deletedAt) throw new Error("parent_deleted");
+
+    // Walk up to find the parent's own depth. Reply sits at parentDepth + 1,
+    // so parentDepth must be < MAX_REPLY_DEPTH.
+    let parentDepth = 0;
+    let ancestorId: number | null = parent.parentId;
+    while (ancestorId != null) {
+      parentDepth += 1;
+      if (parentDepth >= MAX_REPLY_DEPTH) break;
+      const [next] = await db
+        .select({ parentId: comments.parentId })
+        .from(comments)
+        .where(eq(comments.id, ancestorId))
+        .limit(1);
+      ancestorId = next?.parentId ?? null;
+    }
+    if (parentDepth >= MAX_REPLY_DEPTH) throw new Error("max_reply_depth");
+
+    parentAuthorId = parent.userId;
+  }
+
+  const [inserted] = await db
+    .insert(comments)
+    .values({
+      creationId,
+      userId: user.steamid,
+      body,
+      parentId,
+    })
+    .returning({ id: comments.id });
+
+  if (parentAuthorId && parentAuthorId !== user.steamid) {
+    const [creationRow] = await db
+      .select({ shortId: creations.shortId, title: creations.title })
+      .from(creations)
+      .where(eq(creations.id, creationId))
+      .limit(1);
+    const link = creationRow
+      ? `/creation/${creationRow.shortId}#comment-${inserted?.id ?? ""}`
+      : `/creation/${creationId}`;
+    await createNotification({
+      userId: parentAuthorId,
+      type: "comment_reply",
+      tier: "user",
+      title: `${user.personaName} replied to your comment`,
+      body: creationRow
+        ? `on "${creationRow.title}": ${body.slice(0, 140)}`
+        : body.slice(0, 140),
+      link,
+    });
+  }
 
   revalidatePath(`/creation/${creationId}`);
 }

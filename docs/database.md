@@ -246,14 +246,14 @@ Moderation reports submitted by community members or auto-created by the system.
 
 ### `comments`
 
-Comments on creations. `parentId` reserved for future threading.
+Comments on creations. Threaded up to 3 levels deep via `parentId`.
 
 | Column | Type | Notes |
 |---|---|---|
 | `id` | serial PK | |
 | `creationId` | text → creations | |
 | `userId` | text → users.steamid | |
-| `parentId` | int NULL | Reserved (threading not yet implemented) |
+| `parentId` | int NULL | Self-reference to parent comment; not a FK to keep drizzle-kit happy. Depth enforced in `postComment`. |
 | `body` | text | |
 | `createdAt` | timestamptz | |
 | `editedAt` | timestamptz NULL | |

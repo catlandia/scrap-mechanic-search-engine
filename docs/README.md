@@ -17,12 +17,15 @@
 
 ## Quick orientation
 
-- Current version: **V5.6** — `/settings` hub + gear icon in header, light-theme readability pass (accent shades remapped, washed-out alpha bumped)
+- Current version: **V5.7** — threaded comments (3 levels), reply notifications
 - Stack: Next.js 15 App Router · TypeScript · Tailwind v4 · Drizzle + Neon · iron-session · Steam OpenID
 - Hard constraint: everything must remain on **free tiers** — no paid APIs, no metered per-item costs
 - Transactions are **not available** (neon-http driver) — writes are sequential, partial state is accepted
 
-## Recent changes (V4.6–4.15)
+## Recent changes (V4.6–5.7)
+
+- **V5.7 — threaded comments.** The `comments.parentId` column has existed in the schema since V3.0 but was never wired up, so the thread on every creation was a flat list — you couldn't reply to a specific comment, only tack a new top-level comment onto the creation. Now the reply button is live. Depth is capped at 3 levels (root / reply / sub-reply); the cap is enforced in `postComment` by walking up ancestors on the server rather than trusting a client-side depth value. Rendering builds a tree in `CommentSection.tsx`: root comments newest-first so fresh discussion surfaces, replies within a thread oldest-first so the conversation reads top-to-bottom. Replying to someone else's comment fires a `comment_reply` notification in the user tier with a deep link to `#comment-<id>` on the creation page; self-replies don't notify. No schema change — column was already there.
+
 
 - **V4.6:** 3-tab public ideas board (Approved/Implemented/Rejected); creator can reject live suggestions; creator-side tag removal button on creation detail page
 - **V4.7:** `effectiveRole()` helper — banned users lose all write permissions automatically; ban lifts without manual cleanup when `bannedUntil` elapses

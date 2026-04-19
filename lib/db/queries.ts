@@ -783,6 +783,7 @@ export async function getActionedReports(limit = 50): Promise<ActionedReportRow[
 export interface CreationCommentRow {
   id: number;
   creationId: string;
+  parentId: number | null;
   body: string;
   createdAt: Date;
   editedAt: Date | null;
@@ -793,15 +794,18 @@ export interface CreationCommentRow {
   authorRole: string;
 }
 
+// Returned oldest-first so the tree-builder on the client has stable ordering;
+// the client reverses root-level order afterwards to put newest threads on top.
 export async function getCreationComments(
   creationId: string,
-  limit = 100,
+  limit = 200,
 ): Promise<CreationCommentRow[]> {
   const db = getDb();
   return db
     .select({
       id: comments.id,
       creationId: comments.creationId,
+      parentId: comments.parentId,
       body: comments.body,
       createdAt: comments.createdAt,
       editedAt: comments.editedAt,
@@ -814,7 +818,7 @@ export async function getCreationComments(
     .from(comments)
     .innerJoin(users, eq(users.steamid, comments.userId))
     .where(eq(comments.creationId, creationId))
-    .orderBy(desc(comments.createdAt))
+    .orderBy(comments.createdAt)
     .limit(limit);
 }
 
