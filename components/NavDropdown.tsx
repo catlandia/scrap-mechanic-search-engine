@@ -65,7 +65,10 @@ export function NavDropdown({
       {open && (
         <div
           role="menu"
-          className="absolute left-0 top-full z-40 mt-1 min-w-[10rem] overflow-hidden rounded-md border border-border bg-background/95 py-1 shadow-lg backdrop-blur"
+          // Flush against the button (no mt) so the cursor can traverse from
+          // trigger to menu without crossing an unhovered gap that would fire
+          // mouseleave on the container and snap the menu shut mid-hover.
+          className="absolute left-0 top-full z-40 min-w-[10rem] overflow-hidden rounded-md border border-border bg-background/95 py-1 shadow-lg backdrop-blur"
         >
           {items.map((i) => (
             <Link
