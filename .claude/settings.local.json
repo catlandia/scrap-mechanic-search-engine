@@ -18,7 +18,9 @@
       "Bash(git --version)",
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(git commit *)",
+      "Bash(rm -rf \"app/api/captcha/debug\")"
     ],
     "deny": [
       "Bash(format *)",
