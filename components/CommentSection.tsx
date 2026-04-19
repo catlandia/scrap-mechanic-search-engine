@@ -12,8 +12,17 @@ import {
 import type { CreationCommentRow } from "@/lib/db/queries";
 import { RoleBadge } from "@/components/RoleBadge";
 import { UserName } from "@/components/UserName";
+import { Spinner } from "@/components/Spinner";
 import { cn } from "@/lib/utils";
 import type { UserRole } from "@/lib/db/schema";
+
+// Which row-level action is currently in flight. Lets the spinner sit on
+// exactly the button the user clicked instead of adorning every pending
+// button in the thread.
+type PendingAction =
+  | { kind: "vote"; id: number; dir: "up" | "down" }
+  | { kind: "delete"; id: number }
+  | null;
 
 // Must match MAX_REPLY_DEPTH in lib/community/actions.ts.
 const MAX_DEPTH = 2;
@@ -87,6 +96,7 @@ export function CommentSection({
   // second click on "confirm delete?" actually fires deleteComment. Guards
   // against fat-finger taps on phones and double-clicks on desktop.
   const [confirmingDeleteId, setConfirmingDeleteId] = useState<number | null>(null);
+  const [pendingAction, setPendingAction] = useState<PendingAction>(null);
   const [isPending, startTransition] = useTransition();
 
   const tree = useMemo(() => buildTree(comments), [comments]);
@@ -132,6 +142,7 @@ export function CommentSection({
 
   function handleVote(commentId: number, next: -1 | 0 | 1) {
     setVoteError(null);
+    setPendingAction({ kind: "vote", id: commentId, dir: next === -1 ? "down" : "up" });
     startTransition(async () => {
       try {
         await voteComment(commentId, next);
@@ -147,12 +158,15 @@ export function CommentSection({
         } else {
           setVoteError(msg);
         }
+      } finally {
+        setPendingAction(null);
       }
     });
   }
 
   function handleDelete(commentId: number) {
     setDeleteError(null);
+    setPendingAction({ kind: "delete", id: commentId });
     const fd = new FormData();
     fd.append("commentId", String(commentId));
     startTransition(async () => {
@@ -165,6 +179,8 @@ export function CommentSection({
         setDeleteError(
           err instanceof Error ? err.message : "Failed to delete comment.",
         );
+      } finally {
+        setPendingAction(null);
       }
     });
   }
@@ -198,9 +214,12 @@ export function CommentSection({
               <button
                 type="submit"
                 disabled={isPending || !body.trim()}
-                className="rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-black hover:bg-accent-strong disabled:opacity-50"
+                className="inline-flex items-center gap-2 rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-black hover:bg-accent-strong disabled:opacity-50"
               >
-                {isPending ? "Posting…" : "Post comment"}
+                {isPending && pendingAction === null && (
+                  <Spinner size="xs" />
+                )}
+                {isPending && pendingAction === null ? "Posting…" : "Post comment"}
               </button>
             </div>
           </div>
@@ -250,6 +269,7 @@ export function CommentSection({
             onDelete={handleDelete}
             onVote={handleVote}
             pending={isPending}
+            pendingAction={pendingAction}
           />
         ))}
       </ul>
@@ -273,6 +293,7 @@ function CommentNode({
   onDelete,
   onVote,
   pending,
+  pendingAction,
 }: {
   node: Node;
   depth: number;
@@ -289,6 +310,7 @@ function CommentNode({
   onDelete: (id: number) => void;
   onVote: (id: number, value: -1 | 0 | 1) => void;
   pending: boolean;
+  pendingAction: PendingAction;
 }) {
   const isOwner = viewerSteamid === node.authorSteamid;
   const canDelete = !node.deletedAt && (isOwner || viewerIsMod);
@@ -340,6 +362,11 @@ function CommentNode({
                   canVote={canVote}
                   onVote={(v) => onVote(node.id, v)}
                   pending={pending}
+                  pendingDir={
+                    pendingAction?.kind === "vote" && pendingAction.id === node.id
+                      ? pendingAction.dir
+                      : null
+                  }
                 />
                 {canReply && (
                   <button
@@ -373,9 +400,21 @@ function CommentNode({
                         aria-label={`Confirm delete comment by ${node.authorName}`}
                         onClick={() => onDelete(node.id)}
                         disabled={pending}
-                        className="rounded border border-red-400/60 bg-red-500/15 px-1.5 py-0.5 text-xs font-semibold text-red-300 hover:bg-red-500/25 disabled:opacity-50"
+                        aria-busy={
+                          pendingAction?.kind === "delete" &&
+                          pendingAction.id === node.id
+                        }
+                        className="inline-flex items-center gap-1.5 rounded border border-red-400/60 bg-red-500/15 px-1.5 py-0.5 text-xs font-semibold text-red-300 hover:bg-red-500/25 disabled:opacity-50"
                       >
-                        confirm delete?
+                        {pendingAction?.kind === "delete" &&
+                        pendingAction.id === node.id ? (
+                          <>
+                            <Spinner size="xs" />
+                            deleting…
+                          </>
+                        ) : (
+                          "confirm delete?"
+                        )}
                       </button>
                       <button
                         type="button"
@@ -443,6 +482,7 @@ function CommentNode({
               onDelete={onDelete}
               onVote={onVote}
               pending={pending}
+              pendingAction={pendingAction}
             />
           ))}
         </ul>
@@ -457,12 +497,14 @@ function CommentVoteControl({
   canVote,
   onVote,
   pending,
+  pendingDir,
 }: {
   net: number;
   viewerVote: -1 | 0 | 1;
   canVote: boolean;
   onVote: (v: -1 | 0 | 1) => void;
   pending: boolean;
+  pendingDir: "up" | "down" | null;
 }) {
   const netColor =
     net > 0 ? "text-emerald-400" : net < 0 ? "text-red-300" : "text-foreground/50";
@@ -479,14 +521,15 @@ function CommentVoteControl({
         type="button"
         aria-label="Upvote comment"
         aria-pressed={viewerVote === 1}
+        aria-busy={pendingDir === "up"}
         disabled={pending}
         onClick={() => onVote(viewerVote === 1 ? 0 : 1)}
         className={cn(
-          "rounded px-1 leading-none hover:text-emerald-400 disabled:opacity-50",
+          "inline-flex items-center justify-center rounded px-1 leading-none hover:text-emerald-400 disabled:opacity-50",
           viewerVote === 1 ? "text-emerald-400" : "text-foreground/40",
         )}
       >
-        ▲
+        {pendingDir === "up" ? <Spinner size="xs" /> : "▲"}
       </button>
       <span className={cn("tabular-nums", netColor)}>
         {net > 0 ? `+${net}` : net}
@@ -495,14 +538,15 @@ function CommentVoteControl({
         type="button"
         aria-label="Downvote comment"
         aria-pressed={viewerVote === -1}
+        aria-busy={pendingDir === "down"}
         disabled={pending}
         onClick={() => onVote(viewerVote === -1 ? 0 : -1)}
         className={cn(
-          "rounded px-1 leading-none hover:text-red-300 disabled:opacity-50",
+          "inline-flex items-center justify-center rounded px-1 leading-none hover:text-red-300 disabled:opacity-50",
           viewerVote === -1 ? "text-red-300" : "text-foreground/40",
         )}
       >
-        ▼
+        {pendingDir === "down" ? <Spinner size="xs" /> : "▼"}
       </button>
     </span>
   );
@@ -556,8 +600,9 @@ function ReplyForm({
           <button
             type="submit"
             disabled={pending || !body.trim()}
-            className="rounded-md bg-accent px-3 py-1 text-xs font-medium text-black hover:bg-accent-strong disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded-md bg-accent px-3 py-1 text-xs font-medium text-black hover:bg-accent-strong disabled:opacity-50"
           >
+            {pending && <Spinner size="xs" />}
             {pending ? "Posting…" : "Reply"}
           </button>
         </div>
@@ -659,8 +704,9 @@ function ReportForm({
         <button
           type="submit"
           disabled={isPending || (reason === "other" && !customText.trim())}
-          className="rounded bg-amber-500 px-3 py-1 text-xs font-medium text-black hover:bg-amber-400 disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded bg-amber-500 px-3 py-1 text-xs font-medium text-black hover:bg-amber-400 disabled:opacity-50"
         >
+          {isPending && <Spinner size="xs" />}
           {isPending ? "Submitting…" : "Submit report"}
         </button>
       </div>
