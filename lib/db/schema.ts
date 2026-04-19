@@ -605,6 +605,62 @@ export const userBadges = pgTable(
 export type UserBadge = typeof userBadges.$inferSelect;
 export type NewUserBadge = typeof userBadges.$inferInsert;
 
+// ---------------- Changelog ----------------
+// Two tiers match how the Creator actually thinks about ship cadence:
+// "update" for meaningful new features a user would care about, "patch"
+// for small fixes or incremental polish. Both share the same table —
+// the public page shows them together with a visible pill, the tab
+// filter defaults to Updates so the big stuff is seen first.
+export const CHANGELOG_TIERS = ["update", "patch"] as const;
+export type ChangelogTier = (typeof CHANGELOG_TIERS)[number];
+
+export const changelogEntries = pgTable(
+  "changelog_entries",
+  {
+    id: serial("id").primaryKey(),
+    tier: text("tier").notNull().default("update"),
+    title: text("title").notNull(),
+    body: text("body"),
+    authorUserId: text("author_user_id").references(() => users.steamid, {
+      onDelete: "set null",
+    }),
+    // Entries are drafted then published — `publishedAt` null means draft,
+    // only-Creator-visible; setting it fires notifications and flips the
+    // entry public.
+    publishedAt: timestamp("published_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    // Soft delete so a hasty un-publish doesn't wipe history. The public
+    // reader filters on `deletedAt is null`; admin sees everything.
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
+  },
+  (t) => [
+    index("changelog_entries_published_at_idx").on(t.publishedAt),
+    index("changelog_entries_tier_idx").on(t.tier),
+  ],
+);
+
+// Per-user last-seen tracker for the "unread" pill next to the top-bar
+// link. `lastSeenEntryId` = highest changelog entry id the user has
+// visibly seen. Rows only exist for users who've ever opened /changelog.
+export const changelogReads = pgTable("changelog_reads", {
+  userId: text("user_id")
+    .primaryKey()
+    .references(() => users.steamid, { onDelete: "cascade" }),
+  lastSeenEntryId: integer("last_seen_entry_id").notNull().default(0),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export type ChangelogEntry = typeof changelogEntries.$inferSelect;
+export type NewChangelogEntry = typeof changelogEntries.$inferInsert;
+export type ChangelogRead = typeof changelogReads.$inferSelect;
+
 export type Comment = typeof comments.$inferSelect;
 export type NewComment = typeof comments.$inferInsert;
 export type FeatureSuggestion = typeof featureSuggestions.$inferSelect;

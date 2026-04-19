@@ -169,6 +169,13 @@
       "when": 1776632101861,
       "tag": "0023_mysterious_captain_flint",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1776632287267,
+      "tag": "0024_faulty_legion",
+      "breakpoints": true
     }
   ]
 }

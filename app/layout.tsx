@@ -10,6 +10,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { BetaBanner } from "@/components/BetaBanner";
 import { GuideLink } from "@/components/GuideLink";
 import { ToastProvider } from "@/components/Toast";
+import { getUnreadChangelogCount } from "@/lib/changelog/actions";
 import { getUnreadNotificationCountsByTier, getUserCounts } from "@/lib/db/queries";
 import type { NotificationTier } from "@/lib/db/schema";
 import { getCustomThemeColors, getRatingMode, getTheme } from "@/lib/prefs.server";
@@ -45,7 +46,7 @@ export const metadata: Metadata = {
 };
 
 type NavItem =
-  | { kind: "link"; href: string; label: string }
+  | { kind: "link"; href: string; label: string; badge?: number }
   | { kind: "group"; label: string; items: { href: string; label: string }[] };
 
 // Kind pages live under a single "Browse" dropdown on desktop (and a section
@@ -67,6 +68,7 @@ const navItems: NavItem[] = [
   { kind: "link", href: "/search", label: "Search" },
   { kind: "link", href: "/creators", label: "Creators" },
   { kind: "link", href: "/suggestions", label: "Ideas" },
+  { kind: "link", href: "/changelog", label: "What's new" },
   { kind: "link", href: "/submit", label: "Submit" },
 ];
 
@@ -88,6 +90,20 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   }
   const ratingMode = await getRatingMode();
   const theme = await getTheme();
+  // Unread changelog entries drive the "What's new" top-bar badge. Bounded
+  // to 99 server-side so the pill stays compact.
+  let unreadChangelog = 0;
+  try {
+    unreadChangelog = await getUnreadChangelogCount();
+  } catch {
+    // Changelog is cosmetic — never block the layout render.
+  }
+  const navItemsWithBadges: NavItem[] = navItems.map((item) => {
+    if (item.kind === "link" && item.href === "/changelog") {
+      return { ...item, badge: unreadChangelog };
+    }
+    return item;
+  });
   let userCounts: { total: number; online: number } | null = null;
   try {
     userCounts = await getUserCounts();
@@ -132,7 +148,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               </span>
             </Link>
             <nav className="hidden flex-wrap items-center gap-x-5 gap-y-1 text-sm text-foreground/70 sm:flex">
-              {navItems.map((item) =>
+              {navItemsWithBadges.map((item) =>
                 item.kind === "group" ? (
                   <NavDropdown
                     key={item.label}
@@ -143,9 +159,17 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   <Link
                     key={item.href}
                     href={item.href}
-                    className="hover:text-foreground"
+                    className="inline-flex items-center gap-1.5 hover:text-foreground"
                   >
                     {item.label}
+                    {item.badge && item.badge > 0 ? (
+                      <span
+                        aria-label={`${item.badge} unread`}
+                        className="inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-semibold leading-none text-black"
+                      >
+                        {item.badge}
+                      </span>
+                    ) : null}
                   </Link>
                 ),
               )}
@@ -173,7 +197,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 </Link>
               )}
               <MobileNav
-                navItems={navItems}
+                navItems={navItemsWithBadges}
                 extraLinks={extraLinks}
                 ratingMode={ratingMode}
                 theme={theme}

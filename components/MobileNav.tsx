@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 
 type NavLink = { href: string; label: string };
 type NavItem =
-  | { kind: "link"; href: string; label: string }
+  | { kind: "link"; href: string; label: string; badge?: number }
   | { kind: "group"; label: string; items: NavLink[] };
 
 export function MobileNav({
@@ -191,6 +191,7 @@ export function MobileNav({
                     href={item.href}
                     label={item.label}
                     active={pathname === item.href}
+                    badge={item.badge}
                   />
                 ) : (
                   <div key={item.label} className="mt-2">
@@ -293,22 +294,32 @@ function MobileLink({
   label,
   active,
   indented = false,
+  badge,
 }: {
   href: string;
   label: string;
   active: boolean;
   indented?: boolean;
+  badge?: number;
 }) {
   return (
     <Link
       href={href}
       className={cn(
-        "py-2.5 text-foreground/75 hover:bg-foreground/5 hover:text-foreground",
+        "flex items-center gap-2 py-2.5 text-foreground/75 hover:bg-foreground/5 hover:text-foreground",
         indented ? "pl-8 pr-4 text-sm" : "px-4",
         active && "bg-accent/10 text-accent",
       )}
     >
-      {label}
+      <span>{label}</span>
+      {badge && badge > 0 ? (
+        <span
+          aria-label={`${badge} unread`}
+          className="ml-auto inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-semibold leading-none text-black"
+        >
+          {badge}
+        </span>
+      ) : null}
     </Link>
   );
 }

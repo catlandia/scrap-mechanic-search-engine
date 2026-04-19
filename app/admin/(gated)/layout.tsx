@@ -22,6 +22,7 @@ const baseNav = [
 ];
 const creatorNav = [
   { href: "/admin/suggestions", label: "Suggestions" },
+  { href: "/admin/changelog", label: "Changelog" },
   { href: "/admin/users", label: "Users" },
   { href: "/admin/badges", label: "Badges" },
 ];
