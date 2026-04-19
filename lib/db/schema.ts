@@ -203,6 +203,14 @@ export const creationCategories = pgTable(
   (t) => [primaryKey({ columns: [t.creationId, t.categoryId] })],
 );
 
+export interface IngestProgress {
+  kindsDone: number;
+  kindsTotal: number;
+  currentKind: string | null;
+  pageInCurrentKind: number;
+  pagesPerKind: number;
+}
+
 export const ingestRuns = pgTable("ingest_runs", {
   id: serial("id").primaryKey(),
   startedAt: timestamp("started_at", { withTimezone: true }).notNull().defaultNow(),
@@ -210,6 +218,9 @@ export const ingestRuns = pgTable("ingest_runs", {
   fetched: integer("fetched").notNull().default(0),
   newItems: integer("new_items").notNull().default(0),
   errors: jsonb("errors").$type<unknown[]>().notNull().default([]),
+  // Live progress snapshot, updated after each page fetch during a run.
+  // Nullable / empty object while the run hasn't started the loop yet.
+  progress: jsonb("progress").$type<IngestProgress | null>(),
 });
 
 // ---------------- v2.0: accounts, voting, favourites, reports ----------------

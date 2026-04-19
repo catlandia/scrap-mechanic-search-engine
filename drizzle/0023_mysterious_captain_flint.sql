@@ -1,0 +1,1 @@
+ALTER TABLE "ingest_runs" ADD COLUMN "progress" jsonb;

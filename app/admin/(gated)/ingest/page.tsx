@@ -3,6 +3,7 @@ import { getDb } from "@/lib/db/client";
 import { ingestRuns } from "@/lib/db/schema";
 import { triggerIngest } from "@/app/admin/actions";
 import { FormSubmitButton } from "@/components/FormSubmitButton";
+import { IngestProgress } from "@/components/admin/IngestProgress";
 
 export const dynamic = "force-dynamic";
 
@@ -34,27 +35,32 @@ export default async function IngestPage() {
         </div>
         <form
           action={triggerIngest}
-          className="flex items-end gap-2 rounded-md border border-border bg-card p-3"
+          className="flex w-full max-w-md flex-col gap-2 rounded-md border border-border bg-card p-3 sm:w-auto"
         >
-          <label className="flex flex-col gap-1 text-xs text-foreground/60">
-            Pages per kind
-            <input
-              type="number"
-              name="pagesPerKind"
-              min={1}
-              max={20}
-              defaultValue={5}
-              className="w-20 rounded border border-border bg-background px-2 py-1 text-sm text-foreground"
-            />
-          </label>
-          <FormSubmitButton
-            pendingLabel="Running…"
-            spinnerSize="sm"
-            toastSuccess="Ingest run complete — see the table for counts."
-            className="rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-black hover:bg-accent-strong"
-          >
-            Run ingest now
-          </FormSubmitButton>
+          <div className="flex items-end gap-2">
+            <label className="flex flex-col gap-1 text-xs text-foreground/60">
+              Pages per kind
+              <input
+                type="number"
+                name="pagesPerKind"
+                min={1}
+                max={20}
+                defaultValue={5}
+                className="w-20 rounded border border-border bg-background px-2 py-1 text-sm text-foreground"
+              />
+            </label>
+            <FormSubmitButton
+              pendingLabel="Running…"
+              spinnerSize="sm"
+              toastSuccess="Ingest run complete — see the table for counts."
+              className="rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-black hover:bg-accent-strong"
+            >
+              Run ingest now
+            </FormSubmitButton>
+          </div>
+          {/* Inside the form so useFormStatus sees it. Component self-hides
+              when there's nothing in flight. */}
+          <IngestProgress />
         </form>
       </header>
 

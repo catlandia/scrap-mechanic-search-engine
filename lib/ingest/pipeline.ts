@@ -187,8 +187,45 @@ export async function runIngest(options: IngestOptions = {}): Promise<IngestResu
 
   const [run] = await db
     .insert(ingestRuns)
-    .values({ startedAt: new Date(), fetched: 0, newItems: 0 })
+    .values({
+      startedAt: new Date(),
+      fetched: 0,
+      newItems: 0,
+      progress: {
+        kindsDone: 0,
+        kindsTotal: kinds.length,
+        currentKind: null,
+        pageInCurrentKind: 0,
+        pagesPerKind,
+      },
+    })
     .returning();
+
+  // Cheap best-effort progress writer. Failures here are non-fatal — if
+  // the admin's progress bar occasionally stalls because one update
+  // dropped, the run still completes and the final counts are correct.
+  async function writeProgress(partial: {
+    kindsDone: number;
+    currentKind: string | null;
+    pageInCurrentKind: number;
+  }) {
+    try {
+      await db
+        .update(ingestRuns)
+        .set({
+          progress: {
+            kindsDone: partial.kindsDone,
+            kindsTotal: kinds.length,
+            currentKind: partial.currentKind,
+            pageInCurrentKind: partial.pageInCurrentKind,
+            pagesPerKind,
+          },
+        })
+        .where(eq(ingestRuns.id, run.id));
+    } catch {
+      // Swallow — progress tracking is a UX hint, not a correctness signal.
+    }
+  }
 
   const errors: IngestResult["errors"] = [];
   let totalFetched = 0;
@@ -196,6 +233,7 @@ export async function runIngest(options: IngestOptions = {}): Promise<IngestResu
   let tagRowsInserted = 0;
   const collected: CollectedItem[] = [];
 
+  let kindsDone = 0;
   for (const kind of kinds) {
     const requiredTag = STEAM_KIND_TAGS[kind];
     let cursor = "*";
@@ -205,8 +243,18 @@ export async function runIngest(options: IngestOptions = {}): Promise<IngestResu
     // We track fresh-for-us insert candidates per-kind so early-stop is
     // driven by real new work, not re-surfaced pending items.
     let novelForKind = 0;
+    await writeProgress({
+      kindsDone,
+      currentKind: kind,
+      pageInCurrentKind: 0,
+    });
     try {
       for (let page = 0; page < pagesPerKind; page += 1) {
+        await writeProgress({
+          kindsDone,
+          currentKind: kind,
+          pageInCurrentKind: page + 1,
+        });
         const { items, nextCursor } = await queryFiles({
           apiKey,
           requiredTags: [requiredTag],
@@ -249,6 +297,12 @@ export async function runIngest(options: IngestOptions = {}): Promise<IngestResu
     } catch (err) {
       errors.push({ kind, message: err instanceof Error ? err.message : String(err) });
     }
+    kindsDone += 1;
+    await writeProgress({
+      kindsDone,
+      currentKind: null,
+      pageInCurrentKind: 0,
+    });
   }
 
   // De-dupe: a single publishedfileid could appear under multiple kind queries.

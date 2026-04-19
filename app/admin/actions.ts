@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { and, eq, inArray, ne, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, ne, sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import {
   categories,
@@ -15,7 +15,7 @@ import {
   users,
 } from "@/lib/db/schema";
 import { runIngest } from "@/lib/ingest/pipeline";
-import { CREATION_KINDS } from "@/lib/db/schema";
+import { CREATION_KINDS, ingestRuns, type IngestProgress } from "@/lib/db/schema";
 import { getCurrentUser, isBanned } from "@/lib/auth/session";
 import { effectiveRole, isModerator } from "@/lib/auth/roles";
 import type { UserRole } from "@/lib/db/schema";
@@ -240,6 +240,30 @@ export async function confirmCreationTag(formData: FormData) {
     );
   revalidatePath(`/creation/${creationId}`);
   revalidatePath("/admin/queue");
+}
+
+export async function getLatestIngestProgress(): Promise<{
+  id: number | null;
+  running: boolean;
+  progress: IngestProgress | null;
+}> {
+  await requireMod();
+  const db = getDb();
+  const [row] = await db
+    .select({
+      id: ingestRuns.id,
+      endedAt: ingestRuns.endedAt,
+      progress: ingestRuns.progress,
+    })
+    .from(ingestRuns)
+    .orderBy(desc(ingestRuns.startedAt))
+    .limit(1);
+  if (!row) return { id: null, running: false, progress: null };
+  return {
+    id: row.id,
+    running: row.endedAt == null,
+    progress: row.progress ?? null,
+  };
 }
 
 export async function triggerIngest(formData?: FormData): Promise<void> {
