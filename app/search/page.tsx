@@ -7,6 +7,7 @@ import { SortSelector } from "@/components/SortSelector";
 import {
   getAllCategories,
   getAllTags,
+  parsePageIndex,
   parseSortMode,
   searchApproved,
 } from "@/lib/db/queries";
@@ -41,7 +42,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
   const hasQuery = Boolean(sp.q?.trim());
   const defaultSort = hasQuery ? "relevance" : "newest";
   const sort = sp.sort ? parseSortMode(sp.sort) : defaultSort;
-  const pageIndex = Math.min(200, Math.max(0, Number(sp.page ?? "1") - 1));
+  const pageIndex = parsePageIndex(sp.page, 200);
 
   const [allTags, allCategories, results] = await Promise.all([
     getAllTags(),

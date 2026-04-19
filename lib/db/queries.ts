@@ -101,6 +101,19 @@ export function parseSortMode(raw: string | undefined | null): SortMode {
   return "newest";
 }
 
+// `?page=` URL param → zero-indexed offset. Non-numeric input lands on page 0
+// rather than NaN. `maxIndex` caps how deep into OFFSET queries a caller can
+// drive — important because OFFSET on large tables is linear in the offset
+// size, so a 1,000,000-page request would thrash Neon.
+export function parsePageIndex(
+  raw: string | undefined | null,
+  maxIndex = 200,
+): number {
+  const n = Number(raw ?? "1");
+  if (!Number.isFinite(n)) return 0;
+  return Math.min(maxIndex, Math.max(0, Math.trunc(n) - 1));
+}
+
 // Combines websearch (handles phrase quotes, OR, -negation) with a prefix
 // pass so partial typing still matches: `cann` finds "cannon" via `cann:*`.
 // Tokens are stripped of non-word chars before going through to_tsquery so

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { getTopCreators } from "@/lib/db/queries";
+import { getTopCreators, parsePageIndex } from "@/lib/db/queries";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +23,7 @@ export default async function CreatorsPage({
 }) {
   const sp = await searchParams;
   const q = (sp.q ?? "").trim();
-  const pageIndex = Math.min(50, Math.max(0, Number(sp.page ?? "1") - 1));
+  const pageIndex = parsePageIndex(sp.page, 50);
 
   const rows = await getTopCreators({
     q,

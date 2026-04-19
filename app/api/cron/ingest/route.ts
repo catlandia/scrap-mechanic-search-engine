@@ -27,7 +27,7 @@ async function handle(req: NextRequest) {
     const result = await runIngest({});
     return NextResponse.json({ ok: true, ...result });
   } catch (err) {
-    console.error(err);
+    console.error("[cron/ingest] failed:", err);
     return NextResponse.json({ ok: false, error: "internal" }, { status: 500 });
   }
 }

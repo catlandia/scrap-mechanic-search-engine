@@ -89,34 +89,59 @@ option {
    Tailwind equivalents so role badges, status messages, and role-tinted
    pills stay readable on the light palette. Dark-family themes (v1,
    workshop, contrast) keep the original pale shades. */
+/* The attribute-selector variants catch alpha forms like
+   `text-red-100/80` and `text-emerald-200/70` that plain class selectors
+   would miss. Dropping the alpha here is intentional — the solid darker
+   colour is readable on white where the original pale-shade-at-80% was
+   not, and the aesthetic difference is negligible. */
 html[data-theme="default"] .text-sky-100,
 html[data-theme="default"] .text-sky-200,
 html[data-theme="default"] .text-sky-300,
-html[data-theme="default"] .text-sky-400 {
+html[data-theme="default"] .text-sky-400,
+html[data-theme="default"] [class*="text-sky-100/"],
+html[data-theme="default"] [class*="text-sky-200/"],
+html[data-theme="default"] [class*="text-sky-300/"],
+html[data-theme="default"] [class*="text-sky-400/"] {
   color: #0369a1;
 }
 html[data-theme="default"] .text-emerald-100,
 html[data-theme="default"] .text-emerald-200,
 html[data-theme="default"] .text-emerald-300,
-html[data-theme="default"] .text-emerald-400 {
+html[data-theme="default"] .text-emerald-400,
+html[data-theme="default"] [class*="text-emerald-100/"],
+html[data-theme="default"] [class*="text-emerald-200/"],
+html[data-theme="default"] [class*="text-emerald-300/"],
+html[data-theme="default"] [class*="text-emerald-400/"] {
   color: #047857;
 }
 html[data-theme="default"] .text-amber-100,
 html[data-theme="default"] .text-amber-200,
 html[data-theme="default"] .text-amber-300,
-html[data-theme="default"] .text-amber-400 {
+html[data-theme="default"] .text-amber-400,
+html[data-theme="default"] [class*="text-amber-100/"],
+html[data-theme="default"] [class*="text-amber-200/"],
+html[data-theme="default"] [class*="text-amber-300/"],
+html[data-theme="default"] [class*="text-amber-400/"] {
   color: #b45309;
 }
 html[data-theme="default"] .text-purple-100,
 html[data-theme="default"] .text-purple-200,
 html[data-theme="default"] .text-purple-300,
-html[data-theme="default"] .text-purple-400 {
+html[data-theme="default"] .text-purple-400,
+html[data-theme="default"] [class*="text-purple-100/"],
+html[data-theme="default"] [class*="text-purple-200/"],
+html[data-theme="default"] [class*="text-purple-300/"],
+html[data-theme="default"] [class*="text-purple-400/"] {
   color: #6d28d9;
 }
 html[data-theme="default"] .text-red-100,
 html[data-theme="default"] .text-red-200,
 html[data-theme="default"] .text-red-300,
-html[data-theme="default"] .text-red-400 {
+html[data-theme="default"] .text-red-400,
+html[data-theme="default"] [class*="text-red-100/"],
+html[data-theme="default"] [class*="text-red-200/"],
+html[data-theme="default"] [class*="text-red-300/"],
+html[data-theme="default"] [class*="text-red-400/"] {
   color: #b91c1c;
 }
 /* Hover targets also need darkening. */

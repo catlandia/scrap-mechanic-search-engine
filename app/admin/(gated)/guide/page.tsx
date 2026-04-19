@@ -94,7 +94,7 @@ function Section({
     mod: "border-sky-500/40 bg-sky-500/5",
     elite: "border-amber-500/40 bg-amber-500/5",
     creator: "border-purple-500/40 bg-purple-500/5",
-    rules: "border-foreground/15 bg-white/[0.02]",
+    rules: "border-foreground/15 bg-foreground/[0.02]",
   } as const;
   const tierLabels = {
     mod: "Moderator",

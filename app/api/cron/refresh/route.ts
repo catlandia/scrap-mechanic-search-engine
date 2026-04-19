@@ -26,7 +26,7 @@ async function handle(req: NextRequest) {
     const result = await runRefresh();
     return NextResponse.json({ ok: true, ...result });
   } catch (err) {
-    console.error(err);
+    console.error("[cron/refresh] failed:", err);
     return NextResponse.json({ ok: false, error: "internal" }, { status: 500 });
   }
 }

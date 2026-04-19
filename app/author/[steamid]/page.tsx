@@ -7,6 +7,7 @@ import { SortSelector } from "@/components/SortSelector";
 import {
   getAuthorCreations,
   getAuthorProfile,
+  parsePageIndex,
   parseSortMode,
 } from "@/lib/db/queries";
 import { getRatingMode } from "@/lib/prefs.server";
@@ -49,7 +50,7 @@ export default async function AuthorPage({
 
   const sp = await searchParams;
   const sort = parseSortMode(sp.sort);
-  const pageIndex = Math.max(0, Number(sp.page ?? "1") - 1);
+  const pageIndex = parsePageIndex(sp.page);
 
   const [profile, items] = await Promise.all([
     getAuthorProfile(steamid),

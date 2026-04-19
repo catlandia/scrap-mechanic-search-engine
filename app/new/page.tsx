@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { CreationGrid } from "@/components/CreationCard";
-import { getNewestApproved } from "@/lib/db/queries";
+import { getNewestApproved, parsePageIndex } from "@/lib/db/queries";
 import { getRatingMode } from "@/lib/prefs.server";
 
 export const dynamic = "force-dynamic";
@@ -19,7 +19,7 @@ type SearchParams = Promise<{ page?: string }>;
 
 export default async function NewestPage({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
-  const pageIndex = Math.max(0, Number(params.page ?? "1") - 1);
+  const pageIndex = parsePageIndex(params.page);
   const items = await getNewestApproved(PAGE_SIZE + 1, pageIndex * PAGE_SIZE);
   const hasNext = items.length > PAGE_SIZE;
   const displayed = items.slice(0, PAGE_SIZE);

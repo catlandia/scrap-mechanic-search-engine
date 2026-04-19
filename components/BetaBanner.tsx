@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-const DISMISS_KEY = "smse_beta_dismissed_v1";
+// Bump the version suffix whenever banner copy meaningfully changes — a new
+// key re-shows the banner to users who dismissed the previous message.
+const DISMISS_KEY = "smse_beta_dismissed_v2";
 
 export function BetaBanner() {
   const [hidden, setHidden] = useState(true);
@@ -36,17 +38,17 @@ export function BetaBanner() {
     >
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2 text-xs sm:text-sm">
         <span className="font-semibold uppercase tracking-wider text-amber-300">
-          Beta
+          Beta 2.0
         </span>
         <span className="text-foreground/70">
-          This site is still in testing. Expect rough edges and occasional
-          data changes.
+          Polish pass complete — threads, votes, reports, profile walls,
+          creators directory, badges, and an easier nav.
         </span>
         <Link
-          href="/guide"
+          href="/about"
           className="text-amber-200 underline underline-offset-2 hover:text-foreground"
         >
-          Quick guide →
+          How it works →
         </Link>
         <button
           type="button"

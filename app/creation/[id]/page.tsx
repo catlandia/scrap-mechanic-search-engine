@@ -90,11 +90,10 @@ export default async function CreationDetailPage({ params }: { params: Params })
   // Record the view BEFORE we fetch counts so the viewer's own visit is
   // reflected in the Site-views number they see.
   if (viewer) {
-    try {
-      await recordCreationView(creation.id, viewer.steamid);
-    } catch (err) {
-      console.error("recordCreationView failed:", err);
-    }
+    // View recording is best-effort — if it fails (rate-limit row conflict,
+    // brief DB blip), the page should still render. No need to log every
+    // transient failure.
+    await recordCreationView(creation.id, viewer.steamid).catch(() => {});
   }
 
   const [

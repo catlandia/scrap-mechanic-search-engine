@@ -7,6 +7,7 @@ import { SortSelector } from "@/components/SortSelector";
 import {
   getApprovedByKind,
   getTopTagsForKind,
+  parsePageIndex,
   parseSortMode,
 } from "@/lib/db/queries";
 import type { CreationKind } from "@/lib/db/schema";
@@ -78,7 +79,7 @@ export default async function KindPage({
 
   const sp = await searchParams;
   const sort = parseSortMode(sp.sort);
-  const pageIndex = Math.max(0, Number(sp.page ?? "1") - 1);
+  const pageIndex = parsePageIndex(sp.page);
   const [items, topTags, ratingMode] = await Promise.all([
     getApprovedByKind(entry.kind, {
       sort,
