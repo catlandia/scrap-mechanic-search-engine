@@ -55,8 +55,11 @@ export interface RoleStyle {
 
 export const ROLE_STYLES: Record<UserRole, RoleStyle> = {
   user: {
-    name: "text-white/80",
-    badge: "bg-white/10 text-white/60 border border-white/10",
+    // theme-adaptive so the "user" role's name and badge read on both
+    // light and dark themes (previously `text-white/80` was invisible on
+    // the default light background).
+    name: "text-foreground/85",
+    badge: "bg-foreground/10 text-foreground/70 border border-foreground/15",
   },
   moderator: {
     name: "text-sky-300",
