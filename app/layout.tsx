@@ -74,6 +74,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const customColors = theme === "custom" ? await getCustomThemeColors() : null;
   const showAdminLink = !!user && isModerator(user.role as UserRole);
   const extraLinks = [
+    { href: "/settings", label: "Settings" },
     { href: "/guide", label: "How to use the site" },
     { href: "/submit", label: "Submit a creation" },
     ...(user ? [{ href: "/me/favourites", label: "Your favourites" }] : []),
@@ -156,8 +157,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <Link href="/guide" className="hover:text-foreground">
               Guide
             </Link>
-            <Link href="/settings/theme" className="hover:text-foreground">
-              Theme
+            <Link href="/settings" className="hover:text-foreground">
+              Settings
             </Link>
             <Link href="/terms" className="hover:text-foreground">
               Terms

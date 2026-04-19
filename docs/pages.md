@@ -28,6 +28,8 @@ All public pages are in `app/` using Next.js 15 App Router. Server Components by
 | `/submit` | `app/submit/page.tsx` | Submit a Workshop item |
 | `/suggestions` | `app/suggestions/page.tsx` | Ideas board (3 tabs) |
 | `/suggestions/new` | `app/suggestions/new/page.tsx` | Submit a suggestion (noindex) |
+| `/settings` | `app/settings/page.tsx` | User preferences hub (theme, ratings, account links, help) |
+| `/settings/theme` | `app/settings/theme/page.tsx` | Custom theme editor |
 | `/terms` | `app/terms/page.tsx` | Terms of use |
 | `/privacy` | `app/privacy/page.tsx` | Privacy policy |
 

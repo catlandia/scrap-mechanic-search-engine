@@ -64,3 +64,76 @@ body {
 ::selection {
   background: color-mix(in oklch, var(--color-accent) 40%, transparent);
 }
+
+/* Accent-shade remaps for the default (light) theme.
+   The codebase uses pale Tailwind shades (text-*-200, text-*-300) all over
+   because everything was originally designed against a dark background.
+   Those shades wash out on white — this block flips them to the darker
+   Tailwind equivalents so role badges, status messages, and role-tinted
+   pills stay readable on the light palette. Dark-family themes (v1,
+   workshop, contrast) keep the original pale shades. */
+html[data-theme="default"] .text-sky-100,
+html[data-theme="default"] .text-sky-200,
+html[data-theme="default"] .text-sky-300,
+html[data-theme="default"] .text-sky-400 {
+  color: #0369a1;
+}
+html[data-theme="default"] .text-emerald-100,
+html[data-theme="default"] .text-emerald-200,
+html[data-theme="default"] .text-emerald-300,
+html[data-theme="default"] .text-emerald-400 {
+  color: #047857;
+}
+html[data-theme="default"] .text-amber-100,
+html[data-theme="default"] .text-amber-200,
+html[data-theme="default"] .text-amber-300,
+html[data-theme="default"] .text-amber-400 {
+  color: #b45309;
+}
+html[data-theme="default"] .text-purple-100,
+html[data-theme="default"] .text-purple-200,
+html[data-theme="default"] .text-purple-300,
+html[data-theme="default"] .text-purple-400 {
+  color: #6d28d9;
+}
+html[data-theme="default"] .text-red-100,
+html[data-theme="default"] .text-red-200,
+html[data-theme="default"] .text-red-300,
+html[data-theme="default"] .text-red-400 {
+  color: #b91c1c;
+}
+/* Hover targets also need darkening. */
+html[data-theme="default"] .hover\:text-sky-200:hover,
+html[data-theme="default"] .hover\:text-sky-300:hover {
+  color: #0c4a6e;
+}
+html[data-theme="default"] .hover\:text-emerald-200:hover,
+html[data-theme="default"] .hover\:text-emerald-300:hover {
+  color: #064e3b;
+}
+html[data-theme="default"] .hover\:text-amber-200:hover,
+html[data-theme="default"] .hover\:text-amber-300:hover {
+  color: #78350f;
+}
+html[data-theme="default"] .hover\:text-purple-200:hover,
+html[data-theme="default"] .hover\:text-purple-300:hover {
+  color: #4c1d95;
+}
+html[data-theme="default"] .hover\:text-red-200:hover,
+html[data-theme="default"] .hover\:text-red-300:hover {
+  color: #7f1d1d;
+}
+/* Muted placeholder text — the /20, /30 shades on a light bg become
+   almost invisible. Bump the alpha floor so they stay legible. */
+html[data-theme="default"] .text-foreground\/20 {
+  color: color-mix(in oklch, var(--color-foreground) 45%, transparent);
+}
+html[data-theme="default"] .text-foreground\/30 {
+  color: color-mix(in oklch, var(--color-foreground) 55%, transparent);
+}
+html[data-theme="default"] .text-foreground\/35 {
+  color: color-mix(in oklch, var(--color-foreground) 55%, transparent);
+}
+html[data-theme="default"] .text-foreground\/40 {
+  color: color-mix(in oklch, var(--color-foreground) 60%, transparent);
+}
