@@ -61,6 +61,23 @@ body {
   font-family: var(--font-sans);
 }
 
+/* Form controls inherit their own user-agent text colour by default (usually
+   black), which makes them unreadable on V1 / Workshop / Contrast where the
+   background is dark. Force them to use the theme foreground so every input,
+   select, and textarea swaps correctly with the active theme. */
+input,
+select,
+textarea {
+  color: var(--color-foreground);
+}
+/* Native dropdown options render from the browser's chrome, which on dark-mode
+   OSes can collapse to unreadable combos. Pin them to a neutral that reads on
+   both light and dark theme options. */
+option {
+  color: #000;
+  background-color: #fff;
+}
+
 ::selection {
   background: color-mix(in oklch, var(--color-accent) 40%, transparent);
 }
