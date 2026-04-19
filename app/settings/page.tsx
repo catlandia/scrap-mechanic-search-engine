@@ -57,7 +57,7 @@ export default async function SettingsPage() {
         description="Which rating do you want to see on each creation card — Steam's global vote, the site's own vote, or both?"
       >
         <Suspense>
-          <RatingModeToggle current={ratingMode} />
+          <RatingModeToggle current={ratingMode} alwaysShow />
         </Suspense>
       </SettingsSection>
 

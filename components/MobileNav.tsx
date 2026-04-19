@@ -232,7 +232,7 @@ export function MobileNav({
               <div className="text-[11px] uppercase tracking-widest text-foreground/40">
                 Ratings
               </div>
-              <RatingModeToggle current={ratingMode} />
+              <RatingModeToggle current={ratingMode} alwaysShow />
             </div>
 
             <div className="mx-4 border-t border-foreground/10" />
