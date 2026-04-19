@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { eq } from "drizzle-orm";
@@ -6,6 +7,7 @@ import { getDb } from "@/lib/db/client";
 import { users, type UserRole } from "@/lib/db/schema";
 import { RoleBadge } from "@/components/RoleBadge";
 import { UserName } from "@/components/UserName";
+import { ProfileCreations } from "@/components/profile/ProfileCreations";
 import { ProfileFavourites } from "@/components/profile/ProfileFavourites";
 import { SubmittedItems } from "@/components/profile/SubmittedItems";
 import { VoteHistory } from "@/components/profile/VoteHistory";
@@ -13,7 +15,7 @@ import { ROLE_LABELS, ROLE_STYLES } from "@/lib/auth/roles";
 import { BadgeList } from "@/components/BadgeList";
 import { CommentSection } from "@/components/CommentSection";
 import { getUserBadges } from "@/lib/badges/queries";
-import { getProfileComments } from "@/lib/db/queries";
+import { getAuthorProfile, getProfileComments } from "@/lib/db/queries";
 import { getCurrentUser, isBanned, isMuted } from "@/lib/auth/session";
 import { isModerator } from "@/lib/auth/roles";
 import { canSeeModInfo } from "@/lib/auth/viewer-is";
@@ -45,8 +47,53 @@ export async function generateMetadata({
 
 export default async function ProfilePage({ params }: { params: Params }) {
   const { steamid } = await params;
+  if (!/^\d{1,25}$/.test(steamid)) notFound();
   const user = await loadUser(steamid);
-  if (!user) notFound();
+  if (!user) {
+    // Not signed in on the site, but they may still be credited on one or
+    // more creations — fall through to the /author page rather than a 404.
+    const authorProfile = await getAuthorProfile(steamid);
+    return (
+      <section className="mx-auto max-w-xl space-y-4 rounded-lg border border-border bg-card/60 px-6 py-8 text-center">
+        <h1 className="text-2xl font-bold">Not on the site yet</h1>
+        <p className="text-sm text-foreground/60">
+          This Steam user hasn&apos;t signed in to Scrap Mechanic Search
+          Engine, so there&apos;s no profile to show.
+        </p>
+        {authorProfile ? (
+          <>
+            <p className="text-sm text-foreground/60">
+              They&apos;re credited on{" "}
+              <strong className="text-foreground/80">
+                {authorProfile.count}
+              </strong>{" "}
+              approved creation{authorProfile.count === 1 ? "" : "s"} though.
+            </p>
+            <div className="flex flex-wrap justify-center gap-2 pt-2">
+              <Link
+                href={`/author/${steamid}`}
+                className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-black hover:bg-accent-strong"
+              >
+                View their creations →
+              </Link>
+              <a
+                href={`https://steamcommunity.com/profiles/${steamid}`}
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-md border border-border px-4 py-2 text-sm text-foreground/70 hover:text-foreground"
+              >
+                Steam profile ↗
+              </a>
+            </div>
+          </>
+        ) : (
+          <p className="text-sm text-foreground/50">
+            We don&apos;t have any creations credited to this SteamID either.
+          </p>
+        )}
+      </section>
+    );
+  }
 
   const viewer = await getCurrentUser();
   const showModInfo = canSeeModInfo(viewer, user.steamid);
@@ -164,6 +211,7 @@ export default async function ProfilePage({ params }: { params: Params }) {
           </section>
         )}
 
+      <ProfileCreations steamid={user.steamid} />
       <SubmittedItems steamid={user.steamid} />
       <ProfileFavourites steamid={user.steamid} />
       <VoteHistory

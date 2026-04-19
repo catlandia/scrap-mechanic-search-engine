@@ -153,14 +153,19 @@ Site-rating sorts use a CASE expression so items below the 5-vote floor fall to 
 
 **Validation:** steamid param must match `^\d{1,25}$`.
 
-**Contents:**
+**Contents (user has signed in):**
 - Avatar, persona name, role badge
 - Scrap Mechanic playtime (or "profile private" if null)
 - Steam account creation date (if public)
 - Site join date
 - Moderation status (ban, mute, warnings) — visible to the user themselves and mods+
 - Hard-ban indicator (`🔒 Hard-banned`) — visible to creator
-- Paginated list of approved creations by this user
+- **Creations** — workshop items they authored or co-authored, first 24 with a "View all →" link to `/author/[steamid]` when there are more. Reuses `getAuthorCreations`. Renders only when they're credited on at least one approved item.
+- **Submitted to the site** — items whose `uploadedByUserId` is this steamid (who pressed Submit, not who made it)
+- **Favourites** and **Vote history**
+- **Profile wall** — threaded comments targeting this profile
+
+**Contents (steamid never signed in):** Instead of a 404, renders a small card saying the user isn't on the site yet. If `getAuthorProfile(steamid)` finds credited creations, the card links to `/author/[steamid]` ("View their creations →"). Also offers a Steam-profile external link. Invalid-format steamids still 404.
 
 ---
 
