@@ -11,6 +11,7 @@ const KIND_SLUGS = [
   "tiles",
   "custom-games",
   "terrain",
+  "other",
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {

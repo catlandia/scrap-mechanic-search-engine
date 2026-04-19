@@ -30,6 +30,11 @@ const SLUG_TO_KIND: Record<string, { kind: CreationKind; label: string; descript
     description: "Player-created game modes.",
   },
   terrain: { kind: "terrain_asset", label: "Terrain Assets", description: "Reusable terrain assets." },
+  other: {
+    kind: "other",
+    label: "Other",
+    description: "Workshop items that don't fit any other kind.",
+  },
 };
 
 export function generateStaticParams() {

@@ -49,6 +49,9 @@ const navLinks = [
   { href: "/worlds", label: "Worlds" },
   { href: "/challenges", label: "Challenges" },
   { href: "/tiles", label: "Tiles" },
+  { href: "/custom-games", label: "Custom Games" },
+  { href: "/terrain", label: "Terrain" },
+  { href: "/other", label: "Other" },
   { href: "/search", label: "Search" },
   { href: "/suggestions", label: "Ideas" },
 ];
