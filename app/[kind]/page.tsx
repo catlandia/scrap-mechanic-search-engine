@@ -4,7 +4,11 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { CreationGrid } from "@/components/CreationCard";
 import { SortSelector } from "@/components/SortSelector";
-import { getApprovedByKind, parseSortMode } from "@/lib/db/queries";
+import {
+  getApprovedByKind,
+  getTopTagsForKind,
+  parseSortMode,
+} from "@/lib/db/queries";
 import type { CreationKind } from "@/lib/db/schema";
 import { getRatingMode } from "@/lib/prefs.server";
 
@@ -75,14 +79,17 @@ export default async function KindPage({
   const sp = await searchParams;
   const sort = parseSortMode(sp.sort);
   const pageIndex = Math.max(0, Number(sp.page ?? "1") - 1);
-  const items = await getApprovedByKind(entry.kind, {
-    sort,
-    limit: PAGE_SIZE + 1,
-    offset: pageIndex * PAGE_SIZE,
-  });
+  const [items, topTags, ratingMode] = await Promise.all([
+    getApprovedByKind(entry.kind, {
+      sort,
+      limit: PAGE_SIZE + 1,
+      offset: pageIndex * PAGE_SIZE,
+    }),
+    getTopTagsForKind(entry.kind, 20),
+    getRatingMode(),
+  ]);
   const hasNext = items.length > PAGE_SIZE;
   const displayed = items.slice(0, PAGE_SIZE);
-  const ratingMode = await getRatingMode();
 
   const basePath = `/${slug}`;
   const qs = (extra: Record<string, string | number | null>) => {
@@ -108,28 +115,69 @@ export default async function KindPage({
         </Suspense>
       </header>
 
-      <CreationGrid items={displayed} ratingMode={ratingMode} />
+      <div className="grid gap-6 md:grid-cols-[1fr_14rem]">
+        <div className="min-w-0 space-y-4">
+          <CreationGrid items={displayed} ratingMode={ratingMode} />
 
-      <nav className="flex items-center justify-between pt-4 text-sm text-foreground/60">
-        {pageIndex > 0 ? (
-          <Link href={qs({ page: pageIndex })} className="rounded border border-border px-3 py-1 hover:text-foreground">
-            ← Newer
-          </Link>
-        ) : (
-          <span />
-        )}
-        <span>Page {pageIndex + 1}</span>
-        {hasNext ? (
-          <Link
-            href={qs({ page: pageIndex + 2 })}
-            className="rounded border border-border px-3 py-1 hover:text-foreground"
-          >
-            Older →
-          </Link>
-        ) : (
-          <span />
-        )}
-      </nav>
+          <nav className="flex items-center justify-between pt-4 text-sm text-foreground/60">
+            {pageIndex > 0 ? (
+              <Link
+                href={qs({ page: pageIndex })}
+                className="rounded border border-border px-3 py-1 hover:text-foreground"
+              >
+                ← Newer
+              </Link>
+            ) : (
+              <span />
+            )}
+            <span>Page {pageIndex + 1}</span>
+            {hasNext ? (
+              <Link
+                href={qs({ page: pageIndex + 2 })}
+                className="rounded border border-border px-3 py-1 hover:text-foreground"
+              >
+                Older →
+              </Link>
+            ) : (
+              <span />
+            )}
+          </nav>
+        </div>
+
+        <TagSidebar kind={entry.kind} tags={topTags} />
+      </div>
     </div>
+  );
+}
+
+function TagSidebar({
+  kind,
+  tags,
+}: {
+  kind: CreationKind;
+  tags: Array<{ id: number; slug: string; name: string; count: number }>;
+}) {
+  if (tags.length === 0) return null;
+  return (
+    <aside className="md:sticky md:top-20 md:self-start">
+      <div className="mb-2 text-[10px] uppercase tracking-widest text-foreground/40">
+        Filter by tag
+      </div>
+      <ul className="flex flex-wrap gap-1.5 md:flex-col md:gap-1">
+        {tags.map((t) => (
+          <li key={t.id}>
+            <Link
+              href={`/search?kind=${kind}&tags=${t.slug}`}
+              className="flex items-center justify-between gap-2 rounded-md border border-border bg-card/60 px-2.5 py-1 text-xs text-foreground/75 transition hover:border-accent/60 hover:text-accent"
+            >
+              <span className="truncate">{t.name}</span>
+              <span className="shrink-0 tabular-nums text-foreground/35">
+                {t.count}
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </aside>
   );
 }

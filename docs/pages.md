@@ -65,7 +65,7 @@ Database queries run in parallel via `Promise.all`.
 - 24 items per page
 - Sort dropdown (10 modes — see Search section)
 - Prev/Next pagination
-- Kind-specific tag filter sidebar (future enhancement)
+- Kind-specific tag filter sidebar — top 20 tags by usage within that kind, with counts. Fed by `getTopTagsForKind`; each chip links to `/search?kind=X&tags=Y` rather than filtering in place, so the search page's richer filter UI does the heavy lifting.
 
 ---
 
@@ -106,7 +106,7 @@ Site-rating sorts use a CASE expression so items below the 5-vote floor fall to 
 
 **Tag filtering logic:** All requested tag slugs must match — intersection, not union. Implemented as a `DISTINCT COUNT HAVING` subquery on `creationTags`.
 
-**Text search:** Postgres tsvector (`searchVector` on `creations`, GIN-indexed). `q` is passed through `websearch_to_tsquery('english', …)` so users get phrase quotes, `OR`, and `-negation` for free. Ranking uses `ts_rank_cd`. The `english` dictionary means stems match (`cannon` matches `cannons`) but substrings don't (`cann` no longer matches `cannon` — revisit by appending `:*` with `to_tsquery` if that bites).
+**Text search:** Postgres tsvector (`searchVector` on `creations`, GIN-indexed). `q` is compiled in `tsQueryExpr` as the OR of two subqueries: `websearch_to_tsquery('english', q)` (phrase quotes, `OR`, `-negation`) plus a prefix pass `to_tsquery('english', 'word1:* & word2:* & …')` built from the `\w+` tokens of the input. That way stems match (`cannon`/`cannons`) AND early-typing prefixes match (`cann` finds `cannon`) without losing the websearch syntax goodies. Ranking uses `ts_rank_cd` against the websearch side only so prefix-only matches don't dominate complete hits.
 
 ---
 

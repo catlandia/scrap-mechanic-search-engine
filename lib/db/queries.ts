@@ -101,8 +101,17 @@ export function parseSortMode(raw: string | undefined | null): SortMode {
   return "newest";
 }
 
+// Combines websearch (handles phrase quotes, OR, -negation) with a prefix
+// pass so partial typing still matches: `cann` finds "cannon" via `cann:*`.
+// Tokens are stripped of non-word chars before going through to_tsquery so
+// we never build an invalid expression.
 function tsQueryExpr(q: string): SQL {
-  return sql`websearch_to_tsquery('english', ${q})`;
+  const tokens = q.match(/\w+/g) ?? [];
+  if (tokens.length === 0) {
+    return sql`websearch_to_tsquery('english', ${q})`;
+  }
+  const prefix = tokens.map((t) => `${t}:*`).join(" & ");
+  return sql`(websearch_to_tsquery('english', ${q}) || to_tsquery('english', ${prefix}))`;
 }
 
 function orderByForSort(sort: SortMode, q?: string): SQL {
@@ -151,6 +160,44 @@ export async function getNewestApproved(
     .orderBy(desc(creations.approvedAt))
     .limit(limit)
     .offset(offset);
+}
+
+export interface KindTopTag {
+  id: number;
+  slug: string;
+  name: string;
+  count: number;
+}
+
+// Powers the tag filter sidebar on /[kind] pages. Counts every non-rejected
+// creation_tags row — community nominations below the +3 visibility threshold
+// don't appear on many creations in practice, so they rarely rise to the top
+// 20 and it's not worth the extra JOIN to filter them out here.
+export async function getTopTagsForKind(
+  kind: CreationKind,
+  limit = 20,
+): Promise<KindTopTag[]> {
+  const db = getDb();
+  return db
+    .select({
+      id: tags.id,
+      slug: tags.slug,
+      name: tags.name,
+      count: sql<number>`count(*)::int`,
+    })
+    .from(creationTags)
+    .innerJoin(creations, eq(creations.id, creationTags.creationId))
+    .innerJoin(tags, eq(tags.id, creationTags.tagId))
+    .where(
+      and(
+        eq(creations.kind, kind),
+        eq(creations.status, "approved"),
+        eq(creationTags.rejected, false),
+      ),
+    )
+    .groupBy(tags.id, tags.slug, tags.name)
+    .orderBy(desc(sql`count(*)`))
+    .limit(limit);
 }
 
 export async function getApprovedByKind(
