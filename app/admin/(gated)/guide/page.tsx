@@ -411,6 +411,13 @@ function CreatorSection() {
             user&apos;s warnings count and warning note. Useful when a user
             has reformed and you want the slate clean.
           </li>
+          <li>
+            <strong className="text-white">Allow young account / Revoke age bypass</strong>{" "}
+            — toggle the 7-day Steam account-age gate for a specific user.
+            Flip on for trusted community members whose Steam account is
+            fresh. The gate stays on by default for everyone else; bypass is
+            per-user, never global.
+          </li>
         </ul>
       </Step>
 

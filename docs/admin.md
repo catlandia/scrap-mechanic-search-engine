@@ -94,6 +94,7 @@ All helpers check `effectiveRole` (ban-aware), not `user.role` directly. **Every
 | `clearMute(steamid)` | Lifts mute |
 | `warnUser(steamid, note)` | Increments `warningsCount`, records note. Visible to mod+. |
 | `clearWarnings(steamid)` | Resets `warningsCount` to 0 and clears `warningNote`. Creator-only. |
+| `setAgeGateBypass(steamid, on)` | Flips `users.bypassAgeGate`. Creator-only. When `on`, the user skips the 7-day Steam account-age gate in `requireVotingUser` / `requireActiveUser`. Useful for trusted community members with fresh Steam accounts. |
 | `hardBanUser(steamid)` | Sets `hardBanned=true`. Blocks future sign-ins. Existing sessions die immediately. |
 | `clearHardBan(steamid)` | Wipes hard ban + ban reason |
 

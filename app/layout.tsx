@@ -5,11 +5,12 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { UserMenu } from "@/components/UserMenu";
 import { MobileNav } from "@/components/MobileNav";
 import { RatingModeToggle } from "@/components/RatingModeToggle";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { BetaBanner } from "@/components/BetaBanner";
 import { GuideLink } from "@/components/GuideLink";
 import { getUnreadNotificationCountsByTier } from "@/lib/db/queries";
 import type { NotificationTier } from "@/lib/db/schema";
-import { getRatingMode } from "@/lib/prefs.server";
+import { getRatingMode, getTheme } from "@/lib/prefs.server";
 import { isModerator } from "@/lib/auth/roles";
 import type { UserRole } from "@/lib/db/schema";
 import "./globals.css";
@@ -69,6 +70,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     // If SESSION_SECRET is missing in dev we still want the site to render.
   }
   const ratingMode = await getRatingMode();
+  const theme = await getTheme();
   const showAdminLink = !!user && isModerator(user.role as UserRole);
   const extraLinks = [
     { href: "/guide", label: "How to use the site" },
@@ -80,7 +82,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   ];
 
   return (
-    <html lang="en" className="dark">
+    <html lang="en" className="dark" data-theme={theme}>
       <body className="min-h-screen bg-background text-foreground antialiased">
         <BetaBanner />
         <header className="sticky top-0 z-30 border-b border-white/10 bg-black/80 backdrop-blur supports-[backdrop-filter]:bg-black/60">
@@ -105,6 +107,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   <RatingModeToggle current={ratingMode} />
                 </Suspense>
               </div>
+              <div className="hidden lg:block">
+                <Suspense>
+                  <ThemeToggle current={theme} />
+                </Suspense>
+              </div>
               {user ? (
                 <UserMenu user={user} unreadByTier={unreadByTier} />
               ) : (
@@ -119,6 +126,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 navLinks={navLinks}
                 extraLinks={extraLinks}
                 ratingMode={ratingMode}
+                theme={theme}
                 signedIn={!!user}
               />
             </div>

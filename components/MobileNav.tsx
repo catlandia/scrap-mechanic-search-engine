@@ -5,7 +5,8 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { RatingModeToggle } from "@/components/RatingModeToggle";
-import type { RatingMode } from "@/lib/prefs";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import type { RatingMode, Theme } from "@/lib/prefs";
 import { cn } from "@/lib/utils";
 
 type NavLink = { href: string; label: string };
@@ -13,11 +14,13 @@ type NavLink = { href: string; label: string };
 export function MobileNav({
   navLinks,
   ratingMode,
+  theme,
   extraLinks,
   signedIn,
 }: {
   navLinks: NavLink[];
   ratingMode: RatingMode;
+  theme: Theme;
   extraLinks: NavLink[];
   signedIn: boolean;
 }) {
@@ -174,6 +177,14 @@ export function MobileNav({
                 Ratings
               </div>
               <RatingModeToggle current={ratingMode} />
+            </div>
+
+            <div className="mx-4 border-t border-white/10" />
+            <div className="flex flex-col gap-3 px-4 py-4">
+              <div className="text-[11px] uppercase tracking-widest text-white/40">
+                Theme
+              </div>
+              <ThemeToggle current={theme} />
             </div>
 
             {!signedIn && (

@@ -60,13 +60,17 @@ export default function PrivacyPage() {
             pass the challenge, lasts 30 days.
           </li>
           <li>
-            <code className="text-white">rating_mode</code> — remembers whether
-            you prefer Steam ratings, site ratings, or both.
+            <code className="text-white">smse_rating_mode</code> — remembers
+            whether you prefer Steam ratings, site ratings, or both.
+          </li>
+          <li>
+            <code className="text-white">smse_theme</code> — remembers your
+            chosen colour theme.
           </li>
         </ul>
         <p>
-          All cookies are first-party, HTTP-only, and signed with a server
-          secret. No advertising trackers.
+          All cookies are first-party, signed / HTTP-only where it matters.
+          No advertising trackers.
         </p>
       </section>
 

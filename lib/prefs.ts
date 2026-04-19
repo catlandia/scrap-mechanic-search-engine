@@ -9,3 +9,21 @@ export function parseRatingMode(raw: string | undefined): RatingMode {
     ? (raw as RatingMode)
     : DEFAULT_RATING_MODE;
 }
+
+export const THEMES = ["default", "workshop", "contrast"] as const;
+export type Theme = (typeof THEMES)[number];
+export const DEFAULT_THEME: Theme = "default";
+
+export const THEME_COOKIE = "smse_theme";
+
+export const THEME_LABELS: Record<Theme, string> = {
+  default: "Default",
+  workshop: "Workshop",
+  contrast: "High contrast",
+};
+
+export function parseTheme(raw: string | undefined): Theme {
+  return (THEMES as readonly string[]).includes(raw ?? "")
+    ? (raw as Theme)
+    : DEFAULT_THEME;
+}
