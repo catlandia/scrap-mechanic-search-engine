@@ -56,7 +56,7 @@ function friendlyGateError(code: string): string {
     case "muted":
       return "Your account is currently muted.";
     case "steam_too_new":
-      return "Your Steam account needs to be at least 7 days old.";
+      return "Your Steam account needs to be at least 7 days old. This cooldown prevents fresh accounts from spamming the site — moderators can't bypass it, just wait it out.";
     case "steam_age_unknown":
       return "We couldn't verify your Steam account age because your Steam profile is private. Make your profile public, or send a moderator an appeal at /verify/appeal and they'll flip the gate on your account.";
     default:

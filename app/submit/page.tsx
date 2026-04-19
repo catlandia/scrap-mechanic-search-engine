@@ -14,16 +14,27 @@ export const metadata: Metadata = {
 
 const MIN_STEAM_AGE_DAYS = 7;
 
-function isAgeGated(user: NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>): boolean {
-  if (user.bypassAgeGate) return false;
-  if (!user.steamCreatedAt) return true; // private profile — unknown
+type GateReason = "ok" | "private_profile" | "too_young";
+
+function ageGateReason(
+  user: NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>,
+): GateReason {
+  if (user.bypassAgeGate) return "ok";
+  if (!user.steamCreatedAt) return "private_profile";
   const ageDays =
     (Date.now() - user.steamCreatedAt.getTime()) / 86_400_000;
-  return ageDays < MIN_STEAM_AGE_DAYS;
+  return ageDays < MIN_STEAM_AGE_DAYS ? "too_young" : "ok";
 }
 
 export default async function SubmitPage() {
   const user = await getCurrentUser();
+  const gateReason = user ? ageGateReason(user) : "ok";
+  const ageThrough =
+    user?.steamCreatedAt
+      ? new Date(
+          user.steamCreatedAt.getTime() + MIN_STEAM_AGE_DAYS * 86_400_000,
+        )
+      : null;
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -63,21 +74,16 @@ export default async function SubmitPage() {
         <div className="rounded-md border border-sky-500/40 bg-sky-500/10 px-5 py-4 text-sm text-sky-200">
           You&apos;re currently muted — submissions are disabled.
         </div>
-      ) : isAgeGated(user) ? (
+      ) : gateReason === "private_profile" ? (
         <div className="space-y-3 rounded-md border border-amber-500/40 bg-amber-500/10 px-5 py-4 text-sm">
           <div className="font-semibold text-amber-200">
             We couldn&apos;t verify your Steam account age.
           </div>
           <p className="text-foreground/70">
-            {user.steamCreatedAt == null
-              ? "Your Steam profile is private, so timecreated is hidden — we can't tell if your account is at least 7 days old."
-              : "Your Steam account is less than 7 days old."}
-            {" "}Submissions stay closed until we can verify you.
-          </p>
-          <p className="text-foreground/70">
-            If you&apos;d rather keep your profile private, send a moderator a
-            quick appeal and they&apos;ll flip the gate on your account
-            manually.
+            Your Steam profile is private, so the account-creation date is
+            hidden. Make your profile public and sign in again — or send a
+            moderator a quick appeal and they&apos;ll flip the gate on your
+            account manually.
           </p>
           <Link
             href="/verify/appeal"
@@ -85,6 +91,27 @@ export default async function SubmitPage() {
           >
             Appeal the age gate →
           </Link>
+        </div>
+      ) : gateReason === "too_young" ? (
+        <div className="space-y-3 rounded-md border border-amber-500/40 bg-amber-500/10 px-5 py-4 text-sm">
+          <div className="font-semibold text-amber-200">
+            Your Steam account is less than 7 days old.
+          </div>
+          <p className="text-foreground/70">
+            This is a hard-coded cooldown to stop fresh sock-puppet accounts
+            from spamming the site. It&apos;s{" "}
+            <strong>not something a moderator can bypass</strong> for the
+            too-new case — you just have to wait it out.
+          </p>
+          {ageThrough && (
+            <p className="text-foreground/70">
+              Your account clears the gate on{" "}
+              <strong className="text-amber-200">
+                {ageThrough.toLocaleDateString()}
+              </strong>
+              . Come back then.
+            </p>
+          )}
         </div>
       ) : (
         <SubmitCreationForm />
