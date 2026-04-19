@@ -1,6 +1,7 @@
 import { getDb } from "@/lib/db/client";
 import { categories, tags, type Category, type Tag } from "@/lib/db/schema";
 import { createCategory, createTag } from "@/app/admin/actions";
+import { DeleteCategoryButton } from "@/components/admin/DeleteCategoryButton";
 import { getCurrentUser } from "@/lib/auth/session";
 import { effectiveRole, isCreator } from "@/lib/auth/roles";
 import { TagChipEditable } from "@/components/admin/TagChipEditable";
@@ -69,10 +70,30 @@ export default async function TagsPage() {
         </form>
         <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {allCategories.map((c) => (
-            <li key={c.id} className="rounded border border-border bg-card/60 px-3 py-2 text-sm">
-              <div className="font-medium">{c.name}</div>
-              <div className="text-xs text-foreground/40">{c.slug}</div>
-              {c.description && <div className="mt-1 text-xs text-foreground/60">{c.description}</div>}
+            <li
+              key={c.id}
+              className="flex items-start justify-between gap-2 rounded border border-border bg-card/60 px-3 py-2 text-sm"
+            >
+              <div className="min-w-0 flex-1">
+                <div className="font-medium">{c.name}</div>
+                <div className="text-xs text-foreground/40">{c.slug}</div>
+                {c.description && (
+                  <div className="mt-1 text-xs text-foreground/60">
+                    {c.description}
+                  </div>
+                )}
+                <div className="mt-1 text-[10px] text-foreground/40">
+                  {(tagsByCategory.get(c.id)?.length ?? 0)} tag
+                  {(tagsByCategory.get(c.id)?.length ?? 0) === 1 ? "" : "s"}
+                </div>
+              </div>
+              {creatorView && (
+                <DeleteCategoryButton
+                  categoryId={c.id}
+                  categoryName={c.name}
+                  tagCount={tagsByCategory.get(c.id)?.length ?? 0}
+                />
+              )}
             </li>
           ))}
         </ul>

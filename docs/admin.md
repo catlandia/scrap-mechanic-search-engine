@@ -83,6 +83,7 @@ All helpers check `effectiveRole` (ban-aware), not `user.role` directly. **Every
 | `restoreFromArchive(id)` | Elite+ | Returns to approved, clears actioned reports |
 | `archiveFromReport(id, reportId)` | Elite+ | Archive + action the triggering report |
 | `deleteCommentFromReport(reportId)` | Mod+ | Soft-delete the reported comment + action the report |
+| `deleteCategory(id)` | Creator | Remove a category. Tags in it fall to "Uncategorised" (FK `set null`); creation↔category links cascade away. |
 | `grantBadgeAction(steamid, slug)` | Creator | Grant one of the defined badges to a user |
 | `revokeBadgeAction(steamid, slug)` | Creator | Revoke a badge grant |
 | `addInfluencerAutograntAction(input, label)` | Creator | Add to the badge autogrant allowlist. Input accepts Steam64, profile URL, or vanity URL. Managed via `/admin/badges`. |

@@ -1293,3 +1293,18 @@ export async function createCategory(formData: FormData) {
     .onConflictDoUpdate({ target: categories.slug, set: { name, description } });
   revalidatePath("/admin/tags");
 }
+
+// Creator-only because it's destructive and can't be undone from the UI.
+// Schema FKs handle cleanup: tags.categoryId goes null (tag drops to
+// "Uncategorised"), creation_categories rows cascade away. Creations
+// themselves are untouched.
+export async function deleteCategory(formData: FormData) {
+  await requireCreator();
+  const idRaw = String(formData.get("categoryId") ?? "");
+  const id = Number(idRaw);
+  if (!Number.isInteger(id) || id <= 0) throw new Error("invalid_category_id");
+  const db = getDb();
+  await db.delete(categories).where(eq(categories.id, id));
+  revalidatePath("/admin/tags");
+  revalidatePath("/search");
+}
