@@ -5,8 +5,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "next dev",
-    "prebuild": "tsx scripts/fetch-captcha-images.ts",
-    "build": "next build",
+    "build": "tsx scripts/fetch-captcha-images.ts && next build",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
