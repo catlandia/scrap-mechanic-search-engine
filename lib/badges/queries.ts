@@ -1,7 +1,12 @@
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import { userBadges } from "@/lib/db/schema";
-import { BADGES, BETA_END_DATE, type BadgeDef } from "./definitions";
+import {
+  BADGES,
+  BETA_END_DATE,
+  INFLUENCER_STEAMIDS,
+  type BadgeDef,
+} from "./definitions";
 
 export interface GrantedBadge {
   def: BadgeDef;
@@ -92,6 +97,19 @@ export async function maybeAutoGrantBetatester(
   await grantBadge({
     userId,
     slug: "betatester",
+    grantedByUserId: null,
+  });
+}
+
+// Idempotent — called at sign-in. Grants influencer to anyone whose
+// steamid is on the curated list. No-op otherwise. Doesn't revoke an
+// existing grant if the steamid is later removed from the list (so a
+// manual revoke is required to actively un-badge someone).
+export async function maybeAutoGrantInfluencer(userId: string): Promise<void> {
+  if (!INFLUENCER_STEAMIDS.includes(userId)) return;
+  await grantBadge({
+    userId,
+    slug: "influencer",
     grantedByUserId: null,
   });
 }

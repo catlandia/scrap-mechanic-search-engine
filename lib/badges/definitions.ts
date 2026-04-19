@@ -17,6 +17,15 @@ export interface BadgeDef {
 // ends and the badge becomes a keepsake.
 export const BETA_END_DATE = new Date("2027-01-01T00:00:00Z");
 
+// Curated list of Steam IDs that get the Influencer badge auto-granted on
+// sign-in. Source of truth is this array — to add someone, append a line
+// with a comment naming them. Removing from the list stops future auto-
+// grants but doesn't revoke an existing grant; revoke via /admin/users if
+// you want to actively pull the badge.
+export const INFLUENCER_STEAMIDS: string[] = [
+  // "76561198012345678", // Example Creator — their YouTube channel
+];
+
 export const BADGES: Record<string, BadgeDef> = {
   betatester: {
     slug: "betatester",
@@ -32,8 +41,8 @@ export const BADGES: Record<string, BadgeDef> = {
     description:
       "Creators who publish Scrap Mechanic content the community actually watches.",
     icon: "🎬",
-    pill: "bg-purple-500/15 text-purple-300 border-purple-500/30",
-    grantKind: "manual",
+    pill: "bg-red-500/15 text-red-300 border-red-500/40",
+    grantKind: "auto",
   },
 };
 
