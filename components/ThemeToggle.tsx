@@ -4,6 +4,12 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { THEMES, THEME_LABELS, type Theme } from "@/lib/prefs";
 import { cn } from "@/lib/utils";
 
+/**
+ * Theme picker pill. Deliberately uses hardcoded Tailwind palette colours
+ * (zinc / amber) instead of theme tokens so it stays readable even when
+ * the user has saved a custom theme where every token is the same colour.
+ * This is the fail-safe that lets them switch back to Default.
+ */
 export function ThemeToggle({ current }: { current: Theme }) {
   const pathname = usePathname();
   const sp = useSearchParams();
@@ -13,14 +19,14 @@ export function ThemeToggle({ current }: { current: Theme }) {
     <form
       action="/api/prefs/theme"
       method="post"
-      className="flex items-center gap-1 text-[11px] text-foreground/50"
+      className="flex items-center gap-1 text-[11px] text-zinc-300"
     >
       <input type="hidden" name="next" value={nextUrl} />
       <span className="hidden uppercase tracking-wider sm:inline">Theme:</span>
       <div
         role="group"
         aria-label="Colour theme"
-        className="inline-flex overflow-hidden rounded border border-border bg-card/60"
+        className="inline-flex overflow-hidden rounded border border-zinc-700 bg-zinc-900"
       >
         {THEMES.map((t) => (
           <button
@@ -32,8 +38,8 @@ export function ThemeToggle({ current }: { current: Theme }) {
             className={cn(
               "px-2 py-0.5 text-[11px] transition",
               t === current
-                ? "bg-accent/20 text-accent"
-                : "text-foreground/55 hover:bg-foreground/5 hover:text-foreground",
+                ? "bg-amber-500 text-black"
+                : "text-zinc-300 hover:bg-zinc-800 hover:text-white",
             )}
           >
             {THEME_LABELS[t]}

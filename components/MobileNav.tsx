@@ -78,7 +78,10 @@ export function MobileNav({
         aria-expanded={open}
         aria-controls="mobile-drawer-panel"
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex size-9 items-center justify-center rounded-md border border-border text-foreground/70 hover:text-foreground sm:hidden"
+        /* Hardcoded zinc palette so the hamburger is always visible even
+           under a pathological custom theme — this is the mobile entry
+           point to the drawer where the theme-reset pill lives. */
+        className="inline-flex size-9 items-center justify-center rounded-md border border-zinc-700 bg-zinc-900 text-zinc-100 hover:bg-zinc-800 sm:hidden"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"

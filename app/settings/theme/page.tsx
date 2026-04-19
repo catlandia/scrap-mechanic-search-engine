@@ -123,12 +123,14 @@ export default async function CustomThemePage() {
           >
             Save &amp; apply
           </button>
+          {/* Hardcoded zinc palette — survives even a all-same-colour
+              custom theme so the user can always escape. */}
           <button
             type="submit"
             name="reset"
             value="1"
             formNoValidate
-            className="rounded-md border border-border bg-card px-4 py-2 text-sm text-foreground/70 hover:text-foreground"
+            className="rounded-md border border-zinc-700 bg-zinc-900 px-4 py-2 text-sm font-medium text-zinc-100 hover:bg-zinc-800"
           >
             Reset to default
           </button>

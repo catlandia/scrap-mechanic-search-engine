@@ -119,9 +119,12 @@ export function UserMenu({
               unread={unreadByTier[t] ?? 0}
             />
           ))}
+          {/* Hardcoded zinc so the escape hatch to /settings stays visible
+              even under a pathological custom theme that collapses the
+              foreground/background tokens to the same colour. */}
           <Link
             href="/settings"
-            className="text-foreground/60 hover:text-foreground"
+            className="inline-flex size-7 items-center justify-center rounded-md border border-zinc-700 bg-zinc-900 text-zinc-100 hover:bg-zinc-800"
             title="Settings"
             aria-label="Settings"
           >
@@ -129,7 +132,7 @@ export function UserMenu({
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 20 20"
               fill="currentColor"
-              className="size-5"
+              className="size-4"
               aria-hidden
             >
               <path
