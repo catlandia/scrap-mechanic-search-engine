@@ -1,7 +1,5 @@
 import { cookies } from "next/headers";
 import { getIronSession, type SessionOptions } from "iron-session";
-import { readFile } from "fs/promises";
-import { join } from "path";
 import type { CaptchaQuestion } from "@/app/verify/actions";
 
 type CaptchaSession = {
@@ -26,6 +24,25 @@ function captchaSessionOptions(): SessionOptions {
   };
 }
 
+// The manifest is generated at build time by scripts/fetch-captcha-images.ts
+// and is gitignored. Require it at runtime so typechecks still pass on a
+// fresh clone that hasn't run the build yet; the catch serves a clear error
+// instead of crashing.
+function loadManifest(): Record<string, string> {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    return require("@/lib/captcha/_images.generated.json") as Record<string, string>;
+  } catch {
+    return {};
+  }
+}
+
+let cachedManifest: Record<string, string> | null = null;
+function getManifest(): Record<string, string> {
+  if (!cachedManifest) cachedManifest = loadManifest();
+  return cachedManifest;
+}
+
 export async function GET() {
   const cookieStore = await cookies();
   const session = await getIronSession<CaptchaSession>(cookieStore, captchaSessionOptions());
@@ -37,21 +54,21 @@ export async function GET() {
 
   const imageName = questions[current].image;
   // Defence in depth: only accept `\d+\.jpg` — keeps a compromised session
-  // from escaping the images dir via traversal.
+  // from escaping the manifest via weird keys.
   if (!/^\d+\.jpg$/.test(imageName)) {
     return new Response("Invalid image", { status: 400 });
   }
-  const filePath = join(process.cwd(), "lib", "captcha", "images", imageName);
 
-  try {
-    const buffer = await readFile(filePath);
-    return new Response(buffer, {
-      headers: {
-        "Content-Type": "image/jpeg",
-        "Cache-Control": "no-store",
-      },
-    });
-  } catch {
+  const manifest = getManifest();
+  const base64 = manifest[imageName];
+  if (!base64) {
     return new Response("Image not found", { status: 404 });
   }
+  const buffer = Buffer.from(base64, "base64");
+  return new Response(buffer, {
+    headers: {
+      "Content-Type": "image/jpeg",
+      "Cache-Control": "no-store",
+    },
+  });
 }

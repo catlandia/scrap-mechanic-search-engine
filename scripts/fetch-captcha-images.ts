@@ -6,6 +6,10 @@ import path from "node:path";
 // cheat table against them — see docs/captcha.md threat model.
 
 const IMAGES_DIR = path.resolve(process.cwd(), "lib/captcha/images");
+const MANIFEST_PATH = path.resolve(
+  process.cwd(),
+  "lib/captcha/_images.generated.json",
+);
 const EXPECTED_COUNT = 25;
 const JPG = /^\d+\.jpg$/i;
 
@@ -26,13 +30,14 @@ async function main() {
 
   if (!token || !repo) {
     // Dev escape hatch: if a full image set is already on disk (e.g., the
-    // author copied them in manually), skip. Vercel builds won't hit this
-    // branch because the repo is gitignored — the env vars must be set.
+    // author copied them in manually), use them. Vercel builds won't hit
+    // this branch because the repo is gitignored — the env vars must be set.
     const existing = await countLocalImages();
     if (existing >= EXPECTED_COUNT) {
       console.log(
-        `[captcha] CAPTCHA_IMAGES_TOKEN not set; ${existing} local images already present — skipping fetch.`,
+        `[captcha] CAPTCHA_IMAGES_TOKEN not set; ${existing} local images already present — using them.`,
       );
+      await writeManifestFromDisk();
       return;
     }
     console.error(
@@ -112,6 +117,26 @@ async function main() {
   } else {
     console.log(`[captcha] Fetched ${count} images into lib/captcha/images/`);
   }
+
+  await writeManifestFromDisk();
+}
+
+// Embed every on-disk image into a JSON manifest as base64. Next.js bundles
+// imported JSON reliably, where outputFileTracingIncludes for filesystem
+// reads has proven finicky on Vercel App Router functions.
+async function writeManifestFromDisk() {
+  const files = (await fs.readdir(IMAGES_DIR))
+    .filter((f) => JPG.test(f))
+    .sort();
+  const entries: Record<string, string> = {};
+  for (const name of files) {
+    const buf = await fs.readFile(path.join(IMAGES_DIR, name));
+    entries[name.toLowerCase()] = buf.toString("base64");
+  }
+  await fs.writeFile(MANIFEST_PATH, JSON.stringify(entries));
+  console.log(
+    `[captcha] Wrote manifest with ${files.length} entries to lib/captcha/_images.generated.json`,
+  );
 }
 
 main().catch((err) => {
