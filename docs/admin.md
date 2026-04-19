@@ -85,6 +85,8 @@ All helpers check `effectiveRole` (ban-aware), not `user.role` directly. **Every
 | `deleteCommentFromReport(reportId)` | Mod+ | Soft-delete the reported comment + action the report |
 | `grantBadgeAction(steamid, slug)` | Creator | Grant one of the defined badges to a user |
 | `revokeBadgeAction(steamid, slug)` | Creator | Revoke a badge grant |
+| `addInfluencerAutograntAction(input, label)` | Creator | Add to the badge autogrant allowlist. Input accepts Steam64, profile URL, or vanity URL. Managed via `/admin/badges`. |
+| `removeInfluencerAutograntAction(steamid)` | Creator | Remove from the allowlist. Doesn't revoke existing grants. |
 | `deleteCreation(id)` | Creator | Permanent `status=deleted`, clears reports |
 
 ### User management (Creator-only)

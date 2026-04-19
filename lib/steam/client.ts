@@ -342,7 +342,7 @@ export async function fetchWorkshopContributors(
   });
 }
 
-async function resolveVanityUrl(
+export async function resolveVanityUrl(
   apiKey: string,
   vanity: string,
 ): Promise<string | null> {

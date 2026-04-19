@@ -538,6 +538,33 @@ export const notifications = pgTable(
   ],
 );
 
+// Per-badge allowlist of steamids that should receive the badge
+// automatically at sign-in. Intentionally NOT an FK to users.steamid —
+// creators add influencers before they've signed in, so the user row may
+// not exist yet. The sign-in handler reconciles by granting user_badges
+// rows whenever someone on the allowlist first signs in.
+export const badgeAutogrants = pgTable(
+  "badge_autogrants",
+  {
+    slug: text("slug").notNull(),
+    steamid: text("steamid").notNull(),
+    label: text("label"),
+    addedAt: timestamp("added_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    addedByUserId: text("added_by_user_id").references(() => users.steamid, {
+      onDelete: "set null",
+    }),
+  },
+  (t) => [
+    primaryKey({ columns: [t.slug, t.steamid] }),
+    index("badge_autogrants_steamid_idx").on(t.steamid),
+  ],
+);
+
+export type BadgeAutogrant = typeof badgeAutogrants.$inferSelect;
+export type NewBadgeAutogrant = typeof badgeAutogrants.$inferInsert;
+
 // Badge slugs live in TypeScript (see lib/badges/definitions.ts) rather than
 // a badges table — the catalog is small and code-owned, so rows here are
 // just the grants themselves.

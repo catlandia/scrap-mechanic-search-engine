@@ -1,10 +1,10 @@
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
-import { userBadges } from "@/lib/db/schema";
+import { badgeAutogrants, userBadges } from "@/lib/db/schema";
 import {
+  AUTOGRANT_BADGES,
   BADGES,
   BETA_END_DATE,
-  INFLUENCER_STEAMIDS,
   type BadgeDef,
 } from "./definitions";
 
@@ -101,15 +101,82 @@ export async function maybeAutoGrantBetatester(
   });
 }
 
-// Idempotent — called at sign-in. Grants influencer to anyone whose
-// steamid is on the curated list. No-op otherwise. Doesn't revoke an
-// existing grant if the steamid is later removed from the list (so a
-// manual revoke is required to actively un-badge someone).
-export async function maybeAutoGrantInfluencer(userId: string): Promise<void> {
-  if (!INFLUENCER_STEAMIDS.includes(userId)) return;
-  await grantBadge({
-    userId,
-    slug: "influencer",
-    grantedByUserId: null,
-  });
+// Idempotent — called at sign-in. Grants every badge currently listed in
+// badge_autogrants for this steamid. Doesn't revoke when an autogrant is
+// later removed: un-badging is an explicit action via /admin/users.
+export async function applyAutogrants(userId: string): Promise<void> {
+  const db = getDb();
+  const rows = await db
+    .select({ slug: badgeAutogrants.slug })
+    .from(badgeAutogrants)
+    .where(eq(badgeAutogrants.steamid, userId));
+  for (const r of rows) {
+    if (!BADGES[r.slug]) continue;
+    await grantBadge({
+      userId,
+      slug: r.slug,
+      grantedByUserId: null,
+    });
+  }
+}
+
+export interface AutograntRow {
+  slug: string;
+  steamid: string;
+  label: string | null;
+  addedAt: Date;
+  addedByUserId: string | null;
+}
+
+export async function listAutogrants(slug: string): Promise<AutograntRow[]> {
+  const db = getDb();
+  return db
+    .select()
+    .from(badgeAutogrants)
+    .where(eq(badgeAutogrants.slug, slug))
+    .orderBy(desc(badgeAutogrants.addedAt));
+}
+
+export async function addAutogrant(params: {
+  slug: string;
+  steamid: string;
+  label: string | null;
+  addedByUserId: string | null;
+}): Promise<void> {
+  if (!AUTOGRANT_BADGES.includes(params.slug)) {
+    throw new Error("badge_not_autograntable");
+  }
+  if (!BADGES[params.slug]) throw new Error("unknown_badge");
+  const db = getDb();
+  await db
+    .insert(badgeAutogrants)
+    .values({
+      slug: params.slug,
+      steamid: params.steamid,
+      label: params.label,
+      addedByUserId: params.addedByUserId,
+    })
+    .onConflictDoUpdate({
+      target: [badgeAutogrants.slug, badgeAutogrants.steamid],
+      set: { label: params.label, addedByUserId: params.addedByUserId },
+    });
+  // Best-effort immediate grant if the user already has a row.
+  try {
+    await grantBadge({
+      userId: params.steamid,
+      slug: params.slug,
+      grantedByUserId: null,
+    });
+  } catch {
+    // User might not exist yet (FK violation on insert); sign-in will grant.
+  }
+}
+
+export async function removeAutogrant(slug: string, steamid: string): Promise<void> {
+  const db = getDb();
+  await db
+    .delete(badgeAutogrants)
+    .where(
+      and(eq(badgeAutogrants.slug, slug), eq(badgeAutogrants.steamid, steamid)),
+    );
 }

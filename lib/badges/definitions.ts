@@ -17,14 +17,12 @@ export interface BadgeDef {
 // ends and the badge becomes a keepsake.
 export const BETA_END_DATE = new Date("2027-01-01T00:00:00Z");
 
-// Curated list of Steam IDs that get the Influencer badge auto-granted on
-// sign-in. Source of truth is this array — to add someone, append a line
-// with a comment naming them. Removing from the list stops future auto-
-// grants but doesn't revoke an existing grant; revoke via /admin/users if
-// you want to actively pull the badge.
-export const INFLUENCER_STEAMIDS: string[] = [
-  "76561197994708053", // glykaman — steamcommunity.com/id/glykaman
-];
+// Which badges support an allowlist-based auto-grant (managed via
+// /admin/badges). The creator adds steamids there; the sign-in handler
+// grants user_badges on match. Badges not listed here are either purely
+// manual (admin UI) or auto-granted via some other rule (e.g. date-based
+// betatester).
+export const AUTOGRANT_BADGES: readonly string[] = ["influencer"];
 
 export const BADGES: Record<string, BadgeDef> = {
   betatester: {

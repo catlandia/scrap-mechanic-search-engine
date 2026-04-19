@@ -23,6 +23,7 @@ const baseNav = [
 const creatorNav = [
   { href: "/admin/suggestions", label: "Suggestions" },
   { href: "/admin/users", label: "Users" },
+  { href: "/admin/badges", label: "Badges" },
 ];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {

@@ -29,8 +29,14 @@ import {
 import { stripBBCode } from "@/lib/steam/bbcode";
 import { classify } from "@/lib/tagger/classify";
 import { broadcastToRole, createNotification } from "@/lib/db/notifications";
-import { BADGE_SLUGS } from "@/lib/badges/definitions";
-import { grantBadge, revokeBadge } from "@/lib/badges/queries";
+import { AUTOGRANT_BADGES, BADGE_SLUGS } from "@/lib/badges/definitions";
+import {
+  addAutogrant,
+  grantBadge,
+  removeAutogrant,
+  revokeBadge,
+} from "@/lib/badges/queries";
+import { resolveVanityUrl } from "@/lib/steam/client";
 
 function parseKind(raw: FormDataEntryValue | null): string {
   const kind = String(raw ?? "other");
@@ -564,6 +570,68 @@ export async function grantBadgeAction(formData: FormData) {
 
   revalidatePath("/admin/users");
   revalidatePath(`/profile/${targetSteamid}`);
+}
+
+// Parses whatever the creator pasted into the /admin/badges form —
+// raw Steam64, a profile URL, or a vanity URL/name — into a Steam64. Uses
+// Steam's ResolveVanityURL for the vanity cases.
+async function parseSteamInput(raw: string): Promise<string | null> {
+  const input = raw.trim();
+  if (!input) return null;
+  if (/^\d{17}$/.test(input)) return input;
+
+  let pathOrVanity = input;
+  try {
+    const url = new URL(input);
+    if (url.hostname.endsWith("steamcommunity.com")) {
+      pathOrVanity = url.pathname.replace(/^\/+|\/+$/g, "");
+    }
+  } catch {
+    // not a URL — treat input as a bare vanity name
+  }
+
+  const profileMatch = pathOrVanity.match(/^profiles\/(\d{17})$/);
+  if (profileMatch) return profileMatch[1];
+
+  const vanityMatch = pathOrVanity.match(/^id\/([^\/]+)$/);
+  const vanity = vanityMatch ? vanityMatch[1] : pathOrVanity;
+  if (!/^[A-Za-z0-9_-]+$/.test(vanity)) return null;
+
+  const apiKey = process.env.STEAM_API_KEY;
+  if (!apiKey) return null;
+  return resolveVanityUrl(apiKey, vanity);
+}
+
+export async function addInfluencerAutograntAction(formData: FormData) {
+  const actor = await requireCreator();
+  const slug = String(formData.get("slug") ?? "");
+  if (!AUTOGRANT_BADGES.includes(slug)) throw new Error("badge_not_autograntable");
+
+  const raw = String(formData.get("input") ?? "");
+  const label = String(formData.get("label") ?? "").trim().slice(0, 200) || null;
+  const steamid = await parseSteamInput(raw);
+  if (!steamid) throw new Error("could_not_resolve_steamid");
+
+  await addAutogrant({
+    slug,
+    steamid,
+    label,
+    addedByUserId: actor.steamid,
+  });
+  revalidatePath("/admin/badges");
+  revalidatePath(`/profile/${steamid}`);
+}
+
+export async function removeInfluencerAutograntAction(formData: FormData) {
+  await requireCreator();
+  const slug = String(formData.get("slug") ?? "");
+  const steamid = String(formData.get("steamid") ?? "");
+  if (!AUTOGRANT_BADGES.includes(slug)) throw new Error("badge_not_autograntable");
+  if (!/^\d{1,25}$/.test(steamid)) throw new Error("invalid_steamid");
+
+  await removeAutogrant(slug, steamid);
+  revalidatePath("/admin/badges");
+  revalidatePath(`/profile/${steamid}`);
 }
 
 export async function revokeBadgeAction(formData: FormData) {

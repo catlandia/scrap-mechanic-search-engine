@@ -266,6 +266,25 @@ Comments on creations **or** user profiles (exactly one target). Threaded up to 
 
 ---
 
+### `badgeAutogrants`
+
+Allowlist of `(slug, steamid)` pairs that should receive the badge
+automatically at sign-in. Intentionally no FK to `users.steamid` — the
+creator can pre-load influencers before they've signed in.
+
+| Column | Type | Notes |
+|---|---|---|
+| `slug` | text | Must match a key in `BADGES` marked as auto-grantable |
+| `steamid` | text | Raw Steam64 |
+| `label` | text NULL | Creator-provided note shown in the admin UI |
+| `addedAt` | timestamptz | |
+| `addedByUserId` | text NULL → users.steamid | Null for system-seeded rows |
+
+**PK:** `(slug, steamid)`
+**Indexes:** `steamid`
+
+---
+
 ### `userBadges`
 
 Per-user grants of badges. Badge definitions (slug → name/icon/pill) live

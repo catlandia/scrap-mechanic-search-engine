@@ -2,17 +2,13 @@ import { config as loadEnv } from "dotenv";
 loadEnv({ path: ".env.local", override: false });
 loadEnv({ path: ".env", override: false });
 
-import { and, inArray, lt, sql } from "drizzle-orm";
+import { and, eq, lt, sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
-import { userBadges, users } from "@/lib/db/schema";
-import {
-  BETA_END_DATE,
-  INFLUENCER_STEAMIDS,
-} from "@/lib/badges/definitions";
+import { badgeAutogrants, userBadges, users } from "@/lib/db/schema";
+import { BETA_END_DATE } from "@/lib/badges/definitions";
 
-// One-shot: applies the auto-grant rules against every existing user.
-// Idempotent (ON CONFLICT DO NOTHING) so safe to re-run after editing
-// INFLUENCER_STEAMIDS. Run with: npx tsx scripts/backfill-badges.ts
+// Idempotent one-shot: grants the auto-badges to every eligible existing
+// user. Safe to re-run. Run with: npx tsx scripts/backfill-badges.ts
 
 async function backfillBetatester() {
   const db = getDb();
@@ -39,28 +35,25 @@ async function backfillBetatester() {
     .onConflictDoNothing();
 }
 
-async function backfillInfluencer() {
-  if (INFLUENCER_STEAMIDS.length === 0) {
-    console.log("[badges] INFLUENCER_STEAMIDS is empty — nothing to grant.");
-    return;
-  }
+async function backfillAutogrants() {
   const db = getDb();
-  // Only grant to steamids already present in `users`. Not-yet-signed-in
-  // influencers will be picked up by the Steam return handler on first login.
-  const present = await db
-    .select({ steamid: users.steamid })
-    .from(users)
-    .where(inArray(users.steamid, INFLUENCER_STEAMIDS));
+  // Join autogrants → users so we only try to grant to users that actually
+  // exist (user_badges has a FK to users). Unsigned autogrants wait until
+  // the user first signs in, at which point applyAutogrants() picks them up.
+  const matched = await db
+    .select({ steamid: users.steamid, slug: badgeAutogrants.slug })
+    .from(badgeAutogrants)
+    .innerJoin(users, eq(users.steamid, badgeAutogrants.steamid));
   console.log(
-    `[badges] ${present.length}/${INFLUENCER_STEAMIDS.length} influencers already in users; granting.`,
+    `[badges] ${matched.length} autogrant rows match an existing user.`,
   );
-  if (present.length === 0) return;
+  if (matched.length === 0) return;
   await db
     .insert(userBadges)
     .values(
-      present.map((u) => ({
-        userId: u.steamid,
-        badgeSlug: "influencer",
+      matched.map((m) => ({
+        userId: m.steamid,
+        badgeSlug: m.slug,
         grantedByUserId: null,
       })),
     )
@@ -69,7 +62,7 @@ async function backfillInfluencer() {
 
 async function main() {
   await backfillBetatester();
-  await backfillInfluencer();
+  await backfillAutogrants();
   console.log("[badges] Done.");
 }
 

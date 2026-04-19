@@ -5,8 +5,8 @@ import { users, type NewUser, type UserRole } from "@/lib/db/schema";
 import { getUserSession } from "@/lib/auth/session";
 import { verifySteamAssertion } from "@/lib/auth/steam-openid";
 import {
+  applyAutogrants,
   maybeAutoGrantBetatester,
-  maybeAutoGrantInfluencer,
 } from "@/lib/badges/queries";
 import {
   getPlayerSummary,
@@ -103,7 +103,7 @@ export async function GET(req: NextRequest) {
   try {
     await Promise.all([
       maybeAutoGrantBetatester(steamid, siteJoinedAt),
-      maybeAutoGrantInfluencer(steamid),
+      applyAutogrants(steamid),
     ]);
   } catch (err) {
     console.error("badge auto-grant failed:", err);
