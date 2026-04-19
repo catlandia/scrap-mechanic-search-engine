@@ -23,7 +23,7 @@ export const BETA_END_DATE = new Date("2027-01-01T00:00:00Z");
 // grants but doesn't revoke an existing grant; revoke via /admin/users if
 // you want to actively pull the badge.
 export const INFLUENCER_STEAMIDS: string[] = [
-  // "76561198012345678", // Example Creator — their YouTube channel
+  "76561197994708053", // glykaman — steamcommunity.com/id/glykaman
 ];
 
 export const BADGES: Record<string, BadgeDef> = {
