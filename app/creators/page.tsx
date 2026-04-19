@@ -87,7 +87,7 @@ export default async function CreatorsPage({
           {displayed.map((c) => (
             <li key={c.steamid}>
               <Link
-                href={`/author/${c.steamid}`}
+                href={`/profile/${c.steamid}`}
                 className="flex items-center gap-3 rounded-lg border border-border bg-card/60 px-3 py-2.5 transition hover:border-accent hover:bg-card"
                 title={c.signedIn ? `${c.name ?? "?"} — on the site` : undefined}
               >

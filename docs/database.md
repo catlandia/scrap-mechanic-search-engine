@@ -82,7 +82,7 @@ One row per Steam account that has ever logged in.
 | `profileUrl` | text | |
 | `smPlaytimeMinutes` | int NULL | Null = private Steam profile |
 | `siteJoinedAt` | timestamptz | First login |
-| `lastSeenAt` | timestamptz | Updated on every session resolution |
+| `lastSeenAt` | timestamptz | Bumped by `getCurrentUser()` at most once per minute; powers the footer's "online now" counter. Indexed by `users_last_seen_idx`. |
 | `steamCreatedAt` | timestamptz NULL | Steam account age — enforces 7-day gate on submissions |
 | `role` | text | One of USER_ROLES (default `user`) |
 | `bannedUntil` | timestamptz NULL | Temporary or perma ban (9999-12-31 = permanent) |

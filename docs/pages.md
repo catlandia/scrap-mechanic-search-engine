@@ -197,7 +197,7 @@ The drawer auto-closes on route change (`usePathname` effect) and locks `documen
 **Unauthenticated:**
 - "Sign in with Steam" button (desktop header + drawer)
 
-**Footer:** Non-affiliation disclaimer (Scrap Mechanic is Axolot Games), data source (Steam Web API), privacy note about OpenID.
+**Footer:** Presence counters at the top (online within 5 min · signed-in users total — source: `getUserCounts()` in `lib/db/queries.ts`, anonymous visitors not tracked). Below: non-affiliation disclaimer (Scrap Mechanic is Axolot Games), data source (Steam Web API), privacy note about OpenID.
 
 ---
 

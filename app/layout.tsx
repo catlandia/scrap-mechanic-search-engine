@@ -9,7 +9,7 @@ import { RatingModeToggle } from "@/components/RatingModeToggle";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { BetaBanner } from "@/components/BetaBanner";
 import { GuideLink } from "@/components/GuideLink";
-import { getUnreadNotificationCountsByTier } from "@/lib/db/queries";
+import { getUnreadNotificationCountsByTier, getUserCounts } from "@/lib/db/queries";
 import type { NotificationTier } from "@/lib/db/schema";
 import { getCustomThemeColors, getRatingMode, getTheme } from "@/lib/prefs.server";
 import { isModerator } from "@/lib/auth/roles";
@@ -87,6 +87,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   }
   const ratingMode = await getRatingMode();
   const theme = await getTheme();
+  let userCounts: { total: number; online: number } | null = null;
+  try {
+    userCounts = await getUserCounts();
+  } catch {
+    // Presence counters are cosmetic — never block the layout render.
+  }
   const customColors = theme === "custom" ? await getCustomThemeColors() : null;
   const showAdminLink = !!user && isModerator(user.role as UserRole);
   const extraLinks = [
@@ -176,6 +182,30 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         </header>
         <main className="mx-auto max-w-6xl px-4 py-6 sm:py-10">{children}</main>
         <footer className="mx-auto max-w-6xl px-4 py-10 text-xs text-foreground/50">
+          {userCounts && (
+            <p
+              className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1"
+              aria-label="Site presence"
+            >
+              <span className="inline-flex items-center gap-1.5">
+                <span
+                  aria-hidden
+                  className="inline-block size-2 rounded-full bg-emerald-500"
+                />
+                <strong className="text-foreground/80">
+                  {userCounts.online.toLocaleString()}
+                </strong>{" "}
+                online
+              </span>
+              <span className="text-foreground/30">·</span>
+              <span>
+                <strong className="text-foreground/80">
+                  {userCounts.total.toLocaleString()}
+                </strong>{" "}
+                {userCounts.total === 1 ? "signed-in user" : "signed-in users"} total
+              </span>
+            </p>
+          )}
           <p>
             Not affiliated with Axolot Games. Data pulled from the Steam Web API. Sign-in
             uses Steam OpenID — we only ever see your public SteamID, never your password.

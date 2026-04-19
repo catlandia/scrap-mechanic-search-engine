@@ -89,7 +89,7 @@ export function CreationCard({
             <>
               by{" "}
               <Link
-                href={`/author/${creation.authorSteamid}`}
+                href={`/profile/${creation.authorSteamid}`}
                 className="hover:text-accent"
               >
                 {creation.authorName}

@@ -135,6 +135,10 @@ Returns all categories ordered by name.
 
 Returns a `Record<Kind, number>` mapping each kind to its count of approved creations. Used on the home page dashboard.
 
+### `getUserCounts()`
+
+Returns `{ total, online }` for the footer presence display. Both counts come from one scan of the `users` table: `total = COUNT(*) WHERE NOT hard_banned`; `online = COUNT(*) FILTER (WHERE last_seen_at > now() - interval '5 minutes')`. Backed by `users_last_seen_idx`. Anonymous visitors aren't tracked — the counter only reflects signed-in accounts.
+
 ---
 
 ## Suggestion Queries (in `lib/suggestions/actions.ts`)

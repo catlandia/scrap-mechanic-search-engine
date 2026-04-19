@@ -51,7 +51,7 @@ GET /auth/logout
 - User row doesn't exist
 - User is hard-banned (`hard_banned = true`)
 
-`getCurrentUser()` is wrapped in React's `cache()` so it runs at most once per request regardless of how many server components call it.
+`getCurrentUser()` is wrapped in React's `cache()` so it runs at most once per request regardless of how many server components call it. Side effect: bumps the signed-in user's `lastSeenAt` at most once per minute via a conditional UPDATE — this powers the footer's "online now" counter. Wrapped in try/catch so a DB hiccup on the presence write never breaks auth.
 
 **`isBanned(user)`** — returns `true` if `bannedUntil` is in the future.
 **`isMuted(user)`** — returns `true` if `mutedUntil` is in the future.

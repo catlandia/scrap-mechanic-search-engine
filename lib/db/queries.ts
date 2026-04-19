@@ -585,6 +585,25 @@ export async function getApprovedKindCounts(): Promise<Record<string, number>> {
   return Object.fromEntries(rows.map((r) => [r.kind, r.n]));
 }
 
+// Footer presence counters. One scan with a FILTER aggregate returns both
+// `total` (excluding hard-banned) and `online` (`lastSeenAt` within the
+// window). Hard-banned rows are excluded from total because they can't
+// contribute to online either — getCurrentUser short-circuits before the
+// lastSeenAt bump, so leaving them in would double-skew both numbers.
+const ONLINE_WINDOW_MINUTES = 5;
+
+export async function getUserCounts(): Promise<{ total: number; online: number }> {
+  const db = getDb();
+  const [row] = await db
+    .select({
+      total: sql<number>`count(*)::int`,
+      online: sql<number>`count(*) filter (where ${users.lastSeenAt} > now() - make_interval(mins => ${ONLINE_WINDOW_MINUTES}))::int`,
+    })
+    .from(users)
+    .where(eq(users.hardBanned, false));
+  return { total: row?.total ?? 0, online: row?.online ?? 0 };
+}
+
 export async function getAllTags() {
   const db = getDb();
   return db.select().from(tags).orderBy(tags.name);

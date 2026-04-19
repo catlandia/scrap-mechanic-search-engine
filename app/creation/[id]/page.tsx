@@ -179,7 +179,7 @@ export default async function CreationDetailPage({ params }: { params: Params })
                   <span key={c.steamid}>
                     {i > 0 && (i === uniqueScraped.length - 1 ? " & " : ", ")}
                     <Link
-                      href={`/author/${c.steamid}`}
+                      href={`/profile/${c.steamid}`}
                       className="text-accent hover:underline"
                     >
                       {c.name}
@@ -195,7 +195,7 @@ export default async function CreationDetailPage({ params }: { params: Params })
                 by{" "}
                 {creation.authorSteamid ? (
                   <Link
-                    href={`/author/${creation.authorSteamid}`}
+                    href={`/profile/${creation.authorSteamid}`}
                     className="text-accent hover:underline"
                   >
                     {creation.authorName}

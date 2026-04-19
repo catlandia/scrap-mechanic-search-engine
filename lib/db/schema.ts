@@ -251,6 +251,7 @@ export const users = pgTable(
   (t) => [
     index("users_role_idx").on(t.role),
     index("users_banned_idx").on(t.bannedUntil),
+    index("users_last_seen_idx").on(t.lastSeenAt),
   ],
 );
 

@@ -1,7 +1,7 @@
 import { getIronSession, type SessionOptions } from "iron-session";
 import { cookies } from "next/headers";
 import { cache } from "react";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull, lt, or, sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import { users, type User } from "@/lib/db/schema";
 
@@ -60,6 +60,26 @@ export const getCurrentUser = cache(async (): Promise<User | null> => {
     .limit(1);
   if (!user) return null;
   if (user.hardBanned) return null;
+  // Bump lastSeenAt at most once per minute per user. The conditional WHERE
+  // keeps this a no-op on most requests (single PK lookup, no row rewrite).
+  // We await because neon-http is a one-shot fetch; fire-and-forget would
+  // risk the function ending before the write completes.
+  try {
+    await db
+      .update(users)
+      .set({ lastSeenAt: sql`now()` })
+      .where(
+        and(
+          eq(users.steamid, user.steamid),
+          or(
+            isNull(users.lastSeenAt),
+            lt(users.lastSeenAt, sql`now() - interval '1 minute'`),
+          ),
+        ),
+      );
+  } catch {
+    // Presence tracking is best-effort — never let it block auth.
+  }
   return user;
 });
 
