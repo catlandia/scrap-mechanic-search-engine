@@ -9,6 +9,7 @@ import { RatingModeToggle } from "@/components/RatingModeToggle";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { BetaBanner } from "@/components/BetaBanner";
 import { GuideLink } from "@/components/GuideLink";
+import { ToastProvider } from "@/components/Toast";
 import { getUnreadNotificationCountsByTier, getUserCounts } from "@/lib/db/queries";
 import type { NotificationTier } from "@/lib/db/schema";
 import { getCustomThemeColors, getRatingMode, getTheme } from "@/lib/prefs.server";
@@ -120,6 +121,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         )}
       </head>
       <body className="min-h-screen bg-background text-foreground antialiased">
+        <ToastProvider>
         <BetaBanner />
         <header className="sticky top-0 z-30 border-b border-foreground/10 bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70">
           <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3 sm:flex-wrap sm:gap-x-6 sm:gap-y-2">
@@ -237,6 +239,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             </a>
           </p>
         </footer>
+        </ToastProvider>
       </body>
     </html>
   );
