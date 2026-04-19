@@ -672,6 +672,8 @@ export async function getPublicReportBadge(
       and(
         eq(reports.creationId, creationId),
         eq(reports.status, "actioned"),
+        // Comment-targeted reports must not colour the creation badge.
+        sql`${reports.commentId} IS NULL`,
       ),
     )
     .orderBy(desc(reports.resolvedAt))
@@ -692,11 +694,21 @@ export async function getPublicReportBadge(
 
 export interface ModReportRow {
   id: number;
-  creationId: string;
-  creationShortId: number;
-  creationTitle: string;
+  // Either creationId or commentId is set (enforced by CHECK constraint).
+  creationId: string | null;
+  creationShortId: number | null;
+  creationTitle: string | null;
   creationThumbnail: string | null;
-  creationSteamUrl: string;
+  creationSteamUrl: string | null;
+  commentId: number | null;
+  commentBody: string | null;
+  commentAuthorSteamid: string | null;
+  commentAuthorName: string | null;
+  commentAuthorRole: string | null;
+  commentCreationId: string | null;
+  commentCreationShortId: number | null;
+  commentCreationTitle: string | null;
+  commentProfileSteamid: string | null;
   reason: string;
   customText: string | null;
   source: string;
@@ -705,6 +717,13 @@ export interface ModReportRow {
   reporterName: string | null;
   reporterRole: string | null;
 }
+
+// Both creation- and comment-targeted reports flow through the same admin
+// queue. A comment report joins through `comments` (and its parent creation
+// or profile) rather than through `creations` directly, so both target
+// shapes come back with enough context for one renderer to handle.
+const commentAuthor = alias(users, "comment_author");
+const commentCreation = alias(creations, "comment_creation");
 
 export async function getOpenReports(limit = 50): Promise<ModReportRow[]> {
   const db = getDb();
@@ -716,6 +735,15 @@ export async function getOpenReports(limit = 50): Promise<ModReportRow[]> {
       creationTitle: creations.title,
       creationThumbnail: creations.thumbnailUrl,
       creationSteamUrl: creations.steamUrl,
+      commentId: reports.commentId,
+      commentBody: comments.body,
+      commentAuthorSteamid: comments.userId,
+      commentAuthorName: commentAuthor.personaName,
+      commentAuthorRole: commentAuthor.role,
+      commentCreationId: comments.creationId,
+      commentCreationShortId: commentCreation.shortId,
+      commentCreationTitle: commentCreation.title,
+      commentProfileSteamid: comments.profileSteamid,
       reason: reports.reason,
       customText: reports.customText,
       source: reports.source,
@@ -725,7 +753,10 @@ export async function getOpenReports(limit = 50): Promise<ModReportRow[]> {
       reporterRole: users.role,
     })
     .from(reports)
-    .innerJoin(creations, eq(creations.id, reports.creationId))
+    .leftJoin(creations, eq(creations.id, reports.creationId))
+    .leftJoin(comments, eq(comments.id, reports.commentId))
+    .leftJoin(commentAuthor, eq(commentAuthor.steamid, comments.userId))
+    .leftJoin(commentCreation, eq(commentCreation.id, comments.creationId))
     .leftJoin(users, eq(users.steamid, reports.reporterUserId))
     .where(eq(reports.status, "open"))
     .orderBy(desc(reports.createdAt))
@@ -743,6 +774,9 @@ export interface ActionedReportRow extends ModReportRow {
 export async function getActionedReports(limit = 50): Promise<ActionedReportRow[]> {
   const db = getDb();
   const resolver = alias(users, "resolver");
+  // Actioned list exists to surface the public "flagged" badge on creations —
+  // only creation-targeted reports belong here. Comment reports, once
+  // actioned, are terminal (the comment is deleted or the report cleared).
   return db
     .select({
       id: reports.id,
@@ -751,6 +785,15 @@ export async function getActionedReports(limit = 50): Promise<ActionedReportRow[
       creationTitle: creations.title,
       creationThumbnail: creations.thumbnailUrl,
       creationSteamUrl: creations.steamUrl,
+      commentId: reports.commentId,
+      commentBody: sql<string | null>`NULL`,
+      commentAuthorSteamid: sql<string | null>`NULL`,
+      commentAuthorName: sql<string | null>`NULL`,
+      commentAuthorRole: sql<string | null>`NULL`,
+      commentCreationId: sql<string | null>`NULL`,
+      commentCreationShortId: sql<number | null>`NULL`,
+      commentCreationTitle: sql<string | null>`NULL`,
+      commentProfileSteamid: sql<string | null>`NULL`,
       reason: reports.reason,
       customText: reports.customText,
       source: reports.source,
@@ -771,9 +814,7 @@ export async function getActionedReports(limit = 50): Promise<ActionedReportRow[
     .where(
       and(
         eq(reports.status, "actioned"),
-        // Only surface flags for creations that are currently public.
-        // Archived/deleted items no longer need a badge — archived has its
-        // own UI, deleted is gone.
+        sql`${reports.commentId} IS NULL`,
         eq(creations.status, "approved"),
       ),
     )
@@ -783,7 +824,9 @@ export async function getActionedReports(limit = 50): Promise<ActionedReportRow[
 
 export interface CreationCommentRow {
   id: number;
-  creationId: string;
+  // Exactly one of creationId / profileSteamid is non-null.
+  creationId: string | null;
+  profileSteamid: string | null;
   parentId: number | null;
   body: string;
   createdAt: Date;
@@ -800,16 +843,17 @@ export interface CreationCommentRow {
 
 // Returned oldest-first so the tree-builder on the client has stable ordering;
 // the client reverses root-level order afterwards to put newest threads on top.
-export async function getCreationComments(
-  creationId: string,
+async function fetchComments(
+  where: SQL,
   viewerSteamid: string | null,
-  limit = 200,
+  limit: number,
 ): Promise<CreationCommentRow[]> {
   const db = getDb();
   const rows = await db
     .select({
       id: comments.id,
       creationId: comments.creationId,
+      profileSteamid: comments.profileSteamid,
       parentId: comments.parentId,
       body: comments.body,
       createdAt: comments.createdAt,
@@ -824,7 +868,7 @@ export async function getCreationComments(
     })
     .from(comments)
     .innerJoin(users, eq(users.steamid, comments.userId))
-    .where(eq(comments.creationId, creationId))
+    .where(where)
     .orderBy(comments.createdAt)
     .limit(limit);
 
@@ -848,6 +892,26 @@ export async function getCreationComments(
     const viewerVote: -1 | 0 | 1 = v === 1 ? 1 : v === -1 ? -1 : 0;
     return { ...r, viewerVote };
   });
+}
+
+export function getCreationComments(
+  creationId: string,
+  viewerSteamid: string | null,
+  limit = 200,
+): Promise<CreationCommentRow[]> {
+  return fetchComments(eq(comments.creationId, creationId), viewerSteamid, limit);
+}
+
+export function getProfileComments(
+  profileSteamid: string,
+  viewerSteamid: string | null,
+  limit = 200,
+): Promise<CreationCommentRow[]> {
+  return fetchComments(
+    eq(comments.profileSteamid, profileSteamid),
+    viewerSteamid,
+    limit,
+  );
 }
 
 export async function getUserFavourites(

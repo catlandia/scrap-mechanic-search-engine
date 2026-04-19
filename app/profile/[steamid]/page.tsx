@@ -10,7 +10,10 @@ import { ProfileFavourites } from "@/components/profile/ProfileFavourites";
 import { SubmittedItems } from "@/components/profile/SubmittedItems";
 import { VoteHistory } from "@/components/profile/VoteHistory";
 import { ROLE_LABELS, ROLE_STYLES } from "@/lib/auth/roles";
-import { getCurrentUser } from "@/lib/auth/session";
+import { CommentSection } from "@/components/CommentSection";
+import { getProfileComments } from "@/lib/db/queries";
+import { getCurrentUser, isBanned, isMuted } from "@/lib/auth/session";
+import { isModerator } from "@/lib/auth/roles";
 import { canSeeModInfo } from "@/lib/auth/viewer-is";
 
 export const dynamic = "force-dynamic";
@@ -154,6 +157,15 @@ export default async function ProfilePage({ params }: { params: Params }) {
       <VoteHistory
         steamid={user.steamid}
         viewerSteamid={viewer?.steamid ?? null}
+      />
+
+      <CommentSection
+        target={{ kind: "profile", profileSteamid: user.steamid }}
+        comments={await getProfileComments(user.steamid, viewer?.steamid ?? null)}
+        viewerSteamid={viewer?.steamid ?? null}
+        viewerIsMod={isModerator(viewer?.role as UserRole | undefined)}
+        viewerCanPost={!!viewer && !isBanned(viewer) && !isMuted(viewer)}
+        heading="Profile wall"
       />
     </article>
   );

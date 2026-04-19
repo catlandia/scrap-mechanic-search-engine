@@ -408,7 +408,7 @@ export default async function CreationDetailPage({ params }: { params: Params })
       </p>
 
       <CommentSection
-        creationId={creation.id}
+        target={{ kind: "creation", creationId: creation.id }}
         comments={commentRows}
         viewerSteamid={viewer?.steamid ?? null}
         viewerIsMod={isModerator(viewer?.role as UserRole | undefined)}

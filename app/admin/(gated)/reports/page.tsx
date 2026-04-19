@@ -1,10 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { getActionedReports, getOpenReports } from "@/lib/db/queries";
+import type { ModReportRow } from "@/lib/db/queries";
 import {
   actionReport,
   archiveFromReport,
   clearReport,
+  deleteCommentFromReport,
 } from "@/app/admin/actions";
 import { RoleBadge } from "@/components/RoleBadge";
 import { UserName } from "@/components/UserName";
@@ -52,138 +54,13 @@ export default async function ReportsQueuePage() {
         </div>
       ) : (
         <div className="space-y-4">
-          {rows.map((r) => (
-            <article
-              key={r.id}
-              className="grid gap-4 rounded-lg border border-border bg-card p-4 md:grid-cols-[200px,1fr]"
-            >
-              <Link
-                href={`/creation/${r.creationShortId}`}
-                className="block overflow-hidden rounded-md"
-              >
-                {r.creationThumbnail ? (
-                  <div className="relative aspect-video bg-black">
-                    <Image
-                      src={r.creationThumbnail}
-                      alt={r.creationTitle}
-                      fill
-                      unoptimized
-                      sizes="200px"
-                      className="object-cover"
-                    />
-                  </div>
-                ) : (
-                  <div className="aspect-video rounded bg-black/40" />
-                )}
-              </Link>
-
-              <div className="min-w-0 space-y-2">
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <Link
-                      href={`/creation/${r.creationShortId}`}
-                      className="block truncate font-medium hover:text-accent"
-                    >
-                      #{r.creationShortId} — {r.creationTitle}
-                    </Link>
-                    <a
-                      href={r.creationSteamUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-xs text-foreground/40 hover:text-accent"
-                    >
-                      steam ↗
-                    </a>
-                  </div>
-                  <span className="rounded-full border border-amber-500/40 bg-amber-500/15 px-2 py-0.5 text-xs font-medium uppercase tracking-wider text-amber-200">
-                    {REASON_LABELS[r.reason] ?? r.reason}
-                  </span>
-                </div>
-
-                <div className="text-xs text-foreground/50">
-                  {r.source === "auto" ? (
-                    <span className="inline-flex items-center gap-1 rounded-full border border-foreground/10 bg-foreground/5 px-2 py-0.5">
-                      🤖 auto-filed
-                    </span>
-                  ) : r.reporterName ? (
-                    <>
-                      reported by{" "}
-                      <UserName
-                        name={r.reporterName}
-                        role={r.reporterRole as UserRole | null}
-                        steamid={r.reporterSteamid ?? undefined}
-                      />
-                      <RoleBadge
-                        role={r.reporterRole as UserRole | null}
-                        className="ml-2"
-                      />
-                    </>
-                  ) : (
-                    "reported"
-                  )}
-                  <span className="ml-2 text-foreground/30">
-                    · {new Date(r.createdAt).toLocaleString()}
-                  </span>
-                </div>
-
-                {r.customText && (
-                  <p className="whitespace-pre-wrap rounded border border-border bg-background px-3 py-2 text-sm text-foreground/70">
-                    {r.customText}
-                  </p>
-                )}
-
-                <div className="flex flex-col gap-2 pt-2">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <form action={clearReport}>
-                      <input type="hidden" name="reportId" value={r.id} />
-                      <button
-                        type="submit"
-                        className="rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground/70 hover:border-foreground/50 hover:text-foreground"
-                      >
-                        Clear
-                      </button>
-                    </form>
-                    <form
-                      action={actionReport}
-                      className="flex flex-1 items-center gap-2"
-                    >
-                      <input type="hidden" name="reportId" value={r.id} />
-                      <input
-                        type="text"
-                        name="note"
-                        placeholder="Mod note (shown publicly)"
-                        className="flex-1 rounded border border-border bg-background px-2 py-1.5 text-sm"
-                      />
-                      <button
-                        type="submit"
-                        className="rounded-md bg-amber-500 px-3 py-1.5 text-sm font-medium text-black hover:bg-amber-400"
-                      >
-                        Action
-                      </button>
-                    </form>
-                  </div>
-                  <form
-                    action={archiveFromReport}
-                    className="flex flex-wrap items-center gap-2"
-                  >
-                    <input type="hidden" name="reportId" value={r.id} />
-                    <input
-                      type="text"
-                      name="note"
-                      placeholder="Archive note (optional)"
-                      className="flex-1 rounded border border-red-500/30 bg-red-500/5 px-2 py-1.5 text-sm"
-                    />
-                    <button
-                      type="submit"
-                      className="rounded-md border border-red-500/60 bg-red-500/20 px-3 py-1.5 text-sm font-medium text-red-200 hover:bg-red-500/30"
-                    >
-                      Archive creation
-                    </button>
-                  </form>
-                </div>
-              </div>
-            </article>
-          ))}
+          {rows.map((r) =>
+            r.commentId != null ? (
+              <CommentReportCard key={r.id} r={r} />
+            ) : (
+              <CreationReportCard key={r.id} r={r} />
+            ),
+          )}
         </div>
       )}
       </section>
@@ -219,7 +96,7 @@ export default async function ReportsQueuePage() {
                     <div className="relative aspect-video bg-black">
                       <Image
                         src={f.creationThumbnail}
-                        alt={f.creationTitle}
+                        alt={f.creationTitle ?? ""}
                         fill
                         unoptimized
                         sizes="140px"
@@ -286,6 +163,218 @@ export default async function ReportsQueuePage() {
           </div>
         )}
       </section>
+    </div>
+  );
+}
+
+function CreationReportCard({ r }: { r: ModReportRow }) {
+  return (
+    <article className="grid gap-4 rounded-lg border border-border bg-card p-4 md:grid-cols-[200px,1fr]">
+      <Link
+        href={`/creation/${r.creationShortId}`}
+        className="block overflow-hidden rounded-md"
+      >
+        {r.creationThumbnail ? (
+          <div className="relative aspect-video bg-black">
+            <Image
+              src={r.creationThumbnail}
+              alt={r.creationTitle ?? ""}
+              fill
+              unoptimized
+              sizes="200px"
+              className="object-cover"
+            />
+          </div>
+        ) : (
+          <div className="aspect-video rounded bg-black/40" />
+        )}
+      </Link>
+      <div className="min-w-0 space-y-2">
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div className="min-w-0">
+            <Link
+              href={`/creation/${r.creationShortId}`}
+              className="block truncate font-medium hover:text-accent"
+            >
+              #{r.creationShortId} — {r.creationTitle}
+            </Link>
+            {r.creationSteamUrl && (
+              <a
+                href={r.creationSteamUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="text-xs text-foreground/40 hover:text-accent"
+              >
+                steam ↗
+              </a>
+            )}
+          </div>
+          <span className="rounded-full border border-amber-500/40 bg-amber-500/15 px-2 py-0.5 text-xs font-medium uppercase tracking-wider text-amber-200">
+            {REASON_LABELS[r.reason] ?? r.reason}
+          </span>
+        </div>
+        <ReporterLine r={r} />
+        {r.customText && (
+          <p className="whitespace-pre-wrap rounded border border-border bg-background px-3 py-2 text-sm text-foreground/70">
+            {r.customText}
+          </p>
+        )}
+        <div className="flex flex-col gap-2 pt-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <form action={clearReport}>
+              <input type="hidden" name="reportId" value={r.id} />
+              <button
+                type="submit"
+                className="rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground/70 hover:border-foreground/50 hover:text-foreground"
+              >
+                Clear
+              </button>
+            </form>
+            <form
+              action={actionReport}
+              className="flex flex-1 items-center gap-2"
+            >
+              <input type="hidden" name="reportId" value={r.id} />
+              <input
+                type="text"
+                name="note"
+                placeholder="Mod note (shown publicly)"
+                className="flex-1 rounded border border-border bg-background px-2 py-1.5 text-sm"
+              />
+              <button
+                type="submit"
+                className="rounded-md bg-amber-500 px-3 py-1.5 text-sm font-medium text-black hover:bg-amber-400"
+              >
+                Action
+              </button>
+            </form>
+          </div>
+          <form
+            action={archiveFromReport}
+            className="flex flex-wrap items-center gap-2"
+          >
+            <input type="hidden" name="reportId" value={r.id} />
+            <input
+              type="text"
+              name="note"
+              placeholder="Archive note (optional)"
+              className="flex-1 rounded border border-red-500/30 bg-red-500/5 px-2 py-1.5 text-sm"
+            />
+            <button
+              type="submit"
+              className="rounded-md border border-red-500/60 bg-red-500/20 px-3 py-1.5 text-sm font-medium text-red-200 hover:bg-red-500/30"
+            >
+              Archive creation
+            </button>
+          </form>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function CommentReportCard({ r }: { r: ModReportRow }) {
+  const parentLink = r.commentCreationShortId
+    ? `/creation/${r.commentCreationShortId}#comment-${r.commentId}`
+    : r.commentProfileSteamid
+      ? `/profile/${r.commentProfileSteamid}#comment-${r.commentId}`
+      : "#";
+  const parentLabel = r.commentCreationShortId
+    ? `on creation #${r.commentCreationShortId} — ${r.commentCreationTitle}`
+    : r.commentProfileSteamid
+      ? `on profile ${r.commentProfileSteamid}`
+      : "";
+  return (
+    <article className="space-y-3 rounded-lg border border-sky-500/30 bg-sky-500/5 p-4">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="min-w-0 space-y-1">
+          <div className="text-xs uppercase tracking-widest text-sky-300">
+            Comment report
+          </div>
+          <Link href={parentLink} className="block text-sm text-accent hover:underline">
+            {parentLabel} ↗
+          </Link>
+        </div>
+        <span className="rounded-full border border-amber-500/40 bg-amber-500/15 px-2 py-0.5 text-xs font-medium uppercase tracking-wider text-amber-200">
+          {REASON_LABELS[r.reason] ?? r.reason}
+        </span>
+      </div>
+      {r.commentBody != null && (
+        <blockquote className="whitespace-pre-wrap rounded border border-border bg-background px-3 py-2 text-sm text-foreground/80">
+          <div className="mb-1 text-xs text-foreground/50">
+            by{" "}
+            <UserName
+              name={r.commentAuthorName ?? "?"}
+              role={r.commentAuthorRole as UserRole | null}
+              steamid={r.commentAuthorSteamid ?? undefined}
+            />{" "}
+            <RoleBadge role={r.commentAuthorRole as UserRole | null} />
+          </div>
+          {r.commentBody}
+        </blockquote>
+      )}
+      <ReporterLine r={r} />
+      {r.customText && (
+        <p className="whitespace-pre-wrap rounded border border-border bg-background px-3 py-2 text-sm text-foreground/70">
+          {r.customText}
+        </p>
+      )}
+      <div className="flex flex-wrap items-center gap-2 pt-1">
+        <form action={clearReport}>
+          <input type="hidden" name="reportId" value={r.id} />
+          <button
+            type="submit"
+            className="rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground/70 hover:border-foreground/50 hover:text-foreground"
+          >
+            Clear
+          </button>
+        </form>
+        <form
+          action={deleteCommentFromReport}
+          className="flex flex-1 items-center gap-2"
+        >
+          <input type="hidden" name="reportId" value={r.id} />
+          <input
+            type="text"
+            name="note"
+            placeholder="Mod note (internal)"
+            className="flex-1 rounded border border-red-500/30 bg-red-500/5 px-2 py-1.5 text-sm"
+          />
+          <button
+            type="submit"
+            className="rounded-md border border-red-500/60 bg-red-500/20 px-3 py-1.5 text-sm font-medium text-red-200 hover:bg-red-500/30"
+          >
+            Delete comment
+          </button>
+        </form>
+      </div>
+    </article>
+  );
+}
+
+function ReporterLine({ r }: { r: ModReportRow }) {
+  return (
+    <div className="text-xs text-foreground/50">
+      {r.source === "auto" ? (
+        <span className="inline-flex items-center gap-1 rounded-full border border-foreground/10 bg-foreground/5 px-2 py-0.5">
+          🤖 auto-filed
+        </span>
+      ) : r.reporterName ? (
+        <>
+          reported by{" "}
+          <UserName
+            name={r.reporterName}
+            role={r.reporterRole as UserRole | null}
+            steamid={r.reporterSteamid ?? undefined}
+          />
+          <RoleBadge role={r.reporterRole as UserRole | null} className="ml-2" />
+        </>
+      ) : (
+        "reported"
+      )}
+      <span className="ml-2 text-foreground/30">
+        · {new Date(r.createdAt).toLocaleString()}
+      </span>
     </div>
   );
 }

@@ -3,7 +3,12 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
-import { deleteComment, postComment, voteComment } from "@/lib/community/actions";
+import {
+  deleteComment,
+  postComment,
+  reportComment,
+  voteComment,
+} from "@/lib/community/actions";
 import type { CreationCommentRow } from "@/lib/db/queries";
 import { RoleBadge } from "@/components/RoleBadge";
 import { UserName } from "@/components/UserName";
@@ -12,6 +17,16 @@ import type { UserRole } from "@/lib/db/schema";
 
 // Must match MAX_REPLY_DEPTH in lib/community/actions.ts.
 const MAX_DEPTH = 2;
+
+const REPORT_REASON_OPTIONS: { value: string; label: string }[] = [
+  { value: "spam", label: "Spam or advertising" },
+  { value: "poor_quality", label: "Harassment / low effort" },
+  { value: "other", label: "Other (please explain)" },
+];
+
+export type CommentTarget =
+  | { kind: "creation"; creationId: string }
+  | { kind: "profile"; profileSteamid: string };
 
 type Node = CreationCommentRow & { children: Node[] };
 
@@ -41,18 +56,25 @@ function buildTree(rows: CreationCommentRow[]): Node[] {
   return roots;
 }
 
+function targetFormFields(target: CommentTarget, fd: FormData) {
+  if (target.kind === "creation") fd.append("creationId", target.creationId);
+  else fd.append("profileSteamid", target.profileSteamid);
+}
+
 export function CommentSection({
-  creationId,
+  target,
   comments,
   viewerSteamid,
   viewerIsMod,
   viewerCanPost,
+  heading = "Comments",
 }: {
-  creationId: string;
+  target: CommentTarget;
   comments: CreationCommentRow[];
   viewerSteamid: string | null;
   viewerIsMod: boolean;
   viewerCanPost: boolean;
+  heading?: string;
 }) {
   const router = useRouter();
   const [body, setBody] = useState("");
@@ -60,6 +82,7 @@ export function CommentSection({
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [voteError, setVoteError] = useState<string | null>(null);
   const [replyingTo, setReplyingTo] = useState<number | null>(null);
+  const [reportingId, setReportingId] = useState<number | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const tree = useMemo(() => buildTree(comments), [comments]);
@@ -71,7 +94,7 @@ export function CommentSection({
     if (!trimmed) return;
     setError(null);
     const fd = new FormData();
-    fd.append("creationId", creationId);
+    targetFormFields(target, fd);
     fd.append("body", trimmed);
     startTransition(async () => {
       try {
@@ -87,7 +110,7 @@ export function CommentSection({
   function handleReply(parentId: number, replyBody: string): Promise<void> {
     return new Promise((resolve, reject) => {
       const fd = new FormData();
-      fd.append("creationId", creationId);
+      targetFormFields(target, fd);
       fd.append("body", replyBody);
       fd.append("parentId", String(parentId));
       startTransition(async () => {
@@ -141,10 +164,15 @@ export function CommentSection({
     });
   }
 
+  const placeholder =
+    target.kind === "profile"
+      ? "Leave a message on this profile…"
+      : "Share thoughts, ask a question, drop a tip…";
+
   return (
     <section className="space-y-4">
       <div className="flex items-baseline justify-between">
-        <h2 className="text-lg font-semibold">Comments</h2>
+        <h2 className="text-lg font-semibold">{heading}</h2>
         <span className="text-xs text-foreground/40">{totalVisible} total</span>
       </div>
 
@@ -155,7 +183,7 @@ export function CommentSection({
             onChange={(e) => setBody(e.target.value)}
             rows={3}
             maxLength={2000}
-            placeholder="Share thoughts, ask a question, drop a tip…"
+            placeholder={placeholder}
             className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:border-accent focus:outline-none"
           />
           <div className="flex items-center justify-between gap-2 text-xs text-foreground/40">
@@ -209,6 +237,8 @@ export function CommentSection({
             viewerCanPost={viewerCanPost}
             replyingTo={replyingTo}
             setReplyingTo={setReplyingTo}
+            reportingId={reportingId}
+            setReportingId={setReportingId}
             onReply={handleReply}
             onDelete={handleDelete}
             onVote={handleVote}
@@ -228,6 +258,8 @@ function CommentNode({
   viewerCanPost,
   replyingTo,
   setReplyingTo,
+  reportingId,
+  setReportingId,
   onReply,
   onDelete,
   onVote,
@@ -240,6 +272,8 @@ function CommentNode({
   viewerCanPost: boolean;
   replyingTo: number | null;
   setReplyingTo: (id: number | null) => void;
+  reportingId: number | null;
+  setReportingId: (id: number | null) => void;
   onReply: (parentId: number, body: string) => Promise<void>;
   onDelete: (id: number) => void;
   onVote: (id: number, value: -1 | 0 | 1) => void;
@@ -251,6 +285,7 @@ function CommentNode({
   // Hide vote controls on the viewer's own comment and on deleted ones;
   // signed-out viewers still see the counts but not the arrows.
   const canVote = viewerCanPost && !node.deletedAt && !isOwner;
+  const canReport = viewerCanPost && !node.deletedAt && !isOwner;
   const authorRole = node.authorRole as UserRole;
   const net = node.votesUp - node.votesDown;
 
@@ -307,6 +342,18 @@ function CommentNode({
                     {replyingTo === node.id ? "cancel" : "reply"}
                   </button>
                 )}
+                {canReport && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setReportingId(reportingId === node.id ? null : node.id)
+                    }
+                    className="text-xs text-foreground/40 hover:text-amber-300"
+                    aria-expanded={reportingId === node.id}
+                  >
+                    {reportingId === node.id ? "cancel" : "report"}
+                  </button>
+                )}
                 {canDelete && (
                   <button
                     type="button"
@@ -335,6 +382,14 @@ function CommentNode({
         />
       )}
 
+      {reportingId === node.id && (
+        <ReportForm
+          commentId={node.id}
+          onDone={() => setReportingId(null)}
+          onCancel={() => setReportingId(null)}
+        />
+      )}
+
       {node.children.length > 0 && (
         <ul className="space-y-3 border-l-2 border-border/60 pl-3 sm:pl-4">
           {node.children.map((child) => (
@@ -347,6 +402,8 @@ function CommentNode({
               viewerCanPost={viewerCanPost}
               replyingTo={replyingTo}
               setReplyingTo={setReplyingTo}
+              reportingId={reportingId}
+              setReportingId={setReportingId}
               onReply={onReply}
               onDelete={onDelete}
               onVote={onVote}
@@ -374,7 +431,6 @@ function CommentVoteControl({
 }) {
   const netColor =
     net > 0 ? "text-emerald-400" : net < 0 ? "text-red-300" : "text-foreground/50";
-  // Signed-out / own-comment viewers see the tally but no arrows.
   if (!canVote) {
     return (
       <span className={cn("text-xs tabular-nums", netColor)} aria-label={`${net} net votes`}>
@@ -470,6 +526,108 @@ function ReplyForm({
             {pending ? "Posting…" : "Reply"}
           </button>
         </div>
+      </div>
+    </form>
+  );
+}
+
+function ReportForm({
+  commentId,
+  onDone,
+  onCancel,
+}: {
+  commentId: number;
+  onDone: () => void;
+  onCancel: () => void;
+}) {
+  const router = useRouter();
+  const [reason, setReason] = useState("spam");
+  const [customText, setCustomText] = useState("");
+  const [err, setErr] = useState<string | null>(null);
+  const [submitted, setSubmitted] = useState(false);
+  const [isPending, startTransition] = useTransition();
+
+  if (submitted) {
+    return (
+      <div className="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-200">
+        Report submitted — a moderator will take a look. Thanks.
+      </div>
+    );
+  }
+
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        setErr(null);
+        const fd = new FormData();
+        fd.append("commentId", String(commentId));
+        fd.append("reason", reason);
+        fd.append("customText", customText);
+        startTransition(async () => {
+          try {
+            await reportComment(fd);
+            setSubmitted(true);
+            router.refresh();
+            setTimeout(onDone, 1500);
+          } catch (e) {
+            const msg = e instanceof Error ? e.message : "failed";
+            if (msg === "already_reported") {
+              setErr("You already reported this comment in the last 24 h.");
+            } else if (msg === "cannot_self_report") {
+              setErr("You can't report your own comment.");
+            } else if (msg.startsWith("rate_limited")) {
+              setErr("Daily report cap reached (5 per 24 h).");
+            } else {
+              setErr(msg);
+            }
+          }
+        });
+      }}
+      className="space-y-2 rounded-md border border-amber-500/30 bg-amber-500/5 px-3 py-2"
+    >
+      <div className="text-xs font-medium text-amber-200">Report this comment</div>
+      <label className="block text-xs text-foreground/60">
+        <span className="mb-1 block">Reason</span>
+        <select
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          className="w-full rounded border border-border bg-background px-2 py-1 text-sm"
+        >
+          {REPORT_REASON_OPTIONS.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="block text-xs text-foreground/60">
+        <span className="mb-1 block">
+          Details{reason === "other" ? " (required)" : " (optional)"}
+        </span>
+        <textarea
+          value={customText}
+          onChange={(e) => setCustomText(e.target.value)}
+          rows={2}
+          className="w-full rounded border border-border bg-background px-2 py-1 text-sm"
+        />
+      </label>
+      {err && <div className="text-xs text-red-300">{err}</div>}
+      <div className="flex items-center justify-end gap-2">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="rounded border border-border px-3 py-1 text-xs text-foreground/60 hover:text-foreground"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          disabled={isPending || (reason === "other" && !customText.trim())}
+          className="rounded bg-amber-500 px-3 py-1 text-xs font-medium text-black hover:bg-amber-400 disabled:opacity-50"
+        >
+          {isPending ? "Submitting…" : "Submit report"}
+        </button>
       </div>
     </form>
   );

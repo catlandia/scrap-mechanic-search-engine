@@ -290,6 +290,80 @@ export async function reportCreation(formData: FormData): Promise<void> {
   revalidatePath("/admin/reports");
 }
 
+export async function reportComment(formData: FormData): Promise<void> {
+  const user = await requireVotingUser();
+  const db = getDb();
+
+  const commentIdRaw = String(formData.get("commentId") ?? "");
+  const commentId = Number(commentIdRaw);
+  if (!Number.isInteger(commentId) || commentId <= 0) {
+    throw new Error("invalid_comment_id");
+  }
+
+  const reasonRaw = String(formData.get("reason") ?? "other");
+  const reason: ReportReason = (REPORT_REASONS as readonly string[]).includes(
+    reasonRaw,
+  )
+    ? (reasonRaw as ReportReason)
+    : "other";
+  const customText = String(formData.get("customText") ?? "").trim().slice(0, 1000);
+  if (reason === "other" && !customText) {
+    throw new Error("custom_text_required");
+  }
+
+  const [row] = await db
+    .select({
+      id: comments.id,
+      userId: comments.userId,
+      deletedAt: comments.deletedAt,
+    })
+    .from(comments)
+    .where(eq(comments.id, commentId))
+    .limit(1);
+  if (!row) throw new Error("comment_not_found");
+  if (row.deletedAt) throw new Error("comment_deleted");
+  if (row.userId === user.steamid) throw new Error("cannot_self_report");
+
+  // One report per user per comment per 24h. Simpler than creations: a
+  // comment has no duplicate-target-across-reporters concern to dedupe.
+  const [dupe] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(reports)
+    .where(
+      and(
+        eq(reports.commentId, commentId),
+        eq(reports.reporterUserId, user.steamid),
+        sql`${reports.createdAt} > now() - interval '24 hours'`,
+      ),
+    );
+  if ((dupe?.n ?? 0) > 0) throw new Error("already_reported");
+
+  // Daily total cap shared with creation reports — 5/day across both.
+  const dailyTotal = await countReportsByUserSince(user.steamid, 24 * 60 * 60);
+  if (dailyTotal >= 5) throw new Error("rate_limited: 5 reports per 24h");
+
+  await db.insert(reports).values({
+    commentId,
+    reporterUserId: user.steamid,
+    reason,
+    customText: customText || null,
+    source: "user",
+    status: "open",
+  });
+
+  await broadcastToRole({
+    minRole: "moderator",
+    tier: "moderator",
+    type: "mod_new_report",
+    title: "New report on a comment",
+    body: `Reason: ${reason}${customText ? ` — ${customText.slice(0, 160)}` : ""}`,
+    link: "/admin/reports",
+    excludeUserId: user.steamid,
+  });
+
+  revalidatePath("/admin/reports");
+}
+
 /**
  * Community tag nomination: adds a +1 vote on a tag that may or may not be
  * present on this creation yet. If no creation_tags row exists, one is
@@ -352,7 +426,8 @@ const MAX_REPLY_DEPTH = 2;
 
 export async function postComment(formData: FormData): Promise<void> {
   const user = await requireVotingUser();
-  const creationId = String(formData.get("creationId") ?? "");
+  const creationId = String(formData.get("creationId") ?? "") || null;
+  const profileSteamid = String(formData.get("profileSteamid") ?? "") || null;
   const body = String(formData.get("body") ?? "").trim();
   const parentIdRaw = formData.get("parentId");
   const parentId =
@@ -363,7 +438,10 @@ export async function postComment(formData: FormData): Promise<void> {
     throw new Error("invalid_parent_id");
   }
 
-  if (!creationId) throw new Error("creationId required");
+  // XOR enforced by schema, but surface a friendly error before hitting the DB.
+  if ((creationId && profileSteamid) || (!creationId && !profileSteamid)) {
+    throw new Error("invalid_target");
+  }
   if (!body) throw new Error("body_empty");
   if (body.length > MAX_COMMENT_LENGTH) throw new Error("body_too_long");
 
@@ -389,6 +467,7 @@ export async function postComment(formData: FormData): Promise<void> {
       .select({
         id: comments.id,
         creationId: comments.creationId,
+        profileSteamid: comments.profileSteamid,
         parentId: comments.parentId,
         userId: comments.userId,
         deletedAt: comments.deletedAt,
@@ -397,7 +476,12 @@ export async function postComment(formData: FormData): Promise<void> {
       .where(eq(comments.id, parentId))
       .limit(1);
     if (!parent) throw new Error("parent_not_found");
-    if (parent.creationId !== creationId) throw new Error("parent_mismatch");
+    if (
+      parent.creationId !== creationId ||
+      parent.profileSteamid !== profileSteamid
+    ) {
+      throw new Error("parent_mismatch");
+    }
     if (parent.deletedAt) throw new Error("parent_deleted");
 
     // Walk up to find the parent's own depth. Reply sits at parentDepth + 1,
@@ -423,6 +507,7 @@ export async function postComment(formData: FormData): Promise<void> {
     .insert(comments)
     .values({
       creationId,
+      profileSteamid,
       userId: user.steamid,
       body,
       parentId,
@@ -430,27 +515,51 @@ export async function postComment(formData: FormData): Promise<void> {
     .returning({ id: comments.id });
 
   if (parentAuthorId && parentAuthorId !== user.steamid) {
-    const [creationRow] = await db
-      .select({ shortId: creations.shortId, title: creations.title })
-      .from(creations)
-      .where(eq(creations.id, creationId))
-      .limit(1);
-    const link = creationRow
-      ? `/creation/${creationRow.shortId}#comment-${inserted?.id ?? ""}`
-      : `/creation/${creationId}`;
+    let link: string;
+    let context: string;
+    if (creationId) {
+      const [row] = await db
+        .select({ shortId: creations.shortId, title: creations.title })
+        .from(creations)
+        .where(eq(creations.id, creationId))
+        .limit(1);
+      link = row
+        ? `/creation/${row.shortId}#comment-${inserted?.id ?? ""}`
+        : `/creation/${creationId}`;
+      context = row ? ` on "${row.title}"` : "";
+    } else {
+      link = `/profile/${profileSteamid}#comment-${inserted?.id ?? ""}`;
+      context = " on a profile";
+    }
     await createNotification({
       userId: parentAuthorId,
       type: "comment_reply",
       tier: "user",
       title: `${user.personaName} replied to your comment`,
-      body: creationRow
-        ? `on "${creationRow.title}": ${body.slice(0, 140)}`
-        : body.slice(0, 140),
+      body: `${body.slice(0, 140)}${context}`,
       link,
     });
   }
 
-  revalidatePath(`/creation/${creationId}`);
+  // Also notify the profile owner of a new top-level wall comment. Mirrors
+  // the existing mod broadcast on reports: best-effort, skip self-posts.
+  if (
+    profileSteamid &&
+    parentId == null &&
+    profileSteamid !== user.steamid
+  ) {
+    await createNotification({
+      userId: profileSteamid,
+      type: "profile_comment",
+      tier: "user",
+      title: `${user.personaName} left a comment on your profile`,
+      body: body.slice(0, 180),
+      link: `/profile/${profileSteamid}#comment-${inserted?.id ?? ""}`,
+    });
+  }
+
+  if (creationId) revalidatePath(`/creation/${creationId}`);
+  if (profileSteamid) revalidatePath(`/profile/${profileSteamid}`);
 }
 
 /**
@@ -470,6 +579,7 @@ export async function deleteComment(formData: FormData): Promise<void> {
     .select({
       userId: comments.userId,
       creationId: comments.creationId,
+      profileSteamid: comments.profileSteamid,
     })
     .from(comments)
     .where(eq(comments.id, id))
@@ -488,7 +598,8 @@ export async function deleteComment(formData: FormData): Promise<void> {
     })
     .where(eq(comments.id, id));
 
-  revalidatePath(`/creation/${row.creationId}`);
+  if (row.creationId) revalidatePath(`/creation/${row.creationId}`);
+  if (row.profileSteamid) revalidatePath(`/profile/${row.profileSteamid}`);
 }
 
 function parsePublishedFileId(input: string): string | null {
@@ -708,6 +819,7 @@ export async function voteComment(
     .select({
       userId: comments.userId,
       creationId: comments.creationId,
+      profileSteamid: comments.profileSteamid,
       deletedAt: comments.deletedAt,
     })
     .from(comments)
@@ -765,7 +877,8 @@ export async function voteComment(
     .set({ votesUp: up, votesDown: down })
     .where(eq(comments.id, commentId));
 
-  revalidatePath(`/creation/${row.creationId}`);
+  if (row.creationId) revalidatePath(`/creation/${row.creationId}`);
+  if (row.profileSteamid) revalidatePath(`/profile/${row.profileSteamid}`);
 }
 
 export async function voteTag(

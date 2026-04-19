@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import {
   bigint,
   boolean,
+  check,
   customType,
   index,
   integer,
@@ -344,13 +345,18 @@ export const creationViews = pgTable(
   ],
 );
 
+// A report targets exactly one of: a creation (card-level flag) or a
+// comment (moderation of in-thread content). XOR via CHECK constraint.
 export const reports = pgTable(
   "reports",
   {
     id: serial("id").primaryKey(),
-    creationId: text("creation_id")
-      .notNull()
-      .references(() => creations.id, { onDelete: "cascade" }),
+    creationId: text("creation_id").references(() => creations.id, {
+      onDelete: "cascade",
+    }),
+    commentId: integer("comment_id").references(() => comments.id, {
+      onDelete: "cascade",
+    }),
     // Null when source = 'auto' (machine-generated report).
     reporterUserId: text("reporter_user_id").references(() => users.steamid, {
       onDelete: "set null",
@@ -371,16 +377,26 @@ export const reports = pgTable(
   (t) => [
     index("reports_status_idx").on(t.status),
     index("reports_creation_status_idx").on(t.creationId, t.status),
+    index("reports_comment_idx").on(t.commentId),
+    check(
+      "reports_target_xor",
+      sql`(${t.creationId} IS NOT NULL AND ${t.commentId} IS NULL) OR (${t.creationId} IS NULL AND ${t.commentId} IS NOT NULL)`,
+    ),
   ],
 );
 
+// A comment targets exactly one of: a creation (detail-page thread) or a
+// user profile (wall-style guestbook). The XOR is enforced by a CHECK.
 export const comments = pgTable(
   "comments",
   {
     id: serial("id").primaryKey(),
-    creationId: text("creation_id")
-      .notNull()
-      .references(() => creations.id, { onDelete: "cascade" }),
+    creationId: text("creation_id").references(() => creations.id, {
+      onDelete: "cascade",
+    }),
+    profileSteamid: text("profile_steamid").references(() => users.steamid, {
+      onDelete: "cascade",
+    }),
     userId: text("user_id")
       .notNull()
       .references(() => users.steamid, { onDelete: "cascade" }),
@@ -401,7 +417,12 @@ export const comments = pgTable(
   },
   (t) => [
     index("comments_creation_idx").on(t.creationId),
+    index("comments_profile_idx").on(t.profileSteamid),
     index("comments_user_idx").on(t.userId),
+    check(
+      "comments_target_xor",
+      sql`(${t.creationId} IS NOT NULL AND ${t.profileSteamid} IS NULL) OR (${t.creationId} IS NULL AND ${t.profileSteamid} IS NOT NULL)`,
+    ),
   ],
 );
 

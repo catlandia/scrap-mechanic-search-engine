@@ -225,12 +225,13 @@ Per-user view tracking (for dedup + analytics).
 
 ### `reports`
 
-Moderation reports submitted by community members or auto-created by the system.
+Moderation reports submitted by community members or auto-created by the system. Targets either a creation or a comment (exactly one).
 
 | Column | Type | Notes |
 |---|---|---|
 | `id` | serial PK | |
-| `creationId` | text → creations | |
+| `creationId` | text NULL → creations | One of creationId / commentId must be set (CHECK `reports_target_xor`). |
+| `commentId` | int NULL → comments | Comment-targeted report. |
 | `reporterUserId` | text NULL | Null for auto-reports |
 | `reason` | text | One of REPORT_REASONS |
 | `customText` | text NULL | |
@@ -240,19 +241,20 @@ Moderation reports submitted by community members or auto-created by the system.
 | `resolverNote` | text NULL | |
 | `resolvedAt` | timestamptz NULL | |
 
-**Indexes:** `status`, `(creationId, status)`
+**Indexes:** `status`, `(creationId, status)`, `commentId`
 
 ---
 
 ### `comments`
 
-Comments on creations. Threaded up to 3 levels deep via `parentId`.
+Comments on creations **or** user profiles (exactly one target). Threaded up to 3 levels deep via `parentId`.
 
 | Column | Type | Notes |
 |---|---|---|
 | `id` | serial PK | |
-| `creationId` | text → creations | |
-| `userId` | text → users.steamid | |
+| `creationId` | text NULL → creations | One of creationId / profileSteamid must be set (CHECK `comments_target_xor`). |
+| `profileSteamid` | text NULL → users.steamid | Profile wall target. |
+| `userId` | text → users.steamid | The comment author. |
 | `parentId` | int NULL | Self-reference to parent comment; not a FK to keep drizzle-kit happy. Depth enforced in `postComment`. |
 | `body` | text | |
 | `createdAt` | timestamptz | |

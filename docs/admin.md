@@ -49,11 +49,12 @@ Purpose: catch approved items that still have no publicly visible tags.
 
 ## Reports Queue (`/admin/reports`)
 
-Community-submitted reports about creations (wrong tags, spam, etc.).
+Community-submitted reports. Two shapes share the queue:
 
-- Status flow: `open` → `cleared` (no action taken) | `actioned` (creation removed/archived)
-- `archiveFromReport` action: archives the creation AND actions the report in one step
-- Clearing a report does not affect the creation's status
+- **Creation reports** — the original flag-a-creation path. Status flow: `open` → `cleared` | `actioned`. Actions: **Clear** (dismiss), **Action** (public mod-note badge via `actionReport`), **Archive creation** (`archiveFromReport` — archives the creation AND actions the report in one step).
+- **Comment reports** — render in a distinct sky-bordered card with the reported comment's body quoted inline and a link back to `#comment-<id>` on the parent creation or profile. Actions: **Clear** or **Delete comment** (`deleteCommentFromReport` — soft-deletes the comment and actions the report). No public badge path — the moderation outcome is simply that the comment is gone.
+
+Both shapes route through the same `reports` table (XOR between `creationId` and `commentId`) and both broadcast a moderator-tier notification on submission.
 
 ---
 
@@ -81,6 +82,7 @@ All helpers check `effectiveRole` (ban-aware), not `user.role` directly. **Every
 | `archiveCreation(id)` | Elite+ | Moves to archived, auto-creates audit report |
 | `restoreFromArchive(id)` | Elite+ | Returns to approved, clears actioned reports |
 | `archiveFromReport(id, reportId)` | Elite+ | Archive + action the triggering report |
+| `deleteCommentFromReport(reportId)` | Mod+ | Soft-delete the reported comment + action the report |
 | `deleteCreation(id)` | Creator | Permanent `status=deleted`, clears reports |
 
 ### User management (Creator-only)

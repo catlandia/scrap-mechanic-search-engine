@@ -134,6 +134,13 @@
       "when": 1776564688811,
       "tag": "0018_motionless_surge",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1776565141169,
+      "tag": "0019_chubby_frank_castle",
+      "breakpoints": true
     }
   ]
 }

@@ -6,6 +6,7 @@ import { and, eq, inArray, ne, sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import {
   categories,
+  comments,
   creationCategories,
   creationTags,
   creations,
@@ -653,6 +654,9 @@ export async function actionReport(formData: FormData) {
     .where(eq(reports.id, id))
     .limit(1);
   if (!row) throw new Error("report_not_found");
+  // actionReport produces a public creation flag — it's meaningless on a
+  // comment report (use deleteCommentFromReport instead).
+  if (!row.creationId) throw new Error("not_a_creation_report");
 
   await db
     .update(reports)
@@ -668,6 +672,54 @@ export async function actionReport(formData: FormData) {
   revalidatePath(`/creation/${row.creationId}`);
   revalidatePath("/");
   revalidatePath("/new");
+}
+
+export async function deleteCommentFromReport(formData: FormData) {
+  const user = await requireMod();
+  const idRaw = String(formData.get("reportId") ?? "");
+  const id = Number(idRaw);
+  if (!Number.isInteger(id) || id <= 0) throw new Error("invalid_report_id");
+  const note = String(formData.get("note") ?? "").trim().slice(0, 500);
+
+  const db = getDb();
+  const [row] = await db
+    .select({
+      reportId: reports.id,
+      commentId: reports.commentId,
+    })
+    .from(reports)
+    .where(eq(reports.id, id))
+    .limit(1);
+  if (!row) throw new Error("report_not_found");
+  if (row.commentId == null) throw new Error("not_a_comment_report");
+
+  const [target] = await db
+    .select({
+      creationId: comments.creationId,
+      profileSteamid: comments.profileSteamid,
+    })
+    .from(comments)
+    .where(eq(comments.id, row.commentId))
+    .limit(1);
+
+  await db
+    .update(comments)
+    .set({ deletedAt: new Date(), deletedByUserId: user.steamid })
+    .where(eq(comments.id, row.commentId));
+
+  await db
+    .update(reports)
+    .set({
+      status: "actioned",
+      resolverUserId: user.steamid,
+      resolverNote: note || "Comment deleted",
+      resolvedAt: new Date(),
+    })
+    .where(eq(reports.id, id));
+
+  revalidatePath("/admin/reports");
+  if (target?.creationId) revalidatePath(`/creation/${target.creationId}`);
+  if (target?.profileSteamid) revalidatePath(`/profile/${target.profileSteamid}`);
 }
 
 async function requireEliteMod() {
@@ -701,6 +753,8 @@ export async function archiveFromReport(formData: FormData) {
     .where(eq(reports.id, id))
     .limit(1);
   if (!row) throw new Error("report_not_found");
+  if (!row.creationId) throw new Error("not_a_creation_report");
+  const creationId: string = row.creationId;
 
   const now = new Date();
 
@@ -711,7 +765,7 @@ export async function archiveFromReport(formData: FormData) {
       reviewedAt: now,
       reviewedByUserId: user.steamid,
     })
-    .where(eq(creations.id, row.creationId));
+    .where(eq(creations.id, creationId));
 
   await db
     .update(reports)
@@ -734,7 +788,7 @@ export async function archiveFromReport(formData: FormData) {
     minRole: "elite_moderator",
     tier: "elite_moderator",
     type: "elite_creation_archived",
-    title: `Creation archived: "${creationRow?.title ?? row.creationId}"`,
+    title: `Creation archived: "${creationRow?.title ?? creationId}"`,
     body: `Archived from report${extra ? ` — ${extra.slice(0, 200)}` : ""}`,
     link: "/admin/archive",
     excludeUserId: user.steamid,
