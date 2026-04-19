@@ -22,6 +22,12 @@ vercel env pull .env.local
 | `SESSION_SECRET` | Yes | Min 32 chars; iron-session encryption key |
 | `NEXT_PUBLIC_SITE_URL` | Yes | Canonical URL (e.g. `https://yourdomain.com`); used for OG meta |
 | `CREATOR_STEAMID` | Yes | SteamID of site owner; grants creator-tier role on login |
+| `CAPTCHA_IMAGES_TOKEN` | Yes (prod) | Fine-grained PAT with Contents:Read on the private captcha-images repo |
+| `CAPTCHA_IMAGES_REPO` | Yes (prod) | `owner/repo` name of the private captcha-images repo |
+| `CAPTCHA_IMAGES_BRANCH` | No | Defaults to `main` |
+| `CAPTCHA_IMAGES_PATH` | No | Defaults to repo root — set if jpgs live in a subfolder |
+
+Captcha images are fetched at build time by `scripts/fetch-captcha-images.ts` (wired as the `prebuild` npm script). Images are gitignored — first Vercel deployment after this landed requires both `CAPTCHA_IMAGES_TOKEN` and `CAPTCHA_IMAGES_REPO` to be set or the build will fail. See `docs/captcha.md` for setup.
 
 ---
 

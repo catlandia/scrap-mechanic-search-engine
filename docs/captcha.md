@@ -34,6 +34,8 @@ On success the same session is saved with `verified: true` (30-day expiry). The 
 
 Images live in `lib/captcha/images/` as opaque numbered files (`01.jpg` – `25.jpg`). They are **intentionally outside `public/`** so there's no direct URL like `/captcha/Mechanic1.jpg` to curl. The character → filename mapping is server-side only in `lib/captcha/config.ts`. Vercel's output tracer is told to bundle the images with the `/api/captcha/image` route via `outputFileTracingIncludes` in `next.config.ts`.
 
+**The files themselves live in a private GitHub repo, not this one.** `lib/captcha/images/*.jpg` is gitignored, and `scripts/fetch-captcha-images.ts` downloads the full set into place at build time using the GitHub Contents API. The script is wired as the `prebuild` npm script so Vercel runs it automatically before `next build`. It reads `CAPTCHA_IMAGES_TOKEN` (a fine-grained PAT with `Contents: Read` on that one private repo) and `CAPTCHA_IMAGES_REPO` (in `owner/name` form); optional `CAPTCHA_IMAGES_BRANCH` and `CAPTCHA_IMAGES_PATH` overrides let you re-organize the private repo later without redeploying this one. For local dev the script skips silently when the full set is already on disk, so you don't have to configure the token just to run `npm run dev` — the images are already there from a fresh setup.
+
 ### Chapter 2 easter egg
 
 The Chapter 2 image shows the in-game "Scrap Mechanic Chapter 2" sign. Its correct answer is the literal word **tomorrow** — one of the 4 buttons will say "tomorrow" alongside normal character names. Chance of appearing: ~3.45% per question slot, giving ~10% probability of seeing it at least once across a full 3-question run.
@@ -106,9 +108,9 @@ The admin gate (`/admin/*`) is independent of the captcha and checks for an iron
 
 ## Adding or updating characters
 
-1. Add image files to `lib/captcha/images/` using the next available numeric name (e.g. `26.jpg`, `27.jpg` …). Keep names opaque — avoid anything that leaks which character a file contains.
+1. Add image files to the **private captcha-images repo** (not this one), using the next available numeric name (e.g. `26.jpg`, `27.jpg` …). Keep names opaque — avoid anything that leaks which character a file contains.
 2. Add an entry to `NORMAL_CHARACTERS` in `lib/captcha/config.ts` that references those filenames.
-3. Redeploy — no DB migration needed.
+3. Redeploy — `prebuild` pulls the updated set from the private repo. No DB migration needed.
 
 To replace a Chapter 2 image: swap out the file it points to (currently `25.jpg`) and redeploy.
 
@@ -137,5 +139,5 @@ What the current setup defends against, and what it still doesn't:
 | Guessing image URLs (`/captcha/Woc1.jpg`) | **Closed.** Images are outside `public/` and only the session-gated proxy reads them. |
 | Path traversal via the image proxy | **Closed.** Route rejects anything that isn't `\d+\.jpg`. |
 | Session filename leak to client | **Closed.** Browser only ever sees `/api/captcha/image?n=<uuid>`. |
-| Cloning the public GitHub repo and precomputing perceptual hashes of the 25 images to auto-answer challenges | **Open.** An attacker with `git clone` can still build a cheat table from the repo binaries. Closing this requires either (a) moving images out of the repo entirely (private storage, gitignored, fetched at build time), or (b) per-request image jittering (random crop/tint/noise with `sharp`) so no two serves hash the same. Neither is implemented yet. |
+| Cloning the public GitHub repo and precomputing perceptual hashes of the 25 images to auto-answer challenges | **Closed.** Images live in a private GitHub repo and are fetched into `lib/captcha/images/` at build time by `scripts/fetch-captcha-images.ts` using the `CAPTCHA_IMAGES_TOKEN` PAT. `lib/captcha/images/*.jpg` is gitignored. A `git clone` of the public repo produces no images. For local dev the script skips silently when it finds the full set already on disk. |
 | Vision AI solving a novel image | **Partial.** Informal testing shows general-purpose vision models get roughly one of three right without a cheat table — enough to make brute-forcing 3-in-a-row expensive but not prohibitive. The Chapter 2 easter egg (answer: "tomorrow") is specifically designed to trip AIs that lack game context. |
