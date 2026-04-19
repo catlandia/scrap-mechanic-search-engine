@@ -51,8 +51,11 @@ export async function VoteHistory({
           return (
             <div key={creation.id} className="relative">
               <CreationCard creation={creation} ratingMode={ratingMode} />
+              {/* CreationCard already pins the #shortId badge at top-right
+                  of the thumbnail. Anchor the vote overlay just left of it
+                  (with a 4px gap) so the ID stays readable. */}
               <span
-                className={`absolute top-2 right-2 z-10 rounded-full px-2 py-0.5 text-xs font-bold ${badgeClass}`}
+                className={`absolute top-2 right-12 z-10 rounded-full px-2 py-0.5 text-xs font-bold shadow-md ${badgeClass}`}
                 title={isUp ? "You upvoted this" : "You downvoted this"}
                 aria-label={isUp ? "Upvoted" : "Downvoted"}
               >

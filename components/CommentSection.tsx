@@ -83,6 +83,10 @@ export function CommentSection({
   const [voteError, setVoteError] = useState<string | null>(null);
   const [replyingTo, setReplyingTo] = useState<number | null>(null);
   const [reportingId, setReportingId] = useState<number | null>(null);
+  // Two-stage delete: first click puts the comment into confirm state, a
+  // second click on "confirm delete?" actually fires deleteComment. Guards
+  // against fat-finger taps on phones and double-clicks on desktop.
+  const [confirmingDeleteId, setConfirmingDeleteId] = useState<number | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const tree = useMemo(() => buildTree(comments), [comments]);
@@ -154,6 +158,7 @@ export function CommentSection({
     startTransition(async () => {
       try {
         await deleteComment(fd);
+        setConfirmingDeleteId(null);
         router.refresh();
       } catch (err) {
         console.error(err);
@@ -239,6 +244,8 @@ export function CommentSection({
             setReplyingTo={setReplyingTo}
             reportingId={reportingId}
             setReportingId={setReportingId}
+            confirmingDeleteId={confirmingDeleteId}
+            setConfirmingDeleteId={setConfirmingDeleteId}
             onReply={handleReply}
             onDelete={handleDelete}
             onVote={handleVote}
@@ -260,6 +267,8 @@ function CommentNode({
   setReplyingTo,
   reportingId,
   setReportingId,
+  confirmingDeleteId,
+  setConfirmingDeleteId,
   onReply,
   onDelete,
   onVote,
@@ -274,6 +283,8 @@ function CommentNode({
   setReplyingTo: (id: number | null) => void;
   reportingId: number | null;
   setReportingId: (id: number | null) => void;
+  confirmingDeleteId: number | null;
+  setConfirmingDeleteId: (id: number | null) => void;
   onReply: (parentId: number, body: string) => Promise<void>;
   onDelete: (id: number) => void;
   onVote: (id: number, value: -1 | 0 | 1) => void;
@@ -355,15 +366,37 @@ function CommentNode({
                   </button>
                 )}
                 {canDelete && (
-                  <button
-                    type="button"
-                    aria-label={`Delete comment by ${node.authorName}`}
-                    onClick={() => onDelete(node.id)}
-                    disabled={pending}
-                    className={cn("text-xs text-foreground/40 hover:text-red-300")}
-                  >
-                    delete
-                  </button>
+                  confirmingDeleteId === node.id ? (
+                    <>
+                      <button
+                        type="button"
+                        aria-label={`Confirm delete comment by ${node.authorName}`}
+                        onClick={() => onDelete(node.id)}
+                        disabled={pending}
+                        className="rounded border border-red-400/60 bg-red-500/15 px-1.5 py-0.5 text-xs font-semibold text-red-300 hover:bg-red-500/25 disabled:opacity-50"
+                      >
+                        confirm delete?
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setConfirmingDeleteId(null)}
+                        disabled={pending}
+                        className="text-xs text-foreground/50 hover:text-foreground"
+                      >
+                        cancel
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      aria-label={`Delete comment by ${node.authorName}`}
+                      onClick={() => setConfirmingDeleteId(node.id)}
+                      disabled={pending}
+                      className="text-xs text-foreground/40 hover:text-red-300"
+                    >
+                      delete
+                    </button>
+                  )
                 )}
               </div>
             </div>
@@ -404,6 +437,8 @@ function CommentNode({
               setReplyingTo={setReplyingTo}
               reportingId={reportingId}
               setReportingId={setReportingId}
+              confirmingDeleteId={confirmingDeleteId}
+              setConfirmingDeleteId={setConfirmingDeleteId}
               onReply={onReply}
               onDelete={onDelete}
               onVote={onVote}

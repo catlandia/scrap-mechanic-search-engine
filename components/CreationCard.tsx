@@ -54,7 +54,10 @@ export function CreationCard({
             #{creation.shortId}
           </span>
           {creation.uploadedByUserId && (
-            <span className="absolute bottom-2 left-2 rounded bg-purple-500/30 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-purple-200">
+            // Thumbnail is always dark; force white text so the default
+            // theme's remapped `text-purple-200` (dark purple) doesn't go
+            // invisible on top of it — same reason as the kind/ID badges.
+            <span className="absolute bottom-2 left-2 rounded bg-purple-500/80 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-white/95">
               Community
             </span>
           )}
