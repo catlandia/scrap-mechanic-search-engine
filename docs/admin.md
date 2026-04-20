@@ -154,7 +154,7 @@ Creator-only. Four sections with corresponding status transitions:
 | Rejected | `rejected` | Back to approved → `approved` |
 
 Every card also has:
-- **Creator note field** — inline editable, shown publicly on the Ideas board
+- **Creator note field** — inline editable, shown publicly on the Ideas board. The status-transition buttons (Approve / Reject / etc.) save the note along with the transition; a separate **Save note** button (`updateSuggestionNote`) persists note edits without changing status or sending a submitter notification, so the creator can keep a dialogue going on a live idea.
 - **Hard delete** (🗑) — completely removes the row and cascades votes; no undo
 
 ---

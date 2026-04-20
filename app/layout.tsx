@@ -140,7 +140,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <ToastProvider>
         <BetaBanner />
         <header className="sticky top-0 z-30 border-b border-foreground/10 bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70">
-          <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3 sm:flex-wrap sm:gap-x-6 sm:gap-y-2">
+          <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3 sm:flex-wrap sm:gap-x-6 sm:gap-y-2">
             <Link href="/" className="flex shrink-0 items-center gap-2 hover:opacity-80">
               <img src="/logo.png" alt="Scrap Mechanic" className="h-8 w-auto" />
               <span className="text-lg font-semibold tracking-tight text-accent">
@@ -206,8 +206,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             </div>
           </div>
         </header>
-        <main className="mx-auto max-w-6xl px-4 py-6 sm:py-10">{children}</main>
-        <footer className="mx-auto max-w-6xl px-4 py-10 text-xs text-foreground/50">
+        <main className="mx-auto max-w-7xl px-4 py-6 sm:py-10">{children}</main>
+        <footer className="mx-auto max-w-7xl px-4 py-10 text-xs text-foreground/50">
           {userCounts && (
             <p
               className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1"

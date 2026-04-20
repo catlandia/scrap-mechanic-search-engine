@@ -6,6 +6,7 @@ import {
   getPendingSuggestions,
   getRejectedSuggestions,
   setSuggestionStatus,
+  updateSuggestionNote,
   type SuggestionRow,
 } from "@/lib/suggestions/actions";
 import { isCreator } from "@/lib/auth/roles";
@@ -87,6 +88,15 @@ function ActionCard({
           placeholder="Creator note (optional, shown publicly)"
           className="min-w-[20ch] flex-1 rounded border border-border bg-background px-2 py-1.5 text-sm"
         />
+        <FormSubmitButton
+          formAction={updateSuggestionNote}
+          pendingLabel="Saving…"
+          toastSuccess="Note saved."
+          className="rounded-md border border-purple-500/40 bg-purple-500/10 px-3 py-1.5 text-sm font-medium text-purple-200 hover:bg-purple-500/20"
+          title="Save the creator note without changing the idea's status"
+        >
+          Save note
+        </FormSubmitButton>
         {transitions.map((t) => (
           <FormSubmitButton
             key={t.value}

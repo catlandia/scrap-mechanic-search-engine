@@ -42,6 +42,24 @@ export const BADGES: Record<string, BadgeDef> = {
     pill: "bg-red-500/15 text-red-300 border-red-500/40",
     grantKind: "auto",
   },
+  bright_idea: {
+    slug: "bright_idea",
+    name: "Bright idea",
+    description:
+      "Submitted a feature idea the Creator acted on and shipped to the site.",
+    icon: "💡",
+    pill: "bg-amber-500/15 text-amber-300 border-amber-500/40",
+    grantKind: "manual",
+  },
+  helper: {
+    slug: "helper",
+    name: "Helper",
+    description:
+      "Went out of their way to help the community or the site — bug reports, feedback, translations, the works.",
+    icon: "🤝",
+    pill: "bg-sky-500/15 text-sky-300 border-sky-500/40",
+    grantKind: "manual",
+  },
 };
 
 export function getBadge(slug: string): BadgeDef | null {

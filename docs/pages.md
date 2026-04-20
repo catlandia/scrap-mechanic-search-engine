@@ -27,7 +27,7 @@ All public pages are in `app/` using Next.js 15 App Router. Server Components by
 | `/me/submissions` | `app/me/submissions/page.tsx` | User's submitted Workshop items with status badges |
 | `/me/notifications` | `app/me/notifications/page.tsx` | User's notifications; marks all read on load |
 | `/submit` | `app/submit/page.tsx` | Submit a Workshop item |
-| `/suggestions` | `app/suggestions/page.tsx` | Ideas board (3 tabs) |
+| `/suggestions` | `app/suggestions/page.tsx` | Ideas board — tabbed below `lg`, three-column kanban (Approved / Implemented / Rejected) at `lg+` |
 | `/suggestions/new` | `app/suggestions/new/page.tsx` | Submit a suggestion (noindex) |
 | `/settings` | `app/settings/page.tsx` | User preferences hub (theme, ratings, account links, help) |
 | `/settings/theme` | `app/settings/theme/page.tsx` | Custom theme editor |

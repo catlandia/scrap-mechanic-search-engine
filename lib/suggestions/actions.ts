@@ -183,6 +183,23 @@ export async function deleteSuggestion(formData: FormData) {
   revalidatePath("/suggestions");
 }
 
+export async function updateSuggestionNote(formData: FormData) {
+  await requireCreator();
+  const idRaw = String(formData.get("suggestionId") ?? "");
+  const id = Number(idRaw);
+  if (!Number.isInteger(id) || id <= 0) throw new Error("invalid_id");
+  const note = String(formData.get("note") ?? "").trim() || null;
+
+  const db = getDb();
+  await db
+    .update(featureSuggestions)
+    .set({ creatorNote: note })
+    .where(eq(featureSuggestions.id, id));
+
+  revalidatePath("/admin/suggestions");
+  revalidatePath("/suggestions");
+}
+
 export async function setSuggestionStatus(formData: FormData) {
   const actor = await requireCreator();
   const idRaw = String(formData.get("suggestionId") ?? "");
