@@ -49,6 +49,61 @@ const en: Dictionary = {
   "common.remove": "Remove",
   "common.close": "Close",
   "common.signOut": "Sign out",
+  "common.search": "Search",
+  "common.clear": "Clear",
+  "common.more": "More →",
+  "common.newer": "← Newer",
+  "common.older": "Older →",
+  "common.page": "Page {n}",
+  "common.submit": "Submit",
+
+  // /new
+  "newest.title": "Newest additions",
+  "newest.subtitle": "Creations most recently approved, across every workshop kind.",
+
+  // /creators
+  "creators.title": "Creators",
+  "creators.subtitle":
+    "Workshop authors ranked by how many of their creations made it onto the site. Co-authored items count for everyone credited.",
+  "creators.searchPlaceholder": "Search by name…",
+  "creators.searchAria": "Search creators by name",
+  "creators.noMatch": "No creators match \"{q}\".",
+  "creators.empty": "No creators yet.",
+  "creators.creationCountOne": "{count} creation",
+  "creators.creationCountMany": "{count} creations",
+  "creators.unknownName": "(unknown)",
+
+  // /search
+  "search.title": "Search",
+  "search.placeholder": "Search titles and descriptions…",
+  "search.noResults": "No approved creations match your filters.",
+
+  // /me
+  "me.favourites.title": "Your favourites",
+  "me.favourites.empty": "Nothing favourited yet.",
+  "me.submissions.title": "Your submissions",
+  "me.submissions.empty": "You haven't submitted anything yet.",
+  "me.notifications.title": "Your notifications",
+  "me.notifications.empty": "No notifications yet.",
+  "me.notifications.markAllRead": "Mark all read",
+
+  // CreationCard badges / labels
+  "card.communityBadge": "Community",
+  "card.unratedLabel": "Unrated",
+  "card.viewOnSteam": "View on Steam",
+
+  // Creation detail page
+  "creation.backToNewest": "← Back to newest",
+  "creation.by": "by",
+  "creation.viewOnSteamWorkshop": "View on Steam Workshop ↗",
+  "creation.tagsHeading": "Tags",
+  "creation.voteOnTagsHeading": "Vote on tags",
+  "creation.communityAdded": "Community added",
+  "creation.submittedBy": "submitted by",
+  "creation.descriptionHeading": "Description",
+
+  // BetaBanner
+  "banner.dismiss": "Dismiss",
 
   // Ideas board (public)
   "suggestions.title": "Ideas board",
@@ -167,6 +222,54 @@ const ru: Dictionary = {
   "common.remove": "Убрать",
   "common.close": "Закрыть",
   "common.signOut": "Выйти",
+  "common.search": "Искать",
+  "common.clear": "Очистить",
+  "common.more": "Ещё →",
+  "common.newer": "← Новее",
+  "common.older": "Старее →",
+  "common.page": "Страница {n}",
+  "common.submit": "Отправить",
+
+  "newest.title": "Последние поступления",
+  "newest.subtitle": "Недавно одобренные объекты по всем типам Мастерской.",
+
+  "creators.title": "Авторы",
+  "creators.subtitle":
+    "Авторы Мастерской, отсортированные по числу их работ на сайте. Совместные работы учитываются каждому соавтору.",
+  "creators.searchPlaceholder": "Поиск по имени…",
+  "creators.searchAria": "Поиск авторов по имени",
+  "creators.noMatch": "Авторы не найдены: «{q}».",
+  "creators.empty": "Авторов пока нет.",
+  "creators.creationCountOne": "{count} объект",
+  "creators.creationCountMany": "{count} объектов",
+  "creators.unknownName": "(без имени)",
+
+  "search.title": "Поиск",
+  "search.placeholder": "Ищите по названиям и описаниям…",
+  "search.noResults": "Под ваши фильтры ничего не найдено.",
+
+  "me.favourites.title": "Ваши избранные",
+  "me.favourites.empty": "В избранном пока пусто.",
+  "me.submissions.title": "Ваши заявки",
+  "me.submissions.empty": "Вы пока ничего не добавили.",
+  "me.notifications.title": "Ваши уведомления",
+  "me.notifications.empty": "Уведомлений пока нет.",
+  "me.notifications.markAllRead": "Отметить все как прочитанные",
+
+  "card.communityBadge": "Сообщество",
+  "card.unratedLabel": "Без оценки",
+  "card.viewOnSteam": "Открыть в Steam",
+
+  "creation.backToNewest": "← К новым",
+  "creation.by": "от",
+  "creation.viewOnSteamWorkshop": "Открыть в Мастерской Steam ↗",
+  "creation.tagsHeading": "Теги",
+  "creation.voteOnTagsHeading": "Голосовать за теги",
+  "creation.communityAdded": "Добавлено сообществом",
+  "creation.submittedBy": "добавил",
+  "creation.descriptionHeading": "Описание",
+
+  "banner.dismiss": "Скрыть",
 
   "suggestions.title": "Доска идей",
   "suggestions.eyebrow": "Предложения по функциям",
@@ -279,6 +382,54 @@ const de: Dictionary = {
   "common.remove": "Entfernen",
   "common.close": "Schließen",
   "common.signOut": "Abmelden",
+  "common.search": "Suchen",
+  "common.clear": "Leeren",
+  "common.more": "Mehr →",
+  "common.newer": "← Neuer",
+  "common.older": "Älter →",
+  "common.page": "Seite {n}",
+  "common.submit": "Absenden",
+
+  "newest.title": "Neueste Einträge",
+  "newest.subtitle": "Kürzlich freigegebene Objekte, über alle Workshop-Arten.",
+
+  "creators.title": "Ersteller",
+  "creators.subtitle":
+    "Workshop-Autoren, sortiert nach Anzahl ihrer Einträge auf der Seite. Koautorenschaft zählt für alle Beteiligten.",
+  "creators.searchPlaceholder": "Nach Namen suchen…",
+  "creators.searchAria": "Ersteller nach Namen suchen",
+  "creators.noMatch": "Keine Ersteller zu „{q}\".",
+  "creators.empty": "Noch keine Ersteller.",
+  "creators.creationCountOne": "{count} Eintrag",
+  "creators.creationCountMany": "{count} Einträge",
+  "creators.unknownName": "(unbekannt)",
+
+  "search.title": "Suche",
+  "search.placeholder": "Titel und Beschreibungen durchsuchen…",
+  "search.noResults": "Keine freigegebenen Einträge passen zu deinen Filtern.",
+
+  "me.favourites.title": "Deine Favoriten",
+  "me.favourites.empty": "Noch nichts favorisiert.",
+  "me.submissions.title": "Deine Einreichungen",
+  "me.submissions.empty": "Du hast noch nichts eingereicht.",
+  "me.notifications.title": "Deine Benachrichtigungen",
+  "me.notifications.empty": "Noch keine Benachrichtigungen.",
+  "me.notifications.markAllRead": "Alle als gelesen markieren",
+
+  "card.communityBadge": "Community",
+  "card.unratedLabel": "Ohne Bewertung",
+  "card.viewOnSteam": "Auf Steam ansehen",
+
+  "creation.backToNewest": "← Zurück zu Neueste",
+  "creation.by": "von",
+  "creation.viewOnSteamWorkshop": "Im Steam Workshop ansehen ↗",
+  "creation.tagsHeading": "Tags",
+  "creation.voteOnTagsHeading": "Über Tags abstimmen",
+  "creation.communityAdded": "Von Community hinzugefügt",
+  "creation.submittedBy": "eingereicht von",
+  "creation.descriptionHeading": "Beschreibung",
+
+  "banner.dismiss": "Ausblenden",
 
   "suggestions.title": "Ideen-Board",
   "suggestions.eyebrow": "Feature-Vorschläge",
@@ -392,6 +543,54 @@ const pl: Dictionary = {
   "common.remove": "Usuń",
   "common.close": "Zamknij",
   "common.signOut": "Wyloguj",
+  "common.search": "Szukaj",
+  "common.clear": "Wyczyść",
+  "common.more": "Więcej →",
+  "common.newer": "← Nowsze",
+  "common.older": "Starsze →",
+  "common.page": "Strona {n}",
+  "common.submit": "Wyślij",
+
+  "newest.title": "Najnowsze pozycje",
+  "newest.subtitle": "Ostatnio zatwierdzone prace we wszystkich kategoriach Warsztatu.",
+
+  "creators.title": "Twórcy",
+  "creators.subtitle":
+    "Autorzy Warsztatu uporządkowani według liczby prac, które trafiły na stronę. Prace ze współautorami liczą się każdemu.",
+  "creators.searchPlaceholder": "Szukaj po nazwie…",
+  "creators.searchAria": "Szukaj twórców po nazwie",
+  "creators.noMatch": "Brak twórców pasujących do „{q}\".",
+  "creators.empty": "Nie ma jeszcze twórców.",
+  "creators.creationCountOne": "{count} praca",
+  "creators.creationCountMany": "{count} prac",
+  "creators.unknownName": "(nieznany)",
+
+  "search.title": "Szukaj",
+  "search.placeholder": "Przeszukuj tytuły i opisy…",
+  "search.noResults": "Brak zatwierdzonych prac pasujących do filtrów.",
+
+  "me.favourites.title": "Twoje ulubione",
+  "me.favourites.empty": "Nic jeszcze nie polubiono.",
+  "me.submissions.title": "Twoje zgłoszenia",
+  "me.submissions.empty": "Nic jeszcze nie zgłoszono.",
+  "me.notifications.title": "Twoje powiadomienia",
+  "me.notifications.empty": "Brak powiadomień.",
+  "me.notifications.markAllRead": "Oznacz wszystkie jako przeczytane",
+
+  "card.communityBadge": "Społeczność",
+  "card.unratedLabel": "Bez oceny",
+  "card.viewOnSteam": "Zobacz na Steam",
+
+  "creation.backToNewest": "← Do najnowszych",
+  "creation.by": "autor:",
+  "creation.viewOnSteamWorkshop": "Zobacz w Warsztacie Steam ↗",
+  "creation.tagsHeading": "Tagi",
+  "creation.voteOnTagsHeading": "Głosuj na tagi",
+  "creation.communityAdded": "Dodane przez społeczność",
+  "creation.submittedBy": "zgłoszone przez",
+  "creation.descriptionHeading": "Opis",
+
+  "banner.dismiss": "Zamknij",
 
   "suggestions.title": "Tablica pomysłów",
   "suggestions.eyebrow": "Propozycje funkcji",

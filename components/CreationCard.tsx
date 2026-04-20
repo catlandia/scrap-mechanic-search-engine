@@ -1,18 +1,21 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import type { CreationCardRow } from "@/lib/db/queries";
 import { StarRating } from "@/components/StarRating";
 import type { RatingMode } from "@/lib/prefs";
+import { useT } from "@/lib/i18n/client";
 
-const KIND_LABELS: Record<string, string> = {
-  blueprint: "Blueprint",
-  mod: "Mod",
-  world: "World",
-  challenge: "Challenge",
-  tile: "Tile",
-  custom_game: "Custom Game",
-  terrain_asset: "Terrain",
-  other: "Other",
+const KIND_I18N_KEY: Record<string, string> = {
+  blueprint: "kind.blueprints",
+  mod: "kind.mods",
+  world: "kind.worlds",
+  challenge: "kind.challenges",
+  tile: "kind.tiles",
+  custom_game: "kind.customGames",
+  terrain_asset: "kind.terrain",
+  other: "kind.other",
 };
 
 export function CreationCard({
@@ -22,7 +25,8 @@ export function CreationCard({
   creation: CreationCardRow;
   ratingMode?: RatingMode;
 }) {
-  const kindLabel = KIND_LABELS[creation.kind] ?? creation.kind;
+  const { t } = useT();
+  const kindLabel = KIND_I18N_KEY[creation.kind] ? t(KIND_I18N_KEY[creation.kind]) : creation.kind;
   const showSteam = ratingMode === "steam" || ratingMode === "both";
   const showSite = ratingMode === "site" || ratingMode === "both";
   return (
@@ -58,7 +62,7 @@ export function CreationCard({
             // theme's remapped `text-purple-200` (dark purple) doesn't go
             // invisible on top of it — same reason as the kind/ID badges.
             <span className="absolute bottom-2 left-2 rounded bg-purple-500/80 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-white/95">
-              Community
+              {t("card.communityBadge")}
             </span>
           )}
         </div>
@@ -136,10 +140,11 @@ export function CreationGrid({
   items: CreationCardRow[];
   ratingMode?: RatingMode;
 }) {
+  const { t } = useT();
   if (items.length === 0) {
     return (
       <div className="rounded-md border border-border bg-card/60 px-5 py-8 text-center text-sm text-foreground/50">
-        No approved creations match these filters yet.
+        {t("search.noResults")}
       </div>
     );
   }

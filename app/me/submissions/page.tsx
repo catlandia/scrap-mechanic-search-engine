@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getUserSubmissions } from "@/lib/db/queries";
+import { getT } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
 
@@ -23,22 +24,19 @@ export default async function SubmissionsPage() {
   if (!user) redirect("/auth/steam/login?next=/me/submissions");
 
   const items = await getUserSubmissions(user.steamid, 50);
+  const { t } = await getT();
 
   return (
     <div className="space-y-6">
       <header>
-        <p className="text-sm uppercase tracking-widest text-accent">Your activity</p>
-        <h1 className="text-3xl font-bold">My Submissions</h1>
-        <p className="text-sm text-foreground/60">
-          Workshop items you&apos;ve submitted for review. Newest first.
-        </p>
+        <h1 className="text-3xl font-bold">{t("me.submissions.title")}</h1>
       </header>
 
       {items.length === 0 ? (
         <div className="rounded-md border border-border bg-card/60 px-5 py-8 text-center text-sm text-foreground/60">
-          You haven&apos;t submitted anything yet.{" "}
+          {t("me.submissions.empty")}{" "}
           <Link href="/submit" className="text-accent hover:underline">
-            Submit a creation
+            {t("submit.title")}
           </Link>
         </div>
       ) : (

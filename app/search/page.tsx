@@ -12,6 +12,7 @@ import {
   searchApproved,
 } from "@/lib/db/queries";
 import { getRatingMode } from "@/lib/prefs.server";
+import { getT } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
 
@@ -75,6 +76,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
 
   const totalPages = Math.ceil(results.total / PAGE_SIZE);
   const ratingMode = await getRatingMode();
+  const { t } = await getT();
 
   function pageHref(targetPage: number): string {
     const params = new URLSearchParams();
@@ -97,7 +99,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
 
       <section className="space-y-4">
         <header className="flex flex-wrap items-baseline justify-between gap-3">
-          <h1 className="text-2xl font-semibold">Search</h1>
+          <h1 className="text-2xl font-semibold">{t("search.title")}</h1>
           <div className="flex items-center gap-4">
             <p className="text-sm text-foreground/50">
               {results.total} result{results.total === 1 ? "" : "s"}
@@ -117,20 +119,20 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
                 href={pageHref(pageIndex - 1)}
                 className="rounded border border-border px-3 py-1 hover:text-foreground"
               >
-                ← Previous
+                {t("common.newer")}
               </Link>
             ) : (
               <span />
             )}
             <span>
-              Page {pageIndex + 1} of {totalPages}
+              {t("common.page", { n: pageIndex + 1 })} / {totalPages}
             </span>
             {pageIndex + 1 < totalPages ? (
               <Link
                 href={pageHref(pageIndex + 1)}
                 className="rounded border border-border px-3 py-1 hover:text-foreground"
               >
-                Next →
+                {t("common.older")}
               </Link>
             ) : (
               <span />

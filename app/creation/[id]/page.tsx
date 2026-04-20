@@ -31,18 +31,19 @@ import { TagVoteList } from "@/components/TagVoteList";
 import { isCreator, isModerator } from "@/lib/auth/roles";
 import type { UserRole } from "@/lib/db/schema";
 import { getRatingMode } from "@/lib/prefs.server";
+import { getT } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
 
-const KIND_LABELS: Record<string, string> = {
-  blueprint: "Blueprint",
-  mod: "Mod",
-  world: "World",
-  challenge: "Challenge",
-  tile: "Tile",
-  custom_game: "Custom Game",
-  terrain_asset: "Terrain Asset",
-  other: "Other",
+const KIND_I18N_KEY: Record<string, string> = {
+  blueprint: "kind.blueprints",
+  mod: "kind.mods",
+  world: "kind.worlds",
+  challenge: "kind.challenges",
+  tile: "kind.tiles",
+  custom_game: "kind.customGames",
+  terrain_asset: "kind.terrain",
+  other: "kind.other",
 };
 
 type Params = Promise<{ id: string }>;
@@ -140,7 +141,8 @@ export default async function CreationDetailPage({ params }: { params: Params })
   // over threshold even though they don't yet render in `displayTags`.
   const votableTags = visibleTags;
 
-  const kindLabel = KIND_LABELS[creation.kind] ?? creation.kind;
+  const { t } = await getT();
+  const kindLabel = KIND_I18N_KEY[creation.kind] ? t(KIND_I18N_KEY[creation.kind]) : creation.kind;
   const siteTotal = voteBreakdown.up + voteBreakdown.down;
   const siteScore = siteTotal > 0 ? voteBreakdown.up / siteTotal : null;
   const ratingMode = await getRatingMode();
@@ -150,7 +152,7 @@ export default async function CreationDetailPage({ params }: { params: Params })
   return (
     <article className="mx-auto max-w-4xl space-y-6">
       <Link href="/new" className="text-sm text-foreground/60 hover:text-accent">
-        ← Back to newest
+        {t("creation.backToNewest")}
       </Link>
 
       <header className="space-y-2">
@@ -174,7 +176,7 @@ export default async function CreationDetailPage({ params }: { params: Params })
           if (uniqueScraped.length > 1) {
             return (
               <p className="text-sm text-foreground/60">
-                by{" "}
+                {t("creation.by")}{" "}
                 {uniqueScraped.map((c, i) => (
                   <span key={c.steamid}>
                     {i > 0 && (i === uniqueScraped.length - 1 ? " & " : ", ")}
@@ -192,7 +194,7 @@ export default async function CreationDetailPage({ params }: { params: Params })
           if (creation.authorName) {
             return (
               <p className="text-sm text-foreground/60">
-                by{" "}
+                {t("creation.by")}{" "}
                 {creation.authorSteamid ? (
                   <Link
                     href={`/profile/${creation.authorSteamid}`}
@@ -219,10 +221,10 @@ export default async function CreationDetailPage({ params }: { params: Params })
         {uploader && (
           <p className="flex flex-wrap items-center gap-2 text-xs text-foreground/60">
             <span className="rounded bg-purple-500/20 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-purple-200">
-              Community added
+              {t("creation.communityAdded")}
             </span>
             <span>
-              submitted by{" "}
+              {t("creation.submittedBy")}{" "}
               <UserName
                 name={uploader.personaName}
                 role={uploader.role as UserRole}
@@ -341,7 +343,7 @@ export default async function CreationDetailPage({ params }: { params: Params })
           rel="noreferrer"
           className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-black hover:bg-accent-strong"
         >
-          View on Steam Workshop ↗
+          {t("creation.viewOnSteamWorkshop")}
         </a>
         {isCreator(viewer?.role as UserRole | undefined) && (
           <DeleteCreationButton
@@ -356,7 +358,7 @@ export default async function CreationDetailPage({ params }: { params: Params })
       {displayTags.length > 0 && (
         <div>
           <div className="mb-1.5 text-[10px] uppercase tracking-widest text-foreground/40">
-            Tags
+            {t("creation.tagsHeading")}
           </div>
           <div className="flex flex-wrap gap-1.5">
             {displayTags.map((t) => {
@@ -388,7 +390,7 @@ export default async function CreationDetailPage({ params }: { params: Params })
       <div>
         <div className="mb-1.5 flex items-baseline justify-between">
           <div className="text-[10px] uppercase tracking-widest text-foreground/40">
-            Vote on tags
+            {t("creation.voteOnTagsHeading")}
           </div>
           <div className="text-[10px] text-foreground/30">
             Community tags appear publicly at +3 net votes.

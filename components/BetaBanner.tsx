@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useT } from "@/lib/i18n/client";
 
 // Bump the version suffix whenever banner copy meaningfully changes — a new
 // key re-shows the banner to users who dismissed the previous message.
 const DISMISS_KEY = "smse_beta_dismissed_v2_1";
 
 export function BetaBanner() {
+  const { t } = useT();
   const [hidden, setHidden] = useState(true);
 
   useEffect(() => {
@@ -55,7 +57,8 @@ export function BetaBanner() {
         <button
           type="button"
           onClick={dismiss}
-          aria-label="Dismiss beta notice"
+          aria-label={t("banner.dismiss")}
+          title={t("banner.dismiss")}
           className="ml-auto rounded px-1 text-foreground/60 hover:text-foreground"
         >
           ×

@@ -17,6 +17,7 @@ import {
   NOTIFICATION_TIERS,
   type NotificationTier,
 } from "@/lib/db/schema";
+import { getT } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
 
@@ -96,17 +97,12 @@ export default async function NotificationsPage({
     getUnreadNotificationCountsByTier(user.steamid),
   ]);
   await markAllNotificationsRead(user.steamid, activeTier);
+  const { t } = await getT();
 
   return (
     <div className="space-y-6">
       <header>
-        <p className="text-sm uppercase tracking-widest text-accent">Your activity</p>
-        <h1 className="text-3xl font-bold">Notifications</h1>
-        <p className="text-sm text-foreground/60">
-          {visibleTiers.length > 1
-            ? "Your personal events plus anything your role tier needs you to know about."
-            : "Updates on your submissions, suggestions, and ideas."}
-        </p>
+        <h1 className="text-3xl font-bold">{t("me.notifications.title")}</h1>
       </header>
 
       {visibleTiers.length > 1 && (

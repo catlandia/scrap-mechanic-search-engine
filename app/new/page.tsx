@@ -3,6 +3,7 @@ import Link from "next/link";
 import { CreationGrid } from "@/components/CreationCard";
 import { getNewestApproved, parsePageIndex } from "@/lib/db/queries";
 import { getRatingMode } from "@/lib/prefs.server";
+import { getT } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
 
@@ -24,15 +25,14 @@ export default async function NewestPage({ searchParams }: { searchParams: Searc
   const hasNext = items.length > PAGE_SIZE;
   const displayed = items.slice(0, PAGE_SIZE);
   const ratingMode = await getRatingMode();
+  const { t } = await getT();
 
   return (
     <div className="space-y-6">
       <header className="flex items-baseline justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Newest additions</h1>
-          <p className="text-sm text-foreground/60">
-            Creations most recently approved, across every workshop kind.
-          </p>
+          <h1 className="text-3xl font-bold">{t("newest.title")}</h1>
+          <p className="text-sm text-foreground/60">{t("newest.subtitle")}</p>
         </div>
       </header>
 
@@ -44,18 +44,18 @@ export default async function NewestPage({ searchParams }: { searchParams: Searc
             href={`/new?page=${pageIndex}`}
             className="rounded border border-border px-3 py-1 hover:text-foreground"
           >
-            ← Newer
+            {t("common.newer")}
           </Link>
         ) : (
           <span />
         )}
-        <span>Page {pageIndex + 1}</span>
+        <span>{t("common.page", { n: pageIndex + 1 })}</span>
         {hasNext ? (
           <Link
             href={`/new?page=${pageIndex + 2}`}
             className="rounded border border-border px-3 py-1 hover:text-foreground"
           >
-            Older →
+            {t("common.older")}
           </Link>
         ) : (
           <span />

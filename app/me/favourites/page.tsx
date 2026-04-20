@@ -4,6 +4,7 @@ import { CreationGrid } from "@/components/CreationCard";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getUserFavourites } from "@/lib/db/queries";
 import { getRatingMode } from "@/lib/prefs.server";
+import { getT } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
 
@@ -31,20 +32,17 @@ export default async function FavouritesPage({
   const hasNext = items.length > PAGE_SIZE;
   const displayed = items.slice(0, PAGE_SIZE);
   const ratingMode = await getRatingMode();
+  const { t } = await getT();
 
   return (
     <div className="space-y-6">
       <header>
-        <p className="text-sm uppercase tracking-widest text-accent">Your collection</p>
-        <h1 className="text-3xl font-bold">Favourites</h1>
-        <p className="text-sm text-foreground/60">
-          Creations you&apos;ve hearted. Newest favourites first.
-        </p>
+        <h1 className="text-3xl font-bold">{t("me.favourites.title")}</h1>
       </header>
 
       {displayed.length === 0 ? (
         <div className="rounded-md border border-border bg-card/60 px-5 py-8 text-center text-sm text-foreground/60">
-          No favourites yet. Click the heart on any creation to add it here.
+          {t("me.favourites.empty")}
         </div>
       ) : (
         <CreationGrid items={displayed} ratingMode={ratingMode} />
@@ -56,18 +54,18 @@ export default async function FavouritesPage({
             href={`/me/favourites?page=${pageIndex}`}
             className="rounded border border-border px-3 py-1 hover:text-foreground"
           >
-            ← Newer
+            {t("common.newer")}
           </a>
         ) : (
           <span />
         )}
-        <span>Page {pageIndex + 1}</span>
+        <span>{t("common.page", { n: pageIndex + 1 })}</span>
         {hasNext ? (
           <a
             href={`/me/favourites?page=${pageIndex + 2}`}
             className="rounded border border-border px-3 py-1 hover:text-foreground"
           >
-            Older →
+            {t("common.older")}
           </a>
         ) : (
           <span />
