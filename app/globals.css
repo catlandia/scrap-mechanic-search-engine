@@ -30,6 +30,24 @@ html[data-theme="v1"] {
   --color-border: oklch(0.28 0.01 260);
 }
 
+/* Auto theme + dark OS preference: same V1 palette, applied without JS.
+   The inline <head> script in app/layout.tsx rewrites data-theme="auto"
+   to "v1" before first paint so the themed class selectors and remaps
+   also apply; this @media block is a belt-and-braces palette fallback
+   for strict-CSP or noscript browsers where the script didn't run. */
+@media (prefers-color-scheme: dark) {
+  html[data-theme="auto"] {
+    --color-background: oklch(0.16 0.01 260);
+    --color-foreground: oklch(0.97 0 0);
+    --color-card: oklch(0.21 0.015 260);
+    --color-card-hover: oklch(0.25 0.018 260);
+    --color-muted: oklch(0.55 0.01 260);
+    --color-accent: oklch(0.72 0.18 55);
+    --color-accent-strong: oklch(0.78 0.2 55);
+    --color-border: oklch(0.28 0.01 260);
+  }
+}
+
 /* Workshop theme — warm industrial Scrap Mechanic palette (yellow + brown). */
 html[data-theme="workshop"] {
   --color-background: oklch(0.14 0.02 55);

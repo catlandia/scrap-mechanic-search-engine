@@ -129,6 +129,17 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang={locale} className="dark" data-theme={theme}>
       <head>
+        {/* Resolve `data-theme="auto"` to a concrete theme BEFORE first paint
+            based on the OS's prefers-color-scheme. The original "auto" value
+            is stashed on `data-theme-source` so we can (a) stay subscribed
+            to OS-level changes and flip live, and (b) keep the Auto pill
+            highlighted in the picker. Synchronous inline <script> runs before
+            stylesheets apply, so no flash of the wrong palette. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var h=document.documentElement;if(h.getAttribute("data-theme")!=="auto")return;h.setAttribute("data-theme-source","auto");var mq=window.matchMedia("(prefers-color-scheme: dark)");var apply=function(){h.setAttribute("data-theme",mq.matches?"v1":"default")};apply();if(mq.addEventListener){mq.addEventListener("change",apply)}else if(mq.addListener){mq.addListener(apply)}}catch(e){}})();`,
+          }}
+        />
         {/* When the user has picked a custom theme, inject their colours into
             the `[data-theme="custom"]` selector. Values are hex-only (regex
             validated before the cookie is written) so interpolation is safe. */}

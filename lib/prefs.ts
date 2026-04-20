@@ -31,14 +31,19 @@ export function parseRatingMode(raw: string | undefined): RatingMode {
     : DEFAULT_RATING_MODE;
 }
 
-export const THEMES = ["default", "v1", "workshop", "contrast", "custom"] as const;
+// "auto" = follow the OS/browser's prefers-color-scheme. First-time visitors
+// default to this: light OS → Default theme, dark OS → V1 theme. Resolved to
+// a concrete value by a tiny inline <head> script before first paint so there's
+// no flash of the wrong palette.
+export const THEMES = ["auto", "default", "v1", "workshop", "contrast", "custom"] as const;
 export type Theme = (typeof THEMES)[number];
-export const DEFAULT_THEME: Theme = "default";
+export const DEFAULT_THEME: Theme = "auto";
 
 export const THEME_COOKIE = "smse_theme";
 export const THEME_CUSTOM_COOKIE = "smse_theme_custom";
 
 export const THEME_LABELS: Record<Theme, string> = {
+  auto: "Auto",
   default: "Default",
   v1: "V1",
   workshop: "Workshop",
