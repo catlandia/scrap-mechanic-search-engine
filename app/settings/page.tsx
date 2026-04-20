@@ -30,12 +30,9 @@ export default async function SettingsPage() {
   return (
     <article className="mx-auto max-w-3xl space-y-8">
       <header className="space-y-2">
-        <p className="text-xs uppercase tracking-widest text-accent">Settings</p>
-        <h1 className="text-3xl font-bold">Your preferences</h1>
-        <p className="text-sm text-foreground/60">
-          Every setting here is stored in a browser cookie — no account
-          required. If you clear cookies, everything resets to the defaults.
-        </p>
+        <p className="text-xs uppercase tracking-widest text-accent">{t("settings.eyebrow")}</p>
+        <h1 className="text-3xl font-bold">{t("settings.heading")}</h1>
+        <p className="text-sm text-foreground/60">{t("settings.intro")}</p>
       </header>
 
       <SettingsSection
@@ -50,27 +47,26 @@ export default async function SettingsPage() {
         </div>
       </SettingsSection>
 
-      <SettingsSection title="Theme" description="How the whole site looks.">
+      <SettingsSection title={t("settings.theme")} description={t("settings.themeHint")}>
         <div className="space-y-3">
           <Suspense>
             <ThemeToggle current={theme} />
           </Suspense>
           <p className="text-xs text-foreground/60">
-            Currently using <strong>{THEME_LABELS[theme]}</strong>. Want your
-            own palette?{" "}
+            {t("settings.themeCurrently", { name: THEME_LABELS[theme] })}{" "}
             <Link
               href="/settings/theme"
               className="text-accent hover:underline"
             >
-              Customize your theme →
+              {t("settings.customizeTheme")}
             </Link>
           </p>
         </div>
       </SettingsSection>
 
       <SettingsSection
-        title="Ratings"
-        description="Which rating do you want to see on each creation card — Steam's global vote, the site's own vote, or both?"
+        title={t("settings.ratings")}
+        description={t("settings.ratingsHint")}
       >
         <Suspense>
           <RatingModeToggle current={ratingMode} alwaysShow />
@@ -79,8 +75,8 @@ export default async function SettingsPage() {
 
       {viewer && (
         <SettingsSection
-          title="Your account"
-          description="Stuff linked to your Steam account."
+          title={t("settings.account")}
+          description={t("settings.accountHint")}
         >
           <ul className="space-y-2 text-sm">
             <li>
@@ -88,7 +84,7 @@ export default async function SettingsPage() {
                 href={`/profile/${viewer.steamid}`}
                 className="text-accent hover:underline"
               >
-                Your public profile →
+                {t("settings.profileLink")}
               </Link>
             </li>
             <li>
@@ -96,7 +92,7 @@ export default async function SettingsPage() {
                 href="/me/favourites"
                 className="text-accent hover:underline"
               >
-                Your favourites →
+                {t("settings.favouritesLink")}
               </Link>
             </li>
             <li>
@@ -104,7 +100,7 @@ export default async function SettingsPage() {
                 href="/me/submissions"
                 className="text-accent hover:underline"
               >
-                Your submissions →
+                {t("settings.submissionsLink")}
               </Link>
             </li>
             <li>
@@ -112,7 +108,7 @@ export default async function SettingsPage() {
                 href="/me/notifications"
                 className="text-accent hover:underline"
               >
-                Your notifications →
+                {t("settings.notificationsLink")}
               </Link>
             </li>
             <li>
@@ -121,7 +117,7 @@ export default async function SettingsPage() {
                   type="submit"
                   className="text-sm text-foreground/60 underline-offset-2 hover:text-foreground hover:underline"
                 >
-                  Sign out
+                  {t("common.signOut")}
                 </button>
               </form>
             </li>
@@ -130,13 +126,13 @@ export default async function SettingsPage() {
       )}
 
       <SettingsSection
-        title="Help &amp; info"
-        description="Need a refresher on how the site works?"
+        title={t("settings.helpInfo")}
+        description={t("settings.helpHint")}
       >
         <ul className="space-y-2 text-sm">
           <li>
             <Link href="/guide" className="text-accent hover:underline">
-              Quick guide →
+              {t("settings.quickGuide")}
             </Link>
           </li>
           <li>
@@ -144,16 +140,16 @@ export default async function SettingsPage() {
               href="/suggestions"
               className="text-accent hover:underline"
             >
-              Ideas board →
+              {t("settings.ideasBoardLink")}
             </Link>
           </li>
           <li>
             <Link href="/terms" className="text-accent hover:underline">
-              Terms
+              {t("settings.terms")}
             </Link>{" "}
             ·{" "}
             <Link href="/privacy" className="text-accent hover:underline">
-              Privacy
+              {t("settings.privacy")}
             </Link>{" "}
             ·{" "}
             <a

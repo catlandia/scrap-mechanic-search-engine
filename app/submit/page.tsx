@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getCurrentUser, isBanned, isMuted } from "@/lib/auth/session";
 import { SubmitCreationForm } from "@/components/SubmitCreationForm";
+import { getT } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +29,7 @@ function ageGateReason(
 
 export default async function SubmitPage() {
   const user = await getCurrentUser();
+  const { t } = await getT();
   const gateReason = user ? ageGateReason(user) : "ok";
   const ageThrough =
     user?.steamCreatedAt
@@ -40,9 +42,9 @@ export default async function SubmitPage() {
     <div className="mx-auto max-w-2xl space-y-6">
       <header className="space-y-1">
         <p className="text-sm uppercase tracking-widest text-accent">
-          Submit a creation
+          {t("submit.eyebrow")}
         </p>
-        <h1 className="text-3xl font-bold">Suggest a Workshop item</h1>
+        <h1 className="text-3xl font-bold">{t("submit.title")}</h1>
         <p className="text-sm text-foreground/60">
           Got a gem the cron hasn&apos;t found yet? Submit any Steam Workshop
           URL or id — a moderator will review it and it&apos;ll land on the
@@ -52,33 +54,26 @@ export default async function SubmitPage() {
           </span>{" "}
           badge crediting you.
         </p>
-        <p className="text-xs text-foreground/50">
-          Your item&apos;s title and description can be in any language — the
-          Workshop page is rendered as-is. Tags applied during review are
-          English-only so the catalogue stays consistent across every UI
-          language.
-        </p>
+        <p className="text-xs text-foreground/50">{t("submit.tagsEnglishDisclaimer")}</p>
       </header>
 
       {!user ? (
         <div className="rounded-md border border-border bg-card/60 px-5 py-4 text-sm">
-          <div className="text-foreground/80">
-            You need to be signed in to submit.
-          </div>
+          <div className="text-foreground/80">{t("submit.signedOut")}</div>
           <Link
             href="/auth/steam/login?next=/submit"
             className="mt-3 inline-block rounded-md bg-accent px-4 py-2 text-sm font-medium text-black hover:bg-accent-strong"
           >
-            Sign in with Steam
+            {t("nav.signIn")}
           </Link>
         </div>
       ) : isBanned(user) ? (
         <div className="rounded-md border border-red-500/40 bg-red-500/10 px-5 py-4 text-sm text-red-200">
-          Your account is currently banned — submissions are disabled.
+          {t("submit.banned")}
         </div>
       ) : isMuted(user) ? (
         <div className="rounded-md border border-sky-500/40 bg-sky-500/10 px-5 py-4 text-sm text-sky-200">
-          You&apos;re currently muted — submissions are disabled.
+          {t("submit.muted")}
         </div>
       ) : gateReason === "private_profile" ? (
         <div className="space-y-3 rounded-md border border-amber-500/40 bg-amber-500/10 px-5 py-4 text-sm">

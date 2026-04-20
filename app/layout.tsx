@@ -5,8 +5,6 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { UserMenu } from "@/components/UserMenu";
 import { MobileNav } from "@/components/MobileNav";
 import { NavDropdown } from "@/components/NavDropdown";
-import { RatingModeToggle } from "@/components/RatingModeToggle";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { BetaBanner } from "@/components/BetaBanner";
 import { GuideLink } from "@/components/GuideLink";
 import { ToastProvider } from "@/components/Toast";
@@ -17,7 +15,6 @@ import { getCustomThemeColors, getLocale, getRatingMode, getTheme } from "@/lib/
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { getT } from "@/lib/i18n/server";
 import { LocaleProvider } from "@/lib/i18n/client";
-import { LocaleToggle } from "@/components/LocaleToggle";
 import { isModerator } from "@/lib/auth/roles";
 import type { UserRole } from "@/lib/db/schema";
 import "./globals.css";
@@ -183,21 +180,24 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             </nav>
             <div className="ml-auto flex items-center gap-2 sm:gap-4">
               <GuideLink />
-              <div className="hidden sm:block">
-                <Suspense>
-                  <RatingModeToggle current={ratingMode} />
-                </Suspense>
-              </div>
-              <div className="hidden lg:block">
-                <Suspense>
-                  <ThemeToggle current={theme} />
-                </Suspense>
-              </div>
-              <div className="hidden lg:block">
-                <Suspense>
-                  <LocaleToggle current={locale} />
-                </Suspense>
-              </div>
+              <Link
+                href="/settings"
+                aria-label={t("nav.settings")}
+                title={t("nav.settings")}
+                className="hidden size-9 items-center justify-center rounded-md border border-foreground/15 text-foreground/60 transition hover:border-foreground/35 hover:text-foreground lg:inline-flex"
+              >
+                <svg
+                  aria-hidden
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  className="size-5"
+                >
+                  <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" />
+                  <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.04 1.57V21a2 2 0 1 1-4 0v-.08a1.7 1.7 0 0 0-1.1-1.57 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.57-1.04H3a2 2 0 1 1 0-4h.08a1.7 1.7 0 0 0 1.57-1.1 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.02A1.7 1.7 0 0 0 10 3.08V3a2 2 0 1 1 4 0v.08a1.7 1.7 0 0 0 1.04 1.57 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.02A1.7 1.7 0 0 0 20.92 10H21a2 2 0 1 1 0 4h-.08a1.7 1.7 0 0 0-1.52 1z" />
+                </svg>
+              </Link>
               {user ? (
                 <UserMenu user={user} unreadByTier={unreadByTier} />
               ) : (
@@ -230,17 +230,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   aria-hidden
                   className="inline-block size-2 rounded-full bg-emerald-500"
                 />
-                <strong className="text-foreground/80">
-                  {userCounts.online.toLocaleString()}
-                </strong>{" "}
-                online
+                {t("footer.online", { online: userCounts.online.toLocaleString() })}
               </span>
               <span className="text-foreground/30">·</span>
               <span>
-                <strong className="text-foreground/80">
-                  {userCounts.total.toLocaleString()}
-                </strong>{" "}
-                {userCounts.total === 1 ? "signed-in user" : "signed-in users"} total
+                {t("footer.signedInTotal", { total: userCounts.total.toLocaleString() })}
               </span>
             </p>
           )}

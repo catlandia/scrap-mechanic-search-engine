@@ -5,6 +5,7 @@ import { useRef, useState, useTransition } from "react";
 import { submitSuggestion } from "@/lib/suggestions/actions";
 import { Spinner } from "@/components/Spinner";
 import { useToast } from "@/components/Toast";
+import { useT } from "@/lib/i18n/client";
 
 const MAX_IMAGE_BYTES = 500 * 1024;
 const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"];
@@ -12,6 +13,7 @@ const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"];
 export function SuggestionForm() {
   const router = useRouter();
   const toast = useToast();
+  const { t } = useT();
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [imageDataUri, setImageDataUri] = useState<string | null>(null);
@@ -75,7 +77,7 @@ export function SuggestionForm() {
         setBody("");
         clearImage();
         router.refresh();
-        toast.success("Idea sent to the Creator.");
+        toast.success(t("suggestions.new.thanks"));
       } else if (r.error) {
         toast.error(r.error);
       }
@@ -90,35 +92,35 @@ export function SuggestionForm() {
       >
         <label className="block">
           <span className="mb-1 block text-sm text-foreground/70">
-            Short title
+            {t("suggestions.new.titleLabel")}
           </span>
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             required
             maxLength={120}
-            placeholder="e.g. Dark mode toggle on public pages"
+            placeholder={t("suggestions.new.titlePlaceholder")}
             className="w-full rounded border border-border bg-background px-3 py-2 text-sm focus:border-accent focus:outline-none"
           />
         </label>
         <label className="block">
           <span className="mb-1 block text-sm text-foreground/70">
-            Details (optional)
+            {t("suggestions.new.detailsLabel")}
           </span>
           <textarea
             value={body}
             onChange={(e) => setBody(e.target.value)}
             rows={5}
             maxLength={2000}
-            placeholder="Why this matters, how you'd imagine it working, any edge cases."
+            placeholder={t("suggestions.new.detailsPlaceholder")}
             className="w-full rounded border border-border bg-background px-3 py-2 text-sm focus:border-accent focus:outline-none"
           />
         </label>
         <div className="space-y-2">
           <span className="block text-sm text-foreground/70">
-            Image (optional){" "}
+            {t("suggestions.new.imageLabel")}{" "}
             <span className="text-xs text-foreground/40">
-              · PNG/JPEG/WEBP/GIF, 500 KB max
+              · {t("suggestions.new.imageHint")}
             </span>
           </span>
           {imageDataUri ? (
@@ -136,7 +138,7 @@ export function SuggestionForm() {
                   onClick={clearImage}
                   className="self-start text-red-300 hover:text-red-200"
                 >
-                  Remove
+                  {t("common.remove")}
                 </button>
               </div>
             </div>
@@ -149,10 +151,7 @@ export function SuggestionForm() {
               className="block w-full text-sm text-foreground/70 file:mr-3 file:rounded file:border-0 file:bg-accent/20 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-accent hover:file:bg-accent/30"
             />
           )}
-          <p className="text-xs text-foreground/40">
-            A mockup, screenshot, or sketch helps the Creator understand layout
-            requests faster than words alone.
-          </p>
+          <p className="text-xs text-foreground/40">{t("suggestions.new.imageHelper")}</p>
         </div>
         <div className="flex items-center justify-between text-xs text-foreground/40">
           <span>{body.length}/2000</span>
@@ -162,7 +161,7 @@ export function SuggestionForm() {
             className="inline-flex items-center gap-2 rounded-md bg-accent px-4 py-2 text-sm font-medium text-black hover:bg-accent-strong disabled:opacity-50"
           >
             {isPending && <Spinner size="sm" />}
-            {isPending ? "Sending…" : "Send to Creator"}
+            {isPending ? t("suggestions.new.sending") : t("suggestions.new.send")}
           </button>
         </div>
       </form>
@@ -173,8 +172,7 @@ export function SuggestionForm() {
           aria-live="polite"
           className="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200"
         >
-          Thanks — the Creator will review it. Approved suggestions appear on
-          the public board.
+          {t("suggestions.new.thanks")}
         </div>
       )}
       {result && !result.ok && (

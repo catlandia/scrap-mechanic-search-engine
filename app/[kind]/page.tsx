@@ -12,6 +12,7 @@ import {
 } from "@/lib/db/queries";
 import type { CreationKind } from "@/lib/db/schema";
 import { getRatingMode } from "@/lib/prefs.server";
+import { getT } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
 // Note: unknown single-segment slugs render the not-found page at status
@@ -87,7 +88,7 @@ export default async function KindPage({
   const sp = await searchParams;
   const sort = parseSortMode(sp.sort);
   const pageIndex = parsePageIndex(sp.page);
-  const [items, topTags, ratingMode] = await Promise.all([
+  const [items, topTags, ratingMode, i18n] = await Promise.all([
     getApprovedByKind(entry.kind, {
       sort,
       limit: PAGE_SIZE + 1,
@@ -95,7 +96,20 @@ export default async function KindPage({
     }),
     getTopTagsForKind(entry.kind, 20),
     getRatingMode(),
+    getT(),
   ]);
+  const t = i18n.t;
+  const KIND_KEY_BY_SLUG: Record<string, string> = {
+    blueprints: "kind.blueprints",
+    mods: "kind.mods",
+    worlds: "kind.worlds",
+    challenges: "kind.challenges",
+    tiles: "kind.tiles",
+    "custom-games": "kind.customGames",
+    terrain: "kind.terrain",
+    other: "kind.other",
+  };
+  const translatedLabel = t(KIND_KEY_BY_SLUG[slug] ?? entry.label);
   const hasNext = items.length > PAGE_SIZE;
   const displayed = items.slice(0, PAGE_SIZE);
 
@@ -115,7 +129,7 @@ export default async function KindPage({
     <div className="space-y-6">
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div className="space-y-1">
-          <h1 className="text-3xl font-bold">{entry.label}</h1>
+          <h1 className="text-3xl font-bold">{translatedLabel}</h1>
           <p className="text-sm text-foreground/60">{entry.description}</p>
         </div>
         <Suspense>

@@ -95,9 +95,9 @@ export default async function HomePage() {
         <>
           <section className="space-y-4">
             <div className="flex items-baseline justify-between">
-              <h2 className="text-xl font-semibold">Newest additions</h2>
+              <h2 className="text-xl font-semibold">{t("home.newestHeading")}</h2>
               <Link href="/new" className="text-sm text-accent hover:underline">
-                View all →
+                {t("home.viewAll")}
               </Link>
             </div>
             <CreationGrid items={newest} ratingMode={ratingMode} />
