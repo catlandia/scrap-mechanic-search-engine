@@ -490,6 +490,11 @@ export const featureSuggestions = pgTable(
     approvedAt: timestamp("approved_at", { withTimezone: true }),
     implementedAt: timestamp("implemented_at", { withTimezone: true }),
     creatorNote: text("creator_note"),
+    // Base64 data URI of an image the submitter attached (mockups, screenshots,
+    // sketches). Stored inline in the DB instead of an external blob host to
+    // stay strictly free-tier. Capped at ~500 KB of binary via the submit
+    // action.
+    imageDataUri: text("image_data_uri"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

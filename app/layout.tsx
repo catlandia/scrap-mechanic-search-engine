@@ -147,14 +147,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <ToastProvider>
         <BetaBanner />
         <header className="sticky top-0 z-30 border-b border-foreground/10 bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70">
-          <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3 sm:flex-wrap sm:gap-x-6 sm:gap-y-2">
+          <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3 sm:flex-nowrap sm:gap-x-6">
             <Link href="/" className="flex shrink-0 items-center gap-2 hover:opacity-80">
               <img src="/logo.png" alt="Scrap Mechanic" className="h-8 w-auto" />
               <span className="text-lg font-semibold tracking-tight text-accent">
                 <span className="text-foreground">/</span>Search
               </span>
             </Link>
-            <nav className="hidden flex-wrap items-center gap-x-5 gap-y-1 text-sm text-foreground/70 sm:flex">
+            <nav className="hidden min-w-0 flex-wrap items-center gap-x-5 gap-y-1 text-sm text-foreground/70 sm:flex xl:flex-nowrap">
               {navItemsWithBadges.map((item) =>
                 item.kind === "group" ? (
                   <NavDropdown

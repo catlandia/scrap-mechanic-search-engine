@@ -1,0 +1,1 @@
+ALTER TABLE "feature_suggestions" ADD COLUMN "image_data_uri" text;

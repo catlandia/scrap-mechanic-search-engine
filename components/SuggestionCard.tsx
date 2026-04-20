@@ -143,6 +143,22 @@ export function SuggestionCard({
             {suggestion.body}
           </p>
         )}
+        {suggestion.imageDataUri && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <a
+            href={suggestion.imageDataUri}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block"
+            title="Open full size"
+          >
+            <img
+              src={suggestion.imageDataUri}
+              alt="Attached by submitter"
+              className="max-h-64 rounded border border-border"
+            />
+          </a>
+        )}
         <div className="flex flex-wrap items-center gap-2 text-xs text-foreground/40">
           {suggestion.submitterName && suggestion.submitterSteamid ? (
             <>

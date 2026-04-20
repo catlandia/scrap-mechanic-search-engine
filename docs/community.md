@@ -123,6 +123,7 @@ Users can submit and vote on feature requests for the site.
 **Fields:**
 - Title: max 120 characters
 - Body: max 2000 characters
+- Image (optional): PNG / JPEG / WEBP / GIF, 500 KB binary max. Read as a base64 data URI on the client, validated server-side (MIME allowlist + size cap derived from base64 length), stored inline in `featureSuggestions.imageDataUri`. Rendered as a click-to-enlarge thumbnail on both the public board and the admin queue — makes UI/layout suggestions far clearer than words alone (see idea #11 for the motivating case).
 
 New suggestions start with `status='submitted'` and appear in the admin inbox.
 
@@ -138,6 +139,7 @@ Three tabs:
 
 Each card shows:
 - Title and body
+- Attached image, if any (click to open full size)
 - Submitter persona name + role badge
 - Submission timestamp
 - Vote counts (upvotes, downvotes, net score)

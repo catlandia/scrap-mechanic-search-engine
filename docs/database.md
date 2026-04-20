@@ -351,6 +351,7 @@ Community feature request board.
 | `approvedAt` | timestamptz NULL | |
 | `implementedAt` | timestamptz NULL | |
 | `creatorNote` | text NULL | Shown publicly (creator's explanation) |
+| `imageDataUri` | text NULL | Optional base64 data URI attached by submitter (mockup / screenshot / sketch). Capped at ~500 KB binary via the submit action — inline-in-DB instead of an external blob host to stay free-tier. |
 
 **Index:** `status`
 

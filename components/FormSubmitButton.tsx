@@ -23,38 +23,59 @@ export function FormSubmitButton({
   spinnerSize = "xs",
   disabled,
   toastSuccess,
+  name,
+  value,
+  formAction,
   ...rest
 }: React.ButtonHTMLAttributes<HTMLButtonElement> & {
   pendingLabel?: string;
   spinnerSize?: SpinnerSize;
   toastSuccess?: string;
 }) {
-  const { pending } = useFormStatus();
+  const status = useFormStatus();
   const toast = useToast();
-  const wasPending = useRef(false);
+  const wasActive = useRef(false);
+
+  // A form with N submit buttons shares one useFormStatus result, so naively
+  // every button would spin when any one is pressed ("1 press = 3-button
+  // feedback"). Identify *this* button from the in-flight submission so only
+  // the one that was clicked shows the spinner. React 19 exposes `data` (the
+  // submitted FormData) and `action` (the server action reference) on the
+  // status object — we match whichever of these the caller set.
+  const isThisButton = (() => {
+    if (!status.pending) return false;
+    if (formAction && status.action === formAction) return true;
+    if (name && status.data?.get(name) === String(value ?? "")) return true;
+    // No discriminator — fall back to the legacy "any submit activates me"
+    // behaviour so generic single-button forms still work.
+    return !formAction && !name;
+  })();
 
   useEffect(() => {
-    if (pending) {
-      wasPending.current = true;
-    } else if (wasPending.current && toastSuccess) {
-      wasPending.current = false;
+    if (isThisButton) {
+      wasActive.current = true;
+    } else if (wasActive.current && !status.pending && toastSuccess) {
+      wasActive.current = false;
       toast.success(toastSuccess);
     }
-  }, [pending, toastSuccess, toast]);
+  }, [isThisButton, status.pending, toastSuccess, toast]);
 
   return (
     <button
       type="submit"
-      disabled={disabled || pending}
-      aria-busy={pending}
+      name={name}
+      value={value}
+      formAction={formAction}
+      disabled={disabled || status.pending}
+      aria-busy={isThisButton}
       className={cn(
         "inline-flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-wait",
         className,
       )}
       {...rest}
     >
-      {pending && <Spinner size={spinnerSize} />}
-      {pending && pendingLabel ? pendingLabel : children}
+      {isThisButton && <Spinner size={spinnerSize} />}
+      {isThisButton && pendingLabel ? pendingLabel : children}
     </button>
   );
 }

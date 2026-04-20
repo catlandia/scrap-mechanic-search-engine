@@ -1,32 +1,79 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { submitSuggestion } from "@/lib/suggestions/actions";
 import { Spinner } from "@/components/Spinner";
 import { useToast } from "@/components/Toast";
+
+const MAX_IMAGE_BYTES = 500 * 1024;
+const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"];
 
 export function SuggestionForm() {
   const router = useRouter();
   const toast = useToast();
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
+  const [imageDataUri, setImageDataUri] = useState<string | null>(null);
+  const [imageName, setImageName] = useState<string | null>(null);
   const [result, setResult] = useState<{ ok: boolean; error?: string } | null>(
     null,
   );
   const [isPending, startTransition] = useTransition();
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  function onImagePick(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) {
+      setImageDataUri(null);
+      setImageName(null);
+      return;
+    }
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      toast.error("Image must be PNG, JPEG, WEBP, or GIF.");
+      e.target.value = "";
+      return;
+    }
+    if (file.size > MAX_IMAGE_BYTES) {
+      toast.error(
+        `Image is ${(file.size / 1024).toFixed(0)} KB — the limit is 500 KB. Try compressing or cropping first.`,
+      );
+      e.target.value = "";
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const uri = typeof reader.result === "string" ? reader.result : null;
+      if (!uri || !uri.startsWith("data:")) {
+        toast.error("Couldn't read the image file.");
+        return;
+      }
+      setImageDataUri(uri);
+      setImageName(file.name);
+    };
+    reader.onerror = () => toast.error("Couldn't read the image file.");
+    reader.readAsDataURL(file);
+  }
+
+  function clearImage() {
+    setImageDataUri(null);
+    setImageName(null);
+    if (fileRef.current) fileRef.current.value = "";
+  }
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
     const fd = new FormData();
     fd.append("title", title);
     fd.append("body", body);
+    if (imageDataUri) fd.append("image", imageDataUri);
     startTransition(async () => {
       const r = await submitSuggestion(fd);
       setResult(r);
       if (r.ok) {
         setTitle("");
         setBody("");
+        clearImage();
         router.refresh();
         toast.success("Idea sent to the Creator.");
       } else if (r.error) {
@@ -67,6 +114,46 @@ export function SuggestionForm() {
             className="w-full rounded border border-border bg-background px-3 py-2 text-sm focus:border-accent focus:outline-none"
           />
         </label>
+        <div className="space-y-2">
+          <span className="block text-sm text-foreground/70">
+            Image (optional){" "}
+            <span className="text-xs text-foreground/40">
+              · PNG/JPEG/WEBP/GIF, 500 KB max
+            </span>
+          </span>
+          {imageDataUri ? (
+            <div className="flex items-start gap-3 rounded border border-border bg-background p-2">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={imageDataUri}
+                alt="Attached preview"
+                className="max-h-40 rounded border border-border"
+              />
+              <div className="flex flex-col gap-1 text-xs text-foreground/60">
+                <span className="truncate">{imageName}</span>
+                <button
+                  type="button"
+                  onClick={clearImage}
+                  className="self-start text-red-300 hover:text-red-200"
+                >
+                  Remove
+                </button>
+              </div>
+            </div>
+          ) : (
+            <input
+              ref={fileRef}
+              type="file"
+              accept={ALLOWED_TYPES.join(",")}
+              onChange={onImagePick}
+              className="block w-full text-sm text-foreground/70 file:mr-3 file:rounded file:border-0 file:bg-accent/20 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-accent hover:file:bg-accent/30"
+            />
+          )}
+          <p className="text-xs text-foreground/40">
+            A mockup, screenshot, or sketch helps the Creator understand layout
+            requests faster than words alone.
+          </p>
+        </div>
         <div className="flex items-center justify-between text-xs text-foreground/40">
           <span>{body.length}/2000</span>
           <button

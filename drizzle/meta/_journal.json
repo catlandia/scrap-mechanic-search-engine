@@ -176,6 +176,13 @@
       "when": 1776632287267,
       "tag": "0024_faulty_legion",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1776679394532,
+      "tag": "0025_bouncy_klaw",
+      "breakpoints": true
     }
   ]
 }

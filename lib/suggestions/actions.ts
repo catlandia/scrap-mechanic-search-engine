@@ -20,6 +20,32 @@ import {
 const MAX_TITLE = 120;
 const MAX_BODY = 2000;
 const MIN_STEAM_AGE_DAYS = 7;
+// Inline image cap: 500 KB of binary bytes. Base64 inflates ~33%, so the stored
+// data URI reaches ~680 KB max. Sits well inside Neon's row-size limits and
+// keeps per-suggestion DB cost modest (worst case 50 suggestions/day × 680 KB =
+// ~34 MB/day, trivial against the 3 GB free-tier storage).
+const MAX_IMAGE_BINARY_BYTES = 500 * 1024;
+const ALLOWED_IMAGE_MIME = new Set([
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+  "image/gif",
+]);
+
+function validateImageDataUri(raw: string): { ok: true; value: string } | { ok: false; error: string } {
+  const match = /^data:(image\/[a-z+.-]+);base64,([A-Za-z0-9+/=]+)$/.exec(raw);
+  if (!match) return { ok: false, error: "Image must be a base64 data URI." };
+  const [, mime, b64] = match;
+  if (!ALLOWED_IMAGE_MIME.has(mime)) {
+    return { ok: false, error: "Image must be PNG, JPEG, WEBP, or GIF." };
+  }
+  // Rough binary-size estimate from the base64 length. Cheaper than decoding.
+  const binaryBytes = Math.floor((b64.length * 3) / 4);
+  if (binaryBytes > MAX_IMAGE_BINARY_BYTES) {
+    return { ok: false, error: "Image is larger than 500 KB." };
+  }
+  return { ok: true, value: raw };
+}
 
 async function requireActiveUser() {
   const user = await getCurrentUser();
@@ -47,9 +73,16 @@ export async function submitSuggestion(formData: FormData): Promise<{ ok: boolea
     const user = await requireActiveUser();
     const title = String(formData.get("title") ?? "").trim();
     const body = String(formData.get("body") ?? "").trim();
+    const imageRaw = String(formData.get("image") ?? "").trim();
     if (!title) return { ok: false, error: "Title required." };
     if (title.length > MAX_TITLE) return { ok: false, error: "Title too long." };
     if (body.length > MAX_BODY) return { ok: false, error: "Body too long." };
+    let image: string | null = null;
+    if (imageRaw) {
+      const check = validateImageDataUri(imageRaw);
+      if (!check.ok) return { ok: false, error: check.error };
+      image = check.value;
+    }
 
     const db = getDb();
 
@@ -80,6 +113,7 @@ export async function submitSuggestion(formData: FormData): Promise<{ ok: boolea
       submitterUserId: user.steamid,
       title,
       body: body || null,
+      imageDataUri: image,
     });
     // Fan the purple bell: the creator sees every new idea land in the inbox.
     await broadcastToRole({
@@ -261,6 +295,7 @@ export interface SuggestionRow {
   approvedAt: Date | null;
   implementedAt: Date | null;
   creatorNote: string | null;
+  imageDataUri: string | null;
   submitterSteamid: string | null;
   submitterName: string | null;
   submitterRole: string | null;
@@ -289,6 +324,7 @@ async function getSuggestionsByStatuses(
       approvedAt: featureSuggestions.approvedAt,
       implementedAt: featureSuggestions.implementedAt,
       creatorNote: featureSuggestions.creatorNote,
+      imageDataUri: featureSuggestions.imageDataUri,
       submitterSteamid: featureSuggestions.submitterUserId,
       submitterName: users.personaName,
       submitterRole: users.role,
@@ -343,6 +379,7 @@ export async function getPendingSuggestions(): Promise<SuggestionRow[]> {
       approvedAt: featureSuggestions.approvedAt,
       implementedAt: featureSuggestions.implementedAt,
       creatorNote: featureSuggestions.creatorNote,
+      imageDataUri: featureSuggestions.imageDataUri,
       submitterSteamid: featureSuggestions.submitterUserId,
       submitterName: users.personaName,
       submitterRole: users.role,

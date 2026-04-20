@@ -51,12 +51,12 @@ export const BADGES: Record<string, BadgeDef> = {
     pill: "bg-amber-500/15 text-amber-300 border-amber-500/40",
     grantKind: "manual",
   },
-  helper: {
-    slug: "helper",
-    name: "Helper",
+  bug_hunter: {
+    slug: "bug_hunter",
+    name: "Bug hunter",
     description:
-      "Went out of their way to help the community or the site — bug reports, feedback, translations, the works.",
-    icon: "🤝",
+      "Found a real bug on the site, tested a pre-release feature, or flagged something that got fixed because of their report.",
+    icon: "🐛",
     pill: "bg-sky-500/15 text-sky-300 border-sky-500/40",
     grantKind: "manual",
   },

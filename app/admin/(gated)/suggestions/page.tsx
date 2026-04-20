@@ -73,6 +73,23 @@ function ActionCard({
         </p>
       )}
 
+      {suggestion.imageDataUri && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <a
+          href={suggestion.imageDataUri}
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Open full size"
+          className="inline-block"
+        >
+          <img
+            src={suggestion.imageDataUri}
+            alt="Attached by submitter"
+            className="max-h-64 rounded border border-border"
+          />
+        </a>
+      )}
+
       {suggestion.creatorNote && (
         <div className="rounded border border-purple-500/30 bg-purple-500/5 px-3 py-2 text-xs text-purple-200">
           <span className="font-medium">Current note:</span> {suggestion.creatorNote}
