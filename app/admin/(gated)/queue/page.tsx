@@ -1,6 +1,7 @@
+import Link from "next/link";
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
-import { categories, creations, creationTags, tagVotes, tags, users } from "@/lib/db/schema";
+import { categories, creations, creationTags, tagVotes, tags } from "@/lib/db/schema";
 import { QueueItem } from "@/components/admin/QueueItem";
 
 export const dynamic = "force-dynamic";
@@ -166,9 +167,9 @@ function EmptyState() {
       <div className="text-lg font-semibold">All approved items have tags.</div>
       <div className="mt-1 text-emerald-100/80">
         Nothing needs tag work right now. Triage more items from{" "}
-        <a href="/admin/triage" className="underline hover:text-foreground">
+        <Link href="/admin/triage" className="underline hover:text-foreground">
           /admin/triage
-        </a>{" "}
+        </Link>{" "}
         or wait for the next ingest.
       </div>
     </div>

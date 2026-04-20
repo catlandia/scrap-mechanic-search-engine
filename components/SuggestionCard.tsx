@@ -144,7 +144,7 @@ export function SuggestionCard({
           </p>
         )}
         {suggestion.imageDataUri && (
-          // eslint-disable-next-line @next/next/no-img-element
+           
           <a
             href={suggestion.imageDataUri}
             target="_blank"

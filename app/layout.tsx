@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Suspense } from "react";
 import { getCurrentUser } from "@/lib/auth/session";
 import { UserMenu } from "@/components/UserMenu";
 import { MobileNav } from "@/components/MobileNav";
@@ -11,7 +10,7 @@ import { ToastProvider } from "@/components/Toast";
 import { getUnreadChangelogCount } from "@/lib/changelog/actions";
 import { getUnreadNotificationCountsByTier, getUserCounts } from "@/lib/db/queries";
 import type { NotificationTier } from "@/lib/db/schema";
-import { getCustomThemeColors, getLocale, getRatingMode, getTheme } from "@/lib/prefs.server";
+import { getCustomThemeColors, getRatingMode, getTheme } from "@/lib/prefs.server";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { getT } from "@/lib/i18n/server";
 import { LocaleProvider } from "@/lib/i18n/client";
@@ -195,12 +194,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               {user ? (
                 <UserMenu user={user} unreadByTier={unreadByTier} />
               ) : (
-                <Link
+                // Plain <a>: /auth/steam/login server-redirects to steamcommunity.com,
+                // and <Link>'s RSC prefetch of that URL trips CORS.
+                // eslint-disable-next-line @next/next/no-html-link-for-pages
+                <a
                   href="/auth/steam/login"
                   className="hidden rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-black hover:bg-accent-strong sm:inline-block"
                 >
                   {t("nav.signIn")}
-                </Link>
+                </a>
               )}
               <MobileNav
                 navItems={navItemsWithBadges}

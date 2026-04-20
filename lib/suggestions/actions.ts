@@ -9,7 +9,6 @@ import {
   featureSuggestions,
   featureSuggestionVotes,
   users,
-  type UserRole,
 } from "@/lib/db/schema";
 import { broadcastToRole, createNotification } from "@/lib/db/notifications";
 import {
