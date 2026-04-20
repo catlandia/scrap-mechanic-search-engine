@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD COLUMN "age_gate_appeal_handled_at" timestamp with time zone;

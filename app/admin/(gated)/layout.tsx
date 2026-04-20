@@ -14,6 +14,7 @@ const baseNav = [
   { href: "/admin/triage", label: "Triage" },
   { href: "/admin/queue", label: "Queue" },
   { href: "/admin/reports", label: "Reports" },
+  { href: "/admin/appeals", label: "Appeals" },
   { href: "/admin/archive", label: "Archive" },
   { href: "/admin/add", label: "Add" },
   { href: "/admin/tags", label: "Tags" },

@@ -19,6 +19,7 @@ The admin backend is gated at `/admin/*` by the middleware, requiring a Steam lo
 | `/admin/archive` | Mod+ (view only) | Archived creations |
 | `/admin/add` | Mod+ | Manually add a Workshop item by URL |
 | `/admin/users` | Creator | User role + ban management |
+| `/admin/appeals` | Mod+ | Age-gate appeal queue — grant or dismiss appeals submitted via `/verify/appeal` |
 | `/admin/suggestions` | Creator | Feature suggestion board management |
 | `/admin/guide` | Mod+ | In-app moderator handbook. Sections are tier-gated — a regular mod only sees moderator-tier content, an elite sees mod+elite, the creator sees everything. |
 
@@ -103,6 +104,8 @@ All helpers check `effectiveRole` (ban-aware), not `user.role` directly. **Every
 | `warnUser(steamid, note)` | Increments `warningsCount`, records note. Visible to mod+. |
 | `clearWarnings(steamid)` | Resets `warningsCount` to 0 and clears `warningNote`. Creator-only. |
 | `setAgeGateBypass(steamid, on)` | Flips `users.bypassAgeGate`. Creator-only. When `on`, the user skips the 7-day Steam account-age gate in `requireVotingUser` / `requireActiveUser`. Useful for trusted community members with fresh Steam accounts. |
+| `grantAgeGateAppeal(steamid)` | **Mod+**. Flips `bypassAgeGate=true` and stamps `ageGateAppealHandledAt=now()`, then notifies the user their appeal was approved. Scoped to the appeals queue — mods cannot grant bypasses to arbitrary users via `/admin/users`, only to users who self-identified through `/verify/appeal`. |
+| `dismissAgeGateAppeal(steamid)` | **Mod+**. Stamps `ageGateAppealHandledAt=now()` without flipping the bypass, removing the request from the queue. The user can re-appeal after 24 h and it'll resurface. |
 | `hardBanUser(steamid)` | Sets `hardBanned=true`. Blocks future sign-ins. Existing sessions die immediately. |
 | `clearHardBan(steamid)` | Wipes hard ban + ban reason |
 

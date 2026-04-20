@@ -1278,6 +1278,48 @@ export async function setAgeGateBypass(formData: FormData) {
   revalidatePath(`/profile/${steamid}`);
 }
 
+// Appeal-queue actions — mod+ so the /admin/appeals tab is actually useful
+// without needing to ping the creator. The raw setAgeGateBypass above stays
+// creator-only because the /admin/users editor targets arbitrary accounts;
+// the appeal path only touches users who self-identified via the appeal form.
+export async function grantAgeGateAppeal(formData: FormData) {
+  await requireMod();
+  const steamid = String(formData.get("steamid") ?? "").trim();
+  if (!/^\d{1,25}$/.test(steamid)) throw new Error("invalid_steamid");
+
+  const db = getDb();
+  await db
+    .update(users)
+    .set({ bypassAgeGate: true, ageGateAppealHandledAt: new Date() })
+    .where(eq(users.steamid, steamid));
+
+  await createNotification({
+    userId: steamid,
+    type: "age_gate_appeal_granted",
+    title: "Your age-gate appeal was approved",
+    body: "A moderator has let you past the 7-day Steam account-age check. You can now submit, comment, and vote.",
+    link: "/",
+  });
+
+  revalidatePath("/admin/appeals");
+  revalidatePath("/admin/users");
+  revalidatePath(`/profile/${steamid}`);
+}
+
+export async function dismissAgeGateAppeal(formData: FormData) {
+  await requireMod();
+  const steamid = String(formData.get("steamid") ?? "").trim();
+  if (!/^\d{1,25}$/.test(steamid)) throw new Error("invalid_steamid");
+
+  const db = getDb();
+  await db
+    .update(users)
+    .set({ ageGateAppealHandledAt: new Date() })
+    .where(eq(users.steamid, steamid));
+
+  revalidatePath("/admin/appeals");
+}
+
 export async function warnUser(formData: FormData) {
   const actor = await requireMod();
   const steamid = String(formData.get("steamid") ?? "").trim();

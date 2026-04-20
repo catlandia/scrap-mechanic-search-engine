@@ -92,6 +92,8 @@ One row per Steam account that has ever logged in.
 | `muteReason` | text NULL | |
 | `warningsCount` | int | |
 | `warningNote` | text NULL | Latest warning message |
+| `bypassAgeGate` | boolean | Creator / appeal-granter override — user skips the 7-day Steam account-age gate. Flipped by `setAgeGateBypass` (creator, in `/admin/users`) and `grantAgeGateAppeal` (mod+, via the appeals queue). |
+| `ageGateAppealHandledAt` | timestamptz NULL | Set when a mod grants or dismisses an age-gate appeal. Drives the `/admin/appeals` filter: the queue only shows users whose latest appeal was submitted after this timestamp (or whose timestamp is null). |
 
 **Indexes:** `role`, `bannedUntil`
 

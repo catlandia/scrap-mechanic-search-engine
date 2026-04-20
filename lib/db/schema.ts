@@ -258,6 +258,13 @@ export const users = pgTable(
     // Creator can wave specific users past the 7-day Steam account-age gate —
     // useful for trusted community members on fresh Steam accounts.
     bypassAgeGate: boolean("bypass_age_gate").notNull().default(false),
+    // When a mod acts on a user's age-gate appeal (grant or dismiss), this
+    // stamps the moment so the /admin/appeals queue only shows unresolved
+    // requests. Null = no appeal ever decided (either none submitted or the
+    // user re-appealed after a dismissal).
+    ageGateAppealHandledAt: timestamp("age_gate_appeal_handled_at", {
+      withTimezone: true,
+    }),
   },
   (t) => [
     index("users_role_idx").on(t.role),
