@@ -3,12 +3,7 @@
 import { randomUUID } from "crypto";
 import { cookies } from "next/headers";
 import { getIronSession, type SessionOptions } from "iron-session";
-import {
-  NORMAL_CHARACTERS,
-  CHAPTER_2,
-  CHAPTER_2_CHANCE,
-  type Character,
-} from "@/lib/captcha/config";
+import { generateQuestions, type CaptchaQuestion } from "@/lib/captcha/questions";
 import {
   botVerifiedSessionOptions,
   requireSessionSecret,
@@ -16,13 +11,6 @@ import {
 } from "@/lib/captcha/verified-session";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-
-export type CaptchaQuestion = {
-  id: string;
-  image: string;
-  correct: string;
-  options: string[]; // shuffled, includes correct
-};
 
 type CaptchaSession = {
   questions?: CaptchaQuestion[];
@@ -63,51 +51,6 @@ function captchaSessionOptions(): SessionOptions {
 async function getSession() {
   const cookieStore = await cookies();
   return getIronSession<CaptchaSession>(cookieStore, captchaSessionOptions());
-}
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function shuffle<T>(arr: T[]): T[] {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
-function pickImage(images: string[]): string {
-  return images[Math.floor(Math.random() * images.length)];
-}
-
-function buildQuestion(char: Character, pool: Character[]): CaptchaQuestion {
-  const wrongPool = pool.filter((c) => c.id !== char.id).map((c) => c.answer);
-  const wrongOptions = shuffle(wrongPool).slice(0, 3);
-  const options = shuffle([char.answer, ...wrongOptions]);
-  return { id: char.id, image: pickImage(char.images), correct: char.answer, options };
-}
-
-function generateQuestions(): CaptchaQuestion[] {
-  const allChars = [...NORMAL_CHARACTERS, CHAPTER_2];
-  const used = new Set<string>();
-  const questions: CaptchaQuestion[] = [];
-
-  for (let i = 0; i < 3; i++) {
-    const useChapter2 = !used.has("chapter2") && Math.random() < CHAPTER_2_CHANCE;
-
-    let char: Character;
-    if (useChapter2) {
-      char = CHAPTER_2;
-    } else {
-      const available = NORMAL_CHARACTERS.filter((c) => !used.has(c.id));
-      char = available[Math.floor(Math.random() * available.length)];
-    }
-
-    used.add(char.id);
-    questions.push(buildQuestion(char, allChars));
-  }
-
-  return questions;
 }
 
 // ─── Server actions ───────────────────────────────────────────────────────────

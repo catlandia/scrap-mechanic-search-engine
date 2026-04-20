@@ -29,6 +29,8 @@ All public pages are in `app/` using Next.js 15 App Router. Server Components by
 | `/submit` | `app/submit/page.tsx` | Submit a Workshop item |
 | `/suggestions` | `app/suggestions/page.tsx` | Ideas board — tabbed below `lg`, three-column kanban (Approved / Implemented / Rejected) at `lg+` |
 | `/suggestions/new` | `app/suggestions/new/page.tsx` | Submit a suggestion (noindex) |
+| `/minigames` | `app/minigames/page.tsx` | Landing page for in-site minigames |
+| `/minigames/scrapcha` | `app/minigames/scrapcha/page.tsx` | Scrapcha — endless character-identification game. Same character pool as `/verify`, different session cookie, no skip button, does not grant the `bot_verified` cookie. |
 | `/settings` | `app/settings/page.tsx` | User preferences hub (theme, ratings, account links, help) |
 | `/settings/theme` | `app/settings/theme/page.tsx` | Custom theme editor |
 | `/terms` | `app/terms/page.tsx` | Terms of use |

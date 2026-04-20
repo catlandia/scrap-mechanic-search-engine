@@ -90,6 +90,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     { kind: "link", href: "/search", label: t("nav.search") },
     { kind: "link", href: "/creators", label: t("nav.creators") },
     { kind: "link", href: "/suggestions", label: t("nav.ideas") },
+    { kind: "link", href: "/minigames", label: t("nav.minigames") },
     { kind: "link", href: "/changelog", label: t("nav.whatsNew") },
     { kind: "link", href: "/submit", label: t("nav.submit") },
   ];

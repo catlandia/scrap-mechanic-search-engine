@@ -22,6 +22,7 @@ const en: Dictionary = {
   "nav.submit": "Submit",
   "nav.signIn": "Sign in with Steam",
   "nav.settings": "Settings",
+  "nav.minigames": "Minigames",
 
   // Kinds
   "kind.blueprints": "Blueprints",
@@ -93,6 +94,32 @@ const en: Dictionary = {
   "card.viewOnSteam": "View on Steam",
 
   // Creation detail page
+  // Minigames
+  "minigames.eyebrow": "Break room",
+  "minigames.title": "Minigames",
+  "minigames.subtitle":
+    "Small Scrap Mechanic-themed diversions that live on the site. New ones will show up here as they're built.",
+  "minigames.playLabel": "Play",
+  "minigames.comingSoon": "More coming soon",
+  "minigames.backToIndex": "← Minigames",
+  "minigames.reset": "Reset stats",
+  "minigames.statsLabel": "Session stats",
+  "minigames.stat.streak": "Streak",
+  "minigames.stat.bestStreak": "Best",
+  "minigames.stat.rounds": "Rounds",
+  "minigames.stat.accuracy": "Accuracy",
+  "minigames.whoIsThis": "Who is this?",
+  "minigames.zoomAria": "Tap to zoom in on the image",
+  "minigames.zoomHint": "Tap to zoom",
+  "minigames.zoomDialogLabel": "Zoomed character image",
+  "minigames.wrongReset": "Wrong — streak reset.",
+  "minigames.roundWon": "Round won! Next round…",
+  "minigames.scrapcha.name": "Scrapcha",
+  "minigames.scrapcha.blurb":
+    "Identify Scrap Mechanic characters from screenshots. Same puzzle the sign-in captcha uses, but endless — how long can you keep your streak alive?",
+  "minigames.scrapcha.subtitle":
+    "Pick the character in the screenshot. One wrong answer resets your streak — how far can you push it?",
+
   "creation.backToNewest": "← Back to newest",
   "creation.by": "by",
   "creation.viewOnSteamWorkshop": "View on Steam Workshop ↗",
@@ -198,6 +225,7 @@ const ru: Dictionary = {
   "nav.submit": "Добавить",
   "nav.signIn": "Войти через Steam",
   "nav.settings": "Настройки",
+  "nav.minigames": "Мини-игры",
 
   "kind.blueprints": "Чертежи",
   "kind.mods": "Моды",
@@ -259,6 +287,31 @@ const ru: Dictionary = {
   "card.communityBadge": "Сообщество",
   "card.unratedLabel": "Без оценки",
   "card.viewOnSteam": "Открыть в Steam",
+
+  "minigames.eyebrow": "Комната отдыха",
+  "minigames.title": "Мини-игры",
+  "minigames.subtitle":
+    "Небольшие развлечения по Scrap Mechanic прямо на сайте. Новые будут появляться по мере готовности.",
+  "minigames.playLabel": "Играть",
+  "minigames.comingSoon": "Скоро ещё",
+  "minigames.backToIndex": "← К мини-играм",
+  "minigames.reset": "Сбросить",
+  "minigames.statsLabel": "Статистика сессии",
+  "minigames.stat.streak": "Серия",
+  "minigames.stat.bestStreak": "Рекорд",
+  "minigames.stat.rounds": "Раунды",
+  "minigames.stat.accuracy": "Точность",
+  "minigames.whoIsThis": "Кто это?",
+  "minigames.zoomAria": "Нажмите, чтобы увеличить",
+  "minigames.zoomHint": "Увеличить",
+  "minigames.zoomDialogLabel": "Увеличенное изображение персонажа",
+  "minigames.wrongReset": "Неверно — серия сброшена.",
+  "minigames.roundWon": "Раунд пройден! Следующий…",
+  "minigames.scrapcha.name": "Скрапча",
+  "minigames.scrapcha.blurb":
+    "Угадывайте персонажей Scrap Mechanic по скриншотам. Та же задачка, что и на входе, но бесконечная — насколько длинную серию вы удержите?",
+  "minigames.scrapcha.subtitle":
+    "Выберите персонажа на скриншоте. Одна ошибка — и серия сброшена. Как далеко вы зайдёте?",
 
   "creation.backToNewest": "← К новым",
   "creation.by": "от",
@@ -358,6 +411,7 @@ const de: Dictionary = {
   "nav.submit": "Einreichen",
   "nav.signIn": "Mit Steam anmelden",
   "nav.settings": "Einstellungen",
+  "nav.minigames": "Minispiele",
 
   "kind.blueprints": "Blaupausen",
   "kind.mods": "Mods",
@@ -419,6 +473,31 @@ const de: Dictionary = {
   "card.communityBadge": "Community",
   "card.unratedLabel": "Ohne Bewertung",
   "card.viewOnSteam": "Auf Steam ansehen",
+
+  "minigames.eyebrow": "Pausenraum",
+  "minigames.title": "Minispiele",
+  "minigames.subtitle":
+    "Kleine Scrap-Mechanic-Ablenkungen direkt auf der Seite. Neue erscheinen hier, sobald sie fertig sind.",
+  "minigames.playLabel": "Spielen",
+  "minigames.comingSoon": "Weitere folgen",
+  "minigames.backToIndex": "← Zu den Minispielen",
+  "minigames.reset": "Zurücksetzen",
+  "minigames.statsLabel": "Sitzungs-Statistik",
+  "minigames.stat.streak": "Serie",
+  "minigames.stat.bestStreak": "Rekord",
+  "minigames.stat.rounds": "Runden",
+  "minigames.stat.accuracy": "Trefferquote",
+  "minigames.whoIsThis": "Wer ist das?",
+  "minigames.zoomAria": "Tippen, um das Bild zu vergrößern",
+  "minigames.zoomHint": "Tippen zum Zoomen",
+  "minigames.zoomDialogLabel": "Vergrößertes Charakterbild",
+  "minigames.wrongReset": "Falsch — Serie zurückgesetzt.",
+  "minigames.roundWon": "Runde gewonnen! Nächste Runde…",
+  "minigames.scrapcha.name": "Scrapcha",
+  "minigames.scrapcha.blurb":
+    "Erkenne Scrap-Mechanic-Charaktere auf Screenshots. Dasselbe Puzzle wie beim Login, aber endlos — wie lange hältst du deine Serie?",
+  "minigames.scrapcha.subtitle":
+    "Wähle den Charakter auf dem Bild. Eine falsche Antwort setzt deine Serie zurück — wie weit kommst du?",
 
   "creation.backToNewest": "← Zurück zu Neueste",
   "creation.by": "von",
@@ -519,6 +598,7 @@ const pl: Dictionary = {
   "nav.submit": "Dodaj",
   "nav.signIn": "Zaloguj przez Steam",
   "nav.settings": "Ustawienia",
+  "nav.minigames": "Minigry",
 
   "kind.blueprints": "Schematy",
   "kind.mods": "Mody",
@@ -580,6 +660,31 @@ const pl: Dictionary = {
   "card.communityBadge": "Społeczność",
   "card.unratedLabel": "Bez oceny",
   "card.viewOnSteam": "Zobacz na Steam",
+
+  "minigames.eyebrow": "Sala relaksu",
+  "minigames.title": "Minigry",
+  "minigames.subtitle":
+    "Małe rozrywki w stylu Scrap Mechanic prosto na stronie. Kolejne pojawią się tu, gdy będą gotowe.",
+  "minigames.playLabel": "Zagraj",
+  "minigames.comingSoon": "Wkrótce więcej",
+  "minigames.backToIndex": "← Do minigier",
+  "minigames.reset": "Zresetuj",
+  "minigames.statsLabel": "Statystyki sesji",
+  "minigames.stat.streak": "Seria",
+  "minigames.stat.bestStreak": "Rekord",
+  "minigames.stat.rounds": "Rundy",
+  "minigames.stat.accuracy": "Celność",
+  "minigames.whoIsThis": "Kto to?",
+  "minigames.zoomAria": "Dotknij, aby powiększyć",
+  "minigames.zoomHint": "Dotknij, aby powiększyć",
+  "minigames.zoomDialogLabel": "Powiększony obrazek postaci",
+  "minigames.wrongReset": "Źle — seria zresetowana.",
+  "minigames.roundWon": "Runda wygrana! Kolejna…",
+  "minigames.scrapcha.name": "Scrapcha",
+  "minigames.scrapcha.blurb":
+    "Rozpoznawaj postacie Scrap Mechanic ze zrzutów ekranu. Ta sama zagadka co przy logowaniu, ale bez końca — jak długą serię utrzymasz?",
+  "minigames.scrapcha.subtitle":
+    "Wybierz postać z obrazka. Jeden błąd resetuje serię — jak daleko zajdziesz?",
 
   "creation.backToNewest": "← Do najnowszych",
   "creation.by": "autor:",
