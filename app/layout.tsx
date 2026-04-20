@@ -154,7 +154,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 <span className="text-foreground">/</span>Search
               </span>
             </Link>
-            <nav className="hidden min-w-0 flex-wrap items-center gap-x-5 gap-y-1 text-sm text-foreground/70 sm:flex xl:flex-nowrap">
+            <nav className="hidden min-w-0 flex-nowrap items-center gap-x-5 text-sm text-foreground/70 lg:flex">
               {navItemsWithBadges.map((item) =>
                 item.kind === "group" ? (
                   <NavDropdown

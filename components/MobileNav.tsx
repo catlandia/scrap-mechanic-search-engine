@@ -92,7 +92,7 @@ export function MobileNav({
         /* Hardcoded zinc palette so the hamburger is always visible even
            under a pathological custom theme — this is the mobile entry
            point to the drawer where the theme-reset pill lives. */
-        className="inline-flex size-9 items-center justify-center rounded-md border border-zinc-700 bg-zinc-900 text-zinc-100 hover:bg-zinc-800 sm:hidden"
+        className="inline-flex size-9 items-center justify-center rounded-md border border-zinc-700 bg-zinc-900 text-zinc-100 hover:bg-zinc-800 lg:hidden"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -120,7 +120,7 @@ export function MobileNav({
       {open && mounted && createPortal(
         <div
           id="mobile-drawer-panel"
-          className="fixed inset-0 z-[100] sm:hidden"
+          className="fixed inset-0 z-[100] lg:hidden"
           role="dialog"
           aria-modal="true"
         >
