@@ -17,7 +17,6 @@ import {
 } from "@/lib/auth/roles";
 import { BADGES } from "@/lib/badges/definitions";
 import { getBadgesForSteamIds } from "@/lib/badges/queries";
-import { BadgeList } from "@/components/BadgeList";
 import { RoleBadge } from "@/components/RoleBadge";
 import { UserName } from "@/components/UserName";
 import { UserModForms } from "@/components/UserModForms";

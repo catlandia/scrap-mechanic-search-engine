@@ -254,12 +254,14 @@ export function MobileNav({
               <>
                 <div className="mx-4 border-t border-foreground/10" />
                 <div className="px-4 py-4">
-                  <Link
+                  {/* Plain <a>: server redirects to steamcommunity.com; <Link> prefetch would CORS-fail. */}
+                  {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+                  <a
                     href="/auth/steam/login"
                     className="block rounded-md bg-accent px-3 py-2 text-center text-sm font-medium text-black hover:bg-accent-strong"
                   >
                     Sign in with Steam
-                  </Link>
+                  </a>
                 </div>
               </>
             )}

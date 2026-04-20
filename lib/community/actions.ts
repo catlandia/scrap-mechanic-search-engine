@@ -6,7 +6,6 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
 import { sql } from "drizzle-orm";
 import {
-  categories,
   commentVotes,
   comments,
   creationCategories,
@@ -22,7 +21,6 @@ import {
   type ReportReason,
 } from "@/lib/db/schema";
 import { effectiveRole, isModerator } from "@/lib/auth/roles";
-import type { UserRole } from "@/lib/db/schema";
 import {
   detectKind,
   fetchWorkshopContributors,

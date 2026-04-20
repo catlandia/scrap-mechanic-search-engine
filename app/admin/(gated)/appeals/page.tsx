@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { and, desc, eq, sql } from "drizzle-orm";
-import { notifications, users } from "@/lib/db/schema";
+import { users } from "@/lib/db/schema";
 import { getDb } from "@/lib/db/client";
 import {
   dismissAgeGateAppeal,

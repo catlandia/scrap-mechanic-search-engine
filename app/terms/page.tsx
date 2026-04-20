@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Terms",
@@ -30,9 +31,9 @@ export default function TermsPage() {
         <p>
           Signing in uses Steam OpenID — we never see your Steam password. By
           signing in you agree to these terms and to our{" "}
-          <a href="/privacy" className="text-accent hover:underline">
+          <Link href="/privacy" className="text-accent hover:underline">
             privacy policy
-          </a>
+          </Link>
           . You are responsible for keeping your Steam account secure.
         </p>
       </section>

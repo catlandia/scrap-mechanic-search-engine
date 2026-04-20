@@ -18,7 +18,6 @@ import { runIngest } from "@/lib/ingest/pipeline";
 import { CREATION_KINDS, ingestRuns, type IngestProgress } from "@/lib/db/schema";
 import { getCurrentUser, isBanned } from "@/lib/auth/session";
 import { effectiveRole, isModerator } from "@/lib/auth/roles";
-import type { UserRole } from "@/lib/db/schema";
 import {
   detectKind,
   fetchWorkshopContributors,

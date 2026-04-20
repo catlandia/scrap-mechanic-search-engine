@@ -134,7 +134,7 @@ function VerifyChallenge() {
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="text-center space-y-3">
           <div className="text-5xl">⚙️</div>
-          <h1 className="text-2xl font-bold text-accent">You're in!</h1>
+          <h1 className="text-2xl font-bold text-accent">You&apos;re in!</h1>
           <p className="text-foreground/50 text-sm">Welcome to the Workshop…</p>
         </div>
       </div>

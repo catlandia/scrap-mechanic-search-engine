@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/session";
 import { AppealForm } from "./AppealForm";
 
@@ -59,12 +58,14 @@ export default async function AppealPage() {
             You need to sign in with Steam first so moderators know which
             account to approve.
           </p>
-          <Link
+          {/* Plain <a>: server redirects to steamcommunity.com; <Link> prefetch would CORS-fail. */}
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+          <a
             href="/auth/steam/login?next=/verify/appeal"
             className="mt-3 inline-block rounded-md bg-accent px-4 py-2 text-sm font-medium text-black hover:bg-accent-strong"
           >
             Sign in with Steam
-          </Link>
+          </a>
         </div>
       )}
 
