@@ -76,42 +76,9 @@ export function UserMenu({
     <div className="flex items-center gap-2 text-sm sm:gap-3">
       {!banned && (
         <>
-          <Link
-            href="/submit"
-            className="text-foreground/60 hover:text-foreground"
-            title="Submit"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              className="size-5 sm:hidden"
-              aria-hidden
-            >
-              <path
-                fillRule="evenodd"
-                d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5z"
-                clipRule="evenodd"
-              />
-            </svg>
-            <span className="hidden sm:inline">Submit</span>
-          </Link>
-          <Link
-            href="/me/favourites"
-            className="text-foreground/60 hover:text-foreground"
-            title="Favourites"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              className="size-5 sm:hidden"
-              aria-hidden
-            >
-              <path d="M9.653 17.482l-.006-.004-.018-.01a22.37 22.37 0 0 1-.317-.192 23.81 23.81 0 0 1-3.699-2.927C3.653 12.61 2 10.22 2 7.5A4.5 4.5 0 0 1 10 4.635 4.5 4.5 0 0 1 18 7.5c0 2.72-1.653 5.11-3.613 6.85a23.81 23.81 0 0 1-3.699 2.926 22.21 22.21 0 0 1-.343.202l-.007.005-.002.001a.752.752 0 0 1-.683-.002z" />
-            </svg>
-            <span className="hidden sm:inline">Favourites</span>
-          </Link>
+          {/* Submit / Favourites / Admin are reachable from the main nav,
+              the hamburger drawer, and /settings — keeping them out of this
+              menu stops the top bar overflowing at lg. */}
           {visibleTiers.map((t) => (
             <TierBell
               key={t}
@@ -144,14 +111,6 @@ export function UserMenu({
           </Link>
         </>
       )}
-      {isModerator(role) && (
-        <Link
-          href="/admin/triage"
-          className="hidden text-foreground/60 hover:text-foreground sm:inline"
-        >
-          Admin
-        </Link>
-      )}
       <Link
         href={`/profile/${user.steamid}`}
         className="group flex items-center gap-2"
@@ -180,7 +139,7 @@ export function UserMenu({
         )}
         <span
           className={cn(
-            "hidden max-w-[140px] truncate font-medium group-hover:underline sm:inline",
+            "hidden max-w-[140px] truncate font-medium group-hover:underline xl:inline",
             banned ? "text-red-300 line-through" : style.name,
           )}
         >
@@ -191,10 +150,10 @@ export function UserMenu({
             Banned
           </span>
         ) : (
-          <RoleBadge role={displayRole} className="hidden md:inline-flex" />
+          <RoleBadge role={displayRole} className="hidden xl:inline-flex" />
         )}
       </Link>
-      <form action="/auth/logout" method="post" className="hidden sm:block">
+      <form action="/auth/logout" method="post" className="hidden xl:block">
         <button
           type="submit"
           className="text-xs text-foreground/40 hover:text-foreground/70"

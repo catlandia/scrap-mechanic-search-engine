@@ -8,6 +8,8 @@ import { THEME_LABELS } from "@/lib/prefs";
 import { getLocale, getRatingMode, getTheme } from "@/lib/prefs.server";
 import { getT } from "@/lib/i18n/server";
 import { getCurrentUser } from "@/lib/auth/session";
+import { isModerator } from "@/lib/auth/roles";
+import type { UserRole } from "@/lib/db/schema";
 
 export const dynamic = "force-dynamic";
 
@@ -111,6 +113,16 @@ export default async function SettingsPage() {
                 {t("settings.notificationsLink")}
               </Link>
             </li>
+            {isModerator(viewer.role as UserRole) && (
+              <li>
+                <Link
+                  href="/admin/triage"
+                  className="text-accent hover:underline"
+                >
+                  Admin triage →
+                </Link>
+              </li>
+            )}
             <li>
               <form action="/auth/logout" method="post" className="inline">
                 <button
