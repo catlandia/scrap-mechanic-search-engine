@@ -13,7 +13,11 @@ import { ToastProvider } from "@/components/Toast";
 import { getUnreadChangelogCount } from "@/lib/changelog/actions";
 import { getUnreadNotificationCountsByTier, getUserCounts } from "@/lib/db/queries";
 import type { NotificationTier } from "@/lib/db/schema";
-import { getCustomThemeColors, getRatingMode, getTheme } from "@/lib/prefs.server";
+import { getCustomThemeColors, getLocale, getRatingMode, getTheme } from "@/lib/prefs.server";
+import { getDictionary } from "@/lib/i18n/dictionaries";
+import { getT } from "@/lib/i18n/server";
+import { LocaleProvider } from "@/lib/i18n/client";
+import { LocaleToggle } from "@/components/LocaleToggle";
 import { isModerator } from "@/lib/auth/roles";
 import type { UserRole } from "@/lib/db/schema";
 import "./globals.css";
@@ -51,25 +55,15 @@ type NavItem =
 
 // Kind pages live under a single "Browse" dropdown on desktop (and a section
 // header on mobile) so the top bar stops at 6 items instead of 12.
-const browseItems = [
-  { href: "/blueprints", label: "Blueprints" },
-  { href: "/mods", label: "Mods" },
-  { href: "/worlds", label: "Worlds" },
-  { href: "/challenges", label: "Challenges" },
-  { href: "/tiles", label: "Tiles" },
-  { href: "/custom-games", label: "Custom Games" },
-  { href: "/terrain", label: "Terrain" },
-  { href: "/other", label: "Other" },
-];
-
-const navItems: NavItem[] = [
-  { kind: "link", href: "/new", label: "Newest" },
-  { kind: "group", label: "Browse", items: browseItems },
-  { kind: "link", href: "/search", label: "Search" },
-  { kind: "link", href: "/creators", label: "Creators" },
-  { kind: "link", href: "/suggestions", label: "Ideas" },
-  { kind: "link", href: "/changelog", label: "What's new" },
-  { kind: "link", href: "/submit", label: "Submit" },
+const browseHrefs = [
+  { href: "/blueprints", key: "kind.blueprints" as const },
+  { href: "/mods", key: "kind.mods" as const },
+  { href: "/worlds", key: "kind.worlds" as const },
+  { href: "/challenges", key: "kind.challenges" as const },
+  { href: "/tiles", key: "kind.tiles" as const },
+  { href: "/custom-games", key: "kind.customGames" as const },
+  { href: "/terrain", key: "kind.terrain" as const },
+  { href: "/other", key: "kind.other" as const },
 ];
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -90,6 +84,18 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   }
   const ratingMode = await getRatingMode();
   const theme = await getTheme();
+  const { locale, t } = await getT();
+  const dict = getDictionary(locale);
+  const browseItems = browseHrefs.map((b) => ({ href: b.href, label: t(b.key) }));
+  const navItems: NavItem[] = [
+    { kind: "link", href: "/new", label: t("nav.newest") },
+    { kind: "group", label: t("nav.browse"), items: browseItems },
+    { kind: "link", href: "/search", label: t("nav.search") },
+    { kind: "link", href: "/creators", label: t("nav.creators") },
+    { kind: "link", href: "/suggestions", label: t("nav.ideas") },
+    { kind: "link", href: "/changelog", label: t("nav.whatsNew") },
+    { kind: "link", href: "/submit", label: t("nav.submit") },
+  ];
   // Unread changelog entries drive the "What's new" top-bar badge. Bounded
   // to 99 server-side so the pill stays compact.
   let unreadChangelog = 0;
@@ -123,7 +129,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   ];
 
   return (
-    <html lang="en" className="dark" data-theme={theme}>
+    <html lang={locale} className="dark" data-theme={theme}>
       <head>
         {/* When the user has picked a custom theme, inject their colours into
             the `[data-theme="custom"]` selector. Values are hex-only (regex
@@ -137,6 +143,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         )}
       </head>
       <body className="min-h-screen bg-background text-foreground antialiased">
+        <LocaleProvider locale={locale} dict={dict}>
         <ToastProvider>
         <BetaBanner />
         <header className="sticky top-0 z-30 border-b border-foreground/10 bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70">
@@ -186,6 +193,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   <ThemeToggle current={theme} />
                 </Suspense>
               </div>
+              <div className="hidden lg:block">
+                <Suspense>
+                  <LocaleToggle current={locale} />
+                </Suspense>
+              </div>
               {user ? (
                 <UserMenu user={user} unreadByTier={unreadByTier} />
               ) : (
@@ -193,7 +205,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   href="/auth/steam/login"
                   className="hidden rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-black hover:bg-accent-strong sm:inline-block"
                 >
-                  Sign in with Steam
+                  {t("nav.signIn")}
                 </Link>
               )}
               <MobileNav
@@ -264,6 +276,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           </p>
         </footer>
         </ToastProvider>
+        </LocaleProvider>
       </body>
     </html>
   );

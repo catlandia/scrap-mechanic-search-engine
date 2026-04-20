@@ -182,6 +182,11 @@ lib/
     thresholds.ts                 # per-kind follow-count minimums
   suggestions/
     actions.ts                    # suggestion CRUD server actions
+  i18n/
+    dictionaries.ts               # en/ru/de/pl translation keys + translate()
+    server.ts                     # getT() — reads smse_lang cookie, returns {locale, dict, t}
+    client.tsx                    # LocaleProvider + useT() for client components
+    english-tag.ts                # isEnglishTagName — ASCII-only tag-name guard
 middleware.ts                     # gates /admin/* behind login
 vercel.json                       # cron schedule
 drizzle/                          # generated SQL migrations (checked in)

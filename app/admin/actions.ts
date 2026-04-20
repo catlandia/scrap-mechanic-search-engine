@@ -30,6 +30,7 @@ import { stripBBCode } from "@/lib/steam/bbcode";
 import { classify } from "@/lib/tagger/classify";
 import { broadcastToRole, createNotification } from "@/lib/db/notifications";
 import { AUTOGRANT_BADGES, BADGE_SLUGS } from "@/lib/badges/definitions";
+import { ENGLISH_TAG_ERROR, isEnglishTagName } from "@/lib/i18n/english-tag";
 import {
   addAutogrant,
   grantBadge,
@@ -298,6 +299,7 @@ export async function createTag(formData: FormData) {
   const categoryId = categoryIdRaw ? Number(categoryIdRaw) : null;
 
   if (!slug || !name) throw new Error("slug and name required");
+  if (!isEnglishTagName(name)) throw new Error(ENGLISH_TAG_ERROR);
 
   await db
     .insert(tags)
@@ -337,6 +339,7 @@ export async function updateTag(formData: FormData) {
   const categoryId = categoryIdRaw ? Number(categoryIdRaw) : null;
 
   if (!slug || !name) throw new Error("slug and name required");
+  if (!isEnglishTagName(name)) throw new Error(ENGLISH_TAG_ERROR);
 
   // Reject slug collisions against other tags — the DB unique constraint
   // would catch it, but a friendlier error is worth the round-trip.

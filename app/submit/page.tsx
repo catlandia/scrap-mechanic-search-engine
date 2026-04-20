@@ -52,6 +52,12 @@ export default async function SubmitPage() {
           </span>{" "}
           badge crediting you.
         </p>
+        <p className="text-xs text-foreground/50">
+          Your item&apos;s title and description can be in any language — the
+          Workshop page is rendered as-is. Tags applied during review are
+          English-only so the catalogue stays consistent across every UI
+          language.
+        </p>
       </header>
 
       {!user ? (

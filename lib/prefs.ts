@@ -1,3 +1,24 @@
+export const LOCALES = ["en", "ru", "de", "pl"] as const;
+export type Locale = (typeof LOCALES)[number];
+export const DEFAULT_LOCALE: Locale = "en";
+
+export const LOCALE_COOKIE = "smse_lang";
+
+// Native names so the language picker reads naturally to speakers of each one,
+// regardless of which locale the surrounding UI is currently in.
+export const LOCALE_NATIVE_NAMES: Record<Locale, string> = {
+  en: "English",
+  ru: "Русский",
+  de: "Deutsch",
+  pl: "Polski",
+};
+
+export function parseLocale(raw: string | undefined): Locale {
+  return (LOCALES as readonly string[]).includes(raw ?? "")
+    ? (raw as Locale)
+    : DEFAULT_LOCALE;
+}
+
 export const RATING_MODES = ["steam", "site", "both"] as const;
 export type RatingMode = (typeof RATING_MODES)[number];
 export const DEFAULT_RATING_MODE: RatingMode = "both";

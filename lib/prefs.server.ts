@@ -1,15 +1,33 @@
 import { cookies } from "next/headers";
 import {
+  LOCALE_COOKIE,
   parseCustomThemeColors,
+  parseLocale,
   parseRatingMode,
   parseTheme,
   RATING_MODE_COOKIE,
   THEME_COOKIE,
   THEME_CUSTOM_COOKIE,
   type CustomThemeColors,
+  type Locale,
   type RatingMode,
   type Theme,
 } from "./prefs";
+
+export async function getLocale(): Promise<Locale> {
+  const store = await cookies();
+  return parseLocale(store.get(LOCALE_COOKIE)?.value);
+}
+
+export async function setLocaleCookie(locale: Locale): Promise<void> {
+  const store = await cookies();
+  store.set(LOCALE_COOKIE, locale, {
+    httpOnly: false,
+    sameSite: "lax",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 365,
+  });
+}
 
 export async function getRatingMode(): Promise<RatingMode> {
   const store = await cookies();

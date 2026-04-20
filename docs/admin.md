@@ -84,6 +84,7 @@ All helpers check `effectiveRole` (ban-aware), not `user.role` directly. **Every
 | `archiveFromReport(id, reportId)` | Elite+ | Archive + action the triggering report |
 | `deleteCommentFromReport(reportId)` | Mod+ | Soft-delete the reported comment + action the report |
 | `deleteCategory(id)` | Creator | Remove a category. Tags in it fall to "Uncategorised" (FK `set null`); creation↔category links cascade away. |
+| `createTag` / `updateTag` (name field) | Mod / Creator | Tag names are validated by `isEnglishTagName` (`lib/i18n/english-tag.ts`) — only A–Z, 0–9, spaces, and basic punctuation pass. Non-Latin scripts, accented letters, and umlauts are rejected so the catalogue stays consistent across every UI language. |
 | `grantBadgeAction(steamid, slug)` | Creator | Grant one of the defined badges to a user |
 | `revokeBadgeAction(steamid, slug)` | Creator | Revoke a badge grant |
 | `addInfluencerAutograntAction(input, label)` | Creator | Add to the badge autogrant allowlist. Input accepts Steam64, profile URL, or vanity URL. Managed via `/admin/badges`. |

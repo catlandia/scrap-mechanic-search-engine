@@ -3,8 +3,10 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { RatingModeToggle } from "@/components/RatingModeToggle";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { LocaleToggle } from "@/components/LocaleToggle";
 import { THEME_LABELS } from "@/lib/prefs";
-import { getRatingMode, getTheme } from "@/lib/prefs.server";
+import { getLocale, getRatingMode, getTheme } from "@/lib/prefs.server";
+import { getT } from "@/lib/i18n/server";
 import { getCurrentUser } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
@@ -17,11 +19,13 @@ export const metadata: Metadata = {
 };
 
 export default async function SettingsPage() {
-  const [ratingMode, theme, viewer] = await Promise.all([
+  const [ratingMode, theme, locale, viewer] = await Promise.all([
     getRatingMode(),
     getTheme(),
+    getLocale(),
     getCurrentUser(),
   ]);
+  const { t } = await getT();
 
   return (
     <article className="mx-auto max-w-3xl space-y-8">
@@ -33,6 +37,18 @@ export default async function SettingsPage() {
           required. If you clear cookies, everything resets to the defaults.
         </p>
       </header>
+
+      <SettingsSection
+        title={t("settings.language")}
+        description={t("settings.languageHint")}
+      >
+        <div className="space-y-3">
+          <Suspense>
+            <LocaleToggle current={locale} />
+          </Suspense>
+          <p className="text-xs text-foreground/60">{t("settings.tagsDisclaimer")}</p>
+        </div>
+      </SettingsSection>
 
       <SettingsSection title="Theme" description="How the whole site looks.">
         <div className="space-y-3">

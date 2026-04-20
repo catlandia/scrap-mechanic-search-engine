@@ -7,6 +7,7 @@ import {
   getNewestApproved,
 } from "@/lib/db/queries";
 import { getRatingMode } from "@/lib/prefs.server";
+import { getT } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
 
@@ -52,6 +53,7 @@ export default async function HomePage() {
   const total = Object.values(counts).reduce((sum, n) => sum + n, 0);
   const hasAny = total > 0;
   const ratingMode = await getRatingMode();
+  const { t } = await getT();
 
   return (
     <div className="space-y-14">
@@ -60,7 +62,7 @@ export default async function HomePage() {
           Scrap Mechanic · Search Engine
         </p>
         <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-          Find the good stuff from the Workshop.
+          {t("home.heroTitle")}
         </h1>
         <p className="max-w-2xl text-lg text-foreground/70">
           Hand-curated Blueprints, Mods, Worlds, and more. Combine tags like{" "}

@@ -8,6 +8,7 @@ import {
 } from "@/lib/suggestions/actions";
 import { getCurrentUser } from "@/lib/auth/session";
 import { SuggestionCard } from "@/components/SuggestionCard";
+import { getT } from "@/lib/i18n/server";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -39,6 +40,7 @@ export default async function SuggestionsPage({
 
   const viewer = await getCurrentUser();
   const viewerId = viewer?.steamid ?? null;
+  const { t } = await getT();
 
   const [approved, implemented, rejected] = await Promise.all([
     getApprovedSuggestions(viewerId),
@@ -58,34 +60,30 @@ export default async function SuggestionsPage({
       <header className="flex flex-wrap items-baseline justify-between gap-3">
         <div>
           <p className="text-sm uppercase tracking-widest text-accent">
-            Feature suggestions
+            {t("suggestions.eyebrow")}
           </p>
-          <h1 className="text-3xl font-bold">Ideas board</h1>
-          <p className="text-sm text-foreground/60">
-            Ideas the Creator has reviewed. Upvote the ones you want first.
-            Rejected ideas stay visible so you can see what didn&apos;t make
-            the cut and why.
-          </p>
+          <h1 className="text-3xl font-bold">{t("suggestions.title")}</h1>
+          <p className="text-sm text-foreground/60">{t("suggestions.subtitle")}</p>
         </div>
         <Link
           href="/suggestions/new"
           className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-black hover:bg-accent-strong"
         >
-          Submit a suggestion
+          {t("suggestions.submitCta")}
         </Link>
       </header>
 
       <div className="lg:hidden">
         <nav className="flex gap-2 border-b border-border text-sm">
-          <TabLink label="Approved" count={approved.length} active={tab === "approved"} href="/suggestions" />
+          <TabLink label={t("suggestions.tab.approved")} count={approved.length} active={tab === "approved"} href="/suggestions" />
           <TabLink
-            label="Implemented"
+            label={t("suggestions.tab.implemented")}
             count={implemented.length}
             active={tab === "implemented"}
             href="/suggestions?status=implemented"
           />
           <TabLink
-            label="Rejected"
+            label={t("suggestions.tab.rejected")}
             count={rejected.length}
             active={tab === "rejected"}
             href="/suggestions?status=rejected"
@@ -99,10 +97,10 @@ export default async function SuggestionsPage({
             readOnly={tab !== "approved"}
             emptyLabel={
               tab === "rejected"
-                ? "No rejected ideas yet."
+                ? t("suggestions.empty.rejected")
                 : tab === "implemented"
-                  ? "No implemented ideas yet. Things approved and shipped show up here."
-                  : "No approved ideas on the board yet — submit one."
+                  ? t("suggestions.empty.implemented")
+                  : t("suggestions.empty.approved")
             }
           />
         </div>
@@ -110,31 +108,31 @@ export default async function SuggestionsPage({
 
       <div className="hidden lg:grid lg:grid-cols-3 lg:gap-4">
         <BoardColumn
-          label="Approved"
+          label={t("suggestions.tab.approved")}
           tone="accent"
           count={approved.length}
           suggestions={approved}
           signedIn={!!viewer}
           readOnly={false}
-          emptyLabel="No approved ideas on the board yet — submit one."
+          emptyLabel={t("suggestions.empty.approved")}
         />
         <BoardColumn
-          label="Implemented"
+          label={t("suggestions.tab.implemented")}
           tone="emerald"
           count={implemented.length}
           suggestions={implemented}
           signedIn={!!viewer}
           readOnly
-          emptyLabel="No implemented ideas yet. Things approved and shipped show up here."
+          emptyLabel={t("suggestions.empty.implemented")}
         />
         <BoardColumn
-          label="Rejected"
+          label={t("suggestions.tab.rejected")}
           tone="red"
           count={rejected.length}
           suggestions={rejected}
           signedIn={!!viewer}
           readOnly
-          emptyLabel="No rejected ideas yet."
+          emptyLabel={t("suggestions.empty.rejected")}
         />
       </div>
     </div>

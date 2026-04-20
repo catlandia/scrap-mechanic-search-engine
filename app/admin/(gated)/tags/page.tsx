@@ -106,6 +106,11 @@ export default async function TagsPage() {
 
       <section className="space-y-3">
         <h2 className="text-sm font-semibold uppercase tracking-widest text-foreground/50">Tags</h2>
+        <p className="rounded border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-xs text-amber-200">
+          Tag names must be in English (A–Z, 0–9, spaces, and basic punctuation).
+          Non-Latin scripts and accented letters are rejected server-side — the
+          catalogue stays consistent across every UI language.
+        </p>
         <form
           action={createTag}
           className="grid gap-2 rounded-md border border-border bg-card p-4 sm:grid-cols-4"
