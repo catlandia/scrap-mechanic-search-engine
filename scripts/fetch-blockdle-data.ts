@@ -1,0 +1,215 @@
+import fs from "node:fs/promises";
+import path from "node:path";
+
+// Prebuild: pulls the block database + icons from a private GitHub repo
+// and rewrites the three generated files server+client code imports. Mirrors
+// scripts/fetch-captcha-images.ts — same GH Contents API, same dev escape
+// hatch. See docs/blockdle.md for the private-repo layout.
+
+const LIB_DIR = path.resolve(process.cwd(), "lib/blockdle");
+const ICONS_DIR = path.join(LIB_DIR, "icons");
+const BLOCKS_JSON_DISK = path.join(LIB_DIR, "blocks.json");
+const BLOCKS_GENERATED_TS = path.join(LIB_DIR, "blocks.generated.ts");
+const AUTOCOMPLETE_GENERATED_TS = path.join(LIB_DIR, "autocomplete.generated.ts");
+const ICONS_GENERATED_JSON = path.join(LIB_DIR, "_icons.generated.json");
+
+const UUID_PNG = /^[0-9a-f-]{36}\.png$/i;
+
+type ExtractedBlock = {
+  uuid: string;
+  title: string;
+  category: string;
+  material: string;
+  durability: number;
+  density: number;
+  friction: number;
+  buoyancy: number;
+};
+
+async function main() {
+  const token = process.env.BLOCKDLE_DATA_TOKEN;
+  const repo = process.env.BLOCKDLE_DATA_REPO;
+  const branch = process.env.BLOCKDLE_DATA_BRANCH ?? "main";
+  const repoPath = (process.env.BLOCKDLE_DATA_PATH ?? "").replace(/^\/+|\/+$/g, "");
+
+  if (!token || !repo) {
+    // Dev escape hatch: if the extractor output is already on disk, use it.
+    const local = await readLocalSet();
+    if (local) {
+      console.log(
+        `[blockdle] BLOCKDLE_DATA_TOKEN not set; using local set of ${local.blocks.length} blocks + ${local.iconCount} icons.`,
+      );
+      await writeGenerated(local.blocks);
+      return;
+    }
+    console.error(
+      "[blockdle] BLOCKDLE_DATA_TOKEN and BLOCKDLE_DATA_REPO are required to fetch the block database.",
+    );
+    console.error(
+      "           Run scripts/extract-blockdle-data.ts against your local SM install,",
+    );
+    console.error(
+      "           push the output to a private GitHub repo, generate a fine-grained",
+    );
+    console.error("           read-only PAT, and set both env vars. See docs/blockdle.md.");
+    process.exit(1);
+  }
+
+  console.log(`[blockdle] Fetching data from ${repo}@${branch}…`);
+
+  await fs.mkdir(ICONS_DIR, { recursive: true });
+
+  // 1. Pull blocks.json from the repo path root.
+  const blocksUrl = `https://api.github.com/repos/${repo}/contents/${repoPath ? repoPath + "/" : ""}blocks.json?ref=${branch}`;
+  const blocksRes = await fetch(blocksUrl, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/vnd.github.raw",
+      "X-GitHub-Api-Version": "2022-11-28",
+      "User-Agent": "scrap-mechanic-search-engine",
+    },
+  });
+  if (!blocksRes.ok) {
+    const body = await blocksRes.text().catch(() => "");
+    throw new Error(
+      `Failed to fetch blocks.json: ${blocksRes.status} ${blocksRes.statusText}\n${body}`,
+    );
+  }
+  const blocksRaw = await blocksRes.text();
+  await fs.writeFile(BLOCKS_JSON_DISK, blocksRaw, "utf8");
+  const blocks = JSON.parse(blocksRaw) as ExtractedBlock[];
+  console.log(`[blockdle] blocks.json: ${blocks.length} records`);
+
+  // 2. List icons/ in the repo.
+  const iconsListUrl = new URL(
+    `https://api.github.com/repos/${repo}/contents/${repoPath ? repoPath + "/" : ""}icons`,
+  );
+  iconsListUrl.searchParams.set("ref", branch);
+  const listRes = await fetch(iconsListUrl, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/vnd.github+json",
+      "X-GitHub-Api-Version": "2022-11-28",
+      "User-Agent": "scrap-mechanic-search-engine",
+    },
+  });
+  if (!listRes.ok) {
+    const body = await listRes.text().catch(() => "");
+    throw new Error(
+      `Failed to list icons/: ${listRes.status} ${listRes.statusText}\n${body}`,
+    );
+  }
+  const entries = (await listRes.json()) as Array<{
+    name: string;
+    path: string;
+    type: string;
+  }>;
+  const iconFiles = entries.filter((e) => e.type === "file" && UUID_PNG.test(e.name));
+  console.log(`[blockdle] icons/: ${iconFiles.length} PNGs`);
+
+  // 3. Download each icon.
+  for (const entry of iconFiles) {
+    const rawRes = await fetch(
+      `https://api.github.com/repos/${repo}/contents/${entry.path}?ref=${branch}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/vnd.github.raw",
+          "X-GitHub-Api-Version": "2022-11-28",
+          "User-Agent": "scrap-mechanic-search-engine",
+        },
+      },
+    );
+    if (!rawRes.ok) {
+      throw new Error(
+        `Failed to download ${entry.path}: ${rawRes.status} ${rawRes.statusText}`,
+      );
+    }
+    const buf = Buffer.from(await rawRes.arrayBuffer());
+    await fs.writeFile(path.join(ICONS_DIR, entry.name.toLowerCase()), buf);
+  }
+
+  await writeGenerated(blocks);
+}
+
+async function readLocalSet(): Promise<
+  { blocks: ExtractedBlock[]; iconCount: number } | null
+> {
+  try {
+    const raw = await fs.readFile(BLOCKS_JSON_DISK, "utf8");
+    const blocks = JSON.parse(raw) as ExtractedBlock[];
+    const iconFiles = (await fs.readdir(ICONS_DIR).catch(() => []))
+      .filter((f) => UUID_PNG.test(f));
+    if (iconFiles.length === 0) return null;
+    return { blocks, iconCount: iconFiles.length };
+  } catch {
+    return null;
+  }
+}
+
+async function writeGenerated(blocks: ExtractedBlock[]) {
+  // Validate icon presence and emit a side-by-side index.
+  const iconFiles = new Set(
+    (await fs.readdir(ICONS_DIR).catch(() => []))
+      .filter((f) => UUID_PNG.test(f))
+      .map((f) => f.toLowerCase()),
+  );
+
+  const missingIcon: string[] = [];
+  for (const b of blocks) {
+    if (!iconFiles.has(`${b.uuid}.png`)) missingIcon.push(b.uuid);
+  }
+  if (missingIcon.length > 0) {
+    throw new Error(
+      `blocks.json lists ${missingIcon.length} uuid(s) with no matching icon on disk: ${missingIcon.slice(0, 5).join(", ")}${missingIcon.length > 5 ? " …" : ""}`,
+    );
+  }
+  const blockUuids = new Set(blocks.map((b) => b.uuid));
+  const orphanIcons: string[] = [];
+  for (const f of iconFiles) {
+    const uuid = f.replace(/\.png$/i, "");
+    if (!blockUuids.has(uuid)) orphanIcons.push(uuid);
+  }
+  if (orphanIcons.length > 0) {
+    throw new Error(
+      `icons/ contains ${orphanIcons.length} orphan file(s) with no matching block: ${orphanIcons.slice(0, 5).join(", ")}${orphanIcons.length > 5 ? " …" : ""}`,
+    );
+  }
+
+  // 1. blocks.generated.ts — full typed export for the server.
+  const blocksLiteral = JSON.stringify(blocks, null, 2);
+  const blocksOut = `// GENERATED by scripts/fetch-blockdle-data.ts — do not edit.
+import type { Block } from "./types";
+
+export const BLOCKS: readonly Block[] = ${blocksLiteral} as const;
+`;
+  await fs.writeFile(BLOCKS_GENERATED_TS, blocksOut, "utf8");
+
+  // 2. autocomplete.generated.ts — slim index for the client bundle.
+  const index = blocks
+    .map((b) => ({ uuid: b.uuid, name: b.title, nameLower: b.title.toLowerCase() }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+  const autoOut = `// GENERATED by scripts/fetch-blockdle-data.ts — do not edit.
+import type { AutocompleteEntry } from "./types";
+
+export const INDEX: readonly AutocompleteEntry[] = ${JSON.stringify(index)};
+`;
+  await fs.writeFile(AUTOCOMPLETE_GENERATED_TS, autoOut, "utf8");
+
+  // 3. _icons.generated.json — base64 map keyed by uuid.
+  const iconMap: Record<string, string> = {};
+  for (const b of blocks) {
+    const buf = await fs.readFile(path.join(ICONS_DIR, `${b.uuid}.png`));
+    iconMap[b.uuid] = buf.toString("base64");
+  }
+  await fs.writeFile(ICONS_GENERATED_JSON, JSON.stringify(iconMap), "utf8");
+
+  console.log(
+    `[blockdle] Wrote blocks.generated.ts (${blocks.length}), autocomplete.generated.ts (${index.length}), _icons.generated.json (${Object.keys(iconMap).length}).`,
+  );
+}
+
+main().catch((err) => {
+  console.error("[blockdle] fetch failed:", err);
+  process.exit(1);
+});

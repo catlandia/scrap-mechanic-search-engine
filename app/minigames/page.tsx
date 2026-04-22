@@ -46,11 +46,26 @@ export default async function MinigamesLandingPage() {
             </p>
           </Link>
         </li>
-        <li className="flex h-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border bg-card/40 p-5 text-center text-sm text-foreground/40">
-          <span className="text-3xl" aria-hidden>
-            ⏳
-          </span>
-          <p>{t("minigames.comingSoon")}</p>
+        <li>
+          <Link
+            href="/minigames/blockdle"
+            className="group flex h-full flex-col gap-2 rounded-lg border border-border bg-card p-5 transition hover:border-accent hover:bg-card/80"
+          >
+            <div className="flex items-start justify-between gap-2">
+              <span className="text-3xl" aria-hidden>
+                🟩
+              </span>
+              <span className="rounded-full border border-accent/40 bg-accent/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-accent">
+                {t("minigames.playLabel")}
+              </span>
+            </div>
+            <h2 className="text-lg font-semibold text-foreground group-hover:text-accent">
+              {t("minigames.blockdle.name")}
+            </h2>
+            <p className="text-sm text-foreground/60">
+              {t("minigames.blockdle.blurb")}
+            </p>
+          </Link>
         </li>
       </ul>
     </div>

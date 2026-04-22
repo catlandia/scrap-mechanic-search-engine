@@ -28,3 +28,15 @@ Thumbs.db
 # out of the public repo.
 /lib/captcha/images/*.jpg
 /lib/captcha/_images.generated.json
+
+# Blockdle block database + icons live in a separate private GitHub repo
+# and are fetched at build time by scripts/fetch-blockdle-data.ts. Game
+# assets (icons) are Scrap Mechanic IP; keeping them out of the public repo
+# matches the captcha pattern and avoids redistributing game content.
+/lib/blockdle/blocks.json
+/lib/blockdle/blocks.generated.ts
+/lib/blockdle/autocomplete.generated.ts
+/lib/blockdle/_icons.generated.json
+/lib/blockdle/icons/
+/blockdle-data-tmp/
+/tmp-blockdle/

@@ -1,0 +1,453 @@
+// One-shot extractor. Point it at a local Scrap Mechanic install, pulls
+// every user-visible block / part with its in-game handbook stats + icon,
+// and emits:
+//   <out>/blocks.json         — sorted by title, one record per block
+//   <out>/icons/<uuid>.png    — 96x96 tiles sliced from the game atlases
+//
+// The user then commits <out> to a separate private GitHub repo; the public
+// repo's build-time fetch script pulls the data back in.
+//
+// Usage:
+//   npx tsx scripts/extract-blockdle-data.ts \
+//     --sm "D:/SteamLibrary/steamapps/common/Scrap Mechanic" \
+//     --out ./blockdle-data-tmp
+//
+// --strict   exit non-zero on any unmapped material / category
+// --sm       SM install root (default: env SM_INSTALL_DIR)
+// --out      output directory (default: ./blockdle-data-tmp)
+
+import fs from "node:fs/promises";
+import path from "node:path";
+import { Jimp } from "jimp";
+
+// ---------- CLI ----------
+
+function arg(name: string, fallback?: string): string | undefined {
+  const flag = `--${name}`;
+  const i = process.argv.indexOf(flag);
+  if (i >= 0 && i + 1 < process.argv.length) return process.argv[i + 1];
+  return fallback;
+}
+
+const SM_ROOT = arg("sm", process.env.SM_INSTALL_DIR);
+const OUT_DIR = path.resolve(process.cwd(), arg("out", "./blockdle-data-tmp")!);
+const STRICT = process.argv.includes("--strict");
+
+if (!SM_ROOT) {
+  console.error("error: --sm <Scrap Mechanic install root> is required");
+  console.error("       (or set SM_INSTALL_DIR env var)");
+  process.exit(1);
+}
+
+const smRoot = path.resolve(SM_ROOT);
+
+// ---------- Helpers ----------
+
+// shapesets.json uses JSON with // comments. Strip them before parsing.
+function parseJsonc<T = unknown>(raw: string): T {
+  const stripped = raw
+    .split(/\r?\n/)
+    .map((line) => line.replace(/^(\s*)\/\/.*$/, "$1"))
+    .join("\n");
+  return JSON.parse(stripped) as T;
+}
+
+function resolvePath(p: string): string {
+  return p
+    .replace(/^\$GAME_DATA/, path.join(smRoot, "Data"))
+    .replace(/^\$SURVIVAL_DATA/, path.join(smRoot, "Survival"))
+    .replace(/^\$CHALLENGE_DATA/, path.join(smRoot, "ChallengeData"))
+    .replace(/\\/g, "/");
+}
+
+async function readText(p: string): Promise<string> {
+  return fs.readFile(p, "utf8");
+}
+
+// ---------- Category mapping (shapeset filename → category) ----------
+
+type Category =
+  | "Building"
+  | "Decoration"
+  | "Interactive"
+  | "Container"
+  | "Vehicle"
+  | "Industrial"
+  | "Tool"
+  | "Consumable"
+  | "Resource"
+  | "Worldgen";
+
+// null = skip (not user-facing / internal)
+const CATEGORY_FOR_FILE: Record<string, Category | null> = {
+  "blocks.json": "Building",
+  "fittings.json": "Building",
+  "spaceship.json": "Building",
+  "decor.json": "Decoration",
+  "plants.json": "Decoration",
+  "lights.json": "Decoration",
+  "interactive.json": "Interactive",
+  "interactive_shared.json": "Interactive",
+  "interactive_upgradeable.json": "Interactive",
+  "interactivecontainers.json": "Interactive",
+  "interactivecontainers_shared.json": "Interactive",
+  "scrapinteractables.json": "Interactive",
+  "containers.json": "Container",
+  "vehicle.json": "Vehicle",
+  "industrial.json": "Industrial",
+  "mounted_guns.json": "Tool",
+  "powertools.json": "Tool",
+  "tool_parts.json": "Tool",
+  "bucket.json": "Tool",
+  "consumable.json": "Consumable",
+  "consumable_shared.json": "Consumable",
+  "outfitpackage.json": "Consumable",
+  "packingcrates.json": "Consumable",
+  "component.json": "Resource",
+  "resources.json": "Resource",
+  "harvests.json": "Resource",
+  "treeparts.json": "Resource",
+  "stoneparts.json": "Resource",
+  "robotparts.json": "Resource",
+  "construction.json": "Worldgen",
+  "building.json": "Worldgen",
+  "warehouse.json": "Worldgen",
+  "manmade.json": "Worldgen",
+  "wedges.shapeset": "Building",
+
+  // Explicit skip — engine / internal / worldgen-only.
+  "characterobject.json": null,
+  "character_shape.json": null,
+  "debug.json": null,
+  "blocks_blueprint.json": null,
+  "beacon.json": null,
+  "craftbot.json": null,
+  "cookbot.json": null,
+  "plantables.json": null,
+  "shootingrange.json": null,
+  "vacumpipe.json": null,
+  "destructable_tape.json": null,
+  "survivalobject.json": null,
+  "effect_proxies.json": null,
+  "override.json": null,
+  "challenge.json": null,
+};
+
+function categoryFor(file: string): Category | null | undefined {
+  const base = path.basename(file).toLowerCase();
+  if (base in CATEGORY_FOR_FILE) return CATEGORY_FOR_FILE[base];
+  return undefined;
+}
+
+// ---------- Material normalisation ----------
+
+type Material =
+  | "Mechanical"
+  | "Metal"
+  | "Wood"
+  | "Plastic"
+  | "Cardboard"
+  | "Plant"
+  | "Grass"
+  | "Fruit"
+  | "Stone"
+  | "Rock"
+  | "Sand"
+  | "Rubber"
+  | "Gum"
+  | "Glass"
+  | "Other";
+
+const MATERIAL_ALIASES: Record<string, Material> = {
+  mechanical: "Mechanical",
+  metal: "Metal",
+  wood: "Wood",
+  plastic: "Plastic",
+  cardboard: "Cardboard",
+  plant: "Plant",
+  grass: "Grass",
+  fruit: "Fruit",
+  stone: "Stone",
+  rock: "Rock",
+  sand: "Sand",
+  rubber: "Rubber",
+  gum: "Gum",
+  glass: "Glass",
+};
+
+const unknownMaterials = new Set<string>();
+
+function normaliseMaterial(raw: string | undefined): Material {
+  if (!raw) return "Other";
+  const key = raw.toLowerCase();
+  const hit = MATERIAL_ALIASES[key];
+  if (hit) return hit;
+  unknownMaterials.add(raw);
+  return "Other";
+}
+
+// ---------- Title filtering ----------
+
+// Internal names the game never shows the user. If an inventoryDescriptions
+// title looks like one of these, drop the block from the guess pool.
+function looksInternal(title: string): boolean {
+  return /^(obj_|blk_|jnt_|part_|\$)/i.test(title.trim());
+}
+
+// ---------- Atlas slicing ----------
+
+type AtlasEntry = { atlasFile: string; x: number; y: number };
+
+async function loadAtlas(xmlPath: string): Promise<Map<string, AtlasEntry>> {
+  const raw = await readText(xmlPath);
+  const atlasDir = path.dirname(xmlPath);
+  const textureMatch = raw.match(/texture="([^"]+)"/);
+  if (!textureMatch) throw new Error(`no texture attribute in ${xmlPath}`);
+  const atlasFile = path.join(atlasDir, textureMatch[1]);
+
+  const map = new Map<string, AtlasEntry>();
+  const indexRe = /<Index\s+name="([^"]+)">[\s\S]*?<Frame\s+point="(\d+)\s+(\d+)"/g;
+  let m: RegExpExecArray | null;
+  while ((m = indexRe.exec(raw)) !== null) {
+    const name = m[1];
+    if (name === "Empty") continue;
+    map.set(name, { atlasFile, x: parseInt(m[2], 10), y: parseInt(m[3], 10) });
+  }
+  return map;
+}
+
+const ICON_SIZE = 96;
+
+type AtlasSource = { name: string; xmlPath: string };
+
+async function buildIconIndex(sources: AtlasSource[]): Promise<Map<string, AtlasEntry>> {
+  const merged = new Map<string, AtlasEntry>();
+  for (const src of sources) {
+    try {
+      const entries = await loadAtlas(src.xmlPath);
+      for (const [uuid, entry] of entries) {
+        // First atlas wins — base game atlas is scanned first, then
+        // Survival overrides if it redefines the same uuid.
+        if (!merged.has(uuid)) merged.set(uuid, entry);
+      }
+      console.log(`  [icons] ${src.name}: ${entries.size} entries`);
+    } catch (err) {
+      console.warn(`  [icons] failed to load ${src.name}:`, err instanceof Error ? err.message : err);
+    }
+  }
+  return merged;
+}
+
+async function sliceAtlasIcons(
+  iconIndex: Map<string, AtlasEntry>,
+  neededUuids: Set<string>,
+  outDir: string,
+): Promise<number> {
+  // Group needed slices by atlas so we only load each PNG once.
+  const byAtlas = new Map<string, Array<{ uuid: string; x: number; y: number }>>();
+  for (const uuid of neededUuids) {
+    const entry = iconIndex.get(uuid);
+    if (!entry) continue;
+    const list = byAtlas.get(entry.atlasFile) ?? [];
+    list.push({ uuid, x: entry.x, y: entry.y });
+    byAtlas.set(entry.atlasFile, list);
+  }
+
+  let written = 0;
+  for (const [atlasFile, slices] of byAtlas) {
+    const atlas = await Jimp.read(atlasFile);
+    console.log(`  [icons] slicing ${slices.length} from ${path.basename(atlasFile)} (${atlas.width}x${atlas.height})`);
+    for (const s of slices) {
+      const tile = atlas.clone().crop({ x: s.x, y: s.y, w: ICON_SIZE, h: ICON_SIZE });
+      const buf = await tile.getBuffer("image/png");
+      await fs.writeFile(path.join(outDir, `${s.uuid}.png`), buf);
+      written += 1;
+    }
+  }
+  return written;
+}
+
+// ---------- Main ----------
+
+type ShapeSetEntry = {
+  uuid: string;
+  name?: string;
+  physicsMaterial?: string;
+  ratings?: {
+    density?: number;
+    durability?: number;
+    friction?: number;
+    buoyancy?: number;
+  };
+};
+
+async function main() {
+  console.log(`SM root:  ${smRoot}`);
+  console.log(`Out dir:  ${OUT_DIR}`);
+
+  // 1. Parse shapesets.json manifest.
+  const manifestPath = path.join(smRoot, "Data/Objects/Database/shapesets.json");
+  const manifestRaw = await readText(manifestPath);
+  const manifest = parseJsonc<{ shapeSetList: string[] }>(manifestRaw);
+  console.log(`shapesets.json: ${manifest.shapeSetList.length} entries`);
+
+  // 2. Merge both English inventoryDescriptions files into one uuid → title map.
+  const titles = new Map<string, string>();
+  const addTitles = async (p: string) => {
+    try {
+      const raw = await readText(p);
+      const data = JSON.parse(raw) as Record<string, { title?: string }>;
+      let added = 0;
+      for (const [uuid, entry] of Object.entries(data)) {
+        if (entry?.title && !titles.has(uuid)) {
+          titles.set(uuid, entry.title);
+          added += 1;
+        }
+      }
+      console.log(`  [titles] ${path.basename(path.dirname(p))}/${path.basename(p)}: +${added}`);
+    } catch (err) {
+      console.warn(`  [titles] skipped ${p}:`, err instanceof Error ? err.message : err);
+    }
+  };
+  await addTitles(path.join(smRoot, "Data/Gui/Language/English/InventoryItemDescriptions.json"));
+  await addTitles(path.join(smRoot, "Survival/Gui/Language/English/inventoryDescriptions.json"));
+  await addTitles(path.join(smRoot, "ChallengeData/Gui/Language/English/inventoryDescriptions.json"));
+
+  // 3. Iterate every shapeset and collect stat records.
+  type Collected = {
+    uuid: string;
+    title: string;
+    category: Category;
+    material: Material;
+    durability: number;
+    density: number;
+    friction: number;
+    buoyancy: number;
+  };
+  const collected = new Map<string, Collected>();
+  let skippedUnmapped = 0;
+  let skippedInternalName = 0;
+  let skippedNoTitle = 0;
+  let skippedNoRatings = 0;
+  const unmappedFiles = new Set<string>();
+
+  for (const rawPath of manifest.shapeSetList) {
+    const resolved = resolvePath(rawPath);
+    const category = categoryFor(resolved);
+    if (category === null) continue;
+    if (category === undefined) {
+      unmappedFiles.add(path.basename(resolved));
+      skippedUnmapped += 1;
+      continue;
+    }
+
+    let shapeset: { blockList?: ShapeSetEntry[]; partList?: ShapeSetEntry[] };
+    try {
+      const raw = await readText(resolved);
+      shapeset = parseJsonc(raw);
+    } catch (err) {
+      console.warn(`  [shapeset] skip ${path.basename(resolved)}: ${err instanceof Error ? err.message : err}`);
+      continue;
+    }
+
+    const entries = [...(shapeset.blockList ?? []), ...(shapeset.partList ?? [])];
+    for (const e of entries) {
+      if (!e.uuid) continue;
+      if (collected.has(e.uuid)) continue;
+
+      const title = titles.get(e.uuid);
+      if (!title) {
+        skippedNoTitle += 1;
+        continue;
+      }
+      if (looksInternal(title)) {
+        skippedInternalName += 1;
+        continue;
+      }
+      const r = e.ratings;
+      if (
+        !r ||
+        typeof r.density !== "number" ||
+        typeof r.durability !== "number" ||
+        typeof r.friction !== "number" ||
+        typeof r.buoyancy !== "number"
+      ) {
+        skippedNoRatings += 1;
+        continue;
+      }
+
+      collected.set(e.uuid, {
+        uuid: e.uuid,
+        title,
+        category,
+        material: normaliseMaterial(e.physicsMaterial),
+        durability: r.durability,
+        density: r.density,
+        friction: r.friction,
+        buoyancy: r.buoyancy,
+      });
+    }
+  }
+
+  console.log(
+    `\nShapeset pass:  ${collected.size} candidates (skipped ${skippedNoTitle} no-title, ${skippedInternalName} internal-name, ${skippedNoRatings} no-ratings, ${skippedUnmapped} in unmapped files)`,
+  );
+  if (unmappedFiles.size > 0) {
+    console.log(`  Unmapped shapeset files: ${[...unmappedFiles].join(", ")}`);
+  }
+  if (unknownMaterials.size > 0) {
+    console.log(`  Unknown physicsMaterial values (→ "Other"): ${[...unknownMaterials].join(", ")}`);
+  }
+
+  // 4. Load icon atlases + slice the needed tiles.
+  const iconSources: AtlasSource[] = [
+    { name: "base", xmlPath: path.join(smRoot, "Data/Gui/IconMap.xml") },
+    { name: "survival", xmlPath: path.join(smRoot, "Survival/Gui/IconMapSurvival.xml") },
+    { name: "challenge", xmlPath: path.join(smRoot, "ChallengeData/Gui/IconMapChallenge.xml") },
+  ];
+  const iconIndex = await buildIconIndex(iconSources);
+
+  // Drop blocks with no icon — guessing them would be a blank tile.
+  const needed = new Set<string>();
+  let skippedNoIcon = 0;
+  for (const [uuid, block] of collected) {
+    if (iconIndex.has(uuid)) {
+      needed.add(uuid);
+    } else {
+      collected.delete(uuid);
+      skippedNoIcon += 1;
+      void block;
+    }
+  }
+
+  // 5. Write output.
+  const iconsOut = path.join(OUT_DIR, "icons");
+  await fs.rm(OUT_DIR, { recursive: true, force: true });
+  await fs.mkdir(iconsOut, { recursive: true });
+
+  const iconsWritten = await sliceAtlasIcons(iconIndex, needed, iconsOut);
+
+  const blocks = [...collected.values()].sort((a, b) =>
+    a.title.localeCompare(b.title),
+  );
+  await fs.writeFile(
+    path.join(OUT_DIR, "blocks.json"),
+    JSON.stringify(blocks, null, 2),
+    "utf8",
+  );
+
+  console.log(
+    `\nDone. ${blocks.length} blocks, ${iconsWritten} icons. Skipped ${skippedNoIcon} (no icon).`,
+  );
+  console.log(`Output: ${OUT_DIR}`);
+
+  if (STRICT && (unmappedFiles.size > 0 || unknownMaterials.size > 0)) {
+    console.error("\n--strict: unmapped files or materials present; exiting non-zero.");
+    process.exit(2);
+  }
+}
+
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});
