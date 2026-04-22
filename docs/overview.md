@@ -63,29 +63,9 @@ Community layer (requires Steam login):
 
 ---
 
-## Current Version: V4.15
+## Version history
 
-The project has grown well beyond the initial search-engine scope. Version history at a glance:
-
-| Version | Feature |
-|---|---|
-| V1 | Core search engine: ingest, tagger, admin queue, public pages, cron |
-| V2.0 | Steam OpenID login, user roles, community tag voting, user submissions, bans/mutes/warnings |
-| V3.0 | Comments on creations |
-| V3.1 | Community-submitted Workshop items |
-| V4.0 | Feature suggestion board |
-| V4.1–4.3 | Report queue hooks, rate limiting, up/down votes on suggestions |
-| V4.4–4.5 | Mod archive (view-only), /suggestions tabs |
-| V4.6 | 3-tab ideas board; creator can reject live ideas; creator-side tag removal |
-| V4.7 | Banned users demoted to ghost via `effectiveRole()` |
-| V4.8 | Hard ban (blocks sign-in); full suggestion status re-routing; creator hard-delete |
-| V4.9 | Creator sees all non-rejected tags on `/creation/[id]` |
-| V4.10 | Scrap Mechanic logo image replaces "SM" text in nav |
-| V4.11 | Custom SM-themed captcha (9 characters, Chapter 2 easter egg) |
-| V4.12 | Captcha image filename hidden via `/api/captcha/image` proxy |
-| V4.13 | Appid gate for submissions; notifications system + bell; `/me/submissions`; captcha gates Steam login only |
-| V4.14 | Creator can clear user warnings from admin user page |
-| V4.15 | Rating-mode toggle (Steam/Site/Both); raw ratio instead of Wilson-smoothed `vote_score`; site-rating sorts; queue reject reason; mobile hamburger drawer nav |
+Per-version changelog lives in [`README.md`](README.md#recent-changes-v46810) — the quick-orientation block at the top shows the current version. Don't duplicate it here; a parallel list only decays.
 
 ---
 
@@ -102,6 +82,8 @@ Required for full operation (see `.env.example`):
 | `SESSION_SECRET` | iron-session encryption key, min 32 chars |
 | `NEXT_PUBLIC_SITE_URL` | Canonical site URL (used for OG meta) |
 | `CREATOR_STEAMID` | SteamID of the site owner — grants creator-tier role |
+| `CAPTCHA_IMAGES_TOKEN` / `_REPO` / `_BRANCH` / `_PATH` | Private-repo credentials for the Scrapcha image pipeline (see [captcha.md](captcha.md)) |
+| `BLOCKDLE_DATA_TOKEN` / `_REPO` / `_BRANCH` / `_PATH` | Private-repo credentials for the Blockdle data pipeline (see [blockdle.md](blockdle.md)) |
 
 ---
 
@@ -138,6 +120,9 @@ app/
     profile/[steamid]/page.tsx    # user profile
     author/[steamid]/page.tsx     # author's creations
     me/page.tsx                   # redirect to own profile
+    minigames/page.tsx            # minigames landing grid
+    minigames/scrapcha/           # Scrapcha character-ID game
+    minigames/blockdle/           # Blockdle block-guess *dle game
   admin/
     login/page.tsx
     logout/page.tsx
@@ -155,6 +140,8 @@ app/
   api/
     cron/ingest/route.ts
     cron/refresh/route.ts
+    minigames/scrapcha/image/route.ts   # serves character JPG from manifest
+    minigames/blockdle/icon/[uuid]/route.ts  # serves block PNG from manifest
   auth/
     steam/login/route.ts          # redirect to Steam OpenID
     steam/return/route.ts         # Steam callback, sets session
@@ -182,6 +169,12 @@ lib/
     thresholds.ts                 # per-kind follow-count minimums
   suggestions/
     actions.ts                    # suggestion CRUD server actions
+  captcha/
+    questions.ts                  # character-pool + question generator (shared /verify + /minigames/scrapcha)
+    _images.generated.json        # base64 manifest (gitignored, build-time fetch)
+  blockdle/
+    types.ts compare.ts pick.ts session.ts share.ts
+    blocks.generated.ts _icons.generated.json autocomplete.generated.ts  # all gitignored
   i18n/
     dictionaries.ts               # en/ru/de/pl translation keys + translate()
     server.ts                     # getT() — reads smse_lang cookie, returns {locale, dict, t}
@@ -194,4 +187,8 @@ scripts/
   migrate.ts
   seed.ts
   smoke-classify.ts
+  fetch-captcha-images.ts         # prebuild: pulls captcha JPGs from private repo
+  fetch-blockdle-data.ts          # prebuild: pulls blockdle data from private repo
+  extract-blockdle-data.ts        # one-shot: extracts blocks + icons from local SM install
+  backfill-creators.ts            # one-shot: re-scrape multi-creator attribution
 ```

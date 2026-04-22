@@ -26,8 +26,12 @@ vercel env pull .env.local
 | `CAPTCHA_IMAGES_REPO` | Yes (prod) | `owner/repo` name of the private captcha-images repo |
 | `CAPTCHA_IMAGES_BRANCH` | No | Defaults to `main` |
 | `CAPTCHA_IMAGES_PATH` | No | Defaults to repo root — set if jpgs live in a subfolder |
+| `BLOCKDLE_DATA_TOKEN` | Yes (prod) | Fine-grained PAT with Contents:Read on the private blockdle-data repo |
+| `BLOCKDLE_DATA_REPO` | Yes (prod) | `owner/repo` name of the private blockdle-data repo |
+| `BLOCKDLE_DATA_BRANCH` | No | Defaults to `main` |
+| `BLOCKDLE_DATA_PATH` | No | Defaults to repo root — set if `blocks.json` + `icons/` live in a subfolder |
 
-Captcha images are fetched at build time by `scripts/fetch-captcha-images.ts` (wired as the `prebuild` npm script). Images are gitignored — first Vercel deployment after this landed requires both `CAPTCHA_IMAGES_TOKEN` and `CAPTCHA_IMAGES_REPO` to be set or the build will fail. See `docs/captcha.md` for setup.
+Captcha images **and** the Blockdle block catalogue are fetched at build time — the npm `build` script chains `scripts/fetch-captcha-images.ts` + `scripts/fetch-blockdle-data.ts` before `next build`. Both output sets are gitignored; first Vercel deployment requires all four required env vars per pipeline or the build fails. See `docs/captcha.md` and `docs/blockdle.md` for setup.
 
 ---
 
