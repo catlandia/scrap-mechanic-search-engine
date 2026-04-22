@@ -73,6 +73,8 @@ Runs weekly (Mondays) to sync engagement metrics for already-approved creations.
 
 **What does NOT trigger a re-triage:** Refresh never changes a creation's `status`. Even if an approved item's subscription count drops below the threshold, it stays approved. (Down-the-road: surface a "might want to re-review" flag for admins.)
 
+**Multi-creator attribution drain.** The weekly refresh cron also runs `refreshStaleCreators(500)` and the daily ingest cron tops it up with `refreshStaleCreators(200)` — combined weekly throughput ≈ 1900 rows. Rotation is ordered by `creators_refreshed_at asc nulls first`, so never-scraped and longest-stale rows land first. This is what pulls historical rows scraped by pre-V8.8 parsers (which silently overwrote real attribution with `[]` on transient failure) back into a clean state. On scrape failure the row's prior state and timestamp are preserved so hiccups don't clobber good data.
+
 ---
 
 ## Steam Web API Client (`lib/steam/client.ts`)

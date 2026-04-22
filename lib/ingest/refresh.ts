@@ -58,9 +58,14 @@ export async function runRefresh(batchSize = 100): Promise<RefreshResult> {
   // Second pass: rotate through the catalog and re-scrape multi-creator
   // attribution. Ordered by creatorsRefreshedAt ASC NULLS FIRST so never-
   // scraped rows come first, then the oldest-refreshed. Capped to keep
-  // the cron inside Vercel's function timeout; the whole catalog cycles
-  // over a few weeks.
-  const contributorsFilled = await refreshStaleCreators(200);
+  // the cron inside Vercel's function timeout. The weekly cron is the
+  // *bulk* drain — 500 rows is roughly 100 seconds at a 200 ms per-row
+  // throttle, comfortably inside the 300 s function ceiling. The daily
+  // ingest cron ALSO calls `refreshStaleCreators` as a continuous top-up
+  // pass (see `app/api/cron/ingest/route.ts`), so combined weekly
+  // throughput is ~500 + (200 × 7) ≈ 1900 rows — enough to drain a
+  // ~1000-item catalog every few days and keep it rescanned on rotation.
+  const contributorsFilled = await refreshStaleCreators(500);
 
   return { refreshed, contributorsFilled, errors };
 }
