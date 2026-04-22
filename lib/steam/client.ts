@@ -260,25 +260,40 @@ export function steamUrlFor(publishedFileId: string): string {
   return `https://steamcommunity.com/sharedfiles/filedetails/?id=${publishedFileId}`;
 }
 
+export type ContributorScrapeResult =
+  | { ok: true; contributors: Array<{ steamid: string; name: string }> }
+  | { ok: false; reason: "fetch" | "parse" };
+
 /**
  * Steam's public API only returns a single `creator` per workshop item, but
  * the web UI renders every contributor in a `<div class="creatorsBlock">`
  * sidebar. Scrape it and return the full list, resolving vanity URLs to
  * numeric steamids via ResolveVanityURL.
  *
- * Returns an empty array on network / parse failure — callers should fall
- * back to the API's single `creator` field.
+ * Returns a tagged result so callers can distinguish:
+ *   - { ok: true, contributors: [...] } — scrape succeeded; [] means
+ *     "solo-author item, no creatorsBlock" (still a clean success).
+ *   - { ok: false, reason: "fetch" } — network / HTTP failure after retries.
+ *   - { ok: false, reason: "parse" } — block found but no friendBlock
+ *     entries parsed, i.e. Steam changed their HTML.
+ *
+ * Refresh-path callers should PRESERVE the previously stored `creators` on
+ * `ok: false` rather than overwriting with [] — otherwise transient Steam
+ * hiccups silently clobber real attribution and a weekly rotation can take
+ * a month or more to heal. Insert-path callers have nothing to preserve
+ * and can treat failure as empty.
  */
 export async function fetchWorkshopContributors(
   apiKey: string,
   publishedFileId: string,
-): Promise<Array<{ steamid: string; name: string }>> {
+): Promise<ContributorScrapeResult> {
   const url = `https://steamcommunity.com/sharedfiles/filedetails/?id=${publishedFileId}`;
-  // One-retry + backoff on transient Steam hiccups. Without this, the bulk
-  // backfill lost ~60% of rows to occasional 5xx / aborts. The extra call on
-  // failure is cheap relative to the cost of re-scraping the whole catalog.
+  // Up to 3 attempts with jittered backoff on transient Steam hiccups.
+  // Without this, the bulk backfill lost ~60% of rows to occasional
+  // 5xx / aborts. Each extra retry is cheap relative to re-scraping the
+  // whole catalog on a rotation.
   let html: string | null = null;
-  for (let attempt = 0; attempt < 2; attempt++) {
+  for (let attempt = 0; attempt < 3; attempt++) {
     try {
       const res = await fetch(url, {
         headers: {
@@ -291,30 +306,40 @@ export async function fetchWorkshopContributors(
       html = await res.text();
       break;
     } catch {
-      if (attempt === 0) {
-        await new Promise((r) => setTimeout(r, 500));
+      if (attempt < 2) {
+        await new Promise((r) => setTimeout(r, 400 + Math.random() * 400));
         continue;
       }
-      return [];
+      return { ok: false, reason: "fetch" };
     }
   }
-  if (!html) return [];
+  if (!html) return { ok: false, reason: "fetch" };
 
   const start = html.indexOf('class="creatorsBlock"');
-  if (start < 0) return [];
-  const slice = html.slice(start, start + 20000);
+  // Solo-creator items don't render `creatorsBlock`. That's a clean success
+  // with zero contributors — the `authorSteamid` column covers them.
+  if (start < 0) return { ok: true, contributors: [] };
+
+  // Slice to the end of the block so the regex can't run past unrelated
+  // markup, and so very long blocks (lots of contributors) aren't truncated
+  // at the previous 20 KB cap.
+  const blockEnd = html.indexOf("</div>\r\n\t\t</div>", start);
+  const slice = html.slice(start, blockEnd > start ? blockEnd : start + 40000);
 
   type Raw = { profileLink: string; name: string };
   const raws: Raw[] = [];
   // Each contributor = one friendBlock div with a persona suffix and an
   // <a class="friendBlockLinkOverlay" href="PROFILE_URL"> plus a <div
-  // class="friendBlockContent">PERSONA<br>.
-  const blockRe = /class="friendBlock persona[^"]*"[\s\S]*?class="friendBlockLinkOverlay" href="([^"]+)"[\s\S]*?class="friendBlockContent">\s*([^<\r\n]+)</g;
+  // class="friendBlockContent">PERSONA<br>. Name char class is permissive
+  // so unicode / quotes / punctuation in personas don't break the match.
+  const blockRe = /class="friendBlock persona[^"]*"[\s\S]*?class="friendBlockLinkOverlay" href="([^"]+)"[\s\S]*?class="friendBlockContent">\s*([^<\n]+?)\s*(?:<br|<)/g;
   let m: RegExpExecArray | null;
   while ((m = blockRe.exec(slice)) !== null) {
     raws.push({ profileLink: m[1], name: m[2].trim() });
   }
-  if (raws.length === 0) return [];
+  // Block was there but we parsed zero rows — Steam changed its markup.
+  // Flag as parse failure so callers preserve prior state.
+  if (raws.length === 0) return { ok: false, reason: "parse" };
 
   // Split numeric steamids from vanity URLs. Numeric go straight through;
   // vanities go through ResolveVanityURL.
@@ -335,11 +360,12 @@ export async function fetchWorkshopContributors(
   }
   // De-dupe by steamid in case the HTML lists the same profile twice.
   const seen = new Set<string>();
-  return resolved.filter((c) => {
+  const contributors = resolved.filter((c) => {
     if (seen.has(c.steamid)) return false;
     seen.add(c.steamid);
     return true;
   });
+  return { ok: true, contributors };
 }
 
 export async function resolveVanityUrl(

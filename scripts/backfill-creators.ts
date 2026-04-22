@@ -39,21 +39,26 @@ async function main() {
   for (let i = 0; i < rows.length; i++) {
     const { id, title } = rows[i];
     try {
-      const contributors = await fetchWorkshopContributors(apiKey, id);
-      await db
-        .update(creations)
-        .set({
-          creators: contributors,
-          creatorsRefreshedAt: new Date(),
-        })
-        .where(eq(creations.id, id));
-      updated++;
-      if (contributors.length > 0) withContributors++;
-      if (contributors.length > 1) {
-        multi++;
-        console.log(
-          `  ${id} "${title}" → ${contributors.length} creators: ${contributors.map((c) => c.name).join(", ")}`,
-        );
+      const result = await fetchWorkshopContributors(apiKey, id);
+      if (!result.ok) {
+        console.log(`  ${id} "${title}" — scrape failed (${result.reason}); skipping`);
+      } else {
+        const contributors = result.contributors;
+        await db
+          .update(creations)
+          .set({
+            creators: contributors,
+            creatorsRefreshedAt: new Date(),
+          })
+          .where(eq(creations.id, id));
+        updated++;
+        if (contributors.length > 0) withContributors++;
+        if (contributors.length > 1) {
+          multi++;
+          console.log(
+            `  ${id} "${title}" → ${contributors.length} creators: ${contributors.map((c) => c.name).join(", ")}`,
+          );
+        }
       }
     } catch (e) {
       console.error(`  ${id} failed:`, e instanceof Error ? e.message : e);

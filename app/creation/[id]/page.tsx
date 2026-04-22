@@ -32,6 +32,8 @@ import { isCreator, isModerator } from "@/lib/auth/roles";
 import type { UserRole } from "@/lib/db/schema";
 import { getRatingMode } from "@/lib/prefs.server";
 import { getT } from "@/lib/i18n/server";
+import { rescrapeCreatorsAction } from "@/app/admin/actions";
+import { FormSubmitButton } from "@/components/FormSubmitButton";
 
 export const dynamic = "force-dynamic";
 
@@ -47,6 +49,7 @@ const KIND_I18N_KEY: Record<string, string> = {
 };
 
 type Params = Promise<{ id: string }>;
+type SearchParams = Promise<{ creators?: string }>;
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { id } = await params;
@@ -78,8 +81,15 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   };
 }
 
-export default async function CreationDetailPage({ params }: { params: Params }) {
+export default async function CreationDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Params;
+  searchParams?: SearchParams;
+}) {
   const { id } = await params;
+  const sp = searchParams ? await searchParams : undefined;
   const detail = await getCreationDetail(id);
   if (!detail) notFound();
 
@@ -126,6 +136,35 @@ export default async function CreationDetailPage({ params }: { params: Params })
   const uploader = uploaderRow;
 
   const viewerIsCreator = isCreator(viewer?.role as UserRole | undefined);
+  const viewerIsMod = isModerator(viewer?.role as UserRole | undefined);
+
+  const creatorsFlash = (() => {
+    const raw = sp?.creators;
+    if (!raw) return null;
+    if (raw.startsWith("ok_")) {
+      const n = Number(raw.slice(3));
+      return {
+        tone: "success" as const,
+        message:
+          Number.isFinite(n) && n > 0
+            ? `Re-scraped contributors: ${n} found.`
+            : "Re-scrape succeeded (no co-authors).",
+      };
+    }
+    if (raw === "err_fetch") {
+      return {
+        tone: "error" as const,
+        message: "Re-scrape failed: couldn't reach Steam. Previous attribution was kept.",
+      };
+    }
+    if (raw === "err_parse") {
+      return {
+        tone: "error" as const,
+        message: "Re-scrape failed: Steam HTML didn't parse. Previous attribution was kept.",
+      };
+    }
+    return null;
+  })();
   const visibleTags = tagsWithVotes.filter((t) => !t.rejected);
   const confirmedTags = visibleTags.filter((t) => t.confirmed);
   const communityTags = visibleTags
@@ -217,7 +256,32 @@ export default async function CreationDetailPage({ params }: { params: Params })
           <span>
             <span className="text-foreground/35">Steam:</span> {creation.id}
           </span>
+          {viewerIsMod && (
+            <form action={rescrapeCreatorsAction} className="inline-flex">
+              <input type="hidden" name="creationId" value={creation.id} />
+              <input type="hidden" name="shortId" value={String(creation.shortId)} />
+              <FormSubmitButton
+                className="font-mono text-[11px] text-foreground/45 hover:text-accent disabled:opacity-60"
+                pendingLabel="Re-scraping…"
+                title="Re-scrape multi-creator attribution from Steam"
+              >
+                Re-scrape contributors
+              </FormSubmitButton>
+            </form>
+          )}
         </div>
+        {creatorsFlash && (
+          <p
+            role="status"
+            className={
+              creatorsFlash.tone === "success"
+                ? "rounded-md border border-emerald-500/30 bg-emerald-500/15 px-3 py-1.5 text-xs text-emerald-200"
+                : "rounded-md border border-red-500/30 bg-red-500/15 px-3 py-1.5 text-xs text-red-200"
+            }
+          >
+            {creatorsFlash.message}
+          </p>
+        )}
         {uploader && (
           <p className="flex flex-wrap items-center gap-2 text-xs text-foreground/60">
             <span className="rounded bg-purple-500/20 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-purple-200">

@@ -744,7 +744,8 @@ export async function submitCreation(formData: FormData): Promise<SubmitResult> 
   // Multi-creator scrape (see fetchWorkshopContributors). Best-effort.
   let creators: Array<{ steamid: string; name: string }> = [];
   try {
-    creators = await fetchWorkshopContributors(apiKey, item.publishedfileid);
+    const result = await fetchWorkshopContributors(apiKey, item.publishedfileid);
+    if (result.ok) creators = result.contributors;
   } catch {
     /* best-effort — falls back to single author */
   }

@@ -426,7 +426,8 @@ export async function addCreation(formData: FormData) {
       }
       let creators: Array<{ steamid: string; name: string }> = [];
       try {
-        creators = await fetchWorkshopContributors(apiKey, item.publishedfileid);
+        const result = await fetchWorkshopContributors(apiKey, item.publishedfileid);
+        if (result.ok) creators = result.contributors;
       } catch {
         // scraping is best-effort — falls back to single author
       }
@@ -563,6 +564,52 @@ export async function addCreation(formData: FormData) {
   redirect(
     `/admin/add?added=${parsedId}&status=${autoApprove ? "approved" : "pending"}`,
   );
+}
+
+/**
+ * Re-scrape multi-creator attribution for a single creation immediately.
+ * Useful when a user reports that an item is missing from a co-author's
+ * profile — mods can force a fresh scrape without waiting for the weekly
+ * refresh rotation. On scrape failure the stored `creators` is preserved
+ * (same invariant as `refreshStaleCreators`). Mod+.
+ */
+export async function rescrapeCreatorsAction(formData: FormData) {
+  await requireMod();
+  const creationId = String(formData.get("creationId") ?? "").trim();
+  const shortId = String(formData.get("shortId") ?? "").trim();
+  if (!/^\d+$/.test(creationId)) throw new Error("invalid_creation_id");
+
+  const apiKey = process.env.STEAM_API_KEY;
+  if (!apiKey) throw new Error("steam_api_key_missing");
+
+  const result = await fetchWorkshopContributors(apiKey, creationId);
+  if (!result.ok) {
+    const suffix = shortId ? `/creation/${shortId}` : "";
+    redirect(`${suffix}?creators=err_${result.reason}`);
+  }
+
+  const db = getDb();
+  await db
+    .update(creations)
+    .set({
+      creators: result.contributors,
+      creatorsRefreshedAt: new Date(),
+    })
+    .where(eq(creations.id, creationId));
+
+  revalidatePath(`/creation/${creationId}`);
+  if (shortId) revalidatePath(`/creation/${shortId}`);
+  revalidatePath("/creators");
+  // Revalidate every contributor's author + profile page so the new
+  // attribution shows up immediately. Best-effort per-path calls; if one
+  // path doesn't exist in the router it just no-ops.
+  for (const c of result.contributors) {
+    revalidatePath(`/author/${c.steamid}`);
+    revalidatePath(`/profile/${c.steamid}`);
+  }
+
+  const suffix = shortId ? `/creation/${shortId}` : `/creation/${creationId}`;
+  redirect(`${suffix}?creators=ok_${result.contributors.length}`);
 }
 
 async function requireMod() {

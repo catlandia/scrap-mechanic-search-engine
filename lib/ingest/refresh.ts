@@ -60,7 +60,7 @@ export async function runRefresh(batchSize = 100): Promise<RefreshResult> {
   // scraped rows come first, then the oldest-refreshed. Capped to keep
   // the cron inside Vercel's function timeout; the whole catalog cycles
   // over a few weeks.
-  const contributorsFilled = await refreshStaleCreators(100);
+  const contributorsFilled = await refreshStaleCreators(200);
 
   return { refreshed, contributorsFilled, errors };
 }
@@ -68,8 +68,14 @@ export async function runRefresh(batchSize = 100): Promise<RefreshResult> {
 /**
  * Re-scrape multi-creator attribution for up to `limit` approved creations,
  * preferring rows that have never been scraped or were scraped longest ago.
- * Always writes back even when the scrape returns the same contributors —
- * the timestamp update is what keeps the rotation moving.
+ * On scrape success (including genuine solo-creator items) we update both
+ * `creators` and `creatorsRefreshedAt`. On scrape failure we update NEITHER
+ * — the row's `creatorsRefreshedAt` stays where it was (null for a
+ * never-scraped row, so it retries first next cycle), and whatever
+ * attribution was already stored is preserved instead of being clobbered
+ * with `[]`. That's the fix for the "items missing from contributors'
+ * profiles" bug — transient Steam hiccups used to overwrite real
+ * attribution with empty arrays and lock the row out of rotation for weeks.
  */
 export async function refreshStaleCreators(limit: number): Promise<number> {
   const apiKey = process.env.STEAM_API_KEY;
@@ -83,20 +89,23 @@ export async function refreshStaleCreators(limit: number): Promise<number> {
     .limit(limit);
   let updated = 0;
   for (const { id } of rows) {
-    try {
-      const contributors = await fetchWorkshopContributors(apiKey, id);
-      await db
-        .update(creations)
-        .set({
-          creators: contributors,
-          creatorsRefreshedAt: new Date(),
-        })
-        .where(eq(creations.id, id));
-      updated += 1;
-    } catch {
-      // best-effort; next refresh run will retry. Timestamp stays null so
-      // this row gets re-tried first on the next pass.
+    const result = await fetchWorkshopContributors(apiKey, id);
+    if (result.ok) {
+      try {
+        await db
+          .update(creations)
+          .set({
+            creators: result.contributors,
+            creatorsRefreshedAt: new Date(),
+          })
+          .where(eq(creations.id, id));
+        updated += 1;
+      } catch {
+        // DB write failure — drop through; try again next rotation.
+      }
     }
+    // On !result.ok we intentionally skip the update so prior state +
+    // timestamp are preserved.
     await new Promise((r) => setTimeout(r, 200));
   }
   return updated;

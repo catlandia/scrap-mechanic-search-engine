@@ -349,7 +349,11 @@ export async function runIngest(options: IngestOptions = {}): Promise<IngestResu
       3,
       async (c) => {
         try {
-          return await fetchWorkshopContributors(apiKey, c.item.publishedfileid);
+          const result = await fetchWorkshopContributors(
+            apiKey,
+            c.item.publishedfileid,
+          );
+          return result.ok ? result.contributors : [];
         } catch {
           return [];
         }
