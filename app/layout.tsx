@@ -16,6 +16,7 @@ import { getT } from "@/lib/i18n/server";
 import { LocaleProvider } from "@/lib/i18n/client";
 import { isModerator } from "@/lib/auth/roles";
 import type { UserRole } from "@/lib/db/schema";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 const siteTitle = "Scrap Mechanic Search Engine";
@@ -268,6 +269,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         </footer>
         </ToastProvider>
         </LocaleProvider>
+        <Analytics />
       </body>
     </html>
   );
