@@ -304,6 +304,11 @@ export async function fetchWorkshopContributors(
   // Without this, the bulk backfill lost ~60% of rows to occasional
   // 5xx / aborts. Each extra retry is cheap relative to re-scraping the
   // whole catalog on a rotation.
+  //
+  // 429 special-case: Steam penalty-boxes bulk scrapers with HTTP 429
+  // (Too Many Requests). Regular exponential backoff of a few hundred ms
+  // isn't enough — the lockout lasts minutes. Honour `Retry-After` if it's
+  // present and cap at 60 s so we don't hang a single row forever.
   let html: string | null = null;
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
@@ -314,6 +319,17 @@ export async function fetchWorkshopContributors(
         },
         cache: "no-store",
       });
+      if (res.status === 429) {
+        const retryAfter = Number(res.headers.get("retry-after"));
+        const waitMs = Number.isFinite(retryAfter) && retryAfter > 0
+          ? Math.min(retryAfter * 1000, 60_000)
+          : 30_000 + Math.random() * 15_000;
+        if (attempt < 2) {
+          await new Promise((r) => setTimeout(r, waitMs));
+          continue;
+        }
+        return { ok: false, reason: "fetch" };
+      }
       if (!res.ok) throw new Error(`http_${res.status}`);
       html = await res.text();
       break;
