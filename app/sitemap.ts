@@ -41,7 +41,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     const db = getDb();
     const rows = await db
-      .select({ shortId: creations.shortId, approvedAt: creations.approvedAt })
+      .select({
+        shortId: creations.shortId,
+        approvedAt: creations.approvedAt,
+        thumbnailUrl: creations.thumbnailUrl,
+      })
       .from(creations)
       .where(eq(creations.status, "approved"))
       .orderBy(desc(creations.approvedAt))
@@ -53,6 +57,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         lastModified: r.approvedAt ?? now,
         changeFrequency: "weekly" as const,
         priority: 0.6,
+        ...(r.thumbnailUrl ? { images: [r.thumbnailUrl] } : {}),
       }));
 
     const authorRows = await db

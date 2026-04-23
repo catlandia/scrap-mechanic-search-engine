@@ -271,6 +271,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             >
               GitHub
             </a>
+            <Link href="/feed.xml" className="hover:text-foreground">
+              RSS
+            </Link>
           </p>
         </footer>
         </ToastProvider>
