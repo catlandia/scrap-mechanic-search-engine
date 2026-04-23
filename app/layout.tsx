@@ -43,6 +43,11 @@ export const metadata: Metadata = {
     description: siteDescription,
     images: ["/logo.png"],
   },
+  verification: {
+    other: {
+      "msvalidate.01": "C7BE56E66887614C5291BC85D654FB41",
+    },
+  },
 };
 
 type NavItem =
