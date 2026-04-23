@@ -34,6 +34,7 @@ import { getRatingMode } from "@/lib/prefs.server";
 import { getT } from "@/lib/i18n/server";
 import { rescrapeCreatorsAction } from "@/app/admin/actions";
 import { FormSubmitButton } from "@/components/FormSubmitButton";
+import { JsonLd } from "@/components/JsonLd";
 
 export const dynamic = "force-dynamic";
 
@@ -185,8 +186,45 @@ export default async function CreationDetailPage({
   const showSteamRating = ratingMode === "steam" || ratingMode === "both";
   const showSiteRating = ratingMode === "site" || ratingMode === "both";
 
+  const siteBase = process.env.NEXT_PUBLIC_SITE_URL ?? "https://scrap-mechanic-search-engine.vercel.app";
+  const canonicalUrl = `${siteBase}/creation/${creation.shortId ?? creation.id}`;
+  const jsonLd: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "CreativeWork",
+    name: creation.title,
+    description: creation.descriptionClean.slice(0, 500),
+    url: canonicalUrl,
+    ...(creation.thumbnailUrl ? { image: creation.thumbnailUrl } : {}),
+    ...(creation.authorName
+      ? {
+          author: {
+            "@type": "Person",
+            name: creation.authorName,
+            ...(creation.authorSteamid
+              ? { url: `${siteBase}/profile/${creation.authorSteamid}` }
+              : {}),
+          },
+        }
+      : {}),
+    ...(creation.approvedAt
+      ? { dateCreated: new Date(creation.approvedAt).toISOString() }
+      : {}),
+    ...(siteTotal >= 5 && siteScore !== null
+      ? {
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: (siteScore * 5).toFixed(2),
+            bestRating: "5",
+            worstRating: "1",
+            ratingCount: siteTotal,
+          },
+        }
+      : {}),
+  };
+
   return (
     <article className="mx-auto max-w-4xl space-y-6">
+      <JsonLd data={jsonLd} />
       <Link href="/new" className="text-sm text-foreground/60 hover:text-accent">
         {t("creation.backToNewest")}
       </Link>

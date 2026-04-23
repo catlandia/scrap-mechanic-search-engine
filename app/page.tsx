@@ -8,6 +8,7 @@ import {
 } from "@/lib/db/queries";
 import { getRatingMode } from "@/lib/prefs.server";
 import { getT } from "@/lib/i18n/server";
+import { JsonLd } from "@/components/JsonLd";
 
 export const dynamic = "force-dynamic";
 
@@ -55,8 +56,22 @@ export default async function HomePage() {
   const ratingMode = await getRatingMode();
   const { t } = await getT();
 
+  const siteBase = process.env.NEXT_PUBLIC_SITE_URL ?? "https://scrap-mechanic-search-engine.vercel.app";
+  const websiteJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "Scrap Mechanic Search Engine",
+    url: siteBase,
+    potentialAction: {
+      "@type": "SearchAction",
+      target: `${siteBase}/search?q={search_term_string}`,
+      "query-input": "required name=search_term_string",
+    },
+  };
+
   return (
     <div className="space-y-14">
+      <JsonLd data={websiteJsonLd} />
       <section className="space-y-4">
         <p className="text-sm uppercase tracking-widest text-accent">
           Scrap Mechanic · Search Engine
