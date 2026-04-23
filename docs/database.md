@@ -323,6 +323,29 @@ Up/down votes on individual comments. Mirrors `creationVotes` shape.
 
 ---
 
+### `blockdleDailyResults`
+
+One row per signed-in user per UTC day — drives both Blockdle leaderboards (today's + all-time). Only written on the first terminal submission (won or lost) for that user+date via `onConflictDoNothing`; anonymous players are never recorded.
+
+| Column | Type | Notes |
+|---|---|---|
+| `userId` | text → users.steamid, ON DELETE CASCADE | |
+| `dateIsoUtc` | text NOT NULL | `"YYYY-MM-DD"` — the UTC day of the puzzle |
+| `guessesUsed` | int NOT NULL | `1..ATTEMPTS_MAX` |
+| `won` | boolean NOT NULL | |
+| `createdAt` | timestamptz NOT NULL default now() | |
+
+**PK:** `(userId, dateIsoUtc)` — idempotent write, first submission wins
+**Indexes:** `dateIsoUtc`
+
+**Queries:**
+- `getTodayLeaderboard()` — today's wins, sorted fewest-guesses-first, hard-banned users filtered.
+- `getAllTimeLeaderboard()` — GROUP BY user, `wins = COUNT(*) FILTER (WHERE won)`, `avgGuesses = AVG(guesses_used) FILTER (WHERE won)`. `HAVING wins > 0` so loss-only users don't appear. Sorted by wins DESC, avg-guesses ASC.
+
+See [blockdle.md](blockdle.md) for the full flow.
+
+---
+
 ### `ingestRuns`
 
 Audit trail for the automated ingest pipeline.

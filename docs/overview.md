@@ -122,7 +122,7 @@ app/
     me/page.tsx                   # redirect to own profile
     minigames/page.tsx            # minigames landing grid
     minigames/scrapcha/           # Scrapcha character-ID game
-    minigames/blockdle/           # Blockdle block-guess *dle game
+    minigames/blockdle/           # Blockdle block-guess *dle game (+ daily & all-time leaderboards)
   admin/
     login/page.tsx
     logout/page.tsx
