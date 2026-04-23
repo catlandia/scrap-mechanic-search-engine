@@ -470,6 +470,30 @@ export const commentVotes = pgTable(
   ],
 );
 
+// Daily Blockdle finishers — one row per signed-in user per UTC day,
+// recording whether they won and how many guesses they used. Drives
+// the /minigames/blockdle leaderboard. Only written on the first
+// terminal submission (won or lost) for that day via
+// onConflictDoNothing, so a crash/retry can't overwrite a real attempt.
+export const blockdleDailyResults = pgTable(
+  "blockdle_daily_results",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.steamid, { onDelete: "cascade" }),
+    dateIsoUtc: text("date_iso_utc").notNull(),
+    guessesUsed: integer("guesses_used").notNull(),
+    won: boolean("won").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.userId, t.dateIsoUtc] }),
+    index("blockdle_daily_results_date_idx").on(t.dateIsoUtc),
+  ],
+);
+
 export type Creation = typeof creations.$inferSelect;
 export type NewCreation = typeof creations.$inferInsert;
 export type Tag = typeof tags.$inferSelect;

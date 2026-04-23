@@ -121,7 +121,7 @@ const en: Dictionary = {
     "Pick the character in the screenshot. One wrong answer resets your streak — how far can you push it?",
   "minigames.blockdle.name": "Blockdle",
   "minigames.blockdle.blurb":
-    "Guess today's Scrap Mechanic block from its stats. Seven tries, color-coded hints.",
+    "Near-impossible Scrap Mechanic info guesser. Nine clues, ten tries, 500+ blocks.",
   "minigames.blockdle.subtitle":
     "Guess the block. Stats tell you how close you are — green means match, arrows point you toward the answer.",
   "minigames.blockdle.mode.daily": "Daily",
@@ -143,6 +143,11 @@ const en: Dictionary = {
   "minigames.blockdle.flammable.yes": "Yes",
   "minigames.blockdle.flammable.no": "No",
   "minigames.blockdle.level.none": "✗",
+  "minigames.blockdle.leaderboard.title": "Today's leaderboard",
+  "minigames.blockdle.leaderboard.subtitle": "Signed-in winners, fewest guesses first. Resets every UTC midnight.",
+  "minigames.blockdle.leaderboard.count": "{n} finishers",
+  "minigames.blockdle.leaderboard.empty": "No finishers yet today — be the first!",
+  "minigames.blockdle.leaderboard.guesses": "{n} tries",
   "minigames.blockdle.win.title": "Solved!",
   "minigames.blockdle.win.body": "Got it in {n}/{max}.",
   "minigames.blockdle.lose.title": "Out of guesses",
@@ -352,7 +357,7 @@ const ru: Dictionary = {
     "Выберите персонажа на скриншоте. Одна ошибка — и серия сброшена. Как далеко вы зайдёте?",
   "minigames.blockdle.name": "Блокдл",
   "minigames.blockdle.blurb":
-    "Угадайте сегодняшний блок Scrap Mechanic по характеристикам. Семь попыток, цветные подсказки.",
+    "Почти невыполнимый угадайщик блоков Scrap Mechanic. Девять подсказок, десять попыток, 500+ блоков.",
   "minigames.blockdle.subtitle":
     "Угадайте блок. Характеристики подсказывают, насколько вы близки — зелёный значит совпадение, стрелки указывают направление.",
   "minigames.blockdle.mode.daily": "Ежедневно",
@@ -374,6 +379,11 @@ const ru: Dictionary = {
   "minigames.blockdle.flammable.yes": "Да",
   "minigames.blockdle.flammable.no": "Нет",
   "minigames.blockdle.level.none": "✗",
+  "minigames.blockdle.leaderboard.title": "Таблица лидеров",
+  "minigames.blockdle.leaderboard.subtitle": "Победители с аккаунтом, от меньшего числа попыток. Сброс каждую полночь UTC.",
+  "minigames.blockdle.leaderboard.count": "{n} завершили",
+  "minigames.blockdle.leaderboard.empty": "Сегодня ещё никто не решил — будьте первым!",
+  "minigames.blockdle.leaderboard.guesses": "{n} попыток",
   "minigames.blockdle.win.title": "Угадано!",
   "minigames.blockdle.win.body": "За {n}/{max} попыток.",
   "minigames.blockdle.lose.title": "Попытки закончились",
@@ -576,7 +586,7 @@ const de: Dictionary = {
     "Wähle den Charakter auf dem Bild. Eine falsche Antwort setzt deine Serie zurück — wie weit kommst du?",
   "minigames.blockdle.name": "Blockdle",
   "minigames.blockdle.blurb":
-    "Errate den heutigen Scrap-Mechanic-Block anhand seiner Werte. Sieben Versuche, farbkodierte Hinweise.",
+    "Beinahe unmöglicher Scrap-Mechanic-Block-Rater. Neun Hinweise, zehn Versuche, 500+ Blöcke.",
   "minigames.blockdle.subtitle":
     "Errate den Block. Die Werte zeigen, wie nah du dran bist — grün heißt Treffer, Pfeile weisen die Richtung.",
   "minigames.blockdle.mode.daily": "Täglich",
@@ -598,6 +608,11 @@ const de: Dictionary = {
   "minigames.blockdle.flammable.yes": "Ja",
   "minigames.blockdle.flammable.no": "Nein",
   "minigames.blockdle.level.none": "✗",
+  "minigames.blockdle.leaderboard.title": "Heutige Bestenliste",
+  "minigames.blockdle.leaderboard.subtitle": "Angemeldete Gewinner, wenigste Versuche zuerst. Setzt sich jeden UTC-Mitternacht zurück.",
+  "minigames.blockdle.leaderboard.count": "{n} Fertige",
+  "minigames.blockdle.leaderboard.empty": "Heute noch keine Lösung — sei der Erste!",
+  "minigames.blockdle.leaderboard.guesses": "{n} Versuche",
   "minigames.blockdle.win.title": "Gelöst!",
   "minigames.blockdle.win.body": "In {n}/{max} geschafft.",
   "minigames.blockdle.lose.title": "Keine Versuche mehr",
@@ -801,7 +816,7 @@ const pl: Dictionary = {
     "Wybierz postać z obrazka. Jeden błąd resetuje serię — jak daleko zajdziesz?",
   "minigames.blockdle.name": "Blockdle",
   "minigames.blockdle.blurb":
-    "Zgadnij dzisiejszy klocek ze Scrap Mechanic po jego statystykach. Siedem prób, podpowiedzi oznaczone kolorami.",
+    "Prawie niemożliwy odgadywacz klocków Scrap Mechanic. Dziewięć wskazówek, dziesięć prób, 500+ klocków.",
   "minigames.blockdle.subtitle":
     "Zgadnij klocek. Statystyki podpowiadają, jak blisko jesteś — zielony to trafienie, strzałki wskazują kierunek.",
   "minigames.blockdle.mode.daily": "Dzienny",
@@ -823,6 +838,11 @@ const pl: Dictionary = {
   "minigames.blockdle.flammable.yes": "Tak",
   "minigames.blockdle.flammable.no": "Nie",
   "minigames.blockdle.level.none": "✗",
+  "minigames.blockdle.leaderboard.title": "Dzisiejsza tabela wyników",
+  "minigames.blockdle.leaderboard.subtitle": "Zalogowani zwycięzcy, od najmniejszej liczby prób. Reset co północ UTC.",
+  "minigames.blockdle.leaderboard.count": "{n} ukończonych",
+  "minigames.blockdle.leaderboard.empty": "Nikt jeszcze dziś nie rozwiązał — bądź pierwszy!",
+  "minigames.blockdle.leaderboard.guesses": "{n} prób",
   "minigames.blockdle.win.title": "Zgadnięte!",
   "minigames.blockdle.win.body": "Za {n}/{max} prób.",
   "minigames.blockdle.lose.title": "Koniec prób",

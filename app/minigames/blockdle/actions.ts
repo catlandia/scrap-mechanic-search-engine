@@ -18,6 +18,10 @@ import {
   type GameStats,
   type GuessComparison,
 } from "@/lib/blockdle/types";
+import { getCurrentUser } from "@/lib/auth/session";
+import { getDb } from "@/lib/db/client";
+import { blockdleDailyResults, users } from "@/lib/db/schema";
+import { and, asc, eq } from "drizzle-orm";
 
 export type Mode = "daily" | "endless";
 
@@ -97,6 +101,36 @@ function viewFromEndless(state: EndlessState): BlockdleView {
   };
 }
 
+// Record a finished daily puzzle to the leaderboard. Only runs for
+// signed-in users (anonymous players stay anonymous — they don't get
+// on the board). Uses ON CONFLICT DO NOTHING so the first terminal
+// submission for that user+date wins; retries after a crash or a
+// dev-only reset can't overwrite the real result.
+async function recordDailyFinish(
+  dateIsoUtc: string,
+  guessesUsed: number,
+  won: boolean,
+): Promise<void> {
+  const user = await getCurrentUser();
+  if (!user) return;
+  try {
+    const db = getDb();
+    await db
+      .insert(blockdleDailyResults)
+      .values({
+        userId: user.steamid,
+        dateIsoUtc,
+        guessesUsed,
+        won,
+      })
+      .onConflictDoNothing();
+  } catch {
+    // Leaderboard writes are best-effort — a DB blip mustn't crash the
+    // guess-submission flow. The player's game state is already saved
+    // to the session cookie; they just won't appear on the board.
+  }
+}
+
 async function startDaily(session: BlockdleSession): Promise<DailyState> {
   const today = todayUtcIso();
   const current = session.daily;
@@ -171,6 +205,9 @@ export async function submitBlockdleGuess(
     };
     session.daily = state;
     await session.save();
+    if ((won || lost) && state.dateIsoUtc) {
+      await recordDailyFinish(state.dateIsoUtc, guessUuids.length, won);
+    }
     return { ok: true, view: viewFromDaily(state) };
   }
 
@@ -238,6 +275,58 @@ export async function resetBlockdle(mode: Mode): Promise<BlockdleView> {
   };
   await session.save();
   return viewFromEndless(session.endless);
+}
+
+export type LeaderboardEntry = {
+  steamid: string;
+  personaName: string;
+  avatarUrl: string | null;
+  role: string;
+  guessesUsed: number;
+  won: boolean;
+};
+
+// Today's leaderboard, wins only, ranked by fewest guesses then earliest
+// finish. Hard-banned users are filtered so a bad actor can't leave
+// lingering entries. Anonymous plays never make it into the table, so
+// nothing to filter there.
+export async function getTodayLeaderboard(
+  limit = 25,
+): Promise<LeaderboardEntry[]> {
+  const db = getDb();
+  const today = todayUtcIso();
+  const rows = await db
+    .select({
+      steamid: users.steamid,
+      personaName: users.personaName,
+      avatarUrl: users.avatarUrl,
+      role: users.role,
+      guessesUsed: blockdleDailyResults.guessesUsed,
+      won: blockdleDailyResults.won,
+      createdAt: blockdleDailyResults.createdAt,
+    })
+    .from(blockdleDailyResults)
+    .innerJoin(users, eq(users.steamid, blockdleDailyResults.userId))
+    .where(
+      and(
+        eq(blockdleDailyResults.dateIsoUtc, today),
+        eq(blockdleDailyResults.won, true),
+        eq(users.hardBanned, false),
+      ),
+    )
+    .orderBy(
+      asc(blockdleDailyResults.guessesUsed),
+      asc(blockdleDailyResults.createdAt),
+    )
+    .limit(limit);
+  return rows.map((r) => ({
+    steamid: r.steamid,
+    personaName: r.personaName,
+    avatarUrl: r.avatarUrl,
+    role: r.role,
+    guessesUsed: r.guessesUsed,
+    won: r.won,
+  }));
 }
 
 export async function clearEndlessStats(): Promise<BlockdleView> {

@@ -1,12 +1,12 @@
 # Blockdle
 
-Second minigame. Loldle / Pokedle-style puzzle: the player guesses a secret Scrap Mechanic block from its in-game stats. Seven tries, colour-coded feedback across nine attribute columns.
+Second minigame. Near-impossible info-guesser: the player guesses a secret Scrap Mechanic block from its in-game stats. Ten tries, nine attribute columns, 500+ blocks in the pool. Daily finishers land on a leaderboard.
 
 Route: `/minigames/blockdle?mode=daily|endless` (default: `daily`).
 
 ## Game rules
 
-- **Seven attempts** per puzzle.
+- **Ten attempts** per puzzle.
 - Each guess is a block picked from the full creative-inventory catalogue (autocomplete off the name index).
 - The server reveals per-attribute feedback across **nine columns**:
   - **Inv. Type** — `Blocks` / `Interactive Parts` / `Parts` / `Consumables`. These are the four colored-line buckets the game's backpack paints on slots; labels match `HANDBOOK_HOW_TO_PLAY_PAGE3_*` in `Data/Gui/Language/English/InterfaceTags.txt` verbatim.
@@ -15,8 +15,8 @@ Route: `/minigames/blockdle?mode=daily|endless` (default: `daily`).
   - **Flammable** — yes / no from the shapeset's `flammable` field. Text match / miss.
   - **Level** — tier number within a detected family ("Concrete Block 3 / 5"). Numeric ↑/↓/= compare; both-null counts as a match, one-null as a miss. Non-tier blocks render as `✗` so "this block has no tier" reads at a glance instead of collapsing with "not yet revealed".
   - **Durability / Density / Friction / Buoyancy** (1–10) — numeric ↑/↓/=.
-- Mode `daily` — one shared secret per UTC day, seeded off the date. Every player sees the same puzzle. Share-result button copies a 9-column emoji grid (Wordle-style).
-- Mode `endless` — fresh random block every round. Streak / best-streak / wins / losses tracked.
+- Mode `daily` — one shared secret per UTC day, seeded off the date. Every player sees the same puzzle. Share-result button copies a 9-column emoji grid (Wordle-style). **Signed-in finishers** land on the leaderboard under the game (see below).
+- Mode `endless` — fresh random block every round. Streak / best-streak / wins / losses tracked per-session; no shared leaderboard.
 
 ### Pool policy
 
@@ -152,13 +152,32 @@ Or set `SM_INSTALL_DIR` once and drop the flag. Writes `blocks.json` + `icons/<u
 
 **Empty-build fallback:** if neither env vars nor an on-disk dataset are available, the fetch script emits empty stubs (`BLOCKS = []`) and the Blockdle page renders a "not configured yet" placeholder instead of crashing the build. Adding the env vars and re-deploying fills everything in on the next build.
 
+## Leaderboard
+
+Daily mode records a row per signed-in finisher. Anonymous players stay anonymous — they don't get written to the table, and they don't see themselves on the board.
+
+**Table:** `blockdle_daily_results`
+- `user_id` (FK → `users.steamid`, cascade delete)
+- `date_iso_utc` (string "YYYY-MM-DD")
+- `guesses_used` (integer, 1..`ATTEMPTS_MAX`)
+- `won` (boolean)
+- `created_at` (timestamp)
+- PK `(user_id, date_iso_utc)`, index on `date_iso_utc`
+
+**Write path:** `recordDailyFinish()` in `actions.ts` fires from `submitBlockdleGuess` the moment the game transitions to `won` or `lost` for a signed-in user in daily mode. Uses `onConflictDoNothing()` so the first terminal submission wins — retries after a crash or a dev-only daily reset can't overwrite the real attempt. Wrapped in try/catch so DB blips can't crash guess submission.
+
+**Read path:** `getTodayLeaderboard(limit = 25)` joins the table against `users` (filtered for not-hard-banned), selects wins only, and sorts by `guesses_used` ASC then `created_at` ASC for deterministic tie-breaking. Rendered by `app/minigames/blockdle/Leaderboard.tsx` as a server component below the game area — updates on navigation since the page is `force-dynamic`.
+
+Endless mode is deliberately not tracked: the answer is locally-chosen random, streak/wins/losses are per-session. A global endless leaderboard would compare apples to oranges.
+
 ## Runtime
 
 - `app/minigames/blockdle/page.tsx` — Server Component. Reads `?mode=`. Renders the "not configured" placeholder when `BLOCKS` is empty.
 - `app/minigames/blockdle/BlockdleGame.tsx` — Client shell. Imports `INDEX` (not `BLOCKS`) so the answer set never ships to the browser. Wraps the grid in `overflow-x-auto` with a `min-w-[880px]` floor because 11 columns don't fit a phone portrait viewport.
 - `app/minigames/blockdle/GuessRow.tsx` — 11-column row (icon + name + 9 attributes).
 - `app/minigames/blockdle/AutocompleteInput.tsx` — client-side prefix + substring match against `INDEX`. Strips non-alphanumerics from both query and name so "craft bot" matches "Craftbot".
-- `app/minigames/blockdle/actions.ts` — `startBlockdle`, `submitBlockdleGuess`, `resetBlockdle`, `clearEndlessStats`. Guess validation + comparison + session mutation all happen server-side.
+- `app/minigames/blockdle/actions.ts` — `startBlockdle`, `submitBlockdleGuess`, `resetBlockdle`, `clearEndlessStats`, `getTodayLeaderboard`. Guess validation + comparison + session mutation + leaderboard write all happen server-side.
+- `app/minigames/blockdle/Leaderboard.tsx` — Server Component. Renders today's top finishers; passes `LeaderboardEntry[]` in from the server page.
 - `app/api/minigames/blockdle/icon/[uuid]/route.ts` — PNG served from `_icons.generated.json`. No session check; icons aren't a cheat vector. `Cache-Control: public, max-age=31536000, immutable`.
 - `lib/blockdle/session.ts` — iron-session cookie `smse_blockdle_v3`, 30-day TTL, signed with `SESSION_SECRET`. Holds `{ daily?, endless? }`.
 
@@ -194,6 +213,7 @@ app/minigames/blockdle/
   BlockdleGame.tsx
   GuessRow.tsx
   AutocompleteInput.tsx
+  Leaderboard.tsx
   actions.ts
 
 app/api/minigames/blockdle/icon/[uuid]/

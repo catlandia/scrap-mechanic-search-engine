@@ -2,12 +2,15 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { BLOCKS } from "@/lib/blockdle/blocks.generated";
 import { BlockdleGame } from "./BlockdleGame";
+import { Leaderboard } from "./Leaderboard";
+import { getTodayLeaderboard } from "./actions";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Blockdle — Scrap Mechanic Search Engine",
-  description: "Guess today's Scrap Mechanic block from its stats. Seven tries.",
+  description:
+    "Near-impossible Scrap Mechanic info guesser. Nine clues, ten tries, 500+ blocks.",
   alternates: { canonical: "/minigames/blockdle" },
   robots: { index: true, follow: true },
 };
@@ -50,8 +53,17 @@ export default async function BlockdlePage({
     );
   }
 
+  // Fetch today's leaderboard server-side so it streams with the page
+  // and updates on navigation. Endless mode has no shared board.
+  const leaderboard = mode === "daily" ? await getTodayLeaderboard(25) : [];
+
   // `key` forces the client component to reset its transient state when
   // the user flips modes via URL, so daily guesses can't leak into endless
   // or vice-versa mid-click.
-  return <BlockdleGame key={mode} mode={mode} />;
+  return (
+    <>
+      <BlockdleGame key={mode} mode={mode} />
+      {mode === "daily" && <Leaderboard entries={leaderboard} />}
+    </>
+  );
 }

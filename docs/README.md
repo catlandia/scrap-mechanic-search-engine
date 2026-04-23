@@ -18,12 +18,14 @@
 
 ## Quick orientation
 
-- Current version: **V8.13 — Blockdle 2.0: 541 blocks, 9 attributes, correct in-game categories**
+- Current version: **V8.14 — Blockdle: daily leaderboard, 10 tries, "near-impossible" framing**
 - Stack: Next.js 15 App Router · TypeScript · Tailwind v4 · Drizzle + Neon · iron-session · Steam OpenID
 - Hard constraint: everything must remain on **free tiers** — no paid APIs, no metered per-item costs
 - Transactions are **not available** (neon-http driver) — writes are sequential, partial state is accepted
 
-## Recent changes (V4.6–8.13)
+## Recent changes (V4.6–8.14)
+
+- **V8.14 — Blockdle: daily leaderboard + 10 tries + "near-impossible" framing.** Small but shippable follow-up to V8.13. (1) **Leaderboard.** New `blockdle_daily_results` table (migration `0028_flippant_owl.sql`), PK `(user_id, date_iso_utc)`, records every signed-in finisher of the daily puzzle — number of guesses + won/lost + created_at. `recordDailyFinish()` fires from `submitBlockdleGuess` on the transition to `won`/`lost` for authenticated users in daily mode, guarded by `onConflictDoNothing()` so the first terminal submission wins and dev-only resets can't overwrite. Wrapped in try/catch so a DB hiccup mustn't crash guess submission. Anonymous players aren't written (intentional — no Steam login = no board presence). `getTodayLeaderboard()` joins against `users` (hard-banned filtered), returns up to 25 winners sorted by fewest guesses then earliest finish. New `Leaderboard.tsx` server component renders below the game on `/minigames/blockdle?mode=daily` with avatar, `UserName` + `RoleBadge`, and a tries-used pill. Endless mode has no leaderboard by design (answers are locally-random, cross-user comparison is meaningless). (2) **Tries 7 → 10.** `ATTEMPTS_MAX` bumped; subtitle / blurb strings and docs updated to match. With 9 attribute columns and 541 blocks the 7-try version was genuinely near-unsolvable in one attempt — 10 gives players a fighting chance without making it trivial. (3) **"Near-impossible info guesser" framing** in copy — Blockdle's listing blurb and page description now tell the player what they're walking into: "Near-impossible Scrap Mechanic info guesser. Nine clues, ten tries, 500+ blocks." Landed across EN / RU / DE / PL plus 5 new leaderboard keys per locale.
 
 - **V8.13 — Blockdle 2.0: 541 blocks, 9 attributes, correct in-game categories.** Major rework of the minigame from V8.10's 474-block / 6-attribute MVP. Landed in ~a dozen incremental commits through the day. See [docs/blockdle.md](blockdle.md) for the full spec; the highlights:
   - **Attempts** 6 → **7**. **Attribute columns** 6 → **9** — added **Inv. Type** (Blocks / Interactive Parts / Parts / Consumables — matches the four colored-line buckets the game's backpack paints on slots, labels lifted verbatim from `HANDBOOK_HOW_TO_PLAY_PAGE3_*` tags), **Flammable** (yes/no from the shapeset field), and **Level** (tier number within a detected 1..N family, e.g. "Concrete Block 3 / 5"; non-tier blocks render `✗` so "has no tier" reads at a glance).

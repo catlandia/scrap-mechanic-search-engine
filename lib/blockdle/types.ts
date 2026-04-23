@@ -151,4 +151,4 @@ export type BlockdleSession = {
   endless?: EndlessState;
 };
 
-export const ATTEMPTS_MAX = 7;
+export const ATTEMPTS_MAX = 10;
