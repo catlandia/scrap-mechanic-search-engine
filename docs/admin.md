@@ -91,6 +91,7 @@ All helpers check `effectiveRole` (ban-aware), not `user.role` directly. **Every
 | `addInfluencerAutograntAction(input, label)` | Creator | Add to the badge autogrant allowlist. Input accepts Steam64, profile URL, or vanity URL. Managed via `/admin/badges`. |
 | `removeInfluencerAutograntAction(steamid)` | Creator | Remove from the allowlist. Doesn't revoke existing grants. |
 | `deleteCreation(id)` | Creator | Permanent `status=deleted`, clears reports |
+| `setCreationKind(id, kind)` | Creator | Inline reclassify a single creation's `kind`. Rendered as a small purple picker on `/creation/[id]` next to the Delete button. Revalidates `/`, `/new`, `/search`, and the creation page; `/[kind]` listings are force-dynamic so they don't need explicit busting. Exists because `detectKind` occasionally misclassifies at ingest (Steam tag coverage is incomplete). |
 
 ### User management (Creator-only)
 

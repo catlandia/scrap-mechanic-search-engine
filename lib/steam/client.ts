@@ -394,5 +394,10 @@ export function detectKind(steamTags: string[]): SteamKind | "other" {
   for (const [kind, tag] of Object.entries(STEAM_KIND_TAGS) as [SteamKind, string][]) {
     if (lowered.has(tag.toLowerCase())) return kind;
   }
-  return "other";
+  // Items without a recognised kind tag used to land in "other", but nothing
+  // a user actually wants lives there — it's almost always a miscategorised
+  // mod. Default the fallback to "mod" so new items land somewhere a
+  // visitor browses; the creator can still flip the kind from the creation
+  // page if a specific item belongs elsewhere.
+  return "mod";
 }

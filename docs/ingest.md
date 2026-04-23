@@ -108,7 +108,7 @@ App ID: **387990** (Scrap Mechanic)
 
 **`steamUrlFor(publishedFileId)`** — constructs a Workshop item URL.
 
-**`detectKind(steamTags[])`** — infers `kind` from the Steam tags on an item.
+**`detectKind(steamTags[])`** — infers `kind` from the Steam tags on an item. Items without any of the mapped kind tags below fall through to **`mod`** (not `"other"`) — almost every untaggable item has turned out to be a miscategorised mod, so landing them in a section a visitor actually browses beats dumping them in an orphan bucket. The creator can reclassify a specific item from its detail page via `setCreationKind` if the heuristic is wrong.
 
 ### Steam Kind → Internal Kind Mapping
 

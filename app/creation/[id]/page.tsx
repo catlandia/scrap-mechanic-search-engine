@@ -27,10 +27,11 @@ import { DeleteCreationButton } from "@/components/DeleteCreationButton";
 import { FavouriteButton } from "@/components/FavouriteButton";
 import { ReportButton } from "@/components/ReportButton";
 import { ShareButton } from "@/components/ShareButton";
+import { CreationKindPicker } from "@/components/CreationKindPicker";
 import { ReportBadge } from "@/components/ReportBadge";
 import { TagVoteList } from "@/components/TagVoteList";
 import { isCreator, isModerator } from "@/lib/auth/roles";
-import type { UserRole } from "@/lib/db/schema";
+import type { CreationKind, UserRole } from "@/lib/db/schema";
 import { getRatingMode } from "@/lib/prefs.server";
 import { getT } from "@/lib/i18n/server";
 import { rescrapeCreatorsAction } from "@/app/admin/actions";
@@ -449,10 +450,16 @@ export default async function CreationDetailPage({
           {t("creation.viewOnSteamWorkshop")}
         </a>
         {isCreator(viewer?.role as UserRole | undefined) && (
-          <DeleteCreationButton
-            creationId={creation.id}
-            creationTitle={creation.title}
-          />
+          <>
+            <CreationKindPicker
+              creationId={creation.id}
+              currentKind={creation.kind as CreationKind}
+            />
+            <DeleteCreationButton
+              creationId={creation.id}
+              creationTitle={creation.title}
+            />
+          </>
         )}
       </div>
 

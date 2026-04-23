@@ -204,6 +204,13 @@
       "when": 1776931191580,
       "tag": "0028_flippant_owl",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1777800000000,
+      "tag": "0029_kind_other_to_mod",
+      "breakpoints": true
     }
   ]
 }

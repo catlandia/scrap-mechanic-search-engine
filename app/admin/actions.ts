@@ -782,6 +782,41 @@ export async function removeCreationTag(formData: FormData) {
  * as 404. Row is kept (not DELETE FROM) so the publishedfileid stays on the
  * blocklist forever unless the creator manually flips it back.
  */
+export async function setCreationKind(formData: FormData) {
+  // Creator-only: after the V8.17 fallback-to-"mod" change, auto-ingest and
+  // /submit still occasionally misclassify an item (e.g. a blueprint tagged
+  // only as "Mod" on Steam). Rather than force the creator into the
+  // full admin-add dance, this lets them fix a single creation's kind
+  // inline from its own page.
+  const user = await requireCreator();
+  const id = String(formData.get("creationId") ?? "");
+  const kind = parseKind(formData.get("kind"));
+  if (!id) throw new Error("creationId required");
+
+  const db = getDb();
+  const rows = await db
+    .select({ kind: creations.kind })
+    .from(creations)
+    .where(eq(creations.id, id))
+    .limit(1);
+  const existing = rows[0];
+  if (!existing) throw new Error("creation_not_found");
+  if (existing.kind === kind) return; // No-op — don't thrash revalidation.
+
+  await db
+    .update(creations)
+    .set({ kind, reviewedAt: new Date(), reviewedByUserId: user.steamid })
+    .where(eq(creations.id, id));
+
+  // Kind-listing pages (`/[kind]`) are force-dynamic so they re-query on
+  // every request — no explicit revalidation needed for those. The
+  // creation page itself and the home / /new feeds do need busting.
+  revalidatePath("/");
+  revalidatePath("/new");
+  revalidatePath("/search");
+  revalidatePath(`/creation/${id}`);
+}
+
 export async function deleteCreation(formData: FormData) {
   const user = await requireCreator();
   const id = String(formData.get("creationId") ?? "");
