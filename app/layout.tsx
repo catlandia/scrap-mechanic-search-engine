@@ -130,6 +130,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang={locale} className="dark" data-theme={theme}>
       <head>
         <meta name="msvalidate.01" content="C7BE56E66887614C5291BC85D654FB41" />
+        <link
+          rel="alternate"
+          type="application/rss+xml"
+          title="Scrap Mechanic Search — Newest"
+          href="/feed.xml"
+        />
         {/* Resolve `data-theme="auto"` to a concrete theme BEFORE first paint
             based on the OS's prefers-color-scheme. The original "auto" value
             is stashed on `data-theme-source` so we can (a) stay subscribed
