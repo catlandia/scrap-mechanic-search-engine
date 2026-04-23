@@ -60,7 +60,6 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   const snippet = creation.descriptionClean.slice(0, 180 - byLine.length).trim();
   const description = `${byLine}${snippet}`.slice(0, 200);
   const canonical = `/creation/${creation.shortId ?? creation.id}`;
-  const images = creation.thumbnailUrl ? [creation.thumbnailUrl] : [];
   return {
     title: creation.title,
     description,
@@ -70,13 +69,11 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
       description,
       type: "article",
       url: canonical,
-      images,
     },
     twitter: {
       card: "summary_large_image",
       title: creation.title,
       description,
-      images,
     },
   };
 }
