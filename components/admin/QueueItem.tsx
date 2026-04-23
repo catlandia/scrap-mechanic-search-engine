@@ -36,6 +36,7 @@ interface Creation {
   voteScore: number | null;
   authorName: string | null;
   steamTags: string[];
+  communitySubmitted: boolean;
 }
 
 interface Tag {
@@ -70,6 +71,7 @@ export function QueueItem({ creation, suggested, allTags, allCategories }: Props
   const [kind, setKind] = useState(creation.kind);
   const [expanded, setExpanded] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
+  const reasonRef = useRef<HTMLInputElement>(null);
   const [pendingAction, setPendingAction] = useState<QueueAction | null>(null);
   const [isPending, startTransition] = useTransition();
   const toast = useToast();
@@ -177,7 +179,18 @@ export function QueueItem({ creation, suggested, allTags, allCategories }: Props
       <div className="min-w-0 space-y-3">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div className="min-w-0">
-            <h3 className="truncate text-lg font-semibold">{creation.title}</h3>
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="truncate text-lg font-semibold">{creation.title}</h3>
+              {creation.communitySubmitted && (
+                <span
+                  className="inline-flex items-center gap-1 rounded-full border border-purple-500/50 bg-purple-500/20 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-purple-200"
+                  title="A community member submitted this via /submit — rejections require a reason that will be shown to them."
+                >
+                  <span aria-hidden>👥</span>
+                  Community submitted
+                </span>
+              )}
+            </div>
             {creation.authorName && (
               <p className="text-xs text-foreground/50">by {creation.authorName}</p>
             )}
@@ -268,13 +281,35 @@ export function QueueItem({ creation, suggested, allTags, allCategories }: Props
           <input
             type="text"
             name="reason"
+            ref={reasonRef}
             maxLength={300}
-            placeholder="Rejection reason (optional, shown to submitter)"
-            className="min-w-[220px] flex-1 rounded-md border border-border bg-background px-2 py-1.5 text-sm text-foreground placeholder:text-foreground/30 focus:border-accent focus:outline-none"
+            placeholder={
+              creation.communitySubmitted
+                ? "Rejection reason (required — shown to the submitter)"
+                : "Rejection reason (optional, shown to submitter)"
+            }
+            className={cn(
+              "min-w-[220px] flex-1 rounded-md border bg-background px-2 py-1.5 text-sm text-foreground placeholder:text-foreground/30 focus:outline-none",
+              creation.communitySubmitted
+                ? "border-purple-500/60 focus:border-purple-400"
+                : "border-border focus:border-accent",
+            )}
           />
           <button
             type="button"
-            onClick={() => dispatch(rejectCreation, "reject")}
+            onClick={() => {
+              if (creation.communitySubmitted) {
+                const reason = reasonRef.current?.value.trim() ?? "";
+                if (!reason) {
+                  toast.error(
+                    "This item was community-submitted — add a rejection reason first so the submitter knows why.",
+                  );
+                  reasonRef.current?.focus();
+                  return;
+                }
+              }
+              dispatch(rejectCreation, "reject");
+            }}
             disabled={isPending}
             aria-busy={pendingAction === "reject"}
             className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground/70 hover:border-red-400 hover:text-red-300 disabled:opacity-60 disabled:cursor-wait"

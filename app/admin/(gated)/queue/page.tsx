@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { and, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import { categories, creations, creationTags, tagVotes, tags } from "@/lib/db/schema";
 import { QueueItem } from "@/components/admin/QueueItem";
@@ -32,7 +32,12 @@ export default async function QueuePage() {
         )`,
       ),
     )
-    .orderBy(desc(creations.approvedAt))
+    // Community-submitted items surface first so the mod can react quickly
+    // — most-recently-approved is the secondary sort so fresh backlog work
+    // stays predictable within each group.
+    .orderBy(
+      sql`${creations.uploadedByUserId} is not null desc, ${creations.approvedAt} desc`,
+    )
     .limit(PAGE_LIMIT * 2);
 
   if (candidates.length === 0) {
@@ -150,6 +155,7 @@ export default async function QueuePage() {
               voteScore: c.voteScore,
               authorName: c.authorName,
               steamTags: c.steamTags ?? [],
+              communitySubmitted: !!c.uploadedByUserId,
             }}
             suggested={suggestedMap.get(c.id) ?? []}
             allTags={allTags}

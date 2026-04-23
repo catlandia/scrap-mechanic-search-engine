@@ -146,6 +146,14 @@ export async function rejectCreation(formData: FormData) {
     .where(eq(creations.id, id))
     .limit(1);
 
+  // Community-submitted rejections require a reason — the submitter put in
+  // the effort to flag the item, so a silent rejection feels dismissive.
+  // The client wraps reject in a reason-prompt for these rows; the server
+  // check is defensive-in-depth for anyone calling the action directly.
+  if (row?.uploadedByUserId && !reason) {
+    throw new Error("reason_required_for_community_submission");
+  }
+
   const now = new Date();
   await db
     .update(creations)

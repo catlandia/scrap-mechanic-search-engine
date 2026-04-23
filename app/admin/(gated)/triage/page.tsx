@@ -1,4 +1,4 @@
-import { desc, eq, inArray, sql } from "drizzle-orm";
+import { eq, inArray, sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import { creations, creationTags, tags } from "@/lib/db/schema";
 import { TriageStack, type TriageCard } from "@/components/admin/TriageStack";
@@ -15,7 +15,13 @@ export default async function TriagePage() {
       .select()
       .from(creations)
       .where(eq(creations.status, "pending"))
-      .orderBy(desc(creations.subscriptions))
+      // Community-submitted rows float to the top of the stack — someone
+      // took the trouble to flag them through /submit, so handle those
+      // before chewing through the auto-ingested trending backlog. Within
+      // each group, most-popular first stays the best tiebreaker.
+      .orderBy(
+        sql`${creations.uploadedByUserId} is not null desc, ${creations.subscriptions} desc`,
+      )
       .limit(BATCH_SIZE),
     db
       .select({ n: sql<number>`count(*)::int` })

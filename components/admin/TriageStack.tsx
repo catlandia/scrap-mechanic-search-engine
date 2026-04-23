@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { quickApprove, rejectCreation } from "@/app/admin/actions";
+import { useToast } from "@/components/Toast";
 import { cn } from "@/lib/utils";
 
 const KIND_LABELS: Record<string, string> = {
@@ -48,6 +49,7 @@ export function TriageStack({
   totalPending: number;
 }) {
   const router = useRouter();
+  const toast = useToast();
   // Snapshot the cards prop on mount. Keep progressing through the buffer
   // and only accept a replacement batch when the current one is exhausted —
   // this way a server-action re-render can't shuffle the stack mid-animation.
@@ -56,6 +58,13 @@ export function TriageStack({
   const [exit, setExit] = useState<ExitDirection>(null);
   const [drag, setDrag] = useState(0);
   const [isPending, startTransition] = useTransition();
+  // A rejection on a community-submitted card waits on a reason. We stash
+  // the card here while the modal is open so the swipe/advance state only
+  // fires once the mod has committed to a reason.
+  const [rejectingCommunity, setRejectingCommunity] = useState<TriageCard | null>(
+    null,
+  );
+  const [rejectReason, setRejectReason] = useState("");
   const dragStart = useRef<number | null>(null);
   const busy = useRef(false);
 
@@ -72,8 +81,11 @@ export function TriageStack({
   const next = buffer[index + 1];
   const remaining = Math.max(0, buffer.length - index);
 
-  const act = useCallback(
-    (action: Exclude<ExitDirection, null>) => {
+  const performAction = useCallback(
+    (
+      action: Exclude<ExitDirection, null>,
+      options?: { reason?: string },
+    ) => {
       if (!current || busy.current) return;
       busy.current = true;
       setDrag(0);
@@ -92,17 +104,47 @@ export function TriageStack({
 
       const fd = new FormData();
       fd.append("creationId", current.id);
+      if (action === "reject" && options?.reason) {
+        fd.append("reason", options.reason);
+      }
       startTransition(async () => {
         try {
           if (action === "approve") await quickApprove(fd);
           else await rejectCreation(fd);
         } catch (err) {
-          console.error(err);
+          // Recover the card in-place — un-animate, leave stack index alone,
+          // surface the error. Otherwise a failed server action silently
+          // skips the card while the DB still shows it pending.
+          setExit(null);
+          setDrag(0);
+          busy.current = false;
+          toast.error(
+            err instanceof Error ? err.message : "Action failed.",
+          );
+          return;
         }
         window.setTimeout(advance, ANIM_MS);
       });
     },
-    [current],
+    [current, toast],
+  );
+
+  const act = useCallback(
+    (action: Exclude<ExitDirection, null>) => {
+      if (!current || busy.current) return;
+      // Community-submitted rejections require a reason. Open the modal
+      // instead of firing the swipe animation; the modal's confirm button
+      // calls performAction("reject", { reason }) once the mod types
+      // something.
+      if (action === "reject" && current.communitySubmitted) {
+        setDrag(0);
+        setRejectReason("");
+        setRejectingCommunity(current);
+        return;
+      }
+      performAction(action);
+    },
+    [current, performAction],
   );
 
   useEffect(() => {
@@ -249,6 +291,111 @@ export function TriageStack({
           onClick={() => act("approve")}
         />
       </footer>
+
+      {rejectingCommunity && (
+        <RejectReasonModal
+          card={rejectingCommunity}
+          reason={rejectReason}
+          onReasonChange={setRejectReason}
+          pending={isPending}
+          onCancel={() => {
+            if (isPending) return;
+            setRejectingCommunity(null);
+            setRejectReason("");
+          }}
+          onConfirm={() => {
+            const trimmed = rejectReason.trim();
+            if (!trimmed) return;
+            setRejectingCommunity(null);
+            setRejectReason("");
+            performAction("reject", { reason: trimmed });
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function RejectReasonModal({
+  card,
+  reason,
+  onReasonChange,
+  onCancel,
+  onConfirm,
+  pending,
+}: {
+  card: TriageCard;
+  reason: string;
+  onReasonChange: (s: string) => void;
+  onCancel: () => void;
+  onConfirm: () => void;
+  pending: boolean;
+}) {
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        onCancel();
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onCancel]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="triage-reject-heading"
+      onClick={onCancel}
+    >
+      <div
+        className="w-full max-w-md space-y-3 rounded-lg border border-border bg-card p-5 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="space-y-1">
+          <h2 id="triage-reject-heading" className="text-lg font-semibold">
+            Why reject this submission?
+          </h2>
+          <p className="text-xs text-foreground/60">
+            <strong className="text-purple-300">{card.title}</strong> was
+            submitted by a community member. They&apos;ll see this reason on
+            their rejection notification — be specific so they know what to
+            fix for next time.
+          </p>
+        </div>
+        <textarea
+          autoFocus
+          value={reason}
+          onChange={(e) => onReasonChange(e.target.value.slice(0, 300))}
+          rows={4}
+          placeholder="e.g. Below the Tiles kind's subscriber threshold. Resubmit once it has more engagement."
+          className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-sm"
+        />
+        <div className="flex items-center justify-between text-[11px] text-foreground/50">
+          <span>{reason.length}/300</span>
+          <span className="italic">Empty reasons are not accepted.</span>
+        </div>
+        <div className="flex items-center justify-end gap-2">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={pending}
+            className="rounded border border-border px-3 py-1.5 text-xs text-foreground/70 hover:text-foreground disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={pending || reason.trim().length === 0}
+            className="rounded bg-red-500 px-4 py-1.5 text-xs font-semibold text-foreground hover:bg-red-400 disabled:opacity-50"
+          >
+            {pending ? "Rejecting…" : "Reject with reason"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

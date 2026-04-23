@@ -29,8 +29,9 @@ The admin backend is gated at `/admin/*` by the middleware, requiring a Steam lo
 
 Purpose: review new `status='pending'` items before they go public.
 
-- Shows up to 50 items ordered by `subscriptions DESC` (most popular first = highest confidence they deserve to be included)
-- Each card shows: thumbnail, title, **Community submitted** pill (purple, when `uploadedByUserId` is set — flags items that came through `/submit` rather than auto-ingest), Steam metadata (subs, favorites, vote score), kind badge, suggested tags with confidence scores, and the **full cleaned description** below the metadata. The description column used to live inside a fixed-height scroller; it now flows inline and the card grows to fit, so moderators can read the entire body without an in-card scroll. The action footer is sticky-bottom so Approve/Skip/Reject stay reachable on long cards.
+- Shows up to 50 items. **Community submissions (`uploadedByUserId IS NOT NULL`) sort to the top of the stack**; within each group the tiebreaker is `subscriptions DESC` so the highest-confidence auto-ingested items still rise. This way moderators clear user-flagged items first instead of hunting for them.
+- Each card shows: thumbnail, title, **Community submitted** pill (purple, when `uploadedByUserId` is set), Steam metadata (subs, favorites, vote score), kind badge, suggested tags with confidence scores, and the **full cleaned description** below the metadata. The description column flows inline and the card grows to fit, so moderators can read the entire body without an in-card scroll. The action footer is sticky-bottom so Approve/Skip/Reject stay reachable on long cards.
+- **Rejecting a community-submitted card requires a reason.** The Reject button (and keyboard left-arrow / swipe-left gesture) opens a modal with a 300-char textarea instead of firing immediately; the reason is persisted into the submitter's `submission_rejected` notification so they know what to fix. `rejectCreation` enforces the same rule server-side — a missing reason on a community row throws `reason_required_for_community_submission`. Non-community (auto-ingested) rejections still fire instantly and leave the reason blank.
 - **Actions:**
   - **Approve** — sets `status=approved`, `approvedAt=now()`, confirms selected tags (sets `confirmed=true`)
   - **Reject** — sets `status=rejected`. The form includes an optional `reason` text input (max 300 chars); if filled, it's appended to the submitter's rejection notification body (`"<title>" was not accepted. Reason: <reason>`).
@@ -43,8 +44,10 @@ Purpose: review new `status='pending'` items before they go public.
 Purpose: catch approved items that still have no publicly visible tags.
 
 - Shows approved creations with no admin-confirmed (non-rejected) tags AND fewer than 3 net community upvotes on any tag
-- Limit 30, ordered by `approvedAt DESC`
-- Lets admin confirm or dismiss tag suggestions after the fact
+- Limit 30. **Community-submitted items (`uploadedByUserId IS NOT NULL`) float to the top**; within each group the tiebreaker is `approvedAt DESC`. Rationale mirrors the triage ordering — user-flagged items are higher-intent and should get tag attention first.
+- Each item carries a purple **Community submitted** pill next to the title when `uploadedByUserId` is set, matching the triage visual.
+- Lets admin confirm or dismiss tag suggestions after the fact.
+- **Rejection on a community-submitted item is guarded.** The reason input becomes a required field (purple border + "required" placeholder) and the Reject button refuses to submit with a toast if it's blank. Server `rejectCreation` throws the same error if called directly. Non-community rows accept blank reasons exactly as before.
 
 ---
 
