@@ -14,10 +14,10 @@ The admin backend is gated at `/admin/*` by the middleware, requiring a Steam lo
 | `/admin/triage` | Mod+ | Review pending items |
 | `/admin/queue` | Mod+ | Confirmed-tag queue for approved items |
 | `/admin/tags` | Mod+ | Create/manage taxonomy |
-| `/admin/ingest` | Mod+ | Ingest run history + manual trigger |
+| `/admin/ingest` | Creator | Ingest run history + manual trigger. Creator-only since V9.0 — manual runs burn Steam API quota and can reshape the catalogue wholesale. |
 | `/admin/reports` | Mod+ | Community moderation reports |
 | `/admin/archive` | Mod+ (view only) | Archived creations |
-| `/admin/add` | Mod+ | Manually add a Workshop item by URL |
+| `/admin/add` | Creator | Manually add a Workshop item by URL. Creator-only since V9.0 — bypasses the follower-count floor entirely so it needs the site owner's judgement. |
 | `/admin/users` | Creator | User role + ban management |
 | `/admin/appeals` | Mod+ | Age-gate appeal queue — grant or dismiss appeals submitted via `/verify/appeal` |
 | `/admin/suggestions` | Creator | Feature suggestion board management |
@@ -32,6 +32,8 @@ Purpose: review new `status='pending'` items before they go public.
 - Shows up to 50 items. **Community submissions (`uploadedByUserId IS NOT NULL`) sort to the top of the stack**; within each group the tiebreaker is `subscriptions DESC` so the highest-confidence auto-ingested items still rise. This way moderators clear user-flagged items first instead of hunting for them.
 - Each card shows: thumbnail, title, **Community submitted** pill (purple, when `uploadedByUserId` is set), Steam metadata (subs, favorites, vote score), kind badge, suggested tags with confidence scores, and the **full cleaned description** below the metadata. The description column flows inline and the card grows to fit, so moderators can read the entire body without an in-card scroll. The action footer is sticky-bottom so Approve/Skip/Reject stay reachable on long cards.
 - **Rejecting a community-submitted card requires a reason.** The Reject button (and keyboard left-arrow / swipe-left gesture) opens a modal with a 300-char textarea instead of firing immediately; the reason is persisted into the submitter's `submission_rejected` notification so they know what to fix. `rejectCreation` enforces the same rule server-side — a missing reason on a community row throws `reason_required_for_community_submission`. Non-community (auto-ingested) rejections still fire instantly and leave the reason blank.
+- **Rejection reason presets (V9.0).** The modal surfaces five one-click preset pills — *Below threshold*, *Duplicate*, *Low quality*, *Missing attribution*, *Not Scrap Mechanic* — that fill the textarea with a short submitter-friendly sentence. Still editable before confirming. The same `REJECT_PRESETS` list is duplicated in `QueueItem.tsx` so rejection notifications stay consistent across both surfaces.
+- **Community-submission counter in the header (V9.0).** When `pending AND uploaded_by_user_id IS NOT NULL` count > 0, the header renders a purple "N community-submitted waiting — these are up first" pill below the batch counter. One extra `COUNT(*)::int` query bundled into the existing `Promise.all` — no extra round-trip.
 - **Actions:**
   - **Approve** — sets `status=approved`, `approvedAt=now()`, confirms selected tags (sets `confirmed=true`)
   - **Reject** — sets `status=rejected`. The form includes an optional `reason` text input (max 300 chars); if filled, it's appended to the submitter's rejection notification body (`"<title>" was not accepted. Reason: <reason>`).
@@ -121,12 +123,12 @@ All helpers check `effectiveRole` (ban-aware), not `user.role` directly. **Every
 | `updateTag(tagId, name, slug, categoryId)` | Creator-only. Fixes misspellings or re-buckets a tag. Normalises the slug; rejects collisions with another tag's slug. `creation_tags.tag_id` is the immutable FK, so changing the slug doesn't orphan anything — but bookmarked `/search?tags=<old>` URLs break. |
 | `createCategory(name, slug)` | Creates a new category |
 
-### Ingest
+### Ingest (Creator-only since V9.0)
 
 | Action | Notes |
 |---|---|
-| `triggerIngest(pagesPerKind?)` | Manual ingest run. Default 1 page; max 20. |
-| `addCreation(urlOrId, autoApprove?)` | Manual item add by Steam URL or ID |
+| `triggerIngest(pagesPerKind?)` | Manual ingest run. Default 1 page; max 20. `requireCreator()`. |
+| `addCreation(urlOrId, autoApprove?)` | Manual item add by Steam URL or ID. `requireCreator()`. Bypasses the follower-count floor. |
 
 ---
 

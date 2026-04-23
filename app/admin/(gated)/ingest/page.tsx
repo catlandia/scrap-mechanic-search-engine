@@ -1,9 +1,12 @@
+import Link from "next/link";
 import { desc } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import { ingestRuns } from "@/lib/db/schema";
 import { triggerIngest } from "@/app/admin/actions";
 import { FormSubmitButton } from "@/components/FormSubmitButton";
 import { IngestProgress } from "@/components/admin/IngestProgress";
+import { getCurrentUser } from "@/lib/auth/session";
+import { effectiveRole, isCreator } from "@/lib/auth/roles";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +18,22 @@ function formatDuration(start: Date | null, end: Date | null): string {
 }
 
 export default async function IngestPage() {
+  const user = await getCurrentUser();
+  if (!user || !isCreator(effectiveRole(user))) {
+    return (
+      <div className="mx-auto max-w-2xl rounded-lg border border-purple-500/40 bg-purple-500/10 p-6 text-sm">
+        <div className="text-lg font-semibold text-purple-200">Creator only.</div>
+        <p className="mt-2 text-purple-100/80">
+          Ingest runs are expensive and can reshape the public catalogue, so
+          they&apos;re reserved for the site Creator. Moderators see newly
+          ingested items land in{" "}
+          <Link href="/admin/triage" className="underline">Triage</Link> once a
+          run finishes.
+        </p>
+      </div>
+    );
+  }
+
   const db = getDb();
   const runs = await db
     .select()

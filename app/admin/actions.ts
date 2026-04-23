@@ -289,7 +289,7 @@ export async function getLatestIngestProgress(): Promise<{
 }
 
 export async function triggerIngest(formData?: FormData): Promise<void> {
-  await requireMod();
+  await requireCreator();
   let pagesPerKind: number | undefined;
   if (formData) {
     const raw = formData.get("pagesPerKind");
@@ -402,7 +402,7 @@ function parsePublishedFileId(input: string): string | null {
  * for brand-new rows so suggestions still appear in the queue/triage.
  */
 export async function addCreation(formData: FormData) {
-  await requireMod();
+  await requireCreator();
   const raw = String(formData.get("input") ?? "").trim();
   const autoApprove = formData.get("approve") === "on";
 

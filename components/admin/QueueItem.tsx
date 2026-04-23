@@ -13,6 +13,32 @@ import { cn } from "@/lib/utils";
 
 type QueueAction = "approve" | "reject" | "save";
 
+// Matches the triage modal's presets so the mod sees the same five
+// one-click fillers wherever they reject a community submission. Keeps
+// rejection notifications consistent across the two surfaces.
+const REJECT_PRESETS: { label: string; text: string }[] = [
+  {
+    label: "Below threshold",
+    text: "Below this kind's subscriber threshold. Resubmit once it has more engagement.",
+  },
+  {
+    label: "Duplicate",
+    text: "Already on the site — search before submitting so we don't end up with duplicates.",
+  },
+  {
+    label: "Low quality",
+    text: "Doesn't clear the site's quality bar right now. Polish the item and resubmit.",
+  },
+  {
+    label: "Missing attribution",
+    text: "Co-authors missing from the Workshop page — add them on Steam, then resubmit.",
+  },
+  {
+    label: "Not Scrap Mechanic",
+    text: "This isn't a Scrap Mechanic Workshop item. Only SM creations belong here.",
+  },
+];
+
 const KIND_OPTIONS = [
   { value: "blueprint", label: "Blueprint" },
   { value: "mod", label: "Mod" },
@@ -266,6 +292,28 @@ export function QueueItem({ creation, suggested, allTags, allCategories }: Props
             );
           })}
         </div>
+
+        {creation.communitySubmitted && (
+          <div className="flex flex-wrap items-center gap-1.5 pt-2 text-[11px] text-foreground/50">
+            <span className="uppercase tracking-wider">Quick reason:</span>
+            {REJECT_PRESETS.map((p) => (
+              <button
+                key={p.label}
+                type="button"
+                onClick={() => {
+                  if (reasonRef.current) {
+                    reasonRef.current.value = p.text;
+                    reasonRef.current.focus();
+                  }
+                }}
+                disabled={isPending}
+                className="rounded-full border border-border px-2.5 py-0.5 text-foreground/70 hover:border-purple-400/60 hover:bg-purple-500/10 hover:text-foreground disabled:opacity-40"
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+        )}
 
         <div className="flex flex-wrap gap-2 pt-2">
           <button

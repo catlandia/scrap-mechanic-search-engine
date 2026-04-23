@@ -65,7 +65,7 @@ Community layer (requires Steam login):
 
 ## Version history
 
-Per-version changelog lives in [`README.md`](README.md#recent-changes-v46810) — the quick-orientation block at the top shows the current version. Don't duplicate it here; a parallel list only decays.
+Per-version changelog lives in [`README.md`](README.md#recent-changes-v46v90) — the quick-orientation block at the top shows the current version. Don't duplicate it here; a parallel list only decays.
 
 ---
 
@@ -176,7 +176,7 @@ lib/
     types.ts compare.ts pick.ts session.ts share.ts
     blocks.generated.ts _icons.generated.json autocomplete.generated.ts  # all gitignored
   i18n/
-    dictionaries.ts               # en/ru/de/pl translation keys + translate()
+    dictionaries.ts               # en/ru/uk/de/pl/zh translation keys + translate()
     server.ts                     # getT() — reads smse_lang cookie, returns {locale, dict, t}
     client.tsx                    # LocaleProvider + useT() for client components
     english-tag.ts                # isEnglishTagName — ASCII-only tag-name guard

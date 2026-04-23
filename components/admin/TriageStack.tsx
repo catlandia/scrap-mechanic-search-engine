@@ -41,12 +41,40 @@ type CardRole = "current" | "next";
 const SWIPE_THRESHOLD = 120;
 const ANIM_MS = 280;
 
+// Shortcut presets for the community-submit rejection modal. Saves the mod
+// typing the same five sentences over and over; can still be edited freely
+// before confirming.
+const REJECT_PRESETS: { label: string; text: string }[] = [
+  {
+    label: "Below threshold",
+    text: "Below this kind's subscriber threshold. Resubmit once it has more engagement.",
+  },
+  {
+    label: "Duplicate",
+    text: "Already on the site — search before submitting so we don't end up with duplicates.",
+  },
+  {
+    label: "Low quality",
+    text: "Doesn't clear the site's quality bar right now. Polish the item and resubmit.",
+  },
+  {
+    label: "Missing attribution",
+    text: "Co-authors missing from the Workshop page — add them on Steam, then resubmit.",
+  },
+  {
+    label: "Not Scrap Mechanic",
+    text: "This isn't a Scrap Mechanic Workshop item. Only SM creations belong here.",
+  },
+];
+
 export function TriageStack({
   cards,
   totalPending,
+  communityPending,
 }: {
   cards: TriageCard[];
   totalPending: number;
+  communityPending: number;
 }) {
   const router = useRouter();
   const toast = useToast();
@@ -233,9 +261,17 @@ export function TriageStack({
             +3.
           </p>
         </div>
-        <div className="text-sm text-foreground/60">
-          <span className="font-medium text-foreground">{remaining}</span> of{" "}
-          {totalPending} in this batch
+        <div className="flex flex-col items-end gap-0.5 text-sm text-foreground/60">
+          <div>
+            <span className="font-medium text-foreground">{remaining}</span> of{" "}
+            {totalPending} in this batch
+          </div>
+          {communityPending > 0 && (
+            <div className="rounded-full border border-purple-500/40 bg-purple-500/10 px-2 py-0.5 text-[11px] font-medium text-purple-200">
+              {communityPending} community-submitted waiting — these are
+              up first
+            </div>
+          )}
         </div>
       </header>
 
@@ -364,6 +400,19 @@ function RejectReasonModal({
             their rejection notification — be specific so they know what to
             fix for next time.
           </p>
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {REJECT_PRESETS.map((p) => (
+            <button
+              key={p.label}
+              type="button"
+              onClick={() => onReasonChange(p.text)}
+              disabled={pending}
+              className="rounded-full border border-border px-2.5 py-1 text-[11px] text-foreground/70 hover:border-purple-400/60 hover:bg-purple-500/10 hover:text-foreground disabled:opacity-40"
+            >
+              {p.label}
+            </button>
+          ))}
         </div>
         <textarea
           autoFocus

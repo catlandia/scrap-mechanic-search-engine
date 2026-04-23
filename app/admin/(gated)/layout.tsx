@@ -16,12 +16,12 @@ const baseNav = [
   { href: "/admin/reports", label: "Reports" },
   { href: "/admin/appeals", label: "Appeals" },
   { href: "/admin/archive", label: "Archive" },
-  { href: "/admin/add", label: "Add" },
   { href: "/admin/tags", label: "Tags" },
-  { href: "/admin/ingest", label: "Ingest" },
   { href: "/admin/guide", label: "Guide" },
 ];
 const creatorNav = [
+  { href: "/admin/add", label: "Add" },
+  { href: "/admin/ingest", label: "Ingest" },
   { href: "/admin/suggestions", label: "Suggestions" },
   { href: "/admin/changelog", label: "Changelog" },
   { href: "/admin/users", label: "Users" },

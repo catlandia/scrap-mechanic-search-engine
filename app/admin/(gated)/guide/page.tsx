@@ -239,30 +239,6 @@ export default async function AdminGuidePage() {
           </Callout>
         </Step>
 
-        <Step title="Manual add — pulling in items the cron missed">
-          <p>
-            <Link href="/admin/add" className="text-accent hover:underline">
-              /admin/add
-            </Link>{" "}
-            takes a Steam Workshop URL or a raw publishedfileid. Bypasses
-            the auto-ingest follower-count floor. Useful for small gems that
-            fall below the threshold but deserve to be here.
-          </p>
-        </Step>
-
-        <Step title="Ingest run history">
-          <p>
-            <Link href="/admin/ingest" className="text-accent hover:underline">
-              /admin/ingest
-            </Link>{" "}
-            shows the cron&apos;s recent runs and any errors. You can also
-            manually trigger a run (enter how many pages per kind, max 20).
-            Use sparingly — each run burns Steam API quota. Manual runs
-            scan the exact depth you enter; cron runs stop early as soon as
-            they&apos;ve found enough truly new items.
-          </p>
-        </Step>
-
         <Step title="Archive — view-only for you">
           <p>
             <Link href="/admin/archive" className="text-accent hover:underline">
@@ -386,7 +362,13 @@ export default async function AdminGuidePage() {
                 <Link href="/admin/ingest" className="text-accent hover:underline">
                   /admin/ingest
                 </Link>{" "}
-                for cron errors — low-priority but easy to miss.
+                for cron errors — low-priority but easy to miss. Manual
+                ingest runs and{" "}
+                <Link href="/admin/add" className="text-accent hover:underline">
+                  /admin/add
+                </Link>{" "}
+                (pulling in individual Workshop URLs) are Creator-only since
+                BETA 3.0.
               </li>
             </>
           }
@@ -510,6 +492,30 @@ export default async function AdminGuidePage() {
               <strong className="text-foreground">Hard delete</strong> (🗑)
               wipes a suggestion and its votes — no audit trail. Only use
               for spam, abuse, or duplicates.
+            </p>
+          </Step>
+
+          <Step title="Manual add — pulling in items the cron missed">
+            <p>
+              <Link href="/admin/add" className="text-accent hover:underline">
+                /admin/add
+              </Link>{" "}
+              takes a Steam Workshop URL or a raw publishedfileid, bypassing
+              the follower-count floor. Small gems that never trended still
+              get a path onto the site. Creator-only since BETA 3.0 — every
+              direct add reshapes the public catalogue and should only
+              happen on your judgement, not a moderator&apos;s.
+            </p>
+          </Step>
+
+          <Step title="Ingest runs">
+            <p>
+              <Link href="/admin/ingest" className="text-accent hover:underline">
+                /admin/ingest
+              </Link>{" "}
+              lists recent cron runs + errors and lets you kick off a manual
+              run (pages per kind, max 20). Each run burns Steam API quota,
+              so use sparingly. Creator-only since BETA 3.0.
             </p>
           </Step>
 

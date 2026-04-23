@@ -1,4 +1,4 @@
-export const LOCALES = ["en", "ru", "de", "pl"] as const;
+export const LOCALES = ["en", "ru", "uk", "de", "pl", "zh"] as const;
 export type Locale = (typeof LOCALES)[number];
 export const DEFAULT_LOCALE: Locale = "en";
 
@@ -9,8 +9,10 @@ export const LOCALE_COOKIE = "smse_lang";
 export const LOCALE_NATIVE_NAMES: Record<Locale, string> = {
   en: "English",
   ru: "Русский",
+  uk: "Українська",
   de: "Deutsch",
   pl: "Polski",
+  zh: "中文",
 };
 
 export function parseLocale(raw: string | undefined): Locale {

@@ -1,4 +1,4 @@
-import { eq, inArray, sql } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import { creations, creationTags, tags } from "@/lib/db/schema";
 import { TriageStack, type TriageCard } from "@/components/admin/TriageStack";
@@ -10,7 +10,7 @@ const BATCH_SIZE = 50;
 export default async function TriagePage() {
   const db = getDb();
 
-  const [pending, totalRow] = await Promise.all([
+  const [pending, totalRow, communityRow] = await Promise.all([
     db
       .select()
       .from(creations)
@@ -27,6 +27,16 @@ export default async function TriagePage() {
       .select({ n: sql<number>`count(*)::int` })
       .from(creations)
       .where(eq(creations.status, "pending"))
+      .then((r) => r[0]),
+    db
+      .select({ n: sql<number>`count(*)::int` })
+      .from(creations)
+      .where(
+        and(
+          eq(creations.status, "pending"),
+          isNotNull(creations.uploadedByUserId),
+        ),
+      )
       .then((r) => r[0]),
   ]);
 
@@ -67,5 +77,11 @@ export default async function TriagePage() {
     communitySubmitted: !!c.uploadedByUserId,
   }));
 
-  return <TriageStack cards={cards} totalPending={totalRow?.n ?? cards.length} />;
+  return (
+    <TriageStack
+      cards={cards}
+      totalPending={totalRow?.n ?? cards.length}
+      communityPending={communityRow?.n ?? 0}
+    />
+  );
 }

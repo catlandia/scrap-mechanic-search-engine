@@ -19,8 +19,7 @@ Public beta. Free to use, no ads, no premium features, runs entirely on free-tie
 
 ## Report a bug or suggest a feature
 
-- **In-app:** use the Ideas board at `/suggestions`
-- **On GitHub:** open an issue in this repo
+Use the in-app Ideas board at `/suggestions`.
 
 ## Stack
 
@@ -57,15 +56,11 @@ Required env vars (see `.env.example`):
 
 Dev server: <http://localhost:3000>.
 
-## Contributing
+## Internal documentation
 
-Issues and PRs welcome. Before opening a PR, please:
+Internal docs live under [`docs/`](docs/) — start with `docs/README.md` for the index.
 
-1. Read `docs/maintaining-docs.md` if your change touches anything documented.
-2. Run `npm run typecheck` — it must pass.
-3. Keep the project's constraints in mind: free-tier only (no paid APIs), `neon-http` has no transactions, the tagger only runs on insert.
-
-Deeper internal documentation lives under [`docs/`](docs/) — start with `docs/README.md` for the index.
+This project is not currently accepting code contributions. For feature requests and bug reports, use the on-site Ideas board at `/suggestions`.
 
 ## License
 
