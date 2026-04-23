@@ -562,6 +562,22 @@ async function main() {
     }
   }
 
+  // Dedupe by title — some items (Craftbot upgrade tiers, Warehouse
+  // Spotlight variants) share the exact same InventoryItemDescriptions
+  // title. In the game the player only ever sees one "Craftbot" icon
+  // in the backpack; rendering five identical-looking autocomplete rows
+  // and silently picking different secrets behind them is a bad puzzle.
+  // Keep the first occurrence (lowest qualityLevel / earliest in the
+  // shapeset, since collection order is deterministic).
+  {
+    const seenTitles = new Set<string>();
+    for (const [uuid, item] of collected) {
+      const key = item.title.toLowerCase();
+      if (seenTitles.has(key)) collected.delete(uuid);
+      else seenTitles.add(key);
+    }
+  }
+
   // Second pass: tier-family detection across every collected block.
   const levelMap = assignLevels(Array.from(collected.values()));
   let tierMembers = 0;

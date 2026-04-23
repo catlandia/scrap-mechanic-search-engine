@@ -14,19 +14,31 @@ type Props = {
 
 const MAX_SUGGESTIONS = 8;
 
-// Client-side prefix + substring match over the slim INDEX. Prefix matches
-// rank above substring; alphabetical tie-break. `excludeNames` is passed
-// in lower-case so we can drop already-guessed entries without a second
-// server round-trip.
+// Collapse whitespace + punctuation so "craft bot" and "craft-bot" both
+// match "Craftbot". Keeps alphanumerics only.
+function normalise(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+// Client-side prefix + substring match over the slim INDEX. Matches are
+// attempted against the raw lowercase name first (preserves spelling
+// hints) and then against the whitespace-stripped form so common typos
+// like "craft bot" vs "Craftbot" still land. Prefix ranks above
+// substring; alphabetical tie-break. `excludeNames` is lower-case.
 function filter(query: string, exclude: ReadonlySet<string>): AutocompleteEntry[] {
-  const q = query.trim().toLowerCase();
-  if (!q) return [];
+  const qRaw = query.trim().toLowerCase();
+  if (!qRaw) return [];
+  const qNorm = normalise(qRaw);
   const prefix: AutocompleteEntry[] = [];
   const substring: AutocompleteEntry[] = [];
   for (const e of INDEX) {
     if (exclude.has(e.nameLower)) continue;
-    if (e.nameLower.startsWith(q)) prefix.push(e);
-    else if (e.nameLower.includes(q)) substring.push(e);
+    const nameNorm = normalise(e.nameLower);
+    if (e.nameLower.startsWith(qRaw) || nameNorm.startsWith(qNorm)) {
+      prefix.push(e);
+    } else if (e.nameLower.includes(qRaw) || nameNorm.includes(qNorm)) {
+      substring.push(e);
+    }
     if (prefix.length >= MAX_SUGGESTIONS) break;
   }
   return [...prefix, ...substring].slice(0, MAX_SUGGESTIONS);

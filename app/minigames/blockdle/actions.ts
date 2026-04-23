@@ -40,9 +40,17 @@ function blockByUuid(uuid: string): Block | undefined {
 }
 
 function blockByName(name: string): Block | undefined {
-  const needle = name.trim().toLowerCase();
+  const raw = name.trim().toLowerCase();
+  if (!raw) return undefined;
+  // Exact lowercase first so an unambiguous typed title always wins.
+  const exact = BLOCKS.find((b) => b.title.toLowerCase() === raw);
+  if (exact) return exact;
+  // Fallback: compare with all non-alphanumerics stripped so raw-Enter
+  // submissions like "craft bot" still resolve to "Craftbot".
+  const normalise = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const needle = normalise(raw);
   if (!needle) return undefined;
-  return BLOCKS.find((b) => b.title.toLowerCase() === needle);
+  return BLOCKS.find((b) => normalise(b.title) === needle);
 }
 
 // Rebuild GuessComparison[] from just the stored UUIDs. If the catalogue
