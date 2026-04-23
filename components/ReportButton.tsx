@@ -12,6 +12,7 @@ const REPORT_REASON_OPTIONS: { value: string; label: string }[] = [
   { value: "poor_quality", label: "Poor quality / low effort" },
   { value: "spam", label: "Spam or advertising" },
   { value: "not_scrap_mechanic", label: "Not a Scrap Mechanic item" },
+  { value: "missing_creators", label: "Missing contributors (some creators aren't showing)" },
   { value: "other", label: "Other (please explain)" },
 ];
 

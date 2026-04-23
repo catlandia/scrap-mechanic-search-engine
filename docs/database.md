@@ -14,7 +14,7 @@ CREATION_KINDS    = blueprint | mod | world | challenge | tile | custom_game | t
 CREATION_STATUSES = pending | approved | rejected | archived | deleted
 TAG_SOURCES       = keyword | steam | admin | community
 USER_ROLES        = user | moderator | elite_moderator | creator
-REPORT_REASONS    = wrong_tags | poor_quality | spam | not_scrap_mechanic | other
+REPORT_REASONS    = wrong_tags | poor_quality | spam | not_scrap_mechanic | missing_creators | other
 SUGGESTION_STATUSES = submitted | approved | rejected | implemented
 ```
 

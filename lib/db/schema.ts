@@ -65,6 +65,7 @@ export const REPORT_REASONS = [
   "poor_quality",
   "spam",
   "not_scrap_mechanic",
+  "missing_creators",
   "other",
 ] as const;
 export type ReportReason = (typeof REPORT_REASONS)[number];

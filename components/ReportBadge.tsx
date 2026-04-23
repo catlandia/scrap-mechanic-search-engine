@@ -5,6 +5,7 @@ const REASON_LABELS: Record<string, string> = {
   poor_quality: "Low quality",
   spam: "Spam",
   not_scrap_mechanic: "Not Scrap Mechanic content",
+  missing_creators: "Missing contributors",
   other: "Community report",
 };
 
