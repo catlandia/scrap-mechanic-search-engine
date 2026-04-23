@@ -154,8 +154,7 @@ export default async function HomePage() {
               >
                 Support the site
               </Link>{" "}
-              to see concrete ways you can pitch in — no donations, just time
-              and attention.
+              to see concrete ways you can pitch in.
             </p>
           </section>
         </>

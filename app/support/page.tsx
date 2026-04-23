@@ -17,10 +17,9 @@ export default function SupportPage() {
         </p>
         <h1 className="text-3xl font-bold">How you can help</h1>
         <p className="text-sm text-foreground/70">
-          The site runs entirely on free tiers with no ads and no revenue
-          goal. That keeps it sustainable but not self-growing — it stays
-          useful because people like you pitch in. Here&apos;s everything that
-          actually moves the needle.
+          The site runs on free tiers right now, which keeps it online but
+          not self-growing — it stays useful because people like you pitch
+          in. Here&apos;s everything that actually moves the needle.
         </p>
       </header>
 
@@ -105,33 +104,18 @@ export default function SupportPage() {
       </section>
 
       <section className="space-y-3 rounded-lg border border-border bg-card/60 p-5">
-        <h2 className="text-lg font-semibold">Contribute code</h2>
+        <h2 className="text-lg font-semibold">Money support</h2>
         <p className="text-sm leading-relaxed text-foreground/80">
-          The site is open-source. PRs are welcome — bug fixes, polish,
-          translation upgrades (the RU/DE/PL dictionaries are all first-pass
-          AI seeds and would benefit from native speakers). Star the{" "}
-          <a
-            href="https://github.com/catlandia/scrap-mechanic-search-engine"
-            target="_blank"
-            rel="noreferrer"
-            className="text-accent hover:underline"
-          >
-            GitHub repo
-          </a>{" "}
-          if you just want to show support without writing anything.
+          Right now there&apos;s no way to donate — I haven&apos;t set up a
+          Patreon, Ko-fi, or anything similar yet. But if the site grows,
+          it&apos;ll eventually outgrow the free tiers, and at that point
+          financial support would genuinely help keep it online and
+          improving. If you&apos;d like to contribute that way later, check
+          back — I&apos;ll add a link here when something&apos;s set up.
         </p>
-      </section>
-
-      <section className="space-y-3 rounded-lg border border-border bg-card/60 p-5">
-        <h2 className="text-lg font-semibold">What the site does not accept</h2>
         <p className="text-sm leading-relaxed text-foreground/80">
-          No donations, no Patreon, no tips. Running costs are zero and
-          keeping them there is part of the design — see{" "}
-          <Link href="/about" className="text-accent hover:underline">
-            how it works
-          </Link>{" "}
-          for the full reasoning. The one thing I genuinely want is your
-          time and attention on the list above.
+          In the meantime the items above are the most useful things you
+          can do.
         </p>
       </section>
     </article>
