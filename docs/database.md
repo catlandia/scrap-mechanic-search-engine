@@ -29,7 +29,7 @@ Main content table. One row per Steam Workshop item.
 | Column | Type | Notes |
 |---|---|---|
 | `id` | text PK | Steam `publishedfileid` |
-| `shortId` | serial UNIQUE | User-facing numeric ID (used in `/creation/[id]` URLs) |
+| `shortId` | integer UNIQUE, nullable | User-facing numeric ID (used in `/creation/[id]` URLs). Assigned on first approval via `nextval('creations_short_id_seq')`; pending/rejected rows carry NULL so inserts don't burn sequence numbers. The sequence object itself predates V8.12 and is still the source of truth — approval uses `COALESCE(short_id, nextval(...))` so archive↔restore preserves the ID. |
 | `title` | text | |
 | `descriptionRaw` | text | Original Steam BBCode markup |
 | `descriptionClean` | text | Stripped version; feeds the tagger + `searchVector` |
@@ -385,4 +385,4 @@ Votes on feature suggestions.
 
 **Permanent bans.** `bannedUntil = 9999-12-31` — a distant date keeps all date-comparison code working without special-casing NULL.
 
-**`shortId` as public URL key.** The serial auto-increment gives short, user-friendly IDs (`/creation/42`) without exposing Steam's numeric publishedfileid directly. Both are accepted by the detail page query.
+**`shortId` as public URL key.** Short, user-friendly IDs (`/creation/42`) without exposing Steam's numeric publishedfileid directly. Both are accepted by the detail page query (`getCreationDetail` tries the integer first, falls back to the steam id). Since V8.12 the column is nullable: rows start with NULL at insert and only receive a sequence value on approval (`approveCreation` / `quickApprove` / `addCreation(autoApprove=true)` call `COALESCE(short_id, nextval(pg_get_serial_sequence('creations', 'short_id')))`). That keeps pending/rejected items off the sequence so visible IDs stay close to the approved catalog count instead of drifting upward over time. Archive → restore preserves the existing number via the COALESCE.

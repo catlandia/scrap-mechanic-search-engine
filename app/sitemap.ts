@@ -46,12 +46,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .where(eq(creations.status, "approved"))
       .orderBy(desc(creations.approvedAt))
       .limit(5000);
-    creationEntries = rows.map((r) => ({
-      url: `${base}/creation/${r.shortId}`,
-      lastModified: r.approvedAt ?? now,
-      changeFrequency: "weekly" as const,
-      priority: 0.6,
-    }));
+    creationEntries = rows
+      .filter((r) => r.shortId != null)
+      .map((r) => ({
+        url: `${base}/creation/${r.shortId}`,
+        lastModified: r.approvedAt ?? now,
+        changeFrequency: "weekly" as const,
+        priority: 0.6,
+      }));
 
     const authorRows = await db
       .select({ steamid: creations.authorSteamid, latest: sql<Date>`max(${creations.approvedAt})` })

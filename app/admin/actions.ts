@@ -97,16 +97,23 @@ export async function approveCreation(formData: FormData) {
   const tagIds = parseTagIds(formData);
 
   const [row] = await db
-    .select({ uploadedByUserId: creations.uploadedByUserId, title: creations.title, shortId: creations.shortId })
+    .select({ uploadedByUserId: creations.uploadedByUserId, title: creations.title })
     .from(creations)
     .where(eq(creations.id, id))
     .limit(1);
 
   const now = new Date();
-  await db
+  const [updated] = await db
     .update(creations)
-    .set({ status: "approved", kind, reviewedAt: now, approvedAt: now })
-    .where(eq(creations.id, id));
+    .set({
+      status: "approved",
+      kind,
+      reviewedAt: now,
+      approvedAt: now,
+      shortId: sql`COALESCE(${creations.shortId}, nextval(pg_get_serial_sequence('creations', 'short_id'))::integer)`,
+    })
+    .where(eq(creations.id, id))
+    .returning({ shortId: creations.shortId });
 
   await replaceTagsForCreation(id, tagIds);
 
@@ -116,7 +123,7 @@ export async function approveCreation(formData: FormData) {
       type: "submission_approved",
       title: "Submission approved!",
       body: `"${row.title}" is now live on the site.`,
-      link: `/creation/${row.shortId}`,
+      link: `/creation/${updated?.shortId ?? id}`,
     });
   }
 
@@ -177,16 +184,22 @@ export async function quickApprove(formData: FormData) {
   if (!id) throw new Error("creationId required");
 
   const [row] = await db
-    .select({ uploadedByUserId: creations.uploadedByUserId, title: creations.title, shortId: creations.shortId })
+    .select({ uploadedByUserId: creations.uploadedByUserId, title: creations.title })
     .from(creations)
     .where(eq(creations.id, id))
     .limit(1);
 
   const now = new Date();
-  await db
+  const [updated] = await db
     .update(creations)
-    .set({ status: "approved", reviewedAt: now, approvedAt: now })
-    .where(eq(creations.id, id));
+    .set({
+      status: "approved",
+      reviewedAt: now,
+      approvedAt: now,
+      shortId: sql`COALESCE(${creations.shortId}, nextval(pg_get_serial_sequence('creations', 'short_id'))::integer)`,
+    })
+    .where(eq(creations.id, id))
+    .returning({ shortId: creations.shortId });
 
   if (row?.uploadedByUserId) {
     await createNotification({
@@ -194,7 +207,7 @@ export async function quickApprove(formData: FormData) {
       type: "submission_approved",
       title: "Submission approved!",
       body: `"${row.title}" is now live on the site.`,
-      link: `/creation/${row.shortId}`,
+      link: `/creation/${updated?.shortId ?? id}`,
     });
   }
 
@@ -473,6 +486,11 @@ export async function addCreation(formData: FormData) {
           status: autoApprove ? "approved" : "pending",
           reviewedAt: autoApprove ? now : null,
           approvedAt: autoApprove ? now : null,
+          // Only draw a short_id when the row is going live immediately;
+          // pending rows stay NULL until a mod approves them.
+          shortId: autoApprove
+            ? sql`nextval(pg_get_serial_sequence('creations', 'short_id'))::integer`
+            : null,
         })
         .onConflictDoUpdate({
           target: creations.id,
@@ -493,7 +511,12 @@ export async function addCreation(formData: FormData) {
             steamTags: baseRow.steamTags,
             kind: baseRow.kind,
             ...(autoApprove
-              ? { status: "approved" as const, reviewedAt: now, approvedAt: now }
+              ? {
+                  status: "approved" as const,
+                  reviewedAt: now,
+                  approvedAt: now,
+                  shortId: sql`COALESCE(${creations.shortId}, nextval(pg_get_serial_sequence('creations', 'short_id'))::integer)`,
+                }
               : {}),
           },
         });

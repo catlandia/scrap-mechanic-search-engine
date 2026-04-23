@@ -92,7 +92,7 @@ export default async function ArchivePage() {
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div className="min-w-0">
                     <div className="truncate font-medium">
-                      #{c.shortId} — {c.title}
+                      {c.shortId != null && `#${c.shortId} — `}{c.title}
                     </div>
                     <div className="text-xs text-foreground/40">
                       {c.authorName ? `by ${c.authorName} · ` : ""}

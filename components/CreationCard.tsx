@@ -31,7 +31,7 @@ export function CreationCard({
   const showSite = ratingMode === "site" || ratingMode === "both";
   return (
     <article className="group flex flex-col overflow-hidden rounded-lg border border-border bg-card transition hover:border-accent">
-      <Link href={`/creation/${creation.shortId}`} className="flex flex-1 flex-col">
+      <Link href={`/creation/${creation.shortId ?? creation.id}`} className="flex flex-1 flex-col">
         <div className="relative aspect-video bg-black">
           {creation.thumbnailUrl ? (
             <Image
@@ -54,9 +54,11 @@ export function CreationCard({
           <span className="absolute left-2 top-2 rounded bg-black/70 px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-white/90">
             {kindLabel}
           </span>
-          <span className="absolute right-2 top-2 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-mono text-white/80">
-            #{creation.shortId}
-          </span>
+          {creation.shortId != null && (
+            <span className="absolute right-2 top-2 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-mono text-white/80">
+              #{creation.shortId}
+            </span>
+          )}
           {creation.uploadedByUserId && (
             // Thumbnail is always dark; force white text so the default
             // theme's remapped `text-purple-200` (dark purple) doesn't go

@@ -548,7 +548,7 @@ export async function postComment(formData: FormData): Promise<void> {
         .where(eq(creations.id, creationId))
         .limit(1);
       link = row
-        ? `/creation/${row.shortId}#comment-${inserted?.id ?? ""}`
+        ? `/creation/${row.shortId ?? creationId}#comment-${inserted?.id ?? ""}`
         : `/creation/${creationId}`;
       context = row ? ` on "${row.title}"` : "";
     } else {

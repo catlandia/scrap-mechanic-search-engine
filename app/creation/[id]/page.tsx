@@ -59,7 +59,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   const byLine = creation.authorName ? `by ${creation.authorName}. ` : "";
   const snippet = creation.descriptionClean.slice(0, 180 - byLine.length).trim();
   const description = `${byLine}${snippet}`.slice(0, 200);
-  const canonical = `/creation/${creation.shortId}`;
+  const canonical = `/creation/${creation.shortId ?? creation.id}`;
   const images = creation.thumbnailUrl ? [creation.thumbnailUrl] : [];
   return {
     title: creation.title,
@@ -250,16 +250,18 @@ export default async function CreationDetailPage({
           return null;
         })()}
         <div className="flex flex-wrap gap-4 pt-1 font-mono text-[11px] text-foreground/45">
-          <span>
-            <span className="text-foreground/35">ID:</span> #{creation.shortId}
-          </span>
+          {creation.shortId != null && (
+            <span>
+              <span className="text-foreground/35">ID:</span> #{creation.shortId}
+            </span>
+          )}
           <span>
             <span className="text-foreground/35">Steam:</span> {creation.id}
           </span>
           {viewerIsMod && (
             <form action={rescrapeCreatorsAction} className="inline-flex">
               <input type="hidden" name="creationId" value={creation.id} />
-              <input type="hidden" name="shortId" value={String(creation.shortId)} />
+              <input type="hidden" name="shortId" value={String(creation.shortId ?? "")} />
               <FormSubmitButton
                 className="font-mono text-[11px] text-foreground/45 hover:text-accent disabled:opacity-60"
                 pendingLabel="Re-scraping…"

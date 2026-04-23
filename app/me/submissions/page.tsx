@@ -55,7 +55,7 @@ export default async function SubmissionsPage() {
                 )}
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    {item.status === "approved" ? (
+                    {item.status === "approved" && item.shortId != null ? (
                       <Link
                         href={`/creation/${item.shortId}`}
                         className="font-medium text-foreground hover:underline truncate"

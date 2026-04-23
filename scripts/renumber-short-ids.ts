@@ -1,11 +1,21 @@
 /**
- * One-off maintenance script: re-assigns creations.short_id so that
- *   - approved creations are numbered by approved_at ASC (#1 = oldest approved)
- *   - pending/rejected creations come after, ordered by ingested_at
- *   - ties broken by the Steam publishedfileid (deterministic)
+ * Optional maintenance script: re-packs `creations.short_id` into a dense
+ * 1..N range ordered by `approved_at ASC`, with deterministic tie-breaks.
  *
- * Resets the sequence afterwards so future inserts continue from max+1.
- * Idempotent — safe to run again at any time.
+ * Post-V8.12 this is rarely needed — short_id is only assigned on
+ * approval, so visible IDs already track the approved catalog size. The
+ * only way gaps open up is if an approved creation later gets archived
+ * or deleted (both preserve their short_id so URLs stay stable). Run
+ * this script only if the gap ever gets large enough to feel weird.
+ *
+ * Invariants preserved:
+ *   - Rows with short_id IS NULL (pending / rejected) stay NULL.
+ *   - Approved / archived / deleted rows get packed into 1..N.
+ *   - Sequence is re-anchored to the new MAX afterwards.
+ *
+ * Side-effect: old bookmarked URLs like /creation/500 may now point at a
+ * different item. The Steam publishedfileid fallback in getCreationDetail
+ * keeps deep links from the ingest side intact.
  */
 import { config as loadEnv } from "dotenv";
 loadEnv({ path: ".env.local", override: false });
@@ -21,12 +31,13 @@ async function main() {
   const db = drizzle(neon(url));
 
   // Postgres checks the UNIQUE constraint per row inside UPDATE, so we can't
-  // reassign overlapping ranges in one shot. Two-phase: negate every row (still
-  // unique because originals are unique), then assign the final ordering.
-  console.log("Phase 1: negating short_id…");
+  // reassign overlapping ranges in one shot. Two-phase: negate every assigned
+  // row (still unique), then assign the final ordering. NULL rows are never
+  // touched.
+  console.log("Phase 1: negating short_id on assigned rows…");
   await db.execute(sql`UPDATE creations SET short_id = -short_id WHERE short_id > 0`);
 
-  console.log("Phase 2: assigning ordered short_id…");
+  console.log("Phase 2: packing assigned rows 1..N by approved_at…");
   await db.execute(sql`
     WITH ordered AS (
       SELECT
@@ -38,6 +49,7 @@ async function main() {
             id ASC
         ) AS rn
       FROM creations
+      WHERE short_id IS NOT NULL
     )
     UPDATE creations AS c
     SET short_id = o.rn
@@ -45,7 +57,7 @@ async function main() {
     WHERE c.id = o.id
   `);
 
-  console.log("Resetting the sequence…");
+  console.log("Resetting the sequence to MAX(short_id)…");
   await db.execute(sql`
     SELECT setval(
       pg_get_serial_sequence('creations', 'short_id'),
@@ -55,13 +67,15 @@ async function main() {
 
   const result = await db.execute<{
     total: number;
-    min_short: number;
+    with_id: number;
+    null_id: number;
     max_short: number;
   }>(sql`
     SELECT
-      COUNT(*)::int        AS total,
-      MIN(short_id)::int   AS min_short,
-      MAX(short_id)::int   AS max_short
+      COUNT(*)::int                                      AS total,
+      COUNT(*) FILTER (WHERE short_id IS NOT NULL)::int  AS with_id,
+      COUNT(*) FILTER (WHERE short_id IS NULL)::int      AS null_id,
+      COALESCE(MAX(short_id), 0)::int                    AS max_short
     FROM creations
   `);
   console.log("Summary:", result.rows?.[0]);

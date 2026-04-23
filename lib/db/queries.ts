@@ -23,7 +23,11 @@ import {
 
 export interface CreationCardRow {
   id: string;
-  shortId: number;
+  // Nullable because the column is now only assigned on first approval —
+  // pending / rejected rows carry NULL. Public card queries filter on
+  // `status = 'approved'` so in practice cards always have one, but the
+  // type matches the schema so non-approved read paths stay honest.
+  shortId: number | null;
   title: string;
   thumbnailUrl: string | null;
   steamUrl: string;

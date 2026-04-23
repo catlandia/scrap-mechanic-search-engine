@@ -80,10 +80,14 @@ export const creations = pgTable(
   "creations",
   {
     id: text("id").primaryKey(),
-    // Short public-facing id. Auto-incrementing; used in user-facing URLs
-    // like /creation/42 while `id` stays the Steam publishedfileid used for
-    // ingest upserts and joins.
-    shortId: serial("short_id").notNull().unique(),
+    // Short public-facing id. Used in user-facing URLs like /creation/42
+    // while `id` stays the Steam publishedfileid used for ingest upserts
+    // and joins. Nullable on purpose: inserts leave it empty and it's
+    // assigned on first approval via `nextval('creations_short_id_seq')`
+    // so the visible number always tracks the approved catalog size —
+    // pending/rejected rows no longer burn sequence values. The sequence
+    // object itself is kept in Postgres (it pre-dates this change).
+    shortId: integer("short_id").unique(),
     title: text("title").notNull(),
     descriptionRaw: text("description_raw").notNull().default(""),
     descriptionClean: text("description_clean").notNull().default(""),
