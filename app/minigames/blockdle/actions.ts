@@ -21,7 +21,7 @@ import {
 import { getCurrentUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
 import { blockdleDailyResults, users } from "@/lib/db/schema";
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, desc, eq, sql } from "drizzle-orm";
 
 export type Mode = "daily" | "endless";
 
@@ -326,6 +326,57 @@ export async function getTodayLeaderboard(
     role: r.role,
     guessesUsed: r.guessesUsed,
     won: r.won,
+  }));
+}
+
+export type AllTimeEntry = {
+  steamid: string;
+  personaName: string;
+  avatarUrl: string | null;
+  role: string;
+  wins: number;
+  played: number;
+  avgGuesses: number;
+};
+
+// Cumulative leaderboard across every daily puzzle ever played. Ranked
+// by total wins DESC with average-guesses-on-wins ASC as tiebreak, so
+// someone with 30 wins at 5.1 avg beats someone with 30 at 6.2. Loss-
+// only players (0 wins) are filtered — the board is "people who
+// managed to pass it", per the user's ask. Hard-banned users filtered
+// for the same reason as the today board.
+export async function getAllTimeLeaderboard(
+  limit = 25,
+): Promise<AllTimeEntry[]> {
+  const db = getDb();
+  const rows = await db
+    .select({
+      steamid: users.steamid,
+      personaName: users.personaName,
+      avatarUrl: users.avatarUrl,
+      role: users.role,
+      wins: sql<number>`COUNT(*) FILTER (WHERE ${blockdleDailyResults.won})::int`,
+      played: sql<number>`COUNT(*)::int`,
+      avgGuesses: sql<number>`COALESCE(AVG(${blockdleDailyResults.guessesUsed}) FILTER (WHERE ${blockdleDailyResults.won}), 0)::float`,
+    })
+    .from(blockdleDailyResults)
+    .innerJoin(users, eq(users.steamid, blockdleDailyResults.userId))
+    .where(eq(users.hardBanned, false))
+    .groupBy(users.steamid, users.personaName, users.avatarUrl, users.role)
+    .having(sql`COUNT(*) FILTER (WHERE ${blockdleDailyResults.won}) > 0`)
+    .orderBy(
+      desc(sql`COUNT(*) FILTER (WHERE ${blockdleDailyResults.won})`),
+      asc(sql`AVG(${blockdleDailyResults.guessesUsed}) FILTER (WHERE ${blockdleDailyResults.won})`),
+    )
+    .limit(limit);
+  return rows.map((r) => ({
+    steamid: r.steamid,
+    personaName: r.personaName,
+    avatarUrl: r.avatarUrl,
+    role: r.role,
+    wins: r.wins,
+    played: r.played,
+    avgGuesses: Math.round(r.avgGuesses * 10) / 10,
   }));
 }
 

@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { BLOCKS } from "@/lib/blockdle/blocks.generated";
 import { BlockdleGame } from "./BlockdleGame";
 import { Leaderboard } from "./Leaderboard";
-import { getTodayLeaderboard } from "./actions";
+import { getAllTimeLeaderboard, getTodayLeaderboard } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -53,9 +53,13 @@ export default async function BlockdlePage({
     );
   }
 
-  // Fetch today's leaderboard server-side so it streams with the page
-  // and updates on navigation. Endless mode has no shared board.
-  const leaderboard = mode === "daily" ? await getTodayLeaderboard(25) : [];
+  // Fetch both leaderboards server-side so they stream with the page.
+  // Endless mode has no shared board — answers are locally-random, no
+  // fair cross-user comparison.
+  const [todayEntries, allTimeEntries] =
+    mode === "daily"
+      ? await Promise.all([getTodayLeaderboard(25), getAllTimeLeaderboard(25)])
+      : [[], []];
 
   // `key` forces the client component to reset its transient state when
   // the user flips modes via URL, so daily guesses can't leak into endless
@@ -63,7 +67,9 @@ export default async function BlockdlePage({
   return (
     <>
       <BlockdleGame key={mode} mode={mode} />
-      {mode === "daily" && <Leaderboard entries={leaderboard} />}
+      {mode === "daily" && (
+        <Leaderboard today={todayEntries} allTime={allTimeEntries} />
+      )}
     </>
   );
 }

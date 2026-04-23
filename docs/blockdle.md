@@ -170,6 +170,16 @@ Daily mode records a row per signed-in finisher. Anonymous players stay anonymou
 
 Endless mode is deliberately not tracked: the answer is locally-chosen random, streak/wins/losses are per-session. A global endless leaderboard would compare apples to oranges.
 
+### All-time board
+
+A second leaderboard under the daily-today board shows cumulative standings across every daily ever played. `getAllTimeLeaderboard()` groups `blockdle_daily_results` by user and returns:
+
+- `wins` = `COUNT(*) FILTER (WHERE won)`
+- `played` = `COUNT(*)` (wins + losses)
+- `avgGuesses` = `AVG(guesses_used) FILTER (WHERE won)`, one-decimal rounded
+
+Filtered to users with at least one win (loss-only players don't make "people who managed to pass it"); hard-banned users filtered. Sorted by `wins DESC`, then `avgGuesses ASC` for a principled tiebreak — 30 wins at 5.1 avg beats 30 wins at 6.2. Capped at 25.
+
 ## Runtime
 
 - `app/minigames/blockdle/page.tsx` — Server Component. Reads `?mode=`. Renders the "not configured" placeholder when `BLOCKS` is empty.
