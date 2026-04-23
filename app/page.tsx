@@ -72,6 +72,18 @@ export default async function HomePage() {
   return (
     <div className="space-y-14">
       <JsonLd data={websiteJsonLd} />
+      <section className="rounded-lg border border-accent/30 bg-accent/5 px-5 py-4 text-sm leading-relaxed text-foreground/80 sm:px-6">
+        <p>
+          Want to help keep this project growing? Head over to{" "}
+          <Link
+            href="/support"
+            className="font-semibold text-accent hover:underline"
+          >
+            Support the site
+          </Link>{" "}
+          to see concrete ways you can pitch in.
+        </p>
+      </section>
       <section className="space-y-4">
         <p className="text-sm uppercase tracking-widest text-accent">
           Scrap Mechanic · Search Engine
@@ -145,18 +157,6 @@ export default async function HomePage() {
             );
           })}
 
-          <section className="rounded-lg border border-accent/30 bg-accent/5 px-5 py-5 text-sm leading-relaxed text-foreground/80 sm:px-6">
-            <p>
-              Want to help keep this project growing? Head over to{" "}
-              <Link
-                href="/support"
-                className="font-semibold text-accent hover:underline"
-              >
-                Support the site
-              </Link>{" "}
-              to see concrete ways you can pitch in.
-            </p>
-          </section>
         </>
       )}
     </div>
