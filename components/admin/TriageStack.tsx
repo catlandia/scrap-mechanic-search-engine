@@ -31,6 +31,7 @@ export interface TriageCard {
   authorName: string | null;
   steamTags: string[];
   tags: { id: number; name: string }[];
+  communitySubmitted: boolean;
 }
 
 type ExitDirection = "approve" | "reject" | "skip" | null;
@@ -176,8 +177,8 @@ export function TriageStack({
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-220px)] flex-col">
-      <header className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
+    <div className="flex flex-col gap-4">
+      <header className="flex flex-wrap items-baseline justify-between gap-2">
         <div>
           <h1 className="text-2xl font-semibold">Triage</h1>
           <p className="text-xs text-foreground/50">
@@ -196,7 +197,12 @@ export function TriageStack({
         </div>
       </header>
 
-      <div className="relative flex-1">
+      {/* Stack needs its own relative positioning context so the absolutely
+          positioned cards land on top of each other. Min-height is generous
+          so the short-description placeholder still looks intentional on
+          sparse items, but the card itself can grow past this via the
+          intrinsic height of its content. */}
+      <div className="relative min-h-[calc(100vh-220px)]">
         {next && (
           <TriageCardView
             key={next.id}
@@ -220,7 +226,7 @@ export function TriageStack({
         )}
       </div>
 
-      <footer className="mt-5 flex items-center justify-center gap-4">
+      <footer className="sticky bottom-4 mt-5 flex items-center justify-center gap-4">
         <ActionButton
           label="Reject"
           shortcut="←"
@@ -307,12 +313,17 @@ function TriageCardView({
   const approveVisible = role === "current" && drag > 40;
   const rejectVisible = role === "current" && drag < -40;
 
+  // `current` flows normally so the card stretches vertically to fit the
+  // full description — moderators wanted to read pending items without an
+  // in-card scroll. `next` is absolute inset-0 behind current so it auto-
+  // matches current's bounding box without needing a hard-coded height.
+  const positioning =
+    role === "current"
+      ? "relative select-none touch-pan-y"
+      : "pointer-events-none absolute inset-0 select-none";
   return (
     <div
-      className={cn(
-        "absolute inset-0 select-none touch-pan-y",
-        role === "next" && "pointer-events-none",
-      )}
+      className={cn(positioning)}
       style={{
         transform,
         transition,
@@ -325,7 +336,7 @@ function TriageCardView({
       onPointerUp={onPointerUp}
       onPointerCancel={onPointerCancel}
     >
-      <div className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card shadow-2xl">
+      <div className="flex flex-col overflow-hidden rounded-xl border border-border bg-card shadow-2xl">
         <div className="relative aspect-video w-full bg-black">
           {card.thumbnailUrl ? (
             <Image
@@ -364,10 +375,21 @@ function TriageCardView({
           </div>
         </div>
 
-        <div className="flex flex-1 flex-col gap-3 overflow-y-auto p-5">
+        <div className="flex flex-col gap-3 p-5">
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div className="min-w-0">
-              <h2 className="truncate text-xl font-semibold">{card.title}</h2>
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="truncate text-xl font-semibold">{card.title}</h2>
+                {card.communitySubmitted && (
+                  <span
+                    className="inline-flex items-center gap-1 rounded-full border border-purple-500/50 bg-purple-500/20 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-purple-200"
+                    title="A community member submitted this creation via /submit — treat the review note carefully."
+                  >
+                    <span aria-hidden>👥</span>
+                    Community submitted
+                  </span>
+                )}
+              </div>
               <div className="text-xs text-foreground/50">
                 {card.authorName ? `by ${card.authorName} · ` : ""}
                 {card.subscriptions.toLocaleString()} subs ·{" "}
@@ -403,9 +425,14 @@ function TriageCardView({
             </div>
           )}
 
-          <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/70">
-            {card.description || "(no description)"}
-          </p>
+          <div className="mt-1 border-t border-border pt-3">
+            <div className="mb-1 text-[10px] uppercase tracking-widest text-foreground/40">
+              Description
+            </div>
+            <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-foreground/80">
+              {card.description || "(no description)"}
+            </p>
+          </div>
         </div>
       </div>
     </div>

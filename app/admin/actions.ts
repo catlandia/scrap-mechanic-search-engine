@@ -22,6 +22,7 @@ import {
   detectKind,
   fetchWorkshopContributors,
   getPublishedFileDetails,
+  pickFullDescription,
   resolvePlayerNames,
   steamUrlFor,
 } from "@/lib/steam/client";
@@ -424,7 +425,7 @@ export async function addCreation(formData: FormData) {
     } else {
       const tagNames = (item.tags ?? []).map((t) => t.tag);
       const kind = detectKind(tagNames);
-      const descRaw = item.file_description || item.short_description || "";
+      const descRaw = pickFullDescription(item);
       const descClean = stripBBCode(descRaw);
       const now = new Date();
 

@@ -25,6 +25,7 @@ import {
   detectKind,
   fetchWorkshopContributors,
   getPublishedFileDetails,
+  pickFullDescription,
   resolvePlayerNames,
   steamUrlFor,
   SCRAP_MECHANIC_APPIDS,
@@ -729,7 +730,7 @@ export async function submitCreation(formData: FormData): Promise<SubmitResult> 
 
   const tagNames = (item.tags ?? []).map((t) => t.tag);
   const kind = detectKind(tagNames);
-  const descRaw = item.file_description || item.short_description || "";
+  const descRaw = pickFullDescription(item);
   const descClean = stripBBCode(descRaw);
 
   let authorName: string | null = null;

@@ -30,7 +30,7 @@ The admin backend is gated at `/admin/*` by the middleware, requiring a Steam lo
 Purpose: review new `status='pending'` items before they go public.
 
 - Shows up to 50 items ordered by `subscriptions DESC` (most popular first = highest confidence they deserve to be included)
-- Each card shows: thumbnail, title, Steam metadata (subs, favorites, vote score), kind badge, suggested tags with confidence scores
+- Each card shows: thumbnail, title, **Community submitted** pill (purple, when `uploadedByUserId` is set — flags items that came through `/submit` rather than auto-ingest), Steam metadata (subs, favorites, vote score), kind badge, suggested tags with confidence scores, and the **full cleaned description** below the metadata. The description column used to live inside a fixed-height scroller; it now flows inline and the card grows to fit, so moderators can read the entire body without an in-card scroll. The action footer is sticky-bottom so Approve/Skip/Reject stay reachable on long cards.
 - **Actions:**
   - **Approve** — sets `status=approved`, `approvedAt=now()`, confirms selected tags (sets `confirmed=true`)
   - **Reject** — sets `status=rejected`. The form includes an optional `reason` text input (max 300 chars); if filled, it's appended to the submitter's rejection notification body (`"<title>" was not accepted. Reason: <reason>`).

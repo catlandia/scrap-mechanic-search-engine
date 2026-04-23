@@ -52,8 +52,14 @@ const PublishedFileSchema = z
     file_size: z.union([z.string(), z.number()]).optional(),
     preview_url: z.string().url().optional(),
     title: z.string().optional().default(""),
+    // Steam inconsistency: IPublishedFileService returns the long body in
+    // `file_description` (if `return_short_description=false`) and the trimmed
+    // body in `short_description`; ISteamRemoteStorage returns the long body
+    // in a plain `description` field. Capture all three and let callers pick
+    // the longest non-empty one.
     short_description: z.string().optional().default(""),
     file_description: z.string().optional().default(""),
+    description: z.string().optional().default(""),
     time_created: z.number().optional(),
     time_updated: z.number().optional(),
     visibility: z.number().optional(),
@@ -123,7 +129,13 @@ export async function queryFiles(args: QueryFilesArgs): Promise<{
   params.set("cursor", args.cursor ?? "*");
   params.set("return_tags", "true");
   params.set("return_vote_data", "true");
-  params.set("return_short_description", "true");
+  // `return_short_description=true` returns a truncated body in
+  // `short_description` and leaves `file_description` empty. Flipping to
+  // `false` gets us the full BBCode description in `file_description`,
+  // which is what every render path actually wants. Payload gets larger
+  // but the ingest cron already handles one page at a time so this is
+  // well within the function budget.
+  params.set("return_short_description", "false");
   params.set("return_details", "true");
   params.set("return_previews", "true");
   params.set("return_metadata", "true");
@@ -387,6 +399,29 @@ export async function resolveVanityUrl(
     // swallow — callers fall back to API's primary creator
   }
   return null;
+}
+
+/**
+ * Steam's two workshop endpoints populate different description fields, and
+ * `return_short_description` flips which one an IPublishedFileService row
+ * carries. This helper hides the mess: picks the richest non-empty body it
+ * can find, so callers don't have to remember which flag was set.
+ */
+export function pickFullDescription(item: {
+  file_description?: string;
+  description?: string;
+  short_description?: string;
+}): string {
+  const candidates = [
+    item.file_description ?? "",
+    item.description ?? "",
+    item.short_description ?? "",
+  ];
+  let best = "";
+  for (const c of candidates) {
+    if (c.length > best.length) best = c;
+  }
+  return best;
 }
 
 export function detectKind(steamTags: string[]): SteamKind | "other" {

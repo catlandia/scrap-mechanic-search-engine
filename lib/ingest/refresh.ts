@@ -1,9 +1,11 @@
 import { eq, sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import { creations } from "@/lib/db/schema";
+import { stripBBCode } from "@/lib/steam/bbcode";
 import {
   fetchWorkshopContributors,
   getPublishedFileDetails,
+  pickFullDescription,
   type PublishedFile,
 } from "@/lib/steam/client";
 
@@ -35,6 +37,13 @@ export async function runRefresh(batchSize = 100): Promise<RefreshResult> {
 
     for (const d of details) {
       try {
+        // Self-heal descriptions alongside the stats refresh. Rows ingested
+        // before V8.18 stored the truncated `short_description` as the clean
+        // body; the new `pickFullDescription` picks whichever field Steam
+        // populated. Writing it on every refresh means the catalog heals as
+        // the cron rotates through, no separate backfill needed.
+        const descRaw = pickFullDescription(d);
+        const descClean = stripBBCode(descRaw);
         await db
           .update(creations)
           .set({
@@ -44,6 +53,9 @@ export async function runRefresh(batchSize = 100): Promise<RefreshResult> {
             voteScore: d.vote_data?.score ?? null,
             votesUp: d.vote_data?.votes_up ?? null,
             votesDown: d.vote_data?.votes_down ?? null,
+            ...(descRaw
+              ? { descriptionRaw: descRaw, descriptionClean: descClean }
+              : {}),
           })
           .where(eq(creations.id, d.publishedfileid));
         refreshed += 1;

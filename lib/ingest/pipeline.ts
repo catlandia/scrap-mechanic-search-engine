@@ -12,6 +12,7 @@ import { stripBBCode } from "@/lib/steam/bbcode";
 import {
   detectKind,
   fetchWorkshopContributors,
+  pickFullDescription,
   queryFiles,
   resolvePlayerNames,
   STEAM_KIND_TAGS,
@@ -96,7 +97,7 @@ function buildRow(
   return {
     id: item.publishedfileid,
     title: item.title || "(untitled)",
-    descriptionRaw: item.file_description || item.short_description || "",
+    descriptionRaw: pickFullDescription(item),
     descriptionClean,
     authorSteamid: item.creator ?? null,
     authorName,
@@ -272,7 +273,7 @@ export async function runIngest(options: IngestOptions = {}): Promise<IngestResu
             continue;
           }
           const detectedKind = detectKind((item.tags ?? []).map((t) => t.tag));
-          const descRaw = item.file_description || item.short_description || "";
+          const descRaw = pickFullDescription(item);
           collected.push({
             item,
             kind: detectedKind,

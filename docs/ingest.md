@@ -69,7 +69,7 @@ These thresholds are tunable — edit `thresholds.ts` and redeploy. No DB migrat
 
 Runs weekly (Mondays) to sync engagement metrics for already-approved creations. Uses `GetPublishedFileDetails` in batches of 100.
 
-**What gets updated:** `subscriptions`, `favorites`, `views`, `voteScore`, `votesUp`, `votesDown`
+**What gets updated:** `subscriptions`, `favorites`, `views`, `voteScore`, `votesUp`, `votesDown`, plus `descriptionRaw` + `descriptionClean` (whenever Steam returns a non-empty body — `pickFullDescription` picks the richest of `file_description` / `description` / `short_description`). Writing the description on every rotation self-heals rows that were ingested with the pre-V8.18 `return_short_description=true` flag and therefore only stored the 250-char preview.
 
 **What does NOT trigger a re-triage:** Refresh never changes a creation's `status`. Even if an approved item's subscription count drops below the threshold, it stays approved. (Down-the-road: surface a "might want to re-review" flag for admins.)
 
@@ -89,6 +89,9 @@ App ID: **387990** (Scrap Mechanic)
 - Filters by required Steam tag (e.g., `requiredtags=Blueprint`)
 - No API key needed for basic queries
 - Returns: items array, next cursor, total count
+- **`return_short_description=false`**: we want the full BBCode body back in `file_description`, not the 250-char preview. With this flag flipped to `true` (the pre-V8.18 default) Steam leaves `file_description` empty and only populates `short_description` — every ingested row that way carried a truncated description.
+
+**`pickFullDescription(item)`** — the two Steam endpoints populate the description field inconsistently: `IPublishedFileService` uses `file_description` or `short_description` depending on the request flag, `ISteamRemoteStorage` uses a plain `description`. This helper returns the richest non-empty body so callers don't have to track which endpoint produced the row. Ingest, admin-add, community-submit, and the weekly refresh all go through it.
 
 **`ISteamRemoteStorage/GetPublishedFileDetails/v1`** (`getPublishedFileDetails`)
 - Batch-fetch full metadata for known publishedfileids

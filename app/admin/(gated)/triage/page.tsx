@@ -58,6 +58,7 @@ export default async function TriagePage() {
     authorName: c.authorName,
     steamTags: c.steamTags ?? [],
     tags: tagsByCreation.get(c.id) ?? [],
+    communitySubmitted: !!c.uploadedByUserId,
   }));
 
   return <TriageStack cards={cards} totalPending={totalRow?.n ?? cards.length} />;
