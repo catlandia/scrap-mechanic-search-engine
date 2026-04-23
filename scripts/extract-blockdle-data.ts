@@ -210,72 +210,81 @@ type InventoryType =
   | "Parts"
   | "Consumables";
 
-// Any of these fields on a partList entry marks it as "Interactive" — the
-// orange-line bucket in the backpack. The set mirrors what the game's UI
-// hardcodes; keeping it data-driven (presence of the field) means new
-// capability markers added in a future update at least get flagged.
-const INTERACTIVE_CAPABILITY_FIELDS = [
-  "bearing",
-  "spring",
-  "piston",
-  "thruster",
-  "engine",
-  "seat",
-  "controller",
-  "logicGate",
-  "timer",
-  "sensor",
-  "button",
-  "switch",
-  "spotlight",
-  "pointLight",
-  "horn",
-  "tone",
-  "radio",
-  "chest",
-  "itemStack",
-  "scripted",
-  "glowEffect",
-  "chemistryDispenser",
-  "sticky",
-];
+// Authoritative shapeset → inventory-type mapping. Matches the four
+// colored-line buckets the game's backpack UI actually paints:
+//   - Blue   = Blocks         (textured 1x1x1 building cubes)
+//   - Orange = Interactive    (bearing, piston, engine, thruster, seat,
+//                              controller, logic gate, light, radio,
+//                              wheel, suspension, craftbot, …)
+//   - Green  = Parts          (decor, sign, beam, pipe, statue — static)
+//   - Yellow = Consumables    (food, seeds, ammo, outfit, crate)
+//
+// An earlier version of this detection was field-driven (presence of
+// `sticky` / `scripted` / etc.) which false-positive'd on ~350 parts
+// because `sticky` is set on nearly every placeable. Shapeset-primary is
+// simpler and correct.
+const INVENTORY_TYPE_FOR_SHAPESET: Record<string, InventoryType> = {
+  "blocks.json": "Blocks",
+  "wedges.shapeset": "Blocks",
 
-// Shapeset files that should always classify as Consumable regardless of
-// the per-entry `consumable` flag (some entries in these files don't set
-// it, but are still survival consumables by category).
-const CONSUMABLE_SHAPESETS = new Set([
-  "consumable.json",
-  "consumable_shared.json",
-  "plantables.json",
-]);
+  "interactive.json": "Interactive Parts",
+  "interactive_shared.json": "Interactive Parts",
+  "interactive_upgradeable.json": "Interactive Parts",
+  "interactivecontainers.json": "Interactive Parts",
+  "interactivecontainers_shared.json": "Interactive Parts",
+  "scrapinteractables.json": "Interactive Parts",
+  "beacon.json": "Interactive Parts",
+  "craftbot.json": "Interactive Parts",
+  "cookbot.json": "Interactive Parts",
+  "vacumpipe.json": "Interactive Parts",
+  "lights.json": "Interactive Parts",
+  "vehicle.json": "Interactive Parts",
+
+  "consumable.json": "Consumables",
+  "consumable_shared.json": "Consumables",
+  "outfitpackage.json": "Consumables",
+  "packingcrates.json": "Consumables",
+  "plantables.json": "Consumables",
+
+  "fittings.json": "Parts",
+  "spaceship.json": "Parts",
+  "decor.json": "Parts",
+  "plants.json": "Parts",
+  "containers.json": "Parts",
+  "industrial.json": "Parts",
+  "component.json": "Parts",
+  "resources.json": "Parts",
+  "harvests.json": "Parts",
+  "treeparts.json": "Parts",
+  "stoneparts.json": "Parts",
+  "robotparts.json": "Parts",
+  "construction.json": "Parts",
+  "building.json": "Parts",
+  "warehouse.json": "Parts",
+  "manmade.json": "Parts",
+  "shootingrange.json": "Parts",
+  "survivalobject.json": "Parts",
+};
 
 function detectInventoryType(args: {
   listType: "block" | "part";
   entry: Record<string, unknown>;
   shapesetBase: string;
-  category: Category;
 }): InventoryType {
   const { listType, entry, shapesetBase } = args;
 
-  // Consumable is highest priority — an edible item in an interactive-looking
-  // shapeset should still show as Consumable to the player.
-  if (
-    entry.consumable === true ||
-    entry.edible != null ||
-    CONSUMABLE_SHAPESETS.has(shapesetBase) ||
-    shapesetBase === "outfitpackage.json" ||
-    shapesetBase === "packingcrates.json"
-  ) {
-    return "Consumables";
-  }
-
+  // blockList always means a 1x1 textured cube — Blocks bucket.
   if (listType === "block") return "Blocks";
 
-  for (const f of INTERACTIVE_CAPABILITY_FIELDS) {
-    if (entry[f] != null) return "Interactive Parts";
-  }
+  // Per-entry consumable flag wins even if the shapeset wasn't listed
+  // as a consumable-type. Rare, but keeps future data changes honest.
+  if (entry.consumable === true || entry.edible != null) return "Consumables";
 
-  return "Parts";
+  // Shapeset-filename lookup is the primary signal for every partList
+  // entry. If a new shapeset lands in a game update we fall through to
+  // "Parts" which is the safest default (the user will notice the gap
+  // sooner than a mis-classified Interactive).
+  return INVENTORY_TYPE_FOR_SHAPESET[shapesetBase] ?? "Parts";
 }
 
 // ---------- Title filtering + level parsing ----------
@@ -436,6 +445,24 @@ async function main() {
   console.log(`SM root:  ${smRoot}`);
   console.log(`Out dir:  ${OUT_DIR}`);
 
+  // Shapesets that are present on disk but not in Data/Objects/Database/shapesets.json
+  // because the engine loads them through other entry points (crafting
+  // station object loader, consumable inventory system, etc.). Creative
+  // players see them in the backpack just the same, so we pull them in
+  // manually. Paths use the $SURVIVAL_DATA prefix so resolvePath() maps
+  // them against this install's Survival directory. All already have
+  // category + inventory-type entries in the maps above.
+  const EXTRA_SHAPESETS = [
+    "$SURVIVAL_DATA/Objects/Database/ShapeSets/consumable.json",
+    "$SURVIVAL_DATA/Objects/Database/ShapeSets/cookbot.json",
+    "$SURVIVAL_DATA/Objects/Database/ShapeSets/interactivecontainers.json",
+    "$SURVIVAL_DATA/Objects/Database/ShapeSets/outfitpackage.json",
+    "$SURVIVAL_DATA/Objects/Database/ShapeSets/packingcrates.json",
+    "$SURVIVAL_DATA/Objects/Database/ShapeSets/plantables.json",
+    "$SURVIVAL_DATA/Objects/Database/ShapeSets/scrapinteractables.json",
+    "$SURVIVAL_DATA/Objects/Database/ShapeSets/survivalobject.json",
+  ];
+
   // 1. Parse shapesets.json manifest.
   const manifestPath = path.join(smRoot, "Data/Objects/Database/shapesets.json");
   const manifestRaw = await readText(manifestPath);
@@ -486,7 +513,8 @@ async function main() {
   let skippedNoRatings = 0;
   const unmappedFiles = new Set<string>();
 
-  for (const rawPath of manifest.shapeSetList) {
+  const allShapesetPaths = [...manifest.shapeSetList, ...EXTRA_SHAPESETS];
+  for (const rawPath of allShapesetPaths) {
     const resolved = resolvePath(rawPath);
     const category = categoryFor(resolved);
     if (category === null) continue;
@@ -544,7 +572,6 @@ async function main() {
             listType,
             entry: e as Record<string, unknown>,
             shapesetBase,
-            category,
           }),
           category,
           material: normaliseMaterial(e.physicsMaterial),
