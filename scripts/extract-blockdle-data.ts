@@ -67,61 +67,61 @@ async function readText(p: string): Promise<string> {
 // ---------- Category mapping (shapeset filename → category) ----------
 
 type Category =
-  | "Block"
-  | "Fitting"
-  | "Spaceship"
-  | "Decoration"
-  | "Plant"
-  | "Light"
-  | "Interactive"
-  | "Interactive Container"
-  | "Scrap Interactable"
-  | "Container"
-  | "Vehicle"
-  | "Industrial"
-  | "Consumable"
-  | "Outfit"
-  | "Packing Crate"
-  | "Component"
-  | "Resource"
-  | "Harvest"
-  | "Tree Part"
-  | "Stone Part"
-  | "Robot Part"
-  | "Worldgen Structure";
+  | "Blocks"
+  | "Fittings"
+  | "Spaceship Parts"
+  | "Decorations"
+  | "Plants"
+  | "Lights"
+  | "Interactive Parts"
+  | "Interactive Containers"
+  | "Scrap Interactables"
+  | "Containers"
+  | "Vehicle Parts"
+  | "Industrial Parts"
+  | "Consumables"
+  | "Outfits"
+  | "Packing Crates"
+  | "Components"
+  | "Resources"
+  | "Harvestables"
+  | "Tree Parts"
+  | "Stone Parts"
+  | "Robot Parts"
+  | "Worldgen Structures";
 
 // null = skip (not user-facing / internal / tool-adjacent per the design).
 const CATEGORY_FOR_FILE: Record<string, Category | null> = {
-  "blocks.json": "Block",
-  "fittings.json": "Fitting",
-  "spaceship.json": "Spaceship",
-  "decor.json": "Decoration",
-  "plants.json": "Plant",
-  "lights.json": "Light",
-  "interactive.json": "Interactive",
-  "interactive_shared.json": "Interactive",
-  "interactive_upgradeable.json": "Interactive",
-  "interactivecontainers.json": "Interactive Container",
-  "interactivecontainers_shared.json": "Interactive Container",
-  "scrapinteractables.json": "Scrap Interactable",
-  "containers.json": "Container",
-  "vehicle.json": "Vehicle",
-  "industrial.json": "Industrial",
-  "consumable.json": "Consumable",
-  "consumable_shared.json": "Consumable",
-  "outfitpackage.json": "Outfit",
-  "packingcrates.json": "Packing Crate",
-  "component.json": "Component",
-  "resources.json": "Resource",
-  "harvests.json": "Harvest",
-  "treeparts.json": "Tree Part",
-  "stoneparts.json": "Stone Part",
-  "robotparts.json": "Robot Part",
-  "construction.json": "Worldgen Structure",
-  "building.json": "Worldgen Structure",
-  "warehouse.json": "Worldgen Structure",
-  "manmade.json": "Worldgen Structure",
-  "wedges.shapeset": "Block",
+  "blocks.json": "Blocks",
+  "fittings.json": "Fittings",
+  "spaceship.json": "Spaceship Parts",
+  "decor.json": "Decorations",
+  "plants.json": "Plants",
+  "lights.json": "Lights",
+  "interactive.json": "Interactive Parts",
+  "interactive_shared.json": "Interactive Parts",
+  "interactive_upgradeable.json": "Interactive Parts",
+  "interactivecontainers.json": "Interactive Containers",
+  "interactivecontainers_shared.json": "Interactive Containers",
+  "scrapinteractables.json": "Scrap Interactables",
+  "containers.json": "Containers",
+  "vehicle.json": "Vehicle Parts",
+  "industrial.json": "Industrial Parts",
+  "consumable.json": "Consumables",
+  "consumable_shared.json": "Consumables",
+  "outfitpackage.json": "Outfits",
+  "packingcrates.json": "Packing Crates",
+  "component.json": "Components",
+  "resources.json": "Resources",
+  "harvests.json": "Harvestables",
+  "treeparts.json": "Tree Parts",
+  "stoneparts.json": "Stone Parts",
+  "robotparts.json": "Robot Parts",
+  "construction.json": "Worldgen Structures",
+  "building.json": "Worldgen Structures",
+  "warehouse.json": "Worldgen Structures",
+  "manmade.json": "Worldgen Structures",
+  "wedges.shapeset": "Blocks",
 
   // Explicit skip — tools (per design) and engine / internal / worldgen-only.
   "bucket.json": null,
@@ -200,7 +200,11 @@ function normaliseMaterial(raw: string | undefined): Material {
 
 // ---------- Inventory-type detection ----------
 
-type InventoryType = "Blocks" | "Interactive" | "Parts" | "Consumable";
+type InventoryType =
+  | "Blocks"
+  | "Interactive Parts"
+  | "Parts"
+  | "Consumables";
 
 // Any of these fields on a partList entry marks it as "Interactive" — the
 // orange-line bucket in the backpack. The set mirrors what the game's UI
@@ -257,13 +261,13 @@ function detectInventoryType(args: {
     shapesetBase === "outfitpackage.json" ||
     shapesetBase === "packingcrates.json"
   ) {
-    return "Consumable";
+    return "Consumables";
   }
 
   if (listType === "block") return "Blocks";
 
   for (const f of INTERACTIVE_CAPABILITY_FIELDS) {
-    if (entry[f] != null) return "Interactive";
+    if (entry[f] != null) return "Interactive Parts";
   }
 
   return "Parts";

@@ -3,35 +3,42 @@
 // can import from this module without touching the game catalog.
 
 // Four top-level buckets matching the in-game backpack's colored-line
-// categorisation (see HANDBOOK_HOW_TO_PLAY_PAGE3_*_TEXT tags in the game).
-export type InventoryType = "Blocks" | "Interactive" | "Parts" | "Consumable";
+// categorisation. Labels are the exact strings the game's handbook uses
+// (HANDBOOK_HOW_TO_PLAY_PAGE3_{BLOCKS,INTERACTIVE_PARTS,PARTS,CONSUMABLES}
+// in Data/Gui/Language/English/InterfaceTags.txt).
+export type InventoryType =
+  | "Blocks"
+  | "Interactive Parts"
+  | "Parts"
+  | "Consumables";
 
 // Fine-grained category derived from the shapeset filename. The game has
-// no explicit category field — these are the shapeset filenames rendered
-// as human-readable labels. 22 values after dropping tool-adjacent files.
+// no explicit per-item category label — these are player-friendly plural
+// names for the shapeset groupings a player would recognise from the
+// inventory. 22 values after dropping tool-adjacent shapesets.
 export type BlockCategory =
-  | "Block"
-  | "Fitting"
-  | "Spaceship"
-  | "Decoration"
-  | "Plant"
-  | "Light"
-  | "Interactive"
-  | "Interactive Container"
-  | "Scrap Interactable"
-  | "Container"
-  | "Vehicle"
-  | "Industrial"
-  | "Consumable"
-  | "Outfit"
-  | "Packing Crate"
-  | "Component"
-  | "Resource"
-  | "Harvest"
-  | "Tree Part"
-  | "Stone Part"
-  | "Robot Part"
-  | "Worldgen Structure";
+  | "Blocks"
+  | "Fittings"
+  | "Spaceship Parts"
+  | "Decorations"
+  | "Plants"
+  | "Lights"
+  | "Interactive Parts"
+  | "Interactive Containers"
+  | "Scrap Interactables"
+  | "Containers"
+  | "Vehicle Parts"
+  | "Industrial Parts"
+  | "Consumables"
+  | "Outfits"
+  | "Packing Crates"
+  | "Components"
+  | "Resources"
+  | "Harvestables"
+  | "Tree Parts"
+  | "Stone Parts"
+  | "Robot Parts"
+  | "Worldgen Structures";
 
 // physicsMaterial values observed in the game's ShapeSets. Kept permissive —
 // the extractor normalises unknowns to "Other" and logs a warning so new
