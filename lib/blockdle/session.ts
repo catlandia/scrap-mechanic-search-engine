@@ -11,12 +11,12 @@ export function blockdleSessionOptions(): SessionOptions {
   const password = process.env.SESSION_SECRET;
   if (!password || password.length < 32) throw new Error("SESSION_SECRET missing");
   return {
-    // Bumped to _v2 in V8.12 — the GuessComparison shape gained
-    // guessInventoryType / guessFlammable / guessLevel / guessMaxLevel.
-    // An old cookie's stored comparisons would render undefined cells if
-    // we kept the same name, so we force-rotate by changing the cookie
-    // name: every visitor silently starts fresh on the new schema.
-    cookieName: "smse_blockdle_v2",
+    // Bumped to _v3 in V8.12 hotfix — session state now stores just
+    // guessUuids[] instead of full GuessComparison[] (materialised on
+    // read). Fixes iron-session "cookie too long" 500s that hit prod
+    // around guess 4. The _v2 cookies stored the old fat shape so we
+    // rotate again to make sure nobody carries a stale payload forward.
+    cookieName: "smse_blockdle_v3",
     password,
     cookieOptions: {
       secure: process.env.NODE_ENV === "production",
@@ -34,12 +34,12 @@ export async function getBlockdleSession() {
 }
 
 export function emptyDaily(): DailyState {
-  return { guesses: [], status: "playing" };
+  return { guessUuids: [], status: "playing" };
 }
 
 export function emptyEndless(): EndlessState {
   return {
-    guesses: [],
+    guessUuids: [],
     status: "playing",
     stats: { streak: 0, bestStreak: 0, wins: 0, losses: 0 },
   };

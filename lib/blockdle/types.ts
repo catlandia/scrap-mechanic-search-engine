@@ -38,6 +38,7 @@ export type BlockCategory =
   | "Tree Parts"
   | "Stone Parts"
   | "Robot Parts"
+  | "Survival Objects"
   | "Worldgen Structures";
 
 // physicsMaterial values observed in the game's ShapeSets. Kept permissive —
@@ -126,16 +127,21 @@ export type GameStats = {
 
 export type GameStatus = "playing" | "won" | "lost";
 
+// NB: persisted session state stores only guess UUIDs — the full
+// GuessComparison objects are materialised from BLOCKS on every render.
+// This keeps the encrypted iron-session cookie under the 4 KB browser
+// limit even with 7 attempts × 9 attributes. Pre-V8.12 / _v2 the full
+// comparisons were cached here and blew past the limit around guess 4.
 export type DailyState = {
   dateIsoUtc?: string;
   answerUuid?: string;
-  guesses: GuessComparison[];
+  guessUuids: string[];
   status: GameStatus;
 };
 
 export type EndlessState = {
   answerUuid?: string;
-  guesses: GuessComparison[];
+  guessUuids: string[];
   status: GameStatus;
   stats: GameStats;
 };

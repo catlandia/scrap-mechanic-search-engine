@@ -45,12 +45,32 @@ function blockByName(name: string): Block | undefined {
   return BLOCKS.find((b) => b.title.toLowerCase() === needle);
 }
 
+// Rebuild GuessComparison[] from just the stored UUIDs. If the catalogue
+// changed between cookie-write and render (rare — only on deploy with a
+// fresh blocks.json) any missing uuid is dropped silently; the worst
+// case is a "lost" round, not a crash.
+function materialiseComparisons(
+  guessUuids: readonly string[],
+  answerUuid: string | undefined,
+): GuessComparison[] {
+  if (!answerUuid) return [];
+  const answer = blockByUuid(answerUuid);
+  if (!answer) return [];
+  const out: GuessComparison[] = [];
+  for (const u of guessUuids) {
+    const g = blockByUuid(u);
+    if (!g) continue;
+    out.push(compareGuess(g, answer));
+  }
+  return out;
+}
+
 function viewFromDaily(state: DailyState): BlockdleView {
   const answer = state.answerUuid ? blockByUuid(state.answerUuid) : undefined;
   return {
     mode: "daily",
     attemptsMax: ATTEMPTS_MAX,
-    guesses: state.guesses,
+    guesses: materialiseComparisons(state.guessUuids, state.answerUuid),
     status: state.status,
     answer: state.status === "playing" ? undefined : answer,
     dateIsoUtc: state.dateIsoUtc,
@@ -62,7 +82,7 @@ function viewFromEndless(state: EndlessState): BlockdleView {
   return {
     mode: "endless",
     attemptsMax: ATTEMPTS_MAX,
-    guesses: state.guesses,
+    guesses: materialiseComparisons(state.guessUuids, state.answerUuid),
     status: state.status,
     answer: state.status === "playing" ? undefined : answer,
     stats: state.stats,
@@ -77,7 +97,7 @@ async function startDaily(session: BlockdleSession): Promise<DailyState> {
   return {
     dateIsoUtc: today,
     answerUuid: answer.uuid,
-    guesses: [],
+    guessUuids: [],
     status: "playing",
   };
 }
@@ -86,11 +106,11 @@ function startEndless(
   current: EndlessState | undefined,
   excludeUuid?: string,
 ): EndlessState {
-  if (current && current.status === "playing" && current.guesses.length > 0) return current;
+  if (current && current.status === "playing" && current.guessUuids.length > 0) return current;
   const answer = pickRandomBlock(BLOCKS, excludeUuid);
   return {
     answerUuid: answer.uuid,
-    guesses: [],
+    guessUuids: [],
     status: "playing",
     stats: current?.stats ?? emptyStats(),
   };
@@ -126,19 +146,19 @@ export async function submitBlockdleGuess(
       state = await startDaily(session);
     }
     if (state.status !== "playing") return { ok: false, reason: "already_finished" };
-    if (state.guesses.some((g) => g.guessUuid === guess.uuid)) {
+    if (state.guessUuids.includes(guess.uuid)) {
       return { ok: false, reason: "duplicate_guess" };
     }
     const answer = state.answerUuid ? blockByUuid(state.answerUuid) : undefined;
     if (!answer) return { ok: false, reason: "already_finished" };
 
     const comparison = compareGuess(guess, answer);
-    const guesses = [...state.guesses, comparison];
+    const guessUuids = [...state.guessUuids, guess.uuid];
     const won = isWinningComparison(comparison);
-    const lost = !won && guesses.length >= ATTEMPTS_MAX;
+    const lost = !won && guessUuids.length >= ATTEMPTS_MAX;
     state = {
       ...state,
-      guesses,
+      guessUuids,
       status: won ? "won" : lost ? "lost" : "playing",
     };
     session.daily = state;
@@ -151,16 +171,16 @@ export async function submitBlockdleGuess(
   if (state.status !== "playing" || !state.answerUuid) {
     state = startEndless(state);
   }
-  if (state.guesses.some((g) => g.guessUuid === guess.uuid)) {
+  if (state.guessUuids.includes(guess.uuid)) {
     return { ok: false, reason: "duplicate_guess" };
   }
   const answer = blockByUuid(state.answerUuid!);
   if (!answer) return { ok: false, reason: "already_finished" };
 
   const comparison = compareGuess(guess, answer);
-  const guesses = [...state.guesses, comparison];
+  const guessUuids = [...state.guessUuids, guess.uuid];
   const won = isWinningComparison(comparison);
-  const lost = !won && guesses.length >= ATTEMPTS_MAX;
+  const lost = !won && guessUuids.length >= ATTEMPTS_MAX;
 
   const stats: GameStats = { ...state.stats };
   if (won) {
@@ -174,7 +194,7 @@ export async function submitBlockdleGuess(
 
   state = {
     ...state,
-    guesses,
+    guessUuids,
     status: won ? "won" : lost ? "lost" : "playing",
     stats,
   };
@@ -204,7 +224,7 @@ export async function resetBlockdle(mode: Mode): Promise<BlockdleView> {
   const answer = pickRandomBlock(BLOCKS, excludeUuid);
   session.endless = {
     answerUuid: answer.uuid,
-    guesses: [],
+    guessUuids: [],
     status: "playing",
     stats: prior?.stats ?? emptyStats(),
   };

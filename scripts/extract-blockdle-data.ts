@@ -88,6 +88,7 @@ type Category =
   | "Tree Parts"
   | "Stone Parts"
   | "Robot Parts"
+  | "Survival Objects"
   | "Worldgen Structures";
 
 // null = skip (not user-facing / internal / tool-adjacent per the design).
@@ -123,6 +124,16 @@ const CATEGORY_FOR_FILE: Record<string, Category | null> = {
   "manmade.json": "Worldgen Structures",
   "wedges.shapeset": "Blocks",
 
+  // Re-included in V8.12 hotfix — these are all creative-inventory-visible
+  // items that earlier I wrongly skipped as "engine internals".
+  "beacon.json": "Interactive Parts",
+  "craftbot.json": "Interactive Parts",
+  "cookbot.json": "Interactive Parts",
+  "plantables.json": "Consumables",
+  "shootingrange.json": "Decorations",
+  "vacumpipe.json": "Industrial Parts",
+  "survivalobject.json": "Survival Objects",
+
   // Explicit skip — tools (per design) and engine / internal / worldgen-only.
   "bucket.json": null,
   "mounted_guns.json": null,
@@ -132,14 +143,7 @@ const CATEGORY_FOR_FILE: Record<string, Category | null> = {
   "character_shape.json": null,
   "debug.json": null,
   "blocks_blueprint.json": null,
-  "beacon.json": null,
-  "craftbot.json": null,
-  "cookbot.json": null,
-  "plantables.json": null,
-  "shootingrange.json": null,
-  "vacumpipe.json": null,
   "destructable_tape.json": null,
-  "survivalobject.json": null,
   "effect_proxies.json": null,
   "override.json": null,
   "challenge.json": null,
@@ -242,6 +246,7 @@ const INTERACTIVE_CAPABILITY_FIELDS = [
 const CONSUMABLE_SHAPESETS = new Set([
   "consumable.json",
   "consumable_shared.json",
+  "plantables.json",
 ]);
 
 function detectInventoryType(args: {
