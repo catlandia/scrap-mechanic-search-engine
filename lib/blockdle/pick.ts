@@ -12,7 +12,7 @@ export function hashString(input: string): number {
   return h >>> 0;
 }
 
-const DAILY_SALT = "blockdle-v1";
+const DAILY_SALT = "blockdle-v2";
 
 export function todayUtcIso(): string {
   return new Date().toISOString().slice(0, 10);

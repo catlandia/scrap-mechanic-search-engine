@@ -11,7 +11,12 @@ export function blockdleSessionOptions(): SessionOptions {
   const password = process.env.SESSION_SECRET;
   if (!password || password.length < 32) throw new Error("SESSION_SECRET missing");
   return {
-    cookieName: "smse_blockdle",
+    // Bumped to _v2 in V8.12 — the GuessComparison shape gained
+    // guessInventoryType / guessFlammable / guessLevel / guessMaxLevel.
+    // An old cookie's stored comparisons would render undefined cells if
+    // we kept the same name, so we force-rotate by changing the cookie
+    // name: every visitor silently starts fresh on the new schema.
+    cookieName: "smse_blockdle_v2",
     password,
     cookieOptions: {
       secure: process.env.NODE_ENV === "production",

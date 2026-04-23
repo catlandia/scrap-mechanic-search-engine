@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Blockdle — Scrap Mechanic Search Engine",
-  description: "Guess today's Scrap Mechanic block from its stats. Six tries.",
+  description: "Guess today's Scrap Mechanic block from its stats. Seven tries.",
   alternates: { canonical: "/minigames/blockdle" },
   robots: { index: true, follow: true },
 };

@@ -18,8 +18,12 @@ const UUID_PNG = /^[0-9a-f-]{36}\.png$/i;
 type ExtractedBlock = {
   uuid: string;
   title: string;
+  inventoryType: string;
   category: string;
   material: string;
+  flammable: boolean;
+  level: number | null;
+  maxLevel: number | null;
   durability: number;
   density: number;
   friction: number;

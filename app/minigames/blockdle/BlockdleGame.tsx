@@ -96,8 +96,11 @@ export function BlockdleGame({ mode }: Props) {
   const labels = {
     icon: t("minigames.blockdle.col.icon"),
     name: t("minigames.blockdle.col.name"),
+    inventoryType: t("minigames.blockdle.col.inventoryType"),
     category: t("minigames.blockdle.col.category"),
     material: t("minigames.blockdle.col.material"),
+    flammable: t("minigames.blockdle.col.flammable"),
+    level: t("minigames.blockdle.col.level"),
     durability: t("minigames.blockdle.col.durability"),
     density: t("minigames.blockdle.col.density"),
     friction: t("minigames.blockdle.col.friction"),
@@ -110,7 +113,7 @@ export function BlockdleGame({ mode }: Props) {
   const emptyRowsCount = Math.max(0, ATTEMPTS_MAX - attemptsUsed);
 
   return (
-    <div className="mx-auto max-w-3xl space-y-5">
+    <div className="mx-auto max-w-5xl space-y-5">
       <header className="flex flex-wrap items-baseline justify-between gap-2">
         <div>
           <Link
@@ -139,15 +142,17 @@ export function BlockdleGame({ mode }: Props) {
         </section>
       )}
 
-      <div className="space-y-2">
-        <GuessRowHeader labels={labels} />
-        <div className="space-y-1.5">
-          {view.guesses.map((g, i) => (
-            <GuessRow key={i} guess={g} />
-          ))}
-          {Array.from({ length: emptyRowsCount }).map((_, i) => (
-            <EmptyGuessRow key={`empty-${i}`} />
-          ))}
+      <div className="-mx-2 overflow-x-auto px-2 sm:mx-0 sm:px-0">
+        <div className="min-w-[880px] space-y-2">
+          <GuessRowHeader labels={labels} />
+          <div className="space-y-1.5">
+            {view.guesses.map((g, i) => (
+              <GuessRow key={i} guess={g} />
+            ))}
+            {Array.from({ length: emptyRowsCount }).map((_, i) => (
+              <EmptyGuessRow key={`empty-${i}`} />
+            ))}
+          </div>
         </div>
       </div>
 

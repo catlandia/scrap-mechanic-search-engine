@@ -7,9 +7,9 @@ function cellGlyph(r: GuessCellResult): string {
     case "miss":
       return "\u{1F7E5}"; // 🟥
     case "higher":
-      return "⬆️"; // ⬆️
+      return "⬆️";
     case "lower":
-      return "⬇️"; // ⬇️
+      return "⬇️";
   }
 }
 
@@ -26,8 +26,11 @@ export function buildShareGrid(input: ShareGridInput): string {
   const rows = guesses.map((g) => {
     const c = g.cells;
     return [
+      cellGlyph(c.inventoryType),
       cellGlyph(c.category),
       cellGlyph(c.material),
+      cellGlyph(c.flammable),
+      cellGlyph(c.level),
       cellGlyph(c.durability),
       cellGlyph(c.density),
       cellGlyph(c.friction),

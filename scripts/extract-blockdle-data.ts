@@ -9,7 +9,7 @@
 //
 // Usage:
 //   npx tsx scripts/extract-blockdle-data.ts \
-//     --sm "D:/SteamLibrary/steamapps/common/Scrap Mechanic" \
+//     --sm "<your SM install root>" \
 //     --out ./blockdle-data-tmp
 //
 // --strict   exit non-zero on any unmapped material / category
@@ -67,55 +67,67 @@ async function readText(p: string): Promise<string> {
 // ---------- Category mapping (shapeset filename → category) ----------
 
 type Category =
-  | "Building"
+  | "Block"
+  | "Fitting"
+  | "Spaceship"
   | "Decoration"
+  | "Plant"
+  | "Light"
   | "Interactive"
+  | "Interactive Container"
+  | "Scrap Interactable"
   | "Container"
   | "Vehicle"
   | "Industrial"
-  | "Tool"
   | "Consumable"
+  | "Outfit"
+  | "Packing Crate"
+  | "Component"
   | "Resource"
-  | "Worldgen";
+  | "Harvest"
+  | "Tree Part"
+  | "Stone Part"
+  | "Robot Part"
+  | "Worldgen Structure";
 
-// null = skip (not user-facing / internal)
+// null = skip (not user-facing / internal / tool-adjacent per the design).
 const CATEGORY_FOR_FILE: Record<string, Category | null> = {
-  "blocks.json": "Building",
-  "fittings.json": "Building",
-  "spaceship.json": "Building",
+  "blocks.json": "Block",
+  "fittings.json": "Fitting",
+  "spaceship.json": "Spaceship",
   "decor.json": "Decoration",
-  "plants.json": "Decoration",
-  "lights.json": "Decoration",
+  "plants.json": "Plant",
+  "lights.json": "Light",
   "interactive.json": "Interactive",
   "interactive_shared.json": "Interactive",
   "interactive_upgradeable.json": "Interactive",
-  "interactivecontainers.json": "Interactive",
-  "interactivecontainers_shared.json": "Interactive",
-  "scrapinteractables.json": "Interactive",
+  "interactivecontainers.json": "Interactive Container",
+  "interactivecontainers_shared.json": "Interactive Container",
+  "scrapinteractables.json": "Scrap Interactable",
   "containers.json": "Container",
   "vehicle.json": "Vehicle",
   "industrial.json": "Industrial",
-  "mounted_guns.json": "Tool",
-  "powertools.json": "Tool",
-  "tool_parts.json": "Tool",
-  "bucket.json": "Tool",
   "consumable.json": "Consumable",
   "consumable_shared.json": "Consumable",
-  "outfitpackage.json": "Consumable",
-  "packingcrates.json": "Consumable",
-  "component.json": "Resource",
+  "outfitpackage.json": "Outfit",
+  "packingcrates.json": "Packing Crate",
+  "component.json": "Component",
   "resources.json": "Resource",
-  "harvests.json": "Resource",
-  "treeparts.json": "Resource",
-  "stoneparts.json": "Resource",
-  "robotparts.json": "Resource",
-  "construction.json": "Worldgen",
-  "building.json": "Worldgen",
-  "warehouse.json": "Worldgen",
-  "manmade.json": "Worldgen",
-  "wedges.shapeset": "Building",
+  "harvests.json": "Harvest",
+  "treeparts.json": "Tree Part",
+  "stoneparts.json": "Stone Part",
+  "robotparts.json": "Robot Part",
+  "construction.json": "Worldgen Structure",
+  "building.json": "Worldgen Structure",
+  "warehouse.json": "Worldgen Structure",
+  "manmade.json": "Worldgen Structure",
+  "wedges.shapeset": "Block",
 
-  // Explicit skip — engine / internal / worldgen-only.
+  // Explicit skip — tools (per design) and engine / internal / worldgen-only.
+  "bucket.json": null,
+  "mounted_guns.json": null,
+  "powertools.json": null,
+  "tool_parts.json": null,
   "characterobject.json": null,
   "character_shape.json": null,
   "debug.json": null,
@@ -186,12 +198,138 @@ function normaliseMaterial(raw: string | undefined): Material {
   return "Other";
 }
 
-// ---------- Title filtering ----------
+// ---------- Inventory-type detection ----------
+
+type InventoryType = "Blocks" | "Interactive" | "Parts" | "Consumable";
+
+// Any of these fields on a partList entry marks it as "Interactive" — the
+// orange-line bucket in the backpack. The set mirrors what the game's UI
+// hardcodes; keeping it data-driven (presence of the field) means new
+// capability markers added in a future update at least get flagged.
+const INTERACTIVE_CAPABILITY_FIELDS = [
+  "bearing",
+  "spring",
+  "piston",
+  "thruster",
+  "engine",
+  "seat",
+  "controller",
+  "logicGate",
+  "timer",
+  "sensor",
+  "button",
+  "switch",
+  "spotlight",
+  "pointLight",
+  "horn",
+  "tone",
+  "radio",
+  "chest",
+  "itemStack",
+  "scripted",
+  "glowEffect",
+  "chemistryDispenser",
+  "sticky",
+];
+
+// Shapeset files that should always classify as Consumable regardless of
+// the per-entry `consumable` flag (some entries in these files don't set
+// it, but are still survival consumables by category).
+const CONSUMABLE_SHAPESETS = new Set([
+  "consumable.json",
+  "consumable_shared.json",
+]);
+
+function detectInventoryType(args: {
+  listType: "block" | "part";
+  entry: Record<string, unknown>;
+  shapesetBase: string;
+  category: Category;
+}): InventoryType {
+  const { listType, entry, shapesetBase } = args;
+
+  // Consumable is highest priority — an edible item in an interactive-looking
+  // shapeset should still show as Consumable to the player.
+  if (
+    entry.consumable === true ||
+    entry.edible != null ||
+    CONSUMABLE_SHAPESETS.has(shapesetBase) ||
+    shapesetBase === "outfitpackage.json" ||
+    shapesetBase === "packingcrates.json"
+  ) {
+    return "Consumable";
+  }
+
+  if (listType === "block") return "Blocks";
+
+  for (const f of INTERACTIVE_CAPABILITY_FIELDS) {
+    if (entry[f] != null) return "Interactive";
+  }
+
+  return "Parts";
+}
+
+// ---------- Title filtering + level parsing ----------
 
 // Internal names the game never shows the user. If an inventoryDescriptions
 // title looks like one of these, drop the block from the guess pool.
 function looksInternal(title: string): boolean {
   return /^(obj_|blk_|jnt_|part_|\$)/i.test(title.trim());
+}
+
+// Split "Metal Block 3" into { base: "Metal Block", level: 3 }. Anything
+// without a trailing integer returns { base: title, level: null }.
+function splitLevel(title: string): { base: string; level: number | null } {
+  const m = title.match(/^(.+?)\s+(\d+)$/);
+  if (!m) return { base: title, level: null };
+  const level = parseInt(m[2], 10);
+  if (!Number.isInteger(level) || level < 1 || level > 20) {
+    return { base: title, level: null };
+  }
+  return { base: m[1].trim(), level };
+}
+
+// Walk the collected blocks, group by stripped base name, and annotate each
+// entry with { level, maxLevel } if the group forms a contiguous 1..N run of
+// at least 2 members. Singletons and non-contiguous groups (e.g. only
+// "Half-Life 2" with no "Half-Life 1") get level=null so false-positive
+// numeric tails don't accidentally become tier attributes.
+function assignLevels<T extends { title: string }>(
+  items: T[],
+): Map<T, { level: number | null; maxLevel: number | null }> {
+  const out = new Map<T, { level: number | null; maxLevel: number | null }>();
+  const byBase = new Map<string, Array<{ item: T; level: number }>>();
+  for (const item of items) {
+    const { base, level } = splitLevel(item.title);
+    if (level == null) {
+      out.set(item, { level: null, maxLevel: null });
+      continue;
+    }
+    const list = byBase.get(base) ?? [];
+    list.push({ item, level });
+    byBase.set(base, list);
+  }
+  for (const [, members] of byBase) {
+    if (members.length < 2) {
+      for (const m of members) out.set(m.item, { level: null, maxLevel: null });
+      continue;
+    }
+    const levels = members.map((m) => m.level).sort((a, b) => a - b);
+    let contiguous = true;
+    for (let i = 0; i < levels.length; i += 1) {
+      if (levels[i] !== i + 1) {
+        contiguous = false;
+        break;
+      }
+    }
+    if (!contiguous) {
+      for (const m of members) out.set(m.item, { level: null, maxLevel: null });
+      continue;
+    }
+    const maxLevel = levels[levels.length - 1];
+    for (const m of members) out.set(m.item, { level: m.level, maxLevel });
+  }
+  return out;
 }
 
 // ---------- Atlas slicing ----------
@@ -273,12 +411,16 @@ type ShapeSetEntry = {
   uuid: string;
   name?: string;
   physicsMaterial?: string;
+  flammable?: boolean;
+  consumable?: boolean;
+  edible?: unknown;
   ratings?: {
     density?: number;
     durability?: number;
     friction?: number;
     buoyancy?: number;
   };
+  [key: string]: unknown;
 };
 
 async function main() {
@@ -317,8 +459,12 @@ async function main() {
   type Collected = {
     uuid: string;
     title: string;
+    inventoryType: InventoryType;
     category: Category;
     material: Material;
+    flammable: boolean;
+    level: number | null;
+    maxLevel: number | null;
     durability: number;
     density: number;
     friction: number;
@@ -350,48 +496,79 @@ async function main() {
       continue;
     }
 
-    const entries = [...(shapeset.blockList ?? []), ...(shapeset.partList ?? [])];
-    for (const e of entries) {
-      if (!e.uuid) continue;
-      if (collected.has(e.uuid)) continue;
+    const shapesetBase = path.basename(resolved).toLowerCase();
+    const lists: Array<{ list: ShapeSetEntry[]; listType: "block" | "part" }> = [
+      { list: shapeset.blockList ?? [], listType: "block" },
+      { list: shapeset.partList ?? [], listType: "part" },
+    ];
 
-      const title = titles.get(e.uuid);
-      if (!title) {
-        skippedNoTitle += 1;
-        continue;
-      }
-      if (looksInternal(title)) {
-        skippedInternalName += 1;
-        continue;
-      }
-      const r = e.ratings;
-      if (
-        !r ||
-        typeof r.density !== "number" ||
-        typeof r.durability !== "number" ||
-        typeof r.friction !== "number" ||
-        typeof r.buoyancy !== "number"
-      ) {
-        skippedNoRatings += 1;
-        continue;
-      }
+    for (const { list, listType } of lists) {
+      for (const e of list) {
+        if (!e.uuid) continue;
+        if (collected.has(e.uuid)) continue;
 
-      collected.set(e.uuid, {
-        uuid: e.uuid,
-        title,
-        category,
-        material: normaliseMaterial(e.physicsMaterial),
-        durability: r.durability,
-        density: r.density,
-        friction: r.friction,
-        buoyancy: r.buoyancy,
-      });
+        const title = titles.get(e.uuid);
+        if (!title) {
+          skippedNoTitle += 1;
+          continue;
+        }
+        if (looksInternal(title)) {
+          skippedInternalName += 1;
+          continue;
+        }
+        const r = e.ratings;
+        if (
+          !r ||
+          typeof r.density !== "number" ||
+          typeof r.durability !== "number" ||
+          typeof r.friction !== "number" ||
+          typeof r.buoyancy !== "number"
+        ) {
+          skippedNoRatings += 1;
+          continue;
+        }
+
+        collected.set(e.uuid, {
+          uuid: e.uuid,
+          title,
+          inventoryType: detectInventoryType({
+            listType,
+            entry: e as Record<string, unknown>,
+            shapesetBase,
+            category,
+          }),
+          category,
+          material: normaliseMaterial(e.physicsMaterial),
+          flammable: e.flammable === true,
+          // Level fields filled in by the second pass below — we need the
+          // full collection in memory to detect contiguous tier families.
+          level: null,
+          maxLevel: null,
+          durability: r.durability,
+          density: r.density,
+          friction: r.friction,
+          buoyancy: r.buoyancy,
+        });
+      }
+    }
+  }
+
+  // Second pass: tier-family detection across every collected block.
+  const levelMap = assignLevels(Array.from(collected.values()));
+  let tierMembers = 0;
+  for (const item of collected.values()) {
+    const lv = levelMap.get(item);
+    if (lv) {
+      item.level = lv.level;
+      item.maxLevel = lv.maxLevel;
+      if (lv.level != null) tierMembers += 1;
     }
   }
 
   console.log(
     `\nShapeset pass:  ${collected.size} candidates (skipped ${skippedNoTitle} no-title, ${skippedInternalName} internal-name, ${skippedNoRatings} no-ratings, ${skippedUnmapped} in unmapped files)`,
   );
+  console.log(`  Tier-family members: ${tierMembers}`);
   if (unmappedFiles.size > 0) {
     console.log(`  Unmapped shapeset files: ${[...unmappedFiles].join(", ")}`);
   }

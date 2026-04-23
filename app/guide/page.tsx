@@ -331,7 +331,7 @@ function Roles() {
       >
         <ul className="list-disc space-y-1 pl-5">
           <li>Upvote / downvote creations, comments, tags, and ideas.</li>
-          <li>Favourite creations (saved to your private list).</li>
+          <li>Favourite creations (shown on your profile).</li>
           <li>Post comments and replies (up to two levels deep).</li>
           <li>Submit Workshop items and suggest new tags.</li>
           <li>Report creations or comments you think are wrong.</li>

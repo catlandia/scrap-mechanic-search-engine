@@ -31,7 +31,7 @@ All public pages are in `app/` using Next.js 15 App Router. Server Components by
 | `/suggestions/new` | `app/suggestions/new/page.tsx` | Submit a suggestion (noindex) |
 | `/minigames` | `app/minigames/page.tsx` | Landing page for in-site minigames |
 | `/minigames/scrapcha` | `app/minigames/scrapcha/page.tsx` | Scrapcha — endless character-identification game. Same character pool as `/verify`, different session cookie, no skip button, does not grant the `bot_verified` cookie. |
-| `/minigames/blockdle` | `app/minigames/blockdle/page.tsx` | Blockdle — Loldle / Pokedle-style block-guess puzzle. `?mode=daily\|endless` (default `daily`). Daily shares one UTC-seeded secret across all users with a Wordle-style emoji share-result; endless tracks streak / best / wins / losses. Six tries, six attribute reveals per guess. Full game details in [blockdle.md](blockdle.md). |
+| `/minigames/blockdle` | `app/minigames/blockdle/page.tsx` | Blockdle — Loldle / Pokedle-style block-guess puzzle. `?mode=daily\|endless` (default `daily`). Daily shares one UTC-seeded secret across all users with a Wordle-style emoji share-result; endless tracks streak / best / wins / losses. Seven tries, nine attribute reveals per guess (inventory type, category, material, flammable, level, durability, density, friction, buoyancy). Full game details in [blockdle.md](blockdle.md). |
 | `/settings` | `app/settings/page.tsx` | User preferences hub (theme, ratings, account links, help) |
 | `/settings/theme` | `app/settings/theme/page.tsx` | Custom theme editor |
 | `/terms` | `app/terms/page.tsx` | Terms of use |

@@ -1,18 +1,24 @@
 # Blockdle
 
-The second minigame. A Loldle / Pokedle-style puzzle where the player guesses a secret Scrap Mechanic block from its in-game stats. Six tries, colour-coded feedback.
+The second minigame. A Loldle / Pokedle-style puzzle where the player guesses a secret Scrap Mechanic block from its in-game stats. Seven tries, colour-coded feedback.
 
 Route: `/minigames/blockdle?mode=daily|endless` (default: `daily`).
 
 ## Game rules
 
-- Six attempts per puzzle.
+- **Seven attempts** per puzzle.
 - Each guess is a block picked from the full SM catalogue (autocomplete off the name index).
-- The server reveals per-attribute feedback:
-  - **Category** and **Material** — green if the guess matches the answer, red otherwise.
-  - **Durability / Density / Friction / Buoyancy** (1–10) — green if equal; otherwise red with `↑` when the answer is higher and `↓` when lower.
-- Mode `daily` — one shared secret per UTC day, seeded off the date. Everyone sees the same puzzle. Share-result button copies an emoji grid.
+- The server reveals per-attribute feedback across **nine columns**:
+  - **Inv. Type** — one of `Blocks` / `Interactive` / `Parts` / `Consumable`, matching the four colored lines the in-game backpack renders on slots. Text match / miss.
+  - **Category** — 22 finer buckets derived from the shapeset filename (`Block`, `Fitting`, `Light`, `Interactive Container`, `Harvest`, …). Match / miss.
+  - **Material** — from `physicsMaterial` (Metal, Wood, Rock, Plastic, Rubber, Glass, Mechanical, …). Match / miss.
+  - **Flammable** — yes / no from the shapeset's `flammable` field. Match / miss.
+  - **Level** — tier number within a detected family (`Metal Block 3` / `5`). Numeric ↑/↓/= comparison; null vs non-null is a miss. Non-tier blocks show `—`.
+  - **Durability / Density / Friction / Buoyancy** (1–10) — numeric ↑/↓/= like before.
+- Mode `daily` — one shared secret per UTC day, seeded off the date. Everyone sees the same puzzle. Share-result button copies a 9-column emoji grid.
 - Mode `endless` — fresh random block every round. Streak / best / wins / losses tracked.
+
+**Tool shapesets** (`bucket.json`, `mounted_guns.json`, `powertools.json`, `tool_parts.json`) are excluded from the guess pool — the game's inventory shows them in their own tool slots, not the backpack categories the minigame compares against.
 
 ## Data source
 
