@@ -101,9 +101,10 @@ Community members can submit Steam Workshop items for admin review.
 3. `consumer_appid` is checked; non-SM items return an error immediately
 4. Item is inserted with `status='pending'` and `uploadedByUserId` set
 5. Tagger runs and suggests tags
-6. Admin triages it like any other pending item
-7. If approved or rejected, the submitter receives a notification
-8. If approved, the creation detail page shows a "Submitted by community" badge crediting the submitter
+6. **Every moderator+ gets a `mod_community_submission` notification (V9.1+)** — title includes the submitter persona + creation title, link goes to `/admin/triage`. Submitter is excluded from the fan-out via `excludeUserId`. Broadcast failure is swallowed so a notification hiccup can't unwind the user-visible insert.
+7. Admin triages it like any other pending item (community rows sort to the top of the stack per V8.19)
+8. If approved or rejected, the submitter receives a notification
+9. If approved, the creation detail page shows a "Submitted by community" badge crediting the submitter
 
 **Parsing:** Accepts full URLs (`steamcommunity.com/sharedfiles/filedetails/?id=XXX`) or bare numeric IDs.
 

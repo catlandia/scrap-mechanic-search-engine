@@ -103,12 +103,14 @@ One row per Steam account that has ever logged in.
 
 Top-level tag buckets (e.g. Vehicle, Building, Mechanism).
 
-| Column | Type |
-|---|---|
-| `id` | serial PK |
-| `slug` | text UNIQUE |
-| `name` | text |
-| `description` | text |
+| Column | Type | Notes |
+|---|---|---|
+| `id` | serial PK | |
+| `slug` | text UNIQUE | |
+| `name` | text | |
+| `description` | text | |
+| `createdByUserId` | text NULL | V9.1+. Who originally created this category. Not an FK (so deleting a user doesn't wipe the column); pre-V9.1 rows are null. |
+| `createdAt` | timestamptz | V9.1+. DEFAULT now(). |
 
 ---
 
@@ -122,6 +124,8 @@ Leaf-level tags (e.g. car, house, cannon, walker).
 | `slug` | text UNIQUE | URL-safe, lowercase-hyphen |
 | `name` | text | Display name |
 | `categoryId` | int NULL → categories | Parent category |
+| `createdByUserId` | text NULL | V9.1+. Stamped on insert only — upsert on same slug leaves this untouched. |
+| `createdAt` | timestamptz | V9.1+. DEFAULT now(). |
 
 **Index:** `categoryId`
 
@@ -302,6 +306,31 @@ in `lib/badges/definitions.ts`, not this table.
 
 **PK:** `(userId, badgeSlug)`
 **Indexes:** `badgeSlug`
+
+**Auto-managed slugs (V9.1+):** `SYSTEM_AUTO_BADGES` in `lib/badges/definitions.ts` lists badges the system rewrites itself (`top_creator`). Manual grant UI is hidden for these and `grantBadgeAction` refuses them with `badge_system_auto_managed`.
+
+---
+
+### `modActions` (V9.1+)
+
+Audit log for every non-trivial admin server action. One row per action. See `docs/admin.md` for the full action vocabulary.
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | serial PK | |
+| `actorUserId` | text NULL → users.steamid (set null) | FK survives user deletion |
+| `actorName` | text NULL | Persona snapshot at action time (stays legible when the actor renames) |
+| `action` | text | `<noun>.<verb>` — stable vocabulary |
+| `targetType` | text NULL | `creation` / `tag` / `category` / `user` / `report` / `comment` / null for ingest-level |
+| `targetId` | text NULL | Steam publishedfileid / tag id / steamid / etc. |
+| `summary` | text NULL | Pre-formatted one-line English description for the feed UI |
+| `metadata` | jsonb NULL | Reason / prior value / count / anything actionable for triage |
+| `createdAt` | timestamptz | DEFAULT now() |
+
+**Indexes:** `createdAt DESC`, `actorUserId`, `action`, `(targetType, targetId)`
+
+**Writes:** `logModAction()` in `lib/audit/log.ts` — try/catch-wrapped so audit-write failure never rolls back the underlying mod action.
+**Reads:** `/admin/audit` (mod+ visible) with filters for actor, action, and `type:id` target.
 
 ---
 

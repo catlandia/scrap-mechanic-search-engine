@@ -60,7 +60,22 @@ export const BADGES: Record<string, BadgeDef> = {
     pill: "bg-sky-500/15 text-sky-300 border-sky-500/40",
     grantKind: "manual",
   },
+  top_creator: {
+    slug: "top_creator",
+    name: "Top creator",
+    description:
+      "Currently holds the most approved creations on the site (including co-authored items). Awarded automatically — if the count changes, the badge moves.",
+    icon: "👑",
+    pill: "bg-amber-500/15 text-amber-300 border-amber-500/50",
+    grantKind: "auto",
+  },
 };
+
+// Auto-managed badges are granted/revoked by the system (not by mods or
+// the creator's /admin/badges autogrant allowlist). Listed here so the
+// /admin/badges + /admin/users UIs can hide their grant buttons and the
+// backfill script can skip them.
+export const SYSTEM_AUTO_BADGES: readonly string[] = ["top_creator"];
 
 export function getBadge(slug: string): BadgeDef | null {
   return BADGES[slug] ?? null;

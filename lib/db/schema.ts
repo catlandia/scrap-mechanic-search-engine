@@ -158,6 +158,14 @@ export const categories = pgTable("categories", {
   slug: text("slug").notNull().unique(),
   name: text("name").notNull(),
   description: text("description"),
+  // V9.1: who created this category, and when. Added so mods can answer
+  // "who added this?" from /admin/audit without cross-referencing commit
+  // history. FK with set-null so deleting the creator user doesn't wipe
+  // the category; pre-V9.1 rows carry nulls.
+  createdByUserId: text("created_by_user_id"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
 });
 
 export const tags = pgTable(
@@ -169,6 +177,12 @@ export const tags = pgTable(
     categoryId: integer("category_id").references(() => categories.id, {
       onDelete: "set null",
     }),
+    // V9.1: same attribution fields as categories. Pre-V9.1 rows carry
+    // nulls — don't backfill from mod_actions, there's no reliable source.
+    createdByUserId: text("created_by_user_id"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
   },
   (t) => [index("tags_category_idx").on(t.categoryId)],
 );
@@ -645,6 +659,40 @@ export const userBadges = pgTable(
 
 export type UserBadge = typeof userBadges.$inferSelect;
 export type NewUserBadge = typeof userBadges.$inferInsert;
+
+// V9.1 audit log — every non-trivial mod action writes one row here.
+// Listed on /admin/audit for any mod+, filterable by actor/action/target.
+// `actorName` is a snapshot so the row stays legible even if the actor
+// renames themselves on Steam or is later deleted. `metadata` holds the
+// action's contextual details (reason, previous value, etc.) as jsonb so
+// new actions don't need schema migrations.
+export const modActions = pgTable(
+  "mod_actions",
+  {
+    id: serial("id").primaryKey(),
+    actorUserId: text("actor_user_id").references(() => users.steamid, {
+      onDelete: "set null",
+    }),
+    actorName: text("actor_name"),
+    action: text("action").notNull(),
+    targetType: text("target_type"),
+    targetId: text("target_id"),
+    summary: text("summary"),
+    metadata: jsonb("metadata").$type<Record<string, unknown>>(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index("mod_actions_created_at_idx").on(t.createdAt.desc()),
+    index("mod_actions_actor_idx").on(t.actorUserId),
+    index("mod_actions_action_idx").on(t.action),
+    index("mod_actions_target_idx").on(t.targetType, t.targetId),
+  ],
+);
+
+export type ModAction = typeof modActions.$inferSelect;
+export type NewModAction = typeof modActions.$inferInsert;
 
 // ---------------- Changelog ----------------
 // Two tiers match how the Creator actually thinks about ship cadence:

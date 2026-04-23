@@ -15,7 +15,7 @@ import {
   ROLE_LABELS,
   ROLE_STYLES,
 } from "@/lib/auth/roles";
-import { BADGES } from "@/lib/badges/definitions";
+import { BADGES, SYSTEM_AUTO_BADGES } from "@/lib/badges/definitions";
 import { getBadgesForSteamIds } from "@/lib/badges/queries";
 import { RoleBadge } from "@/components/RoleBadge";
 import { UserName } from "@/components/UserName";
@@ -235,8 +235,11 @@ function BadgeManager({
   granted: Array<{ slug: string }>;
 }) {
   const grantedSlugs = new Set(granted.map((b) => b.slug));
+  // System-auto badges (e.g. top_creator) are rewritten from server-side
+  // logic every time the catalogue shifts — any manual grant here would
+  // be reverted on the next approval, so just hide the button.
   const ungranted = Object.values(BADGES).filter(
-    (b) => !grantedSlugs.has(b.slug),
+    (b) => !grantedSlugs.has(b.slug) && !SYSTEM_AUTO_BADGES.includes(b.slug),
   );
   return (
     <div className="flex flex-col items-end gap-1 border-t border-border/60 pt-1">

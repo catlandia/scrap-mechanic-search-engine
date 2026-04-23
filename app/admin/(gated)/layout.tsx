@@ -17,6 +17,7 @@ const baseNav = [
   { href: "/admin/appeals", label: "Appeals" },
   { href: "/admin/archive", label: "Archive" },
   { href: "/admin/tags", label: "Tags" },
+  { href: "/admin/audit", label: "Audit" },
   { href: "/admin/guide", label: "Guide" },
 ];
 const creatorNav = [

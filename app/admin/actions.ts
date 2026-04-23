@@ -29,7 +29,7 @@ import {
 import { stripBBCode } from "@/lib/steam/bbcode";
 import { classify } from "@/lib/tagger/classify";
 import { broadcastToRole, createNotification } from "@/lib/db/notifications";
-import { AUTOGRANT_BADGES, BADGE_SLUGS } from "@/lib/badges/definitions";
+import { AUTOGRANT_BADGES, BADGE_SLUGS, SYSTEM_AUTO_BADGES } from "@/lib/badges/definitions";
 import { ENGLISH_TAG_ERROR, isEnglishTagName } from "@/lib/i18n/english-tag";
 import {
   addAutogrant,
@@ -38,6 +38,8 @@ import {
   revokeBadge,
 } from "@/lib/badges/queries";
 import { resolveVanityUrl } from "@/lib/steam/client";
+import { logModAction } from "@/lib/audit/log";
+import { refreshTopCreatorBadge } from "@/lib/badges/top-creator";
 
 function parseKind(raw: FormDataEntryValue | null): string {
   const kind = String(raw ?? "other");
@@ -90,7 +92,7 @@ async function replaceTagsForCreation(creationId: string, tagIds: number[]) {
 }
 
 export async function approveCreation(formData: FormData) {
-  await requireMod();
+  const actor = await requireMod();
   const db = getDb();
   const id = String(formData.get("creationId") ?? "");
   if (!id) throw new Error("creationId required");
@@ -110,6 +112,7 @@ export async function approveCreation(formData: FormData) {
       status: "approved",
       kind,
       reviewedAt: now,
+      reviewedByUserId: actor.steamid,
       approvedAt: now,
       shortId: sql`COALESCE(${creations.shortId}, nextval(pg_get_serial_sequence('creations', 'short_id'))::integer)`,
     })
@@ -128,13 +131,23 @@ export async function approveCreation(formData: FormData) {
     });
   }
 
+  await logModAction({
+    actor,
+    action: "creation.approve",
+    targetType: "creation",
+    targetId: id,
+    summary: `Approved "${row?.title ?? id}" (${kind})`,
+    metadata: { kind, tagCount: tagIds.length, community: !!row?.uploadedByUserId },
+  });
+  await refreshTopCreatorBadge();
+
   revalidatePath("/admin/queue");
   revalidatePath("/");
   revalidatePath("/new");
 }
 
 export async function rejectCreation(formData: FormData) {
-  await requireMod();
+  const actor = await requireMod();
   const db = getDb();
   const id = String(formData.get("creationId") ?? "");
   if (!id) throw new Error("creationId required");
@@ -157,7 +170,7 @@ export async function rejectCreation(formData: FormData) {
   const now = new Date();
   await db
     .update(creations)
-    .set({ status: "rejected", reviewedAt: now })
+    .set({ status: "rejected", reviewedAt: now, reviewedByUserId: actor.steamid })
     .where(eq(creations.id, id));
 
   if (row?.uploadedByUserId) {
@@ -173,6 +186,18 @@ export async function rejectCreation(formData: FormData) {
     });
   }
 
+  await logModAction({
+    actor,
+    action: "creation.reject",
+    targetType: "creation",
+    targetId: id,
+    summary: `Rejected "${row?.title ?? id}"${reason ? ` — ${reason}` : ""}`,
+    metadata: {
+      reason: reason || null,
+      community: !!row?.uploadedByUserId,
+    },
+  });
+
   revalidatePath("/admin/queue");
   // Note: intentionally not revalidating /admin/triage — the client component
   // manages its own buffer so the stack animation isn't interrupted by a
@@ -187,7 +212,7 @@ export async function rejectCreation(formData: FormData) {
  * tags is admin-confirmed OR hits the +3 community-vote threshold.
  */
 export async function quickApprove(formData: FormData) {
-  await requireMod();
+  const actor = await requireMod();
   const db = getDb();
   const id = String(formData.get("creationId") ?? "");
   if (!id) throw new Error("creationId required");
@@ -204,6 +229,7 @@ export async function quickApprove(formData: FormData) {
     .set({
       status: "approved",
       reviewedAt: now,
+      reviewedByUserId: actor.steamid,
       approvedAt: now,
       shortId: sql`COALESCE(${creations.shortId}, nextval(pg_get_serial_sequence('creations', 'short_id'))::integer)`,
     })
@@ -220,13 +246,23 @@ export async function quickApprove(formData: FormData) {
     });
   }
 
+  await logModAction({
+    actor,
+    action: "creation.quickApprove",
+    targetType: "creation",
+    targetId: id,
+    summary: `Quick-approved "${row?.title ?? id}"`,
+    metadata: { community: !!row?.uploadedByUserId },
+  });
+  await refreshTopCreatorBadge();
+
   revalidatePath("/admin/queue");
   revalidatePath("/");
   revalidatePath("/new");
 }
 
 export async function saveCreationTags(formData: FormData) {
-  await requireMod();
+  const actor = await requireMod();
   const db = getDb();
   const id = String(formData.get("creationId") ?? "");
   if (!id) throw new Error("creationId required");
@@ -235,6 +271,15 @@ export async function saveCreationTags(formData: FormData) {
 
   await db.update(creations).set({ kind }).where(eq(creations.id, id));
   await replaceTagsForCreation(id, tagIds);
+
+  await logModAction({
+    actor,
+    action: "creation.saveTags",
+    targetType: "creation",
+    targetId: id,
+    summary: `Edited tags on ${id} (${tagIds.length} tags, kind=${kind})`,
+    metadata: { kind, tagIds },
+  });
 
   revalidatePath("/admin/queue");
 }
@@ -246,7 +291,7 @@ export async function saveCreationTags(formData: FormData) {
  * waiting for the +3 vote threshold.
  */
 export async function confirmCreationTag(formData: FormData) {
-  await requireMod();
+  const actor = await requireMod();
   const db = getDb();
   const creationId = String(formData.get("creationId") ?? "");
   const tagIdRaw = String(formData.get("tagId") ?? "");
@@ -260,6 +305,14 @@ export async function confirmCreationTag(formData: FormData) {
     .where(
       and(eq(creationTags.creationId, creationId), eq(creationTags.tagId, tagId)),
     );
+  await logModAction({
+    actor,
+    action: "creation.confirmTag",
+    targetType: "creation",
+    targetId: creationId,
+    summary: `Confirmed tag #${tagId} on ${creationId}`,
+    metadata: { tagId },
+  });
   revalidatePath(`/creation/${creationId}`);
   revalidatePath("/admin/queue");
 }
@@ -289,7 +342,7 @@ export async function getLatestIngestProgress(): Promise<{
 }
 
 export async function triggerIngest(formData?: FormData): Promise<void> {
-  await requireCreator();
+  const actor = await requireCreator();
   let pagesPerKind: number | undefined;
   if (formData) {
     const raw = formData.get("pagesPerKind");
@@ -301,13 +354,19 @@ export async function triggerIngest(formData?: FormData): Promise<void> {
   // Manual admin runs explicitly want to dig the depth the moderator typed —
   // no early-stop. The cron path opts into minNewPerKind; this one doesn't.
   await runIngest({ pagesPerKind, minNewPerKind: 0 });
+  await logModAction({
+    actor,
+    action: "ingest.manualRun",
+    summary: `Manual ingest run (${pagesPerKind ?? "default"} pages/kind)`,
+    metadata: { pagesPerKind: pagesPerKind ?? null },
+  });
   revalidatePath("/admin/queue");
   revalidatePath("/admin/triage");
   revalidatePath("/admin/ingest");
 }
 
 export async function createTag(formData: FormData) {
-  await requireMod();
+  const actor = await requireMod();
   const db = getDb();
   const slug = String(formData.get("slug") ?? "")
     .trim()
@@ -322,13 +381,35 @@ export async function createTag(formData: FormData) {
   if (!slug || !name) throw new Error("slug and name required");
   if (!isEnglishTagName(name)) throw new Error(ENGLISH_TAG_ERROR);
 
-  await db
+  // On insert, stamp the creator. On update (same slug), leave the creator
+  // untouched — we only want this column to answer "who originally added
+  // this tag", not "who last edited it".
+  const [row] = await db
     .insert(tags)
-    .values({ slug, name, categoryId: categoryId ?? null })
+    .values({
+      slug,
+      name,
+      categoryId: categoryId ?? null,
+      createdByUserId: actor.steamid,
+    })
     .onConflictDoUpdate({
       target: tags.slug,
       set: { name, categoryId: categoryId ?? null },
-    });
+    })
+    .returning({ id: tags.id, createdByUserId: tags.createdByUserId });
+
+  const isNew = row?.createdByUserId === actor.steamid;
+  await logModAction({
+    actor,
+    action: isNew ? "tag.create" : "tag.upsert",
+    targetType: "tag",
+    targetId: row ? String(row.id) : slug,
+    summary: isNew
+      ? `Created tag "${name}" (${slug})`
+      : `Upserted tag "${name}" (${slug})`,
+    metadata: { slug, name, categoryId },
+  });
+
   revalidatePath("/admin/tags");
   revalidatePath("/admin/queue");
 }
@@ -342,7 +423,7 @@ export async function createTag(formData: FormData) {
  * slug doesn't orphan anything.
  */
 export async function updateTag(formData: FormData) {
-  await requireCreator();
+  const actor = await requireCreator();
   const db = getDb();
 
   const tagIdRaw = String(formData.get("tagId") ?? "");
@@ -376,6 +457,15 @@ export async function updateTag(formData: FormData) {
     .set({ name, slug, categoryId: categoryId ?? null })
     .where(eq(tags.id, tagId));
 
+  await logModAction({
+    actor,
+    action: "tag.update",
+    targetType: "tag",
+    targetId: String(tagId),
+    summary: `Updated tag #${tagId} → "${name}" (${slug})`,
+    metadata: { name, slug, categoryId },
+  });
+
   revalidatePath("/admin/tags");
   revalidatePath("/admin/queue");
   revalidatePath("/search");
@@ -402,7 +492,7 @@ function parsePublishedFileId(input: string): string | null {
  * for brand-new rows so suggestions still appear in the queue/triage.
  */
 export async function addCreation(formData: FormData) {
-  await requireCreator();
+  const actor = await requireCreator();
   const raw = String(formData.get("input") ?? "").trim();
   const autoApprove = formData.get("approve") === "on";
 
@@ -582,6 +672,18 @@ export async function addCreation(formData: FormData) {
           .where(eq(creationTags.creationId, item.publishedfileid));
       }
 
+      await logModAction({
+        actor,
+        action: autoApprove ? "creation.adminAddApproved" : "creation.adminAddPending",
+        targetType: "creation",
+        targetId: item.publishedfileid,
+        summary: `${autoApprove ? "Approved" : "Queued"} manual add: "${item.title || "(untitled)"}" (${item.publishedfileid})`,
+        metadata: { autoApprove, kind, isNew },
+      });
+      if (autoApprove) {
+        await refreshTopCreatorBadge();
+      }
+
       revalidatePath("/admin/queue");
       revalidatePath("/");
       revalidatePath("/new");
@@ -606,7 +708,7 @@ export async function addCreation(formData: FormData) {
  * (same invariant as `refreshStaleCreators`). Mod+.
  */
 export async function rescrapeCreatorsAction(formData: FormData) {
-  await requireMod();
+  const actor = await requireMod();
   const creationId = String(formData.get("creationId") ?? "").trim();
   const shortId = String(formData.get("shortId") ?? "").trim();
   if (!/^\d+$/.test(creationId)) throw new Error("invalid_creation_id");
@@ -640,6 +742,16 @@ export async function rescrapeCreatorsAction(formData: FormData) {
     revalidatePath(`/profile/${c.steamid}`);
   }
 
+  await logModAction({
+    actor,
+    action: "creation.rescrapeCreators",
+    targetType: "creation",
+    targetId: creationId,
+    summary: `Re-scraped contributors on ${creationId} (found ${result.contributors.length})`,
+    metadata: { count: result.contributors.length },
+  });
+  await refreshTopCreatorBadge();
+
   const suffix = shortId ? `/creation/${shortId}` : `/creation/${creationId}`;
   redirect(`${suffix}?creators=ok_${result.contributors.length}`);
 }
@@ -666,6 +778,9 @@ export async function grantBadgeAction(formData: FormData) {
   const slug = String(formData.get("slug") ?? "");
   if (!/^\d{1,25}$/.test(targetSteamid)) throw new Error("invalid_steamid");
   if (!BADGE_SLUGS.includes(slug)) throw new Error("unknown_badge");
+  if (SYSTEM_AUTO_BADGES.includes(slug)) {
+    throw new Error("badge_system_auto_managed");
+  }
   const note = String(formData.get("note") ?? "").trim().slice(0, 200) || null;
 
   await grantBadge({
@@ -673,6 +788,15 @@ export async function grantBadgeAction(formData: FormData) {
     slug,
     grantedByUserId: actor.steamid,
     note,
+  });
+
+  await logModAction({
+    actor,
+    action: "badge.grant",
+    targetType: "user",
+    targetId: targetSteamid,
+    summary: `Granted badge "${slug}" to ${targetSteamid}${note ? ` — ${note}` : ""}`,
+    metadata: { slug, note },
   });
 
   revalidatePath("/admin/users");
@@ -746,13 +870,22 @@ export async function removeInfluencerAutograntAction(formData: FormData) {
 }
 
 export async function revokeBadgeAction(formData: FormData) {
-  await requireCreator();
+  const actor = await requireCreator();
   const targetSteamid = String(formData.get("steamid") ?? "");
   const slug = String(formData.get("slug") ?? "");
   if (!/^\d{1,25}$/.test(targetSteamid)) throw new Error("invalid_steamid");
   if (!BADGE_SLUGS.includes(slug)) throw new Error("unknown_badge");
 
   await revokeBadge(targetSteamid, slug);
+
+  await logModAction({
+    actor,
+    action: "badge.revoke",
+    targetType: "user",
+    targetId: targetSteamid,
+    summary: `Revoked badge "${slug}" from ${targetSteamid}`,
+    metadata: { slug },
+  });
 
   revalidatePath("/admin/users");
   revalidatePath(`/profile/${targetSteamid}`);
@@ -764,7 +897,7 @@ export async function revokeBadgeAction(formData: FormData) {
  * clears confirmed. Cleanest "remove this tag I added" escape hatch.
  */
 export async function removeCreationTag(formData: FormData) {
-  await requireCreator();
+  const actor = await requireCreator();
   const creationId = String(formData.get("creationId") ?? "");
   const tagIdRaw = String(formData.get("tagId") ?? "");
   const tagId = Number(tagIdRaw);
@@ -781,6 +914,15 @@ export async function removeCreationTag(formData: FormData) {
         eq(creationTags.tagId, tagId),
       ),
     );
+
+  await logModAction({
+    actor,
+    action: "creation.removeTag",
+    targetType: "creation",
+    targetId: creationId,
+    summary: `Removed tag #${tagId} from ${creationId}`,
+    metadata: { tagId },
+  });
 
   revalidatePath(`/creation/${creationId}`);
 }
@@ -817,6 +959,15 @@ export async function setCreationKind(formData: FormData) {
     .set({ kind, reviewedAt: new Date(), reviewedByUserId: user.steamid })
     .where(eq(creations.id, id));
 
+  await logModAction({
+    actor: user,
+    action: "creation.setKind",
+    targetType: "creation",
+    targetId: id,
+    summary: `Kind ${existing.kind} → ${kind} on ${id}`,
+    metadata: { from: existing.kind, to: kind },
+  });
+
   // Kind-listing pages (`/[kind]`) are force-dynamic so they re-query on
   // every request — no explicit revalidation needed for those. The
   // creation page itself and the home / /new feeds do need busting.
@@ -832,6 +983,12 @@ export async function deleteCreation(formData: FormData) {
   if (!id) throw new Error("creationId required");
 
   const db = getDb();
+  const [row] = await db
+    .select({ title: creations.title })
+    .from(creations)
+    .where(eq(creations.id, id))
+    .limit(1);
+
   await db
     .update(creations)
     .set({
@@ -860,6 +1017,15 @@ export async function deleteCreation(formData: FormData) {
       ),
     );
 
+  await logModAction({
+    actor: user,
+    action: "creation.delete",
+    targetType: "creation",
+    targetId: id,
+    summary: `Hard-deleted "${row?.title ?? id}"`,
+  });
+  await refreshTopCreatorBadge();
+
   revalidatePath("/");
   revalidatePath("/new");
   revalidatePath("/admin/queue");
@@ -883,6 +1049,14 @@ export async function clearReport(formData: FormData) {
       resolvedAt: new Date(),
     })
     .where(eq(reports.id, id));
+
+  await logModAction({
+    actor: user,
+    action: "report.clear",
+    targetType: "report",
+    targetId: String(id),
+    summary: `Cleared report #${id}`,
+  });
 
   revalidatePath("/admin/reports");
   revalidatePath("/");
@@ -915,6 +1089,15 @@ export async function actionReport(formData: FormData) {
       resolvedAt: new Date(),
     })
     .where(eq(reports.id, id));
+
+  await logModAction({
+    actor: user,
+    action: "report.action",
+    targetType: "report",
+    targetId: String(id),
+    summary: `Actioned report #${id} → creation ${row.creationId}${note ? ` — ${note}` : ""}`,
+    metadata: { creationId: row.creationId, note },
+  });
 
   revalidatePath("/admin/reports");
   revalidatePath(`/creation/${row.creationId}`);
@@ -964,6 +1147,15 @@ export async function deleteCommentFromReport(formData: FormData) {
       resolvedAt: new Date(),
     })
     .where(eq(reports.id, id));
+
+  await logModAction({
+    actor: user,
+    action: "comment.deleteFromReport",
+    targetType: "comment",
+    targetId: String(row.commentId),
+    summary: `Deleted comment #${row.commentId} via report #${id}${note ? ` — ${note}` : ""}`,
+    metadata: { reportId: id, note },
+  });
 
   revalidatePath("/admin/reports");
   if (target?.creationId) revalidatePath(`/creation/${target.creationId}`);
@@ -1042,6 +1234,16 @@ export async function archiveFromReport(formData: FormData) {
     excludeUserId: user.steamid,
   });
 
+  await logModAction({
+    actor: user,
+    action: "creation.archiveFromReport",
+    targetType: "creation",
+    targetId: creationId,
+    summary: `Archived "${creationRow?.title ?? creationId}" via report #${id}${extra ? ` — ${extra}` : ""}`,
+    metadata: { reportId: id, extra: extra || null, reason: row.reason },
+  });
+  await refreshTopCreatorBadge();
+
   revalidatePath("/admin/reports");
   revalidatePath("/admin/archive");
   revalidatePath(`/creation/${row.creationId}`);
@@ -1097,6 +1299,16 @@ export async function archiveCreation(formData: FormData) {
     excludeUserId: user.steamid,
   });
 
+  await logModAction({
+    actor: user,
+    action: "creation.archive",
+    targetType: "creation",
+    targetId: id,
+    summary: `Archived "${creationRow?.title ?? id}"${note ? ` — ${note}` : ""}`,
+    metadata: { note: note || null },
+  });
+  await refreshTopCreatorBadge();
+
   revalidatePath("/admin/archive");
   revalidatePath(`/creation/${id}`);
   revalidatePath("/");
@@ -1134,6 +1346,15 @@ export async function restoreFromArchive(formData: FormData) {
       resolvedAt: now,
     })
     .where(and(eq(reports.creationId, id), eq(reports.status, "actioned")));
+
+  await logModAction({
+    actor: user,
+    action: "creation.restoreFromArchive",
+    targetType: "creation",
+    targetId: id,
+    summary: `Restored creation ${id} from archive`,
+  });
+  await refreshTopCreatorBadge();
 
   revalidatePath("/admin/archive");
   revalidatePath(`/creation/${id}`);
@@ -1190,6 +1411,15 @@ export async function setUserRole(formData: FormData) {
     .set({ role: newRole })
     .where(eq(users.steamid, targetSteamid));
 
+  await logModAction({
+    actor,
+    action: "user.setRole",
+    targetType: "user",
+    targetId: targetSteamid,
+    summary: `Set role ${target.role} → ${newRole} for ${targetSteamid}`,
+    metadata: { from: target.role, to: newRole },
+  });
+
   revalidatePath("/admin/users");
 }
 
@@ -1222,12 +1452,21 @@ export async function banUser(formData: FormData) {
     .set({ bannedUntil: until, banReason: reason })
     .where(eq(users.steamid, steamid));
 
+  await logModAction({
+    actor,
+    action: "user.ban",
+    targetType: "user",
+    targetId: steamid,
+    summary: `Banned ${steamid} until ${until.toISOString()}${reason ? ` — ${reason}` : ""}`,
+    metadata: { until: until.toISOString(), reason },
+  });
+
   revalidatePath("/admin/users");
   revalidatePath(`/profile/${steamid}`);
 }
 
 export async function clearBan(formData: FormData) {
-  await requireCreator();
+  const actor = await requireCreator();
   const steamid = String(formData.get("steamid") ?? "").trim();
   if (!steamid) throw new Error("steamid required");
 
@@ -1236,6 +1475,14 @@ export async function clearBan(formData: FormData) {
     .update(users)
     .set({ bannedUntil: null, banReason: null })
     .where(eq(users.steamid, steamid));
+
+  await logModAction({
+    actor,
+    action: "user.unban",
+    targetType: "user",
+    targetId: steamid,
+    summary: `Cleared ban on ${steamid}`,
+  });
 
   revalidatePath("/admin/users");
   revalidatePath(`/profile/${steamid}`);
@@ -1269,12 +1516,21 @@ export async function muteUser(formData: FormData) {
     .set({ mutedUntil: until, muteReason: reason })
     .where(eq(users.steamid, steamid));
 
+  await logModAction({
+    actor,
+    action: "user.mute",
+    targetType: "user",
+    targetId: steamid,
+    summary: `Muted ${steamid} until ${until.toISOString()}${reason ? ` — ${reason}` : ""}`,
+    metadata: { until: until.toISOString(), reason },
+  });
+
   revalidatePath("/admin/users");
   revalidatePath(`/profile/${steamid}`);
 }
 
 export async function clearMute(formData: FormData) {
-  await requireEliteMod();
+  const actor = await requireEliteMod();
   const steamid = String(formData.get("steamid") ?? "").trim();
   if (!/^\d{1,25}$/.test(steamid)) throw new Error("invalid_steamid");
 
@@ -1290,6 +1546,14 @@ export async function clearMute(formData: FormData) {
     .update(users)
     .set({ mutedUntil: null, muteReason: null })
     .where(eq(users.steamid, steamid));
+
+  await logModAction({
+    actor,
+    action: "user.unmute",
+    targetType: "user",
+    targetId: steamid,
+    summary: `Cleared mute on ${steamid}`,
+  });
 
   revalidatePath("/admin/users");
   revalidatePath(`/profile/${steamid}`);
@@ -1330,12 +1594,21 @@ export async function hardBanUser(formData: FormData) {
     })
     .where(eq(users.steamid, steamid));
 
+  await logModAction({
+    actor,
+    action: "user.hardBan",
+    targetType: "user",
+    targetId: steamid,
+    summary: `Hard-banned ${steamid}${reason ? ` — ${reason}` : ""}`,
+    metadata: { reason },
+  });
+
   revalidatePath("/admin/users");
   revalidatePath(`/profile/${steamid}`);
 }
 
 export async function clearHardBan(formData: FormData) {
-  await requireCreator();
+  const actor = await requireCreator();
   const steamid = String(formData.get("steamid") ?? "").trim();
   if (!steamid) throw new Error("steamid required");
 
@@ -1349,12 +1622,20 @@ export async function clearHardBan(formData: FormData) {
     })
     .where(eq(users.steamid, steamid));
 
+  await logModAction({
+    actor,
+    action: "user.clearHardBan",
+    targetType: "user",
+    targetId: steamid,
+    summary: `Cleared hard-ban on ${steamid}`,
+  });
+
   revalidatePath("/admin/users");
   revalidatePath(`/profile/${steamid}`);
 }
 
 export async function clearWarnings(formData: FormData) {
-  await requireCreator();
+  const actor = await requireCreator();
   const steamid = String(formData.get("steamid") ?? "").trim();
   if (!steamid) throw new Error("steamid required");
 
@@ -1363,6 +1644,14 @@ export async function clearWarnings(formData: FormData) {
     .update(users)
     .set({ warningsCount: 0, warningNote: null })
     .where(eq(users.steamid, steamid));
+
+  await logModAction({
+    actor,
+    action: "user.clearWarnings",
+    targetType: "user",
+    targetId: steamid,
+    summary: `Cleared warnings on ${steamid}`,
+  });
 
   revalidatePath("/admin/users");
   revalidatePath(`/profile/${steamid}`);
@@ -1375,7 +1664,7 @@ export async function clearWarnings(formData: FormData) {
  * submit / comment / vote.
  */
 export async function setAgeGateBypass(formData: FormData) {
-  await requireCreator();
+  const actor = await requireCreator();
   const steamid = String(formData.get("steamid") ?? "").trim();
   if (!steamid) throw new Error("steamid required");
   const onRaw = String(formData.get("on") ?? "").trim();
@@ -1387,6 +1676,16 @@ export async function setAgeGateBypass(formData: FormData) {
     .set({ bypassAgeGate: on })
     .where(eq(users.steamid, steamid));
 
+  await logModAction({
+    actor,
+    action: on ? "user.grantAgeGateBypass" : "user.revokeAgeGateBypass",
+    targetType: "user",
+    targetId: steamid,
+    summary: on
+      ? `Granted age-gate bypass to ${steamid}`
+      : `Revoked age-gate bypass from ${steamid}`,
+  });
+
   revalidatePath("/admin/users");
   revalidatePath(`/profile/${steamid}`);
 }
@@ -1396,7 +1695,7 @@ export async function setAgeGateBypass(formData: FormData) {
 // creator-only because the /admin/users editor targets arbitrary accounts;
 // the appeal path only touches users who self-identified via the appeal form.
 export async function grantAgeGateAppeal(formData: FormData) {
-  await requireMod();
+  const actor = await requireMod();
   const steamid = String(formData.get("steamid") ?? "").trim();
   if (!/^\d{1,25}$/.test(steamid)) throw new Error("invalid_steamid");
 
@@ -1414,13 +1713,21 @@ export async function grantAgeGateAppeal(formData: FormData) {
     link: "/",
   });
 
+  await logModAction({
+    actor,
+    action: "appeal.grant",
+    targetType: "user",
+    targetId: steamid,
+    summary: `Granted age-gate appeal for ${steamid}`,
+  });
+
   revalidatePath("/admin/appeals");
   revalidatePath("/admin/users");
   revalidatePath(`/profile/${steamid}`);
 }
 
 export async function dismissAgeGateAppeal(formData: FormData) {
-  await requireMod();
+  const actor = await requireMod();
   const steamid = String(formData.get("steamid") ?? "").trim();
   if (!/^\d{1,25}$/.test(steamid)) throw new Error("invalid_steamid");
 
@@ -1429,6 +1736,14 @@ export async function dismissAgeGateAppeal(formData: FormData) {
     .update(users)
     .set({ ageGateAppealHandledAt: new Date() })
     .where(eq(users.steamid, steamid));
+
+  await logModAction({
+    actor,
+    action: "appeal.dismiss",
+    targetType: "user",
+    targetId: steamid,
+    summary: `Dismissed age-gate appeal for ${steamid}`,
+  });
 
   revalidatePath("/admin/appeals");
 }
@@ -1457,12 +1772,21 @@ export async function warnUser(formData: FormData) {
     })
     .where(eq(users.steamid, steamid));
 
+  await logModAction({
+    actor,
+    action: "user.warn",
+    targetType: "user",
+    targetId: steamid,
+    summary: `Warned ${steamid}${note ? ` — ${note}` : ""}`,
+    metadata: { note, total: (target.warningsCount ?? 0) + 1 },
+  });
+
   revalidatePath("/admin/users");
   revalidatePath(`/profile/${steamid}`);
 }
 
 export async function createCategory(formData: FormData) {
-  await requireMod();
+  const actor = await requireMod();
   const db = getDb();
   const slug = String(formData.get("slug") ?? "")
     .trim()
@@ -1471,10 +1795,24 @@ export async function createCategory(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim() || null;
   if (!slug || !name) throw new Error("slug and name required");
-  await db
+  const [row] = await db
     .insert(categories)
-    .values({ slug, name, description })
-    .onConflictDoUpdate({ target: categories.slug, set: { name, description } });
+    .values({ slug, name, description, createdByUserId: actor.steamid })
+    .onConflictDoUpdate({ target: categories.slug, set: { name, description } })
+    .returning({ id: categories.id, createdByUserId: categories.createdByUserId });
+
+  const isNew = row?.createdByUserId === actor.steamid;
+  await logModAction({
+    actor,
+    action: isNew ? "category.create" : "category.upsert",
+    targetType: "category",
+    targetId: row ? String(row.id) : slug,
+    summary: isNew
+      ? `Created category "${name}" (${slug})`
+      : `Upserted category "${name}" (${slug})`,
+    metadata: { slug, name, description },
+  });
+
   revalidatePath("/admin/tags");
 }
 
@@ -1483,12 +1821,19 @@ export async function createCategory(formData: FormData) {
 // "Uncategorised"), creation_categories rows cascade away. Creations
 // themselves are untouched.
 export async function deleteCategory(formData: FormData) {
-  await requireCreator();
+  const actor = await requireCreator();
   const idRaw = String(formData.get("categoryId") ?? "");
   const id = Number(idRaw);
   if (!Number.isInteger(id) || id <= 0) throw new Error("invalid_category_id");
   const db = getDb();
   await db.delete(categories).where(eq(categories.id, id));
+  await logModAction({
+    actor,
+    action: "category.delete",
+    targetType: "category",
+    targetId: String(id),
+    summary: `Deleted category #${id}`,
+  });
   revalidatePath("/admin/tags");
   revalidatePath("/search");
 }

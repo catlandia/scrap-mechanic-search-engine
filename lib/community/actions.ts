@@ -820,6 +820,26 @@ export async function submitCreation(formData: FormData): Promise<SubmitResult> 
     }
   }
 
+  // Ping every moderator+ the moment a community submission lands — the
+  // V8.19 priority sort already floats these to the top of /admin/triage,
+  // but a notification means the mod doesn't have to be watching the page
+  // to notice. Fire-and-forget; a failed broadcast must not unwind the
+  // user-visible insert.
+  try {
+    const submitterName = user.personaName || user.steamid;
+    await broadcastToRole({
+      minRole: "moderator",
+      tier: "moderator",
+      type: "mod_community_submission",
+      title: `New community submission from ${submitterName}`,
+      body: `"${item.title || "(untitled)"}" — review on /admin/triage.`,
+      link: "/admin/triage",
+      excludeUserId: user.steamid,
+    });
+  } catch (err) {
+    console.error("[community/submit] mod broadcast failed:", err);
+  }
+
   revalidatePath("/admin/triage");
   revalidatePath("/admin/queue");
 

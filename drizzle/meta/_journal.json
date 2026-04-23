@@ -218,6 +218,20 @@
       "when": 1777900000000,
       "tag": "0030_beta_3_0_changelog",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1778000000000,
+      "tag": "0031_mod_actions_audit",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1778100000000,
+      "tag": "0032_beta_3_0_absence_prep_changelog",
+      "breakpoints": true
     }
   ]
 }

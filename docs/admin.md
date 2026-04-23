@@ -13,7 +13,8 @@ The admin backend is gated at `/admin/*` by the middleware, requiring a Steam lo
 | `/admin` | Mod+ | Dashboard overview |
 | `/admin/triage` | Mod+ | Review pending items |
 | `/admin/queue` | Mod+ | Confirmed-tag queue for approved items |
-| `/admin/tags` | Mod+ | Create/manage taxonomy |
+| `/admin/tags` | Mod+ | Create/manage taxonomy (creator + created_at stamped since V9.1) |
+| `/admin/audit` | Mod+ | Mod action audit log (V9.1+). Filter by actor/action/target; paged 50 rows. |
 | `/admin/ingest` | Creator | Ingest run history + manual trigger. Creator-only since V9.0 — manual runs burn Steam API quota and can reshape the catalogue wholesale. |
 | `/admin/reports` | Mod+ | Community moderation reports |
 | `/admin/archive` | Mod+ (view only) | Archived creations |
@@ -75,6 +76,24 @@ requireCreator()   → creator only
 ```
 
 All helpers check `effectiveRole` (ban-aware), not `user.role` directly. **Every admin server action calls `requireMod/Elite/Creator` as its first statement** — the layout-level gate at `/admin/(gated)` is not sufficient, because server actions can be invoked from any page that imports them.
+
+### Audit log (V9.1+)
+
+Every non-trivial admin server action calls `logModAction({ actor, action, targetType, targetId, summary, metadata })` from `lib/audit/log.ts` on success. Rows land in `mod_actions` and surface at `/admin/audit`. Helper is never-throws so a failed insert can't unwind the mod action itself.
+
+Action naming is `<noun>.<verb>` and stable — external consumers (filter UI, dashboards) match on these exact strings:
+
+- `creation.approve` / `creation.quickApprove` / `creation.reject` / `creation.saveTags` / `creation.confirmTag` / `creation.removeTag` / `creation.setKind` / `creation.archive` / `creation.archiveFromReport` / `creation.restoreFromArchive` / `creation.delete` / `creation.rescrapeCreators` / `creation.adminAddPending` / `creation.adminAddApproved`
+- `tag.create` / `tag.upsert` / `tag.update`
+- `category.create` / `category.upsert` / `category.delete`
+- `user.ban` / `user.unban` / `user.hardBan` / `user.clearHardBan` / `user.mute` / `user.unmute` / `user.warn` / `user.clearWarnings` / `user.setRole` / `user.grantAgeGateBypass` / `user.revokeAgeGateBypass`
+- `badge.grant` / `badge.revoke`
+- `appeal.grant` / `appeal.dismiss`
+- `report.clear` / `report.action`
+- `comment.deleteFromReport`
+- `ingest.manualRun`
+
+The `metadata` jsonb carries contextual details (reason strings, prior values, counts). The `summary` column is a pre-formatted one-line English string so the UI doesn't have to know every action's shape.
 
 ### Creation management
 
