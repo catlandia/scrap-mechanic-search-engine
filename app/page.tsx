@@ -144,6 +144,20 @@ export default async function HomePage() {
               </section>
             );
           })}
+
+          <section className="rounded-lg border border-accent/30 bg-accent/5 px-5 py-5 text-sm leading-relaxed text-foreground/80 sm:px-6">
+            <p>
+              Want to help keep this project growing? Head over to{" "}
+              <Link
+                href="/support"
+                className="font-semibold text-accent hover:underline"
+              >
+                Support the site
+              </Link>{" "}
+              to see concrete ways you can pitch in — no donations, just time
+              and attention.
+            </p>
+          </section>
         </>
       )}
     </div>
