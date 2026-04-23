@@ -75,6 +75,17 @@ export default async function HomePage() {
           </Link>{" "}
           for a hexapod. Low-effort creations are filtered out.
         </p>
+        {hasAny && (
+          <div className="inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/10 px-3 py-1 text-sm">
+            <span aria-hidden>📚</span>
+            <span className="font-semibold tabular-nums text-accent">
+              {total.toLocaleString()}
+            </span>
+            <span className="text-foreground/70">
+              creation{total === 1 ? "" : "s"} indexed
+            </span>
+          </div>
+        )}
       </section>
 
       {dbError ? (
