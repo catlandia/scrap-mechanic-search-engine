@@ -39,7 +39,12 @@ export function GuideLink() {
           : "hidden items-center rounded-md border border-transparent px-3 py-1.5 text-sm font-medium text-foreground/70 hover:border-foreground/15 hover:text-foreground sm:inline-flex"
       }
     >
-      <span aria-hidden="true">?</span>
+      <span
+        aria-hidden="true"
+        className="inline-flex size-4 shrink-0 items-center justify-center rounded-full border border-current text-[10px] font-bold leading-none"
+      >
+        ?
+      </span>
       <span>Guide</span>
       {highlight && (
         <span

@@ -119,6 +119,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const extraLinks = [
     { href: "/about", label: "About the site" },
     { href: "/guide", label: "How to use the site" },
+    { href: "/support", label: "Support the site" },
     { href: "/settings", label: "Settings" },
     ...(user ? [{ href: "/me/favourites", label: "Your favourites" }] : []),
     ...(user ? [{ href: "/me/notifications", label: "Notifications" }] : []),
@@ -196,9 +197,42 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   </Link>
                 ),
               )}
+              {showAdminLink && (
+                <Link
+                  href="/admin/triage"
+                  className="inline-flex items-center gap-1 rounded-md border border-sky-400/40 bg-sky-500/10 px-2 py-0.5 text-xs font-semibold uppercase tracking-wider text-sky-300 hover:border-sky-300 hover:bg-sky-500/20 hover:text-sky-200"
+                  title="Jump to the admin triage queue"
+                >
+                  Admin
+                </Link>
+              )}
             </nav>
             <div className="ml-auto flex items-center gap-2 sm:gap-4">
               <GuideLink />
+              {/* Settings gear always visible (signed-in or not) so the
+                  language picker + other preferences don't require a Steam
+                  login. Hardcoded zinc so it stays visible under a custom
+                  theme that collapses foreground/background tokens. */}
+              <Link
+                href="/settings"
+                className="inline-flex size-7 items-center justify-center rounded-md border border-zinc-700 bg-zinc-900 text-zinc-100 hover:bg-zinc-800"
+                title="Settings"
+                aria-label="Settings"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  className="size-4"
+                  aria-hidden
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.53 1.53 0 0 1-2.28.95c-1.37-.84-2.94.73-2.1 2.1.47.77.02 1.79-.95 2.28-1.56.38-1.56 2.6 0 2.98.97.49 1.42 1.51.95 2.28-.84 1.37.73 2.94 2.1 2.1.77-.47 1.79-.02 2.28.95.38 1.56 2.6 1.56 2.98 0 .49-.97 1.51-1.42 2.28-.95 1.37.84 2.94-.73 2.1-2.1-.47-.77-.02-1.79.95-2.28 1.56-.38 1.56-2.6 0-2.98-.97-.49-1.42-1.51-.95-2.28.84-1.37-.73-2.94-2.1-2.1-.77.47-1.79.02-2.28-.95zM10 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </Link>
               {user ? (
                 <UserMenu user={user} unreadByTier={unreadByTier} />
               ) : (
@@ -253,6 +287,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             </Link>
             <Link href="/guide" className="hover:text-foreground">
               Guide
+            </Link>
+            <Link href="/support" className="hover:text-foreground">
+              Support
             </Link>
             <Link href="/settings" className="hover:text-foreground">
               Settings

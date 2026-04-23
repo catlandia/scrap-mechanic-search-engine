@@ -78,7 +78,9 @@ export function UserMenu({
         <>
           {/* Submit / Favourites / Admin are reachable from the main nav,
               the hamburger drawer, and /settings — keeping them out of this
-              menu stops the top bar overflowing at lg. */}
+              menu stops the top bar overflowing at lg. The settings gear
+              lives in app/layout.tsx so signed-out visitors can reach
+              /settings (language picker, etc.) without an account. */}
           {visibleTiers.map((t) => (
             <TierBell
               key={t}
@@ -86,29 +88,6 @@ export function UserMenu({
               unread={unreadByTier[t] ?? 0}
             />
           ))}
-          {/* Hardcoded zinc so the escape hatch to /settings stays visible
-              even under a pathological custom theme that collapses the
-              foreground/background tokens to the same colour. */}
-          <Link
-            href="/settings"
-            className="inline-flex size-7 items-center justify-center rounded-md border border-zinc-700 bg-zinc-900 text-zinc-100 hover:bg-zinc-800"
-            title="Settings"
-            aria-label="Settings"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              className="size-4"
-              aria-hidden
-            >
-              <path
-                fillRule="evenodd"
-                d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.53 1.53 0 0 1-2.28.95c-1.37-.84-2.94.73-2.1 2.1.47.77.02 1.79-.95 2.28-1.56.38-1.56 2.6 0 2.98.97.49 1.42 1.51.95 2.28-.84 1.37.73 2.94 2.1 2.1.77-.47 1.79-.02 2.28.95.38 1.56 2.6 1.56 2.98 0 .49-.97 1.51-1.42 2.28-.95 1.37.84 2.94-.73 2.1-2.1-.47-.77-.02-1.79.95-2.28 1.56-.38 1.56-2.6 0-2.98-.97-.49-1.42-1.51-.95-2.28.84-1.37-.73-2.94-2.1-2.1-.77.47-1.79.02-2.28-.95zM10 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"
-                clipRule="evenodd"
-              />
-            </svg>
-          </Link>
         </>
       )}
       <Link

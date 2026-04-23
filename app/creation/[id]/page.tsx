@@ -26,6 +26,7 @@ import { CreatorTagRemoveButton } from "@/components/CreatorTagRemoveButton";
 import { DeleteCreationButton } from "@/components/DeleteCreationButton";
 import { FavouriteButton } from "@/components/FavouriteButton";
 import { ReportButton } from "@/components/ReportButton";
+import { ShareButton } from "@/components/ShareButton";
 import { ReportBadge } from "@/components/ReportBadge";
 import { TagVoteList } from "@/components/TagVoteList";
 import { isCreator, isModerator } from "@/lib/auth/roles";
@@ -438,6 +439,7 @@ export default async function CreationDetailPage({
           signedIn={!!viewer}
         />
         <ReportButton creationId={creation.id} signedIn={!!viewer} />
+        <ShareButton />
         <a
           href={creation.steamUrl}
           target="_blank"

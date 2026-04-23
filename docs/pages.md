@@ -37,6 +37,7 @@ All public pages are in `app/` using Next.js 15 App Router. Server Components by
 | `/terms` | `app/terms/page.tsx` | Terms of use |
 | `/privacy` | `app/privacy/page.tsx` | Privacy policy |
 | `/about` | `app/about/page.tsx` | Curation criteria — explains thresholds + admin review + community submission path |
+| `/support` | `app/support/page.tsx` | How visitors can help the site (share, submit, vote/tag, report, suggest, flag bugs, contribute code). Explicitly rules out donations — the site is free-tier only and stays that way. |
 | `/verify/appeal` | `app/verify/appeal/page.tsx` | Age-gate appeal form. Sign-in gated but NOT age-gated — private-profile users need it. Broadcasts `mod_age_gate_appeal` to moderator tier with the user's steamid + message. Rate-limited to 1 per 24 h. Noindex. |
 
 **Indexing:** `/me/*`, `/verify`, `/auth/*`, `/profile/[steamid]`, `/suggestions/new`, and `/submit` are all `noindex`. `robots.ts` disallows the same set plus `/admin/` and `/api/`.
@@ -141,6 +142,8 @@ Site-upvote sorts order by net score (`up - down`). No vote floor — zero-vote 
 - Favorite button
 - Report button
 
+**Share button** (all visitors, signed in or not): `components/ShareButton.tsx` — copies `window.location.href` to the clipboard via `navigator.clipboard.writeText` with a `document.execCommand('copy')` fallback for insecure contexts / older browsers. Confirms via toast + a 2-second inline "Copied" swap. Deliberately uses the current URL so whichever form the visitor reached the page through (shortId or publishedfileid) is what gets copied.
+
 **Creator actions (creator role):**
 - Remove a specific tag (sets `rejected=true`) — creator sees **all** non-rejected tags including community tags below the +3 vote threshold, so no false tag is ever unreachable
 - Delete creation (`status=deleted`)
@@ -181,22 +184,24 @@ Site-upvote sorts order by net score (`up - down`). No vote floor — zero-vote 
 - Blueprints, Mods, Worlds, Challenges, Tiles (kind pages)
 - Search (`/search`)
 - Ideas (`/suggestions`)
+- **Admin pill** (moderator+ only) — a distinct sky-coloured `Admin` pill at the end of the desktop nav that jumps to `/admin/triage`. Rendered inline in `app/layout.tsx` rather than as a nav item so the visual weight flags "mod affordance" at a glance instead of blending into the regular nav. Same `showAdminLink = !!user && isModerator(user.role)` check that already feeds the mobile drawer's Admin triage entry.
+
+**Settings gear (always visible, signed-in or not):** a small zinc-coloured gear icon in the top-bar action cluster linking to `/settings`. Rendered directly in `app/layout.tsx` rather than inside `UserMenu` so signed-out visitors can still reach /settings (language picker, theme, rating mode) without a Steam account. `UserMenu` used to host the gear; it was pulled out in V8.16 — the duplicate inside `UserMenu` is gone. The hardcoded zinc palette survives a pathological custom theme that collapses foreground/background to the same colour.
 
 **Rating-mode toggle** (`components/RatingModeToggle.tsx`): three buttons — Steam / Site / Both — posting to `/api/prefs/rating-mode` which sets the `smse_rating_mode` cookie (1-year maxAge, non-httpOnly so server components can read it via `lib/prefs.server.ts → getRatingMode()`). The selected mode is passed through every page that renders `<CreationGrid>` or `<StarRating>` so SSR output matches preference with no flicker. The toggle lives inline in the header on desktop and inside the mobile drawer on `<sm`.
 
 **User menu (signed in, `components/UserMenu.tsx`):**
-- Submit (icon on mobile, text on desktop)
-- Favourites (heart icon on mobile, text on desktop)
-- Bell icon with unread badge → `/me/notifications` (hidden when banned)
-- Admin link (mod+, desktop only — mobile variant lives in the drawer)
-- Avatar + persona name (name hidden `<sm`) + role badge
-- Sign out (desktop; mobile-only sign-out lives in the drawer)
+- Tier bells (one per notification tier the viewer has access to — user / moderator / elite_moderator / creator) with unread badges → `/me/notifications[?tier=…]`. Hidden when banned.
+- Avatar + persona name (name hidden `<xl`) + role badge
+- Sign out (`xl+`; sign-out on narrower viewports lives in the drawer)
+
+Submit / Favourites / Admin / Settings are deliberately NOT in UserMenu — they're in the main nav, the drawer, and/or rendered as standalone top-bar elements in `app/layout.tsx`. Keeping them out of UserMenu is what lets the header fit at `lg`.
 
 Unread notification count is fetched server-side in `app/layout.tsx` on every render and passed as a prop to `UserMenu`.
 
 **Mobile drawer (`components/MobileNav.tsx`):** hamburger visible only on `<sm`. Opens a right-side slide-over panel rendered via `createPortal(document.body)` at `z-[100]` so it escapes the sticky header's stacking context. Contains:
 - Primary nav links (Newest / kinds / Search / Ideas) with active-route highlight
-- Extra links: Submit, Your favourites, Notifications, Your submissions, Admin triage (mods+)
+- Extra links: About, How to use the site, Support the site, Settings, Your favourites (signed-in), Notifications (signed-in), Your submissions (signed-in), Admin triage (mods+)
 - Rating-mode toggle
 - Sign in / Sign out button
 

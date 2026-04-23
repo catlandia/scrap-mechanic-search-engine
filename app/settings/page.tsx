@@ -156,6 +156,11 @@ export default async function SettingsPage() {
             </Link>
           </li>
           <li>
+            <Link href="/support" className="text-accent hover:underline">
+              {t("settings.supportLink")}
+            </Link>
+          </li>
+          <li>
             <Link href="/terms" className="text-accent hover:underline">
               {t("settings.terms")}
             </Link>{" "}
