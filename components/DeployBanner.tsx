@@ -35,6 +35,11 @@ export function DeployBanner() {
   const [serverOffset, setServerOffset] = useState<number>(0);
   const [now, setNow] = useState<number>(() => Date.now());
   const cancelledRef = useRef(false);
+  // Tracks which announcement id we've already fired each sound for so
+  // the countdown jingle doesn't retrigger on every poll and the zero-hit
+  // sting doesn't retrigger every render tick once remaining <= 0.
+  const countdownPlayedForRef = useRef<number | null>(null);
+  const zeroPlayedForRef = useRef<number | null>(null);
 
   useEffect(() => {
     cancelledRef.current = false;
@@ -89,6 +94,30 @@ export function DeployBanner() {
     const id = setInterval(() => setNow(Date.now()), TICK_MS);
     return () => clearInterval(id);
   }, [announcement]);
+
+  // Countdown jingle — fires once when a new announcement first appears.
+  // Play() may reject when the visitor hasn't interacted with the page yet
+  // (autoplay policy) — silently ignored, the banner still shows.
+  useEffect(() => {
+    if (!announcement) return;
+    if (countdownPlayedForRef.current === announcement.id) return;
+    if (announcement.completedAt !== null) return;
+    countdownPlayedForRef.current = announcement.id;
+    const a = new Audio("/sfx/deploy-countdown.mp3");
+    a.play().catch(() => {});
+  }, [announcement]);
+
+  // Zero-hit sting — fires once the moment remaining first crosses 0.
+  useEffect(() => {
+    if (!announcement) return;
+    if (zeroPlayedForRef.current === announcement.id) return;
+    if (announcement.completedAt !== null) return;
+    const serverNow = now + serverOffset;
+    if (announcement.scheduledAt - serverNow > 0) return;
+    zeroPlayedForRef.current = announcement.id;
+    const a = new Audio("/sfx/deploy-live.mp3");
+    a.play().catch(() => {});
+  }, [announcement, now, serverOffset]);
 
   // Auto-reload once the deploy is marked complete, but only once per
   // announcement — sessionStorage flag keeps the new page from reloading

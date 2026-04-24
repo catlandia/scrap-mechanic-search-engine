@@ -84,7 +84,7 @@ Migrations also run automatically during every Vercel build — `scripts/migrate
 For human-initiated pushes, run `npm run deploy` instead of `git push`. The script:
 
 1. Writes a row to `deploy_announcements` with `scheduled_at = now() + 60s`.
-2. Every page on the live site starts showing a sticky red top-bar countdown (`components/DeployBanner.tsx` polls `/api/deploy-announcement` every 8s, ticks locally at ~30fps for smooth milliseconds, pulses under 10s).
+2. Every page on the live site starts showing a sticky red top-bar countdown (`components/DeployBanner.tsx` polls `/api/deploy-announcement` every 8s, ticks locally at ~30fps for smooth milliseconds, pulses under 10s). Two SFX fire alongside the visual — `public/sfx/deploy-countdown.mp3` the moment a new announcement first appears on the client, and `public/sfx/deploy-live.mp3` the instant the countdown hits zero. Each is keyed per-announcement via a ref so polls + render ticks can't retrigger. `audio.play()` rejections from the browser autoplay policy are swallowed silently, so a visitor who hasn't interacted with the page still sees the banner; they just miss the sound.
 3. Counts down in the terminal for 60 seconds.
 4. Runs `git push` → triggers Vercel build → runs migrations → deploys.
 5. The banner holds "Deploying now — the page will auto-refresh when the new version is ready." indefinitely — it never self-hides on a timer. `scripts/complete-deploy.ts` runs at the end of the Vercel build and stamps `completed_at` on the pending announcement. Clients see that on their next poll, the banner swaps to "✅ New version is live — reloading…", and the page auto-reloads onto the new bundle (one reload per announcement, guarded by sessionStorage so the new bundle doesn't reload itself in a loop).
