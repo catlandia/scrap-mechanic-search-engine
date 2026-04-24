@@ -1,5 +1,11 @@
 # Project Overview
 
+## Next planned feature
+
+**Per-kind top-creator badges + kind filter on `/creators`.** Extend the current single `top_creator` 👑 so every `CreationKind` (blueprint / mod / world / challenge / tile / custom_game / terrain_asset / other) has its own auto-managed crown badge awarded to whoever holds the most approved creations of that kind. Then add a kind filter on `/creators` mirroring the V9.6 triage filter. Full design in `C:\Users\arkad\.claude\plans\top-creator-per-kind-badges.md` — nothing implemented yet, the plan covers badge catalog, SQL, refresh wiring, and all edge cases.
+
+---
+
 ## What this is
 
 Scrap Mechanic Search Engine is a curated public directory of Steam Workshop creations for the game Scrap Mechanic (appid 387990). Visitors browse and search by category and tags to find quality creations without drowning in low-effort content.
