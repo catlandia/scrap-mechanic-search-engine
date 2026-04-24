@@ -11,6 +11,13 @@ const POLL_MS = 8_000;
 const POLL_MS_WAITING_FOR_SWAP = 2_000;
 const TICK_MS = 33;
 const RELOAD_FLAG_KEY = "smse_deploy_reloaded_id";
+// Delay between noticing the CDN has swapped to the new bundle and
+// actually calling window.location.reload(). Deliberately long enough
+// that the "New version is live — reloading…" confirmation line stays
+// visible for ~10s after the swap — we don't want to yank a visitor
+// mid-sentence the instant Vercel finishes promoting, when they may
+// have typed the countdown out and kept working.
+const RELOAD_DELAY_AFTER_SWAP_MS = 11_500;
 // Prank banners self-hide this many ms past scheduled_at, independently
 // of the server poll, so the "just kidding :^)" line disappears at the
 // same moment on every device without depending on the 8s poll cadence.
@@ -61,58 +68,12 @@ export function DeployBanner() {
   // sting doesn't retrigger every render tick once remaining <= 0.
   const countdownPlayedForRef = useRef<number | null>(null);
   const zeroPlayedForRef = useRef<number | null>(null);
-  // Pre-allocated Audio elements so mobile browsers can play them later.
-  // Mobile Safari / Chrome block `new Audio(src).play()` when the call
-  // doesn't happen inside a user-gesture stack; the banner's audio fires
-  // reactively in response to a server poll, so creating the elements on
-  // demand always hits that block. We create them on mount and unlock
-  // them the first time the user touches the page — once unlocked, later
-  // .play() calls on the same element succeed without a fresh gesture.
+  // Handle on the currently-playing countdown jingle so the zero-hit sting
+  // can cut it off mid-play. Each play() creates a fresh Audio element —
+  // desktop Chrome / Firefox handle that cleanly once the page has had any
+  // user gesture (typing, clicking, scrolling), which is essentially every
+  // moment a deploy banner is visible.
   const countdownAudioRef = useRef<HTMLAudioElement | null>(null);
-  const stingAudioRef = useRef<HTMLAudioElement | null>(null);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const countdown = new Audio("/sfx/deploy-countdown.mp3");
-    const sting = new Audio("/sfx/deploy-live.mp3");
-    countdown.preload = "auto";
-    sting.preload = "auto";
-    countdownAudioRef.current = countdown;
-    stingAudioRef.current = sting;
-
-    let unlocked = false;
-    const unlock = () => {
-      if (unlocked) return;
-      unlocked = true;
-      // Prime each element with a muted play/pause inside the gesture
-      // stack. iOS treats this as "the user authorised this element";
-      // subsequent unmuted play() calls on the same element work.
-      for (const a of [countdown, sting]) {
-        a.muted = true;
-        const p = a.play();
-        if (p && typeof p.then === "function") {
-          p.then(() => {
-            a.pause();
-            a.currentTime = 0;
-            a.muted = false;
-          }).catch(() => {
-            a.muted = false;
-          });
-        }
-      }
-      document.removeEventListener("pointerdown", unlock);
-      document.removeEventListener("touchstart", unlock);
-      document.removeEventListener("keydown", unlock);
-    };
-    document.addEventListener("pointerdown", unlock);
-    document.addEventListener("touchstart", unlock, { passive: true });
-    document.addEventListener("keydown", unlock);
-    return () => {
-      document.removeEventListener("pointerdown", unlock);
-      document.removeEventListener("touchstart", unlock);
-      document.removeEventListener("keydown", unlock);
-    };
-  }, []);
 
   const hasBuildSwapped =
     serverBuildId !== null && serverBuildId !== CLIENT_BUILD_ID;
@@ -201,9 +162,8 @@ export function DeployBanner() {
     if (countdownPlayedForRef.current === announcement.id) return;
     if (announcement.completedAt !== null) return;
     countdownPlayedForRef.current = announcement.id;
-    const a = countdownAudioRef.current;
-    if (!a) return;
-    a.currentTime = 0;
+    const a = new Audio("/sfx/deploy-countdown.mp3");
+    countdownAudioRef.current = a;
     a.play().catch(() => {});
   }, [announcement]);
 
@@ -218,13 +178,12 @@ export function DeployBanner() {
     if (announcement.scheduledAt - serverNow > 0) return;
     zeroPlayedForRef.current = announcement.id;
     const prev = countdownAudioRef.current;
-    if (prev && !prev.paused) {
+    if (prev) {
       prev.pause();
       prev.currentTime = 0;
+      countdownAudioRef.current = null;
     }
-    const a = stingAudioRef.current;
-    if (!a) return;
-    a.currentTime = 0;
+    const a = new Audio("/sfx/deploy-live.mp3");
     a.play().catch(() => {});
   }, [announcement, now, serverOffset]);
 
@@ -239,6 +198,13 @@ export function DeployBanner() {
   // fresh page from reloading itself in a loop during the 2-minute
   // completed-tail window. Prank rows never reach this path because
   // completedAt stays null for their entire lifecycle.
+  //
+  // RELOAD_DELAY_AFTER_SWAP_MS: once hasBuildSwapped flips true, wait a
+  // visible beat before yanking the page out from under the visitor.
+  // Bumped to ~11.5s on request — long enough for the "New version is
+  // live — reloading…" line to stay up a full ~10s after the CDN swap
+  // so the visitor gets to finish whatever sentence they were typing
+  // and sees the confirmation instead of an instant blink-to-reload.
   useEffect(() => {
     if (!announcement || announcement.completedAt === null) return;
     if (announcement.isPrank) return;
@@ -247,7 +213,10 @@ export function DeployBanner() {
     const seenId = window.sessionStorage.getItem(RELOAD_FLAG_KEY);
     if (seenId === String(announcement.id)) return;
     window.sessionStorage.setItem(RELOAD_FLAG_KEY, String(announcement.id));
-    const t = setTimeout(() => window.location.reload(), 1500);
+    const t = setTimeout(
+      () => window.location.reload(),
+      RELOAD_DELAY_AFTER_SWAP_MS,
+    );
     return () => clearTimeout(t);
   }, [announcement, hasBuildSwapped]);
 
