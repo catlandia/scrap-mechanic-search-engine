@@ -172,12 +172,12 @@ function orderByForSort(sort: SortMode, q?: string): SQL {
 
 // Tiles ship in large batches (terrain packs, full map sets) and would
 // otherwise crowd out every other kind on the home page and /new. This
-// condition keeps roughly 25% of them — a stable per-row hash so the
-// visible set is deterministic across requests, pagination, and cache.
-// Hidden tiles stay in the catalogue; search, /tiles, and /[kind]=tile
-// routes all bypass this so anyone explicitly looking for tiles gets
-// the full list.
-export const TILE_THIN_CONDITION = sql`(${creations.kind} != 'tile' OR (abs(hashtext(${creations.id})) % 4) = 0)`;
+// condition keeps roughly 5% of them — `mod 20 = 0` on a stable per-row
+// hash — so the visible set is deterministic across requests,
+// pagination, and cache. Hidden tiles stay in the catalogue; search,
+// /tiles, and /[kind]=tile routes all bypass this so anyone explicitly
+// looking for tiles gets the full list.
+export const TILE_THIN_CONDITION = sql`(${creations.kind} != 'tile' OR (abs(hashtext(${creations.id})) % 20) = 0)`;
 
 export async function getNewestApproved(
   limit = 24,
@@ -1302,17 +1302,21 @@ export async function getUserSubmissions(userId: string, limit = 50, offset = 0)
 }
 
 /**
- * Returns the most-recent deploy announcement whose scheduled moment is
- * within the active window (up to 30 seconds past), or null. The 30-second
- * tail matches the client banner's "Deploying now — please wait…" grace
- * period — once the tail elapses the banner disappears on its own.
+ * Returns the most-recent deploy announcement that hasn't fully rolled off
+ * yet, or null. A row is "active" if it's uncompleted (the build hasn't
+ * marked it done) OR was completed within the last 2 minutes (give clients
+ * time to see the completed state and auto-reload). Older rows are still
+ * in the table as a deploy log but don't surface on the banner.
  */
 export async function getActiveDeployAnnouncement(): Promise<DeployAnnouncement | null> {
   const db = getDb();
   const [row] = await db
     .select()
     .from(deployAnnouncements)
-    .where(sql`${deployAnnouncements.scheduledAt} + interval '30 seconds' > now()`)
+    .where(
+      sql`${deployAnnouncements.completedAt} IS NULL
+          OR ${deployAnnouncements.completedAt} > now() - interval '2 minutes'`,
+    )
     .orderBy(desc(deployAnnouncements.scheduledAt))
     .limit(1);
   return row ?? null;

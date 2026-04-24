@@ -87,7 +87,7 @@ For human-initiated pushes, run `npm run deploy` instead of `git push`. The scri
 2. Every page on the live site starts showing a sticky red top-bar countdown (`components/DeployBanner.tsx` polls `/api/deploy-announcement` every 8s, ticks locally at ~30fps for smooth milliseconds, pulses under 10s).
 3. Counts down in the terminal for 60 seconds.
 4. Runs `git push` → triggers Vercel build → runs migrations → deploys.
-5. The banner automatically shows "Deploying now — please wait…" for a 30-second grace window once the countdown hits zero, then self-hides.
+5. The banner holds "Deploying now — the page will auto-refresh when the new version is ready." indefinitely — it never self-hides on a timer. `scripts/complete-deploy.ts` runs at the end of the Vercel build and stamps `completed_at` on the pending announcement. Clients see that on their next poll, the banner swaps to "✅ New version is live — reloading…", and the page auto-reloads onto the new bundle (one reload per announcement, guarded by sessionStorage so the new bundle doesn't reload itself in a loop).
 
 This gives every active visitor warning before the site flickers through a rolling deploy. Skip it for docs-only or backend-only changes where no visitor will notice the redeploy.
 
@@ -96,7 +96,7 @@ This gives every active visitor warning before the site flickers through a rolli
 ## Build
 
 ```bash
-npm run build        # runs: fetch-captcha → fetch-blockdle → migrate → next build
+npm run build        # runs: fetch-captcha → fetch-blockdle → migrate → next build → complete-deploy
 npm run typecheck    # tsc --noEmit (CI check)
 npm run lint         # next lint
 ```

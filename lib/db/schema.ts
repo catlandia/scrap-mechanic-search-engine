@@ -766,6 +766,14 @@ export const deployAnnouncements = pgTable("deploy_announcements", {
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
+  // Stamped by `scripts/complete-deploy.ts` during the Vercel build after
+  // `next build` finishes. Until this is set the banner keeps showing
+  // "Deploying now…" forever — we can't reliably guess when a rolling
+  // deploy actually goes live from inside the old bundle, so we wait for
+  // the new bundle's build step to tell us. Once the client sees a
+  // non-null completedAt it auto-reloads (once per announcement, via
+  // sessionStorage) to pick up the new code.
+  completedAt: timestamp("completed_at", { withTimezone: true }),
 });
 
 export type ChangelogEntry = typeof changelogEntries.$inferSelect;

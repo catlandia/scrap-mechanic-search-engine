@@ -3,23 +3,29 @@
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
-/**
- * Top-bar countdown that warns every visitor a deploy is imminent. Polls
- * /api/deploy-announcement every 8s for a scheduled row; when one is
- * active, ticks locally at ~30fps so the millisecond display stays
- * smooth without hammering the server. Turns red + pulses under 10s,
- * then holds "Deploying now…" for a 30-second grace window before
- * self-hiding. The server query already drops rows past the 30s tail,
- * so the client staying open after a deploy doesn't keep showing stale
- * countdowns.
- */
 const POLL_MS = 8_000;
 const TICK_MS = 33;
-const GRACE_MS = 30_000;
 const CRITICAL_MS = 10_000;
+const RELOAD_FLAG_KEY = "smse_deploy_reloaded_id";
 
+interface ActiveAnnouncement {
+  id: number;
+  scheduledAt: number;
+  completedAt: number | null;
+}
+
+/**
+ * Top-bar countdown that warns every visitor a deploy is imminent. The
+ * banner stays visible from the moment an announcement row is written
+ * until the new deploy is actually live (completedAt stamped by the
+ * post-build step). Once completedAt is seen the client auto-reloads
+ * once per announcement so the user lands on the new bundle without
+ * having to refresh manually.
+ */
 export function DeployBanner() {
-  const [scheduledAt, setScheduledAt] = useState<number | null>(null);
+  const [announcement, setAnnouncement] = useState<ActiveAnnouncement | null>(
+    null,
+  );
   const [now, setNow] = useState<number>(() => Date.now());
   const cancelledRef = useRef(false);
 
@@ -33,14 +39,28 @@ export function DeployBanner() {
         if (!res.ok) return;
         const data = (await res.json()) as
           | { active: false }
-          | { active: true; scheduledAt: string };
+          | {
+              active: true;
+              id: number;
+              scheduledAt: string;
+              completedAt: string | null;
+            };
         if (cancelledRef.current) return;
-        setScheduledAt(
-          data.active ? new Date(data.scheduledAt).getTime() : null,
-        );
+        if (!data.active) {
+          setAnnouncement(null);
+          return;
+        }
+        setAnnouncement({
+          id: data.id,
+          scheduledAt: new Date(data.scheduledAt).getTime(),
+          completedAt: data.completedAt
+            ? new Date(data.completedAt).getTime()
+            : null,
+        });
       } catch {
-        // Network flake is fine — the next poll retries, and if the server
-        // is down for the deploy itself the banner simply stops updating.
+        // Network flake is fine — next poll retries. During the deploy
+        // itself the request may briefly fail; the banner's last-known
+        // state stays on screen instead of flickering off.
       }
     }
     poll();
@@ -52,21 +72,44 @@ export function DeployBanner() {
   }, []);
 
   useEffect(() => {
-    if (scheduledAt === null) return;
+    if (announcement === null) return;
     const id = setInterval(() => setNow(Date.now()), TICK_MS);
     return () => clearInterval(id);
-  }, [scheduledAt]);
+  }, [announcement]);
 
-  if (scheduledAt === null) return null;
+  // Auto-reload once the deploy is marked complete, but only once per
+  // announcement — sessionStorage flag keeps the new page from reloading
+  // itself in a loop if completedAt is still within the 2-minute query
+  // window on the fresh bundle.
+  useEffect(() => {
+    if (!announcement || announcement.completedAt === null) return;
+    if (typeof window === "undefined") return;
+    const seenId = window.sessionStorage.getItem(RELOAD_FLAG_KEY);
+    if (seenId === String(announcement.id)) return;
+    window.sessionStorage.setItem(RELOAD_FLAG_KEY, String(announcement.id));
+    const t = setTimeout(() => window.location.reload(), 1500);
+    return () => clearTimeout(t);
+  }, [announcement]);
 
-  const remaining = scheduledAt - now;
-  if (remaining < -GRACE_MS) return null;
+  if (!announcement) return null;
 
+  // If this announcement was already the reason for a reload, it's the
+  // same visit — don't show the "just completed" state again.
+  if (
+    announcement.completedAt !== null &&
+    typeof window !== "undefined" &&
+    window.sessionStorage.getItem(RELOAD_FLAG_KEY) === String(announcement.id)
+  ) {
+    return null;
+  }
+
+  const remaining = announcement.scheduledAt - now;
+  const isCritical = remaining > 0 && remaining < CRITICAL_MS;
+  const isCompleted = announcement.completedAt !== null;
+  const isDeploying = !isCompleted && remaining <= 0;
   const clamped = Math.max(0, remaining);
   const seconds = Math.floor(clamped / 1000);
   const ms = Math.floor(clamped % 1000);
-  const isCritical = remaining > 0 && remaining < CRITICAL_MS;
-  const isDeploying = remaining <= 0;
 
   return (
     <div
@@ -74,11 +117,16 @@ export function DeployBanner() {
       aria-live="assertive"
       className={cn(
         "sticky top-0 z-[60] w-full border-b border-red-900/60 bg-red-600 px-4 py-2 text-center text-sm font-semibold text-white shadow-md",
-        isCritical && "animate-pulse",
+        (isCritical || isDeploying) && "animate-pulse",
       )}
     >
-      {isDeploying ? (
-        <span>Deploying now — the site may briefly flicker. Please wait…</span>
+      {isCompleted ? (
+        <span>✅ New version is live — reloading the page…</span>
+      ) : isDeploying ? (
+        <span>
+          Deploying now — the page will auto-refresh when the new version is
+          ready.
+        </span>
       ) : (
         <span>
           ⚠️ Site restarting in{" "}

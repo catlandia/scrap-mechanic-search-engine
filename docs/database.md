@@ -105,10 +105,11 @@ One row per Steam account that has ever logged in.
 | `id` | serial PK | |
 | `scheduledAt` | timestamptz | Moment the banner's countdown hits zero — typically `now() + 60s` when `scripts/deploy.ts` inserts the row. |
 | `createdAt` | timestamptz | Defaults to `now()`. Preserved so the table doubles as a deploy log. |
+| `completedAt` | timestamptz NULL | Stamped by `scripts/complete-deploy.ts` at the end of the Vercel build. While null the banner shows "Deploying now…" indefinitely — we can't guess when a rolling deploy actually goes live from inside the old bundle, so we wait for the new build to signal completion. Once set, clients auto-reload (once per announcement, tracked via sessionStorage). |
 
 **Indexes:** `scheduled_at DESC` (fast lookup of the latest active row).
 
-Written by `scripts/deploy.ts` (invoked via `npm run deploy`) 60 seconds before pushing. Read by `getActiveDeployAnnouncement()` — keeps the row "active" for 30s past `scheduledAt` to match the client banner's "Deploying now…" grace window. Rows are never deleted.
+Written by `scripts/deploy.ts` (invoked via `npm run deploy`) 60 seconds before pushing. Updated with `completedAt` by `scripts/complete-deploy.ts` at the end of the Vercel build. Read by `getActiveDeployAnnouncement()` — keeps rows "active" while uncompleted, plus a 2-minute tail after completion so laggy clients still see the completed state and reload. Rows are never deleted.
 
 **Indexes:** `role`, `bannedUntil`
 

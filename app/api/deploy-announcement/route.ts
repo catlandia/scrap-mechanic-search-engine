@@ -4,11 +4,10 @@ import { getActiveDeployAnnouncement } from "@/lib/db/queries";
 export const dynamic = "force-dynamic";
 
 /**
- * Polled every few seconds by the top-bar DeployBanner. Returns the
- * currently-active deploy announcement (if any) so the client can render
- * a countdown without holding a websocket open. Responses are tiny —
- * scheduledAt ISO string plus a boolean — so the extra DB read is cheap
- * and caching upstream isn't worth the freshness trade-off.
+ * Polled by the top-bar DeployBanner. Returns the currently-active deploy
+ * announcement (if any) so the client can render a countdown, a
+ * "deploying now" message, or an auto-reload trigger once completedAt is
+ * stamped by the post-build step.
  */
 export async function GET() {
   try {
@@ -18,7 +17,9 @@ export async function GET() {
     }
     return NextResponse.json({
       active: true,
+      id: announcement.id,
       scheduledAt: announcement.scheduledAt.toISOString(),
+      completedAt: announcement.completedAt?.toISOString() ?? null,
     });
   } catch {
     return NextResponse.json({ active: false });
