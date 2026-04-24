@@ -171,7 +171,8 @@ export function DeployBanner({ funMode }: { funMode: boolean }) {
 
   // Zero-hit sting — fires once the moment remaining first crosses 0.
   // Cuts off the countdown jingle if it's still playing so the two
-  // tracks don't overlap.
+  // tracks don't overlap. Also fires a `smse:deploy-sting` window event
+  // that EXTREME FUN MODE listens to for the full-screen nuke video.
   useEffect(() => {
     if (!announcement) return;
     if (!funMode) return;
@@ -188,6 +189,7 @@ export function DeployBanner({ funMode }: { funMode: boolean }) {
     }
     const a = new Audio("/sfx/deploy-live.mp3");
     a.play().catch(() => {});
+    window.dispatchEvent(new CustomEvent("smse:deploy-sting"));
   }, [announcement, now, serverOffset, funMode]);
 
   // Auto-reload only once the deploy is marked complete AND the serving

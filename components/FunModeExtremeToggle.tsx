@@ -3,10 +3,11 @@
 import { usePathname, useSearchParams } from "next/navigation";
 
 /**
- * Blank-button toggle for EXTREME FUN MODE. No runtime behaviour is
- * attached yet — the button exists, flips the cookie, and that's it.
- * Random click events / ambient effects will hang off the pref in
- * future work, but only when the Creator asks.
+ * Toggle for EXTREME FUN MODE. Flips the cookie; the root layout then
+ * mounts `<ExtremeFunEffects enabled>` which attaches the document-wide
+ * click handler (spawns a hitmarker PNG at the cursor + overlapping
+ * hitmarker.mp3) and listens for the deploy-sting window event to play
+ * the fullscreen nuke video.
  *
  * Visually the button has an always-running rainbow gradient (see
  * `.smse-extreme-toggle` in app/globals.css). When on, a conic-gradient
@@ -62,8 +63,8 @@ export function FunModeExtremeToggle({
         {disabled
           ? "Turn Fun Mode on first — EXTREME needs Fun to be on."
           : current
-            ? "Lights are on. No effects wired yet — this is a blank button until the Creator adds behaviour."
-            : "Nothing extreme is happening yet. Flip it on to arm the pref."}
+            ? "Clicks spawn a tilted hitmarker + sound (can overlap). The fake-reboot alarm now triggers a silent fullscreen nuke video. Turn it off if it gets annoying."
+            : "Flip it on to arm click effects + the nuke video on the alarm."}
       </p>
     </form>
   );

@@ -99,10 +99,11 @@ export default async function SettingsPage() {
               <span className="font-semibold text-foreground/80">
                 EXTREME FUN MODE.
               </span>{" "}
-              Layered on top of Fun Mode. For now it&apos;s a blank button —
-              no effects are wired up yet. Once the Creator adds behaviour
-              this is where random click events and other ambient weirdness
-              will live. Turning Fun Mode off cascades this back to off.
+              Layered on top of Fun Mode. Every click spawns a hitmarker
+              sprite and sound at your cursor (they can overlap on rapid
+              clicks), and when the deploy-banner alarm hits zero a silent
+              fullscreen nuke video plays for a few seconds before closing
+              itself. Turning Fun Mode off cascades this back to off.
             </p>
             <Suspense>
               <FunModeExtremeToggle

@@ -361,3 +361,27 @@ html[data-theme="default"] .hover\:bg-rose-500\/25:hover {
     animation: none;
   }
 }
+
+/* Hitmarker sprite lifecycle — spawn at full opacity/scale, then fade
+   out and shrink a touch so the sprite clearly leaves instead of just
+   vanishing. The .55s duration matches HITMARKER_MS in the component
+   so the element hits opacity 0 at roughly the moment the setTimeout
+   unmounts it. Rotation is set inline per-sprite and must be preserved
+   by the keyframes — they only animate opacity + scale, not transform,
+   so the inline `rotate(...)` survives. */
+@keyframes smse-hitmarker-fade {
+  0% {
+    opacity: 1;
+  }
+  40% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.smse-hitmarker {
+  animation: smse-hitmarker-fade 0.55s ease-out forwards;
+  will-change: opacity;
+}

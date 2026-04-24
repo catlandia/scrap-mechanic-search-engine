@@ -6,6 +6,7 @@ import { MobileNav } from "@/components/MobileNav";
 import { NavDropdown } from "@/components/NavDropdown";
 import { BetaBanner } from "@/components/BetaBanner";
 import { DeployBanner } from "@/components/DeployBanner";
+import { ExtremeFunEffects } from "@/components/ExtremeFunEffects";
 import { GuideLink } from "@/components/GuideLink";
 import { ToastProvider } from "@/components/Toast";
 import { getUnreadChangelogCount } from "@/lib/changelog/actions";
@@ -14,6 +15,7 @@ import type { NotificationTier } from "@/lib/db/schema";
 import {
   getCustomThemeColors,
   getFunMode,
+  getFunModeExtreme,
   getRatingMode,
   getTheme,
 } from "@/lib/prefs.server";
@@ -92,6 +94,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const ratingMode = await getRatingMode();
   const theme = await getTheme();
   const funMode = await getFunMode();
+  const funModeExtreme = await getFunModeExtreme();
   const { locale, t } = await getT();
   const dict = getDictionary(locale);
   const browseItems = browseHrefs.map((b) => ({ href: b.href, label: t(b.key) }));
@@ -176,6 +179,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <LocaleProvider locale={locale} dict={dict}>
         <ToastProvider>
         <DeployBanner funMode={funMode} />
+        <ExtremeFunEffects enabled={funMode && funModeExtreme} />
         <BetaBanner />
         <header className="sticky top-0 z-30 border-b border-foreground/10 bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70">
           <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3 sm:flex-nowrap sm:gap-x-6">
