@@ -5,11 +5,16 @@ import { useEffect, useRef, useState } from "react";
 const POLL_MS = 8_000;
 const TICK_MS = 33;
 const RELOAD_FLAG_KEY = "smse_deploy_reloaded_id";
+// Prank banners self-hide this many ms past scheduled_at, independently
+// of the server poll, so the "just kidding :^)" line disappears at the
+// same moment on every device without depending on the 8s poll cadence.
+const PRANK_TAIL_MS = 10_000;
 
 interface ActiveAnnouncement {
   id: number;
   scheduledAt: number;
   completedAt: number | null;
+  isPrank: boolean;
 }
 
 /**
@@ -27,6 +32,11 @@ interface ActiveAnnouncement {
  * same countdown regardless of local clock drift. Between polls the
  * client relies on local time *passage* being accurate (monotonic) —
  * only absolute clock skew matters, and that's re-synced every 8s.
+ *
+ * Prank rows (isPrank=true, written by the Creator-only /admin/abuse
+ * "fake reboot" button) run the full countdown + SFX path identically
+ * but swap the final line to "just kidding :^)" and self-hide after
+ * PRANK_TAIL_MS. They never auto-reload.
  */
 export function DeployBanner() {
   const [announcement, setAnnouncement] = useState<ActiveAnnouncement | null>(
@@ -56,6 +66,7 @@ export function DeployBanner() {
               id: number;
               scheduledAt: string;
               completedAt: string | null;
+              isPrank?: boolean;
               serverNow: number;
             };
         if (cancelledRef.current) return;
@@ -74,6 +85,7 @@ export function DeployBanner() {
           completedAt: data.completedAt
             ? new Date(data.completedAt).getTime()
             : null,
+          isPrank: !!data.isPrank,
         });
       } catch {
         // Network flake is fine — next poll retries. During the deploy
@@ -122,9 +134,11 @@ export function DeployBanner() {
   // Auto-reload once the deploy is marked complete, but only once per
   // announcement — sessionStorage flag keeps the new page from reloading
   // itself in a loop if completedAt is still within the 2-minute query
-  // window on the fresh bundle.
+  // window on the fresh bundle. Prank rows never reach this path because
+  // completedAt stays null for their entire lifecycle.
   useEffect(() => {
     if (!announcement || announcement.completedAt === null) return;
+    if (announcement.isPrank) return;
     if (typeof window === "undefined") return;
     const seenId = window.sessionStorage.getItem(RELOAD_FLAG_KEY);
     if (seenId === String(announcement.id)) return;
@@ -153,13 +167,21 @@ export function DeployBanner() {
   const seconds = Math.floor(clamped / 1000);
   const ms = Math.floor(clamped % 1000);
 
+  // Prank banner hides itself once its tail window elapses so the ending
+  // doesn't depend on when the next server poll happens to land.
+  if (announcement.isPrank && serverNow - announcement.scheduledAt > PRANK_TAIL_MS) {
+    return null;
+  }
+
   return (
     <div
       role="alert"
       aria-live="assertive"
       className="sticky top-0 z-[60] w-full animate-pulse border-b border-red-900/60 bg-red-600 px-4 py-2 text-center text-sm font-semibold text-white shadow-md"
     >
-      {isCompleted ? (
+      {announcement.isPrank && remaining <= 0 ? (
+        <span>just kidding :^)</span>
+      ) : isCompleted ? (
         <span>✅ New version is live — reloading the page…</span>
       ) : isDeploying ? (
         <span>

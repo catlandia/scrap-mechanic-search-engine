@@ -1290,12 +1290,20 @@ export async function getUserSubmissions(userId: string, limit = 50, offset = 0)
  */
 export async function getActiveDeployAnnouncement(): Promise<DeployAnnouncement | null> {
   const db = getDb();
+  // Real rows: alive while uncompleted, plus a 2-minute tail after
+  // completion so laggy clients still see the completed state and reload.
+  // Prank rows (from /admin/abuse): alive from insertion through
+  // scheduled_at + 10s. They never get completed; the short tail is all
+  // the window the banner needs to show the "just kidding :^)" swap.
   const [row] = await db
     .select()
     .from(deployAnnouncements)
     .where(
-      sql`${deployAnnouncements.completedAt} IS NULL
-          OR ${deployAnnouncements.completedAt} > now() - interval '2 minutes'`,
+      sql`(${deployAnnouncements.isPrank} = false
+            AND (${deployAnnouncements.completedAt} IS NULL
+                 OR ${deployAnnouncements.completedAt} > now() - interval '2 minutes'))
+          OR (${deployAnnouncements.isPrank} = true
+              AND ${deployAnnouncements.scheduledAt} > now() - interval '10 seconds')`,
     )
     .orderBy(desc(deployAnnouncements.scheduledAt))
     .limit(1);

@@ -26,6 +26,7 @@ const creatorNav = [
   { href: "/admin/changelog", label: "Changelog" },
   { href: "/admin/users", label: "Users" },
   { href: "/admin/badges", label: "Badges" },
+  { href: "/admin/abuse", label: "Admin Abuse" },
 ];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {

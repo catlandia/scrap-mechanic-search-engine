@@ -10,6 +10,7 @@ import {
   creationCategories,
   creationTags,
   creations,
+  deployAnnouncements,
   reports,
   tags,
   users,
@@ -1855,4 +1856,16 @@ export async function deleteCategory(formData: FormData) {
   });
   revalidatePath("/admin/tags");
   revalidatePath("/search");
+}
+
+// Fires off a pretend deploy announcement from /admin/abuse. Every
+// visitor's DeployBanner picks it up and runs the full 60-second
+// countdown path — same visuals, same SFX — then at zero swaps the
+// copy to "just kidding :^)" and self-hides. No git push, no build,
+// no reload. Creator-only.
+export async function triggerFakeReboot() {
+  await requireCreator();
+  const db = getDb();
+  const scheduledAt = new Date(Date.now() + 60_000);
+  await db.insert(deployAnnouncements).values({ scheduledAt, isPrank: true });
 }

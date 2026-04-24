@@ -23,6 +23,7 @@ The admin backend is gated at `/admin/*` by the middleware, requiring a Steam lo
 | `/admin/appeals` | Mod+ | Age-gate appeal queue — grant or dismiss appeals submitted via `/verify/appeal` |
 | `/admin/suggestions` | Creator | Feature suggestion board management |
 | `/admin/guide` | Mod+ | In-app moderator handbook. Sections are tier-gated — a regular mod only sees moderator-tier content, an elite sees mod+elite, the creator sees everything. |
+| `/admin/abuse` | Creator | Throwaway-command sandbox (V9.10+). First entry: **Fake reboot** — inserts an `is_prank=true` row into `deploy_announcements` so every live visitor sees the 60s countdown + SFX, then at zero the banner swaps to "just kidding :^)" and self-hides 10s later. No build, no reload. Not audited. |
 
 ---
 
@@ -149,6 +150,7 @@ The `metadata` jsonb carries contextual details (reason strings, prior values, c
 |---|---|
 | `triggerIngest(pagesPerKind?)` | Manual ingest run. Default 1 page; max 20. `requireCreator()`. |
 | `addCreation(urlOrId, autoApprove?)` | Manual item add by Steam URL or ID. `requireCreator()`. Bypasses the follower-count floor. |
+| `triggerFakeReboot()` | V9.10+. Inserts `deployAnnouncements { scheduledAt: now()+60s, isPrank: true }`. `requireCreator()`. Surface at `/admin/abuse`. |
 
 ---
 

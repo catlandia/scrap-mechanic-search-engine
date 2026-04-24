@@ -267,6 +267,13 @@
       "when": 1778600000000,
       "tag": "0037_per_kind_top_creator_badges",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1778700000000,
+      "tag": "0038_deploy_announcements_is_prank",
+      "breakpoints": true
     }
   ]
 }

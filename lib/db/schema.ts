@@ -782,6 +782,12 @@ export const deployAnnouncements = pgTable("deploy_announcements", {
   // non-null completedAt it auto-reloads (once per announcement, via
   // sessionStorage) to pick up the new code.
   completedAt: timestamp("completed_at", { withTimezone: true }),
+  // True when the row was inserted by the Creator-only /admin/abuse "fake
+  // reboot" button rather than `scripts/deploy.ts`. Prank rows never get
+  // completedAt stamped, never trigger a client auto-reload, and the
+  // banner swaps its final message to a "just kidding :^)" note before
+  // self-hiding ~10 seconds past scheduled_at.
+  isPrank: boolean("is_prank").notNull().default(false),
 });
 
 export type ChangelogEntry = typeof changelogEntries.$inferSelect;

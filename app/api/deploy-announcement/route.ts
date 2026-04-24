@@ -22,6 +22,7 @@ export async function GET() {
       id: announcement.id,
       scheduledAt: announcement.scheduledAt.toISOString(),
       completedAt: announcement.completedAt?.toISOString() ?? null,
+      isPrank: announcement.isPrank,
       serverNow,
     });
   } catch {

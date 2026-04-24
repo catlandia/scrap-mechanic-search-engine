@@ -34,6 +34,10 @@ async function main() {
   }
 
   const db = drizzle(neon(url));
+  // Exclude prank rows from the "most recent uncompleted" pick — they
+  // never get completedAt stamped, and if a real deploy lands while a
+  // prank is still in its 10s tail, this would otherwise mark the prank
+  // as live and kick every visitor's tab into a reload they don't need.
   const result = await db
     .update(deployAnnouncements)
     .set({ completedAt: sql`now()` })
@@ -42,7 +46,7 @@ async function main() {
         isNull(deployAnnouncements.completedAt),
         sql`${deployAnnouncements.id} = (
           SELECT id FROM ${deployAnnouncements}
-          WHERE completed_at IS NULL
+          WHERE completed_at IS NULL AND is_prank = false
           ORDER BY scheduled_at DESC
           LIMIT 1
         )`,

@@ -25,7 +25,7 @@ The denormalized `siteWeightedUp/Down` columns avoid a GROUP BY join on every ca
 ## Public Listing Queries
 
 ### `getActiveDeployAnnouncement()`
-Returns the most-recent `deploy_announcements` row that's still "active", or `null`. A row is active if `completed_at IS NULL` (the post-build step hasn't stamped it done) OR `completed_at > now() - interval '2 minutes'` (stamped recently enough that slow clients may still need to auto-reload). Powers `/api/deploy-announcement`, which the client `DeployBanner` polls. Older rows stay in the table as a deploy log but stop surfacing on the banner.
+Returns the most-recent `deploy_announcements` row that's still "active", or `null`. **Real rows** (`is_prank = false`) are active if `completed_at IS NULL` (the post-build step hasn't stamped it done) OR `completed_at > now() - interval '2 minutes'` (stamped recently enough that slow clients may still need to auto-reload). **Prank rows** (`is_prank = true`, from `/admin/abuse`) are active while `scheduled_at > now() - interval '10 seconds'` — long enough for the countdown + 10s "just kidding :^)" tail, after which the server stops surfacing them even if the client doesn't self-hide. Powers `/api/deploy-announcement`, which the client `DeployBanner` polls. Older rows stay in the table as a deploy log but stop surfacing on the banner.
 
 ### `getNewestApproved(limit, offset)`
 Returns `status=approved` creations ordered by `approvedAt DESC`. Used on the home page's "Newest additions" section, `/new`, and `/feed.xml`.
