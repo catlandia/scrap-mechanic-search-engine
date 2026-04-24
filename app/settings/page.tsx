@@ -158,7 +158,7 @@ export default async function SettingsPage() {
                   href="/admin/triage"
                   className="text-accent hover:underline"
                 >
-                  Admin triage →
+                  {t("nav.adminTriage")} →
                 </Link>
               </li>
             )}

@@ -135,7 +135,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     ...(user ? [{ href: "/me/favourites", label: "Your favourites" }] : []),
     ...(user ? [{ href: "/me/notifications", label: "Notifications" }] : []),
     ...(user ? [{ href: "/me/submissions", label: "Your submissions" }] : []),
-    ...(showAdminLink ? [{ href: "/admin/triage", label: "Admin triage" }] : []),
+    ...(showAdminLink
+      ? [{ href: "/admin/triage", label: t("nav.adminTriage") }]
+      : []),
   ];
 
   return (

@@ -23,6 +23,7 @@ const en: Dictionary = {
   "nav.signIn": "Sign in with Steam",
   "nav.settings": "Settings",
   "nav.minigames": "Minigames & Others",
+  "nav.adminTriage": "Admin triage",
 
   // Kinds
   "kind.blueprints": "Blueprints",
@@ -303,18 +304,19 @@ const ru: Dictionary = {
   "nav.signIn": "Войти через Steam",
   "nav.settings": "Настройки",
   "nav.minigames": "Мини-игры и прочее",
+  "nav.adminTriage": "Админ",
 
   "kind.blueprints": "Чертежи",
   "kind.mods": "Моды",
   "kind.worlds": "Миры",
-  "kind.challenges": "Задания",
+  "kind.challenges": "Испытания",
   "kind.tiles": "Тайлы",
   "kind.customGames": "Кастомные игры",
   "kind.terrain": "Рельеф",
   "kind.other": "Прочее",
 
   "home.heroTitle": "Найдите лучшее из Мастерской.",
-  "home.newestHeading": "Последние поступления",
+  "home.newestHeading": "Последние добавления",
   "home.browseHeading": "Смотреть каталог",
   "home.viewAll": "Смотреть всё →",
   "home.noItems": "Пока нет одобренных объектов.",
@@ -335,7 +337,7 @@ const ru: Dictionary = {
   "common.page": "Страница {n}",
   "common.submit": "Отправить",
 
-  "newest.title": "Последние поступления",
+  "newest.title": "Последние добавления",
   "newest.subtitle": "Недавно одобренные объекты по всем типам Мастерской.",
 
   "creators.title": "Авторы",
@@ -543,7 +545,7 @@ const ru: Dictionary = {
   "settings.notificationsLink": "Ваши уведомления →",
   "settings.helpInfo": "Справка и сведения",
   "settings.helpHint": "Хотите освежить, как работает сайт?",
-  "settings.quickGuide": "Краткое руководство →",
+  "settings.quickGuide": "Краткий гайд →",
   "settings.ideasBoardLink": "Доска идей →",
   "settings.supportLink": "Поддержать сайт →",
   "settings.terms": "Условия",
@@ -566,6 +568,7 @@ const de: Dictionary = {
   "nav.signIn": "Mit Steam anmelden",
   "nav.settings": "Einstellungen",
   "nav.minigames": "Minispiele & mehr",
+  "nav.adminTriage": "Admin triage",
 
   "kind.blueprints": "Blaupausen",
   "kind.mods": "Mods",
@@ -830,6 +833,7 @@ const pl: Dictionary = {
   "nav.signIn": "Zaloguj przez Steam",
   "nav.settings": "Ustawienia",
   "nav.minigames": "Minigry i inne",
+  "nav.adminTriage": "Admin triage",
 
   "kind.blueprints": "Schematy",
   "kind.mods": "Mody",
@@ -1094,6 +1098,7 @@ const uk: Dictionary = {
   "nav.signIn": "Увійти через Steam",
   "nav.settings": "Налаштування",
   "nav.minigames": "Міні-ігри та інше",
+  "nav.adminTriage": "Admin triage",
 
   "kind.blueprints": "Креслення",
   "kind.mods": "Моди",
@@ -1359,6 +1364,7 @@ const zh: Dictionary = {
   "nav.signIn": "使用 Steam 登录",
   "nav.settings": "设置",
   "nav.minigames": "小游戏与其他",
+  "nav.adminTriage": "Admin triage",
 
   "kind.blueprints": "蓝图",
   "kind.mods": "模组",
