@@ -121,7 +121,7 @@ The `metadata` jsonb carries contextual details (reason strings, prior values, c
 
 | Action | Notes |
 |---|---|
-| `setUserRole(steamid, role)` | Assigns mod/elite. Cannot set creator via UI. Cannot modify self. |
+| `setUserRole(steamid, role)` | Assigns mod/elite. Cannot set creator via UI. Cannot modify self. First-time promotion to mod+ stamps `users.moderatorSinceAt = now()`; subsequent promotions leave the column alone so re-promoted users keep the original date. |
 | `banUser(steamid, durationDays \| "perma")` | Temporary or permanent ban |
 | `clearBan(steamid)` | Lifts ban |
 | `muteUser(steamid, durationDays \| "perma")` | Elite+ required. Blocks votes/comments/reports/favorites |

@@ -94,6 +94,7 @@ One row per Steam account that has ever logged in.
 | `warningNote` | text NULL | Latest warning message |
 | `bypassAgeGate` | boolean | Creator / appeal-granter override — user skips the 7-day Steam account-age gate. Flipped by `setAgeGateBypass` (creator, in `/admin/users`) and `grantAgeGateAppeal` (mod+, via the appeals queue). |
 | `ageGateAppealHandledAt` | timestamptz NULL | Set when a mod grants or dismisses an age-gate appeal. Drives the `/admin/appeals` filter: the queue only shows users whose latest appeal was submitted after this timestamp (or whose timestamp is null). |
+| `moderatorSinceAt` | timestamptz NULL | Stamped the first time `setUserRole` promotes a user to moderator-or-higher. Preserved across demotions — if the same user is later demoted and re-promoted, the original date stands. Display on `/profile/[steamid]` is gated on the user currently being mod+, so demoted users stop seeing the stat even though the column keeps the history. Migration 0033 backfills from the earliest `user.setRole` audit entry whose `metadata.to ∈ mod+`, falling back to `siteJoinedAt` for the Creator and any pre-V9.1 grants. |
 
 **Indexes:** `role`, `bannedUntil`
 

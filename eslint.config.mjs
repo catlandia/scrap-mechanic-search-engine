@@ -16,6 +16,7 @@ const eslintConfig = [
       "out/**",
       "build/**",
       "drizzle/**",
+      ".claude/**",
       "next-env.d.ts",
       "lib/captcha/_images.generated.d.ts",
     ],

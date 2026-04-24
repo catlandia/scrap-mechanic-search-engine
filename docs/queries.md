@@ -25,7 +25,9 @@ The denormalized `siteWeightedUp/Down` columns avoid a GROUP BY join on every ca
 ## Public Listing Queries
 
 ### `getNewestApproved(limit, offset)`
-Returns `status=approved` creations ordered by `approvedAt DESC`. Used on the home page and `/new`.
+Returns `status=approved` creations ordered by `approvedAt DESC`. Used on the home page's "Newest additions" section, `/new`, and `/feed.xml`.
+
+**Tile thinning:** adds `TILE_THIN_CONDITION` — a stable per-row hash (`abs(hashtext(id)) % 4 = 0`) that admits ~25% of `kind='tile'` rows and 100% of everything else. Tiles ship in large batches (terrain packs, full map sets) and would otherwise dominate the mixed newest feed. The hash is deterministic so pagination and RSS-reader caches stay consistent. Hidden tiles remain in the catalogue and are fully visible on `/tiles`, any `/[kind]` page, and `searchApproved` (which deliberately skips thinning — explicit queries should return everything matching).
 
 ### `getApprovedByKind(kind, { sort, limit, offset })`
 Filter by one `kind`. Used on per-kind landing pages. Accepts any `SortMode` except `relevance` (which falls back to `newest` without a query string).

@@ -40,3 +40,8 @@ Thumbs.db
 /lib/blockdle/icons/
 /blockdle-data-tmp/
 /tmp-blockdle/
+
+# Local Claude Code harness state — per-machine lock files and isolated
+# worktrees shouldn't pollute git status or linting.
+.claude/scheduled_tasks.lock
+.claude/worktrees/

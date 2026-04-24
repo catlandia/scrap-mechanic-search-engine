@@ -165,6 +165,7 @@ Site-upvote sorts order by net score (`up - down`). No vote floor — zero-vote 
 - Scrap Mechanic playtime (or "profile private" if null)
 - Steam account creation date (if public)
 - Site join date
+- Moderator-since date — shown in the stat grid next to the join date when the user is currently mod+. Sourced from `users.moderatorSinceAt` (stamped on first promotion, preserved across demotions).
 - Moderation status (ban, mute, warnings) — visible to the user themselves and mods+
 - Hard-ban indicator (`🔒 Hard-banned`) — visible to creator
 - **Creations** — workshop items they authored or co-authored, first 24 with a "View all →" link to `/author/[steamid]` when there are more. Reuses `getAuthorCreations`. Renders only when they're credited on at least one approved item.
