@@ -308,6 +308,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             >
               GitHub
             </a>
+            <a
+              href="https://steamcommunity.com/groups/scrapmechanicsearchengine"
+              target="_blank"
+              rel="noreferrer"
+              className="hover:text-foreground"
+            >
+              Steam Group
+            </a>
             <Link href="/feed.xml" className="hover:text-foreground">
               RSS
             </Link>

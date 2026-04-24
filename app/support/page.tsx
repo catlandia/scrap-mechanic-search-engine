@@ -35,6 +35,19 @@ export default function SupportPage() {
           Every creation page now has a <strong>Share</strong> button next to{" "}
           <em>View on Steam Workshop</em> — one click copies the link.
         </p>
+        <p className="text-sm leading-relaxed text-foreground/80">
+          There&apos;s also a{" "}
+          <a
+            href="https://steamcommunity.com/groups/scrapmechanicsearchengine"
+            target="_blank"
+            rel="noreferrer"
+            className="text-accent hover:underline"
+          >
+            Steam Group
+          </a>
+          {" "}— joining is free and members get announcements in their Steam
+          client when new picks are posted.
+        </p>
       </section>
 
       <section className="space-y-3 rounded-lg border border-border bg-card/60 p-5">
