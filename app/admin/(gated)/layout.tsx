@@ -18,7 +18,6 @@ const baseNav = [
   { href: "/admin/archive", label: "Archive" },
   { href: "/admin/tags", label: "Tags" },
   { href: "/admin/audit", label: "Audit" },
-  { href: "/admin/guide", label: "Guide" },
 ];
 const creatorNav = [
   { href: "/admin/add", label: "Add" },
@@ -70,7 +69,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <div className="mb-8 flex flex-wrap items-center justify-between gap-4 border-b border-border pb-4">
         <div className="flex items-center gap-6">
           <span className="text-sm uppercase tracking-widest text-accent">Admin</span>
-          <nav className="flex flex-wrap gap-4 text-sm">
+          <nav className="flex flex-wrap items-center gap-4 text-sm">
             {baseNav.map((item) => (
               <Link key={item.href} href={item.href} className="text-foreground/70 hover:text-foreground">
                 {item.label}
@@ -86,6 +85,18 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                   {item.label}
                 </Link>
               ))}
+            {/* Guide is pinned visually — a highlighted pill so a new mod
+                sees it first and knows the handbook exists before they
+                start clicking Approve / Reject at random. Stays highlighted
+                permanently; the cost of "slight noise for veteran mods" is
+                lower than "new mod never discovers the guide". */}
+            <Link
+              href="/admin/guide"
+              className="inline-flex items-center gap-1 rounded-full border border-accent/50 bg-accent/10 px-3 py-1 text-xs font-semibold text-accent hover:border-accent hover:bg-accent/20"
+            >
+              <span aria-hidden>📖</span>
+              Guide
+            </Link>
           </nav>
         </div>
         <div className="flex items-center gap-3 text-xs text-foreground/50">
