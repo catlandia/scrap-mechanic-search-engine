@@ -51,6 +51,18 @@ export interface IngestOptions {
    * rows are found.
    */
   order?: IngestOrder;
+  /**
+   * Skip the age floor in the follow-gate. Manual admin runs set this —
+   * an active curator wants to see recent uploads even though they're
+   * under the `minAgeDays` threshold, and they're the one triaging so
+   * nothing lands publicly without review. The cron keeps the age floor
+   * because the gate's whole job there is to filter out vote-farmable
+   * items before they reach triage at all.
+   *
+   * The subscription floor still applies either way; fresh items with
+   * zero subs are just noise regardless of who's running the ingest.
+   */
+  skipAgeGate?: boolean;
 }
 
 export interface IngestResult {
@@ -89,11 +101,15 @@ function ageDays(unixSeconds: number | undefined): number {
   return (Date.now() / 1000 - unixSeconds) / 86400;
 }
 
-function passesFollowGate(item: PublishedFile, kind: string): boolean {
+function passesFollowGate(
+  item: PublishedFile,
+  kind: string,
+  skipAgeGate: boolean,
+): boolean {
   const { minSubscriptions, minAgeDays } = thresholdsForKind(kind);
   const subs = item.lifetime_subscriptions ?? item.subscriptions ?? 0;
   if (subs < minSubscriptions) return false;
-  if (ageDays(item.time_created) < minAgeDays) return false;
+  if (!skipAgeGate && ageDays(item.time_created) < minAgeDays) return false;
   if (item.banned) return false;
   return true;
 }
@@ -174,6 +190,7 @@ export async function runIngest(options: IngestOptions = {}): Promise<IngestResu
     options.order === "new"
       ? QUERY_TYPE.RankedByPublicationDate
       : QUERY_TYPE.RankedByTrend;
+  const skipAgeGate = options.skipAgeGate ?? false;
 
   // Preload ids of items we've already approved, rejected, or creator-deleted
   // so ingest skips them completely — both the QueryFiles processing and the
@@ -285,7 +302,7 @@ export async function runIngest(options: IngestOptions = {}): Promise<IngestResu
             totalFiltered += 1;
             continue;
           }
-          if (!passesFollowGate(item, kind)) {
+          if (!passesFollowGate(item, kind, skipAgeGate)) {
             totalFiltered += 1;
             continue;
           }

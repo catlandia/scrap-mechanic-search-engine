@@ -7,10 +7,13 @@ import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import { deployAnnouncements } from "../lib/db/schema";
 
-// 60 seconds is long enough that active visitors on any page see the
-// countdown tick down a few times before the push fires, short enough
-// that it doesn't feel like a hostage situation for the person deploying.
-const COUNTDOWN_SECONDS = 60;
+// 75 seconds: long enough that active visitors on any page see the
+// countdown tick down for a while and have a real chance to finish
+// whatever they were doing, with ~15 s of slack on top of the old 60 s
+// so finishing a sentence / confirming a triage card doesn't race the
+// push. Short enough that it still doesn't feel like a hostage
+// situation for the person deploying.
+const COUNTDOWN_SECONDS = 75;
 
 async function main() {
   const url = process.env.DATABASE_URL;

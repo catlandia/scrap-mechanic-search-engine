@@ -9,6 +9,12 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { effectiveRole, isCreator } from "@/lib/auth/roles";
 import { ALL_KINDS } from "@/lib/ingest/pipeline";
 import { STEAM_KIND_TAGS } from "@/lib/steam/client";
+import {
+  getManualIngestPrefs,
+  MAX_MANUAL_PAGES_PER_KIND,
+} from "@/lib/admin/ingest-prefs";
+
+const DEFAULT_PAGES_PER_KIND = 20;
 
 export const dynamic = "force-dynamic";
 
@@ -37,11 +43,15 @@ export default async function IngestPage() {
   }
 
   const db = getDb();
-  const runs = await db
-    .select()
-    .from(ingestRuns)
-    .orderBy(desc(ingestRuns.startedAt))
-    .limit(20);
+  const [runs, prefs] = await Promise.all([
+    db
+      .select()
+      .from(ingestRuns)
+      .orderBy(desc(ingestRuns.startedAt))
+      .limit(20),
+    getManualIngestPrefs(),
+  ]);
+  const selectedKinds = new Set(prefs.kinds ?? ALL_KINDS);
 
   return (
     <div className="space-y-6">
@@ -63,7 +73,7 @@ export default async function IngestPage() {
               Order
               <select
                 name="order"
-                defaultValue="trend"
+                defaultValue={prefs.order}
                 className="rounded border border-border bg-background px-2 py-1 text-sm text-foreground"
               >
                 <option value="trend">Best (trending)</option>
@@ -76,8 +86,8 @@ export default async function IngestPage() {
                 type="number"
                 name="pagesPerKind"
                 min={1}
-                max={20}
-                defaultValue={5}
+                max={MAX_MANUAL_PAGES_PER_KIND}
+                defaultValue={prefs.pagesPerKind ?? DEFAULT_PAGES_PER_KIND}
                 className="w-20 rounded border border-border bg-background px-2 py-1 text-sm text-foreground"
               />
             </label>
@@ -101,7 +111,7 @@ export default async function IngestPage() {
                     type="checkbox"
                     name="kinds"
                     value={k}
-                    defaultChecked
+                    defaultChecked={selectedKinds.has(k)}
                     className="h-3.5 w-3.5 rounded border-border bg-background accent-accent"
                   />
                   {STEAM_KIND_TAGS[k]}

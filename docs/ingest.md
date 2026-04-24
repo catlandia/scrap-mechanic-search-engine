@@ -41,6 +41,11 @@ runIngest({
                                    // novel-for-us items are collected.
   order?: "trend" | "new",         // default: "trend" — RankedByTrend vs
                                    // RankedByPublicationDate
+  skipAgeGate?: boolean,           // default: false. When true,
+                                   // passesFollowGate ignores minAgeDays
+                                   // but still enforces minSubscriptions
+                                   // and the banned flag. Manual admin
+                                   // runs pass true.
 })
 ```
 
@@ -52,7 +57,11 @@ The admin can trigger ingest from `/admin/ingest` with three controls:
   pipeline pages through. Newest is useful when the trending list is
   dominated by already-triaged items and we want the freshest uploads
   regardless of popularity.
-- **Pages per kind** — upper page ceiling per kind (1–20).
+- **Pages per kind** — upper page ceiling per kind (1–50). Defaults to
+  20. High ceiling matters because `minNewPerKind` is the real stop
+  condition — a saturated trending top will have 250+ already-decided
+  items before a genuinely new one appears, and the page count is
+  what prevents unbounded paging in pathological cases.
 - **Kinds** — checkboxes for each SteamKind. Unticking a box excludes that
   kind from the run entirely; leaving all ticked means "everything".
 
@@ -60,11 +69,24 @@ Manual runs pass `minNewPerKind = 50` so already-decided items don't burn
 the page budget — the pipeline keeps paging past them until it finds a
 fresh page worth of novel items per kind (bounded by `pagesPerKind`).
 
+Manual runs also pass `skipAgeGate = true`. The cron keeps the age floor
+because its job is to filter vote-farmable items before they reach triage
+at all; a manual run with `order = new` explicitly wants recent uploads,
+and the admin is triaging everything anyway so the floor is counter-
+productive. Without this flag, `order = new` returned almost nothing —
+the newest slice of the Workshop is by definition under the 3–7 day
+floor, and every item failed the gate.
+
+The form selection (order / pages / kinds) is persisted to the
+`smse_ingest_prefs` cookie by the server action so each run starts with
+the moderator's last-used choices instead of snapping back to defaults.
+
 ---
 
 ## Follow-Count Gate (`lib/ingest/thresholds.ts`)
 
-Items must meet both conditions for their kind to pass the gate:
+Items must meet both conditions for their kind to pass the gate (unless
+`skipAgeGate` is set — see below):
 
 | Kind | Min Subscriptions | Min Age (days) |
 |---|---|---|

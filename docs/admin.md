@@ -148,7 +148,8 @@ The `metadata` jsonb carries contextual details (reason strings, prior values, c
 
 | Action | Notes |
 |---|---|
-| `triggerIngest(pagesPerKind?)` | Manual ingest run. Default 1 page; max 20. `requireCreator()`. |
+| `triggerIngest(formData)` | Manual ingest run. Form fields: `pagesPerKind` (1–50, default 20), `order` (`trend`/`new`), `kinds[]` (checkboxes). Passes `skipAgeGate: true` and `minNewPerKind: 50` so runs actually surface novel items from a saturated trending top. Persists the form selection to the `smse_ingest_prefs` cookie so controls don't snap back to defaults after a run. `requireCreator()`. |
+| `getManualIngestPrefs()` | Helper (in `lib/admin/ingest-prefs.ts`) that reads the persisted form cookie. Called from the `/admin/ingest` page to set `defaultValue`s on the trigger form. |
 | `addCreation(urlOrId, autoApprove?)` | Manual item add by Steam URL or ID. `requireCreator()`. Bypasses the follower-count floor. |
 | `triggerFakeReboot()` | V9.10+. Inserts `deployAnnouncements { scheduledAt: now()+60s, isPrank: true }`. `requireCreator()`. Surface at `/admin/abuse`. |
 

@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { and, desc, eq, inArray, ne, sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
@@ -17,6 +18,10 @@ import {
 } from "@/lib/db/schema";
 import { ALL_KINDS, runIngest, type IngestOrder } from "@/lib/ingest/pipeline";
 import type { SteamKind } from "@/lib/steam/client";
+import {
+  MANUAL_INGEST_PREFS_COOKIE,
+  MAX_MANUAL_PAGES_PER_KIND,
+} from "@/lib/admin/ingest-prefs";
 import { CREATION_KINDS, ingestRuns, type IngestProgress } from "@/lib/db/schema";
 import { getCurrentUser, isBanned } from "@/lib/auth/session";
 import { effectiveRole, isModerator } from "@/lib/auth/roles";
@@ -351,7 +356,11 @@ export async function triggerIngest(formData?: FormData): Promise<void> {
   if (formData) {
     const raw = formData.get("pagesPerKind");
     const parsed = raw != null ? Number(raw) : NaN;
-    if (Number.isInteger(parsed) && parsed > 0 && parsed <= 20) {
+    if (
+      Number.isInteger(parsed) &&
+      parsed > 0 &&
+      parsed <= MAX_MANUAL_PAGES_PER_KIND
+    ) {
       pagesPerKind = parsed;
     }
     const rawOrder = String(formData.get("order") ?? "");
@@ -365,18 +374,44 @@ export async function triggerIngest(formData?: FormData): Promise<void> {
       kinds = selected;
     }
   }
-  const effectivePages = pagesPerKind ?? 5;
-  // Manual admin runs: skip already-fetched items and keep paging until we
-  // gather a fresh page worth of novel discoveries per kind, bounded by the
-  // pages ceiling the moderator typed. Without the minNewPerKind target, a
-  // run targeting the "best" list would often burn its whole page budget
-  // re-seeing the same top-of-trending items that were already decided.
+  const effectivePages = pagesPerKind ?? 20;
+  // Manual admin runs:
+  // - skip already-fetched items and keep paging until we gather a fresh
+  //   page's worth of novel discoveries per kind, bounded by the pages
+  //   ceiling the moderator typed — without minNewPerKind, a run targeting
+  //   the "Best" list with a saturated top would burn its whole page
+  //   budget re-seeing already-decided items.
+  // - skip the follow-gate age floor. The cron keeps it to filter vote-
+  //   farmable items before triage, but a manual run with order=new
+  //   explicitly wants recent uploads and the admin is triaging anyway.
   await runIngest({
     pagesPerKind: effectivePages,
     minNewPerKind: 50,
     order,
     kinds,
+    skipAgeGate: true,
   });
+
+  // Persist the form selection so it sticks across submits — without this
+  // the page re-renders with the defaults (order=trend, all kinds ticked,
+  // pages=default) every time and the moderator has to re-tick their
+  // choices before every run.
+  const store = await cookies();
+  store.set(
+    MANUAL_INGEST_PREFS_COOKIE,
+    JSON.stringify({
+      pagesPerKind: pagesPerKind ?? null,
+      order,
+      kinds: kinds ?? null,
+    }),
+    {
+      httpOnly: false,
+      sameSite: "lax",
+      path: "/admin/ingest",
+      maxAge: 60 * 60 * 24 * 30,
+    },
+  );
+
   await logModAction({
     actor,
     action: "ingest.manualRun",
@@ -391,6 +426,7 @@ export async function triggerIngest(formData?: FormData): Promise<void> {
   revalidatePath("/admin/triage");
   revalidatePath("/admin/ingest");
 }
+
 
 export async function createTag(formData: FormData) {
   const actor = await requireMod();
