@@ -1,11 +1,14 @@
 import { cookies } from "next/headers";
 import {
+  FUN_MODE_COOKIE,
   LOCALE_COOKIE,
   parseCustomThemeColors,
+  parseFunMode,
   parseLocale,
   parseRatingMode,
   parseTheme,
   RATING_MODE_COOKIE,
+  serializeFunMode,
   THEME_COOKIE,
   THEME_CUSTOM_COOKIE,
   type CustomThemeColors,
@@ -69,6 +72,21 @@ export async function setCustomThemeCookie(
 ): Promise<void> {
   const store = await cookies();
   store.set(THEME_CUSTOM_COOKIE, JSON.stringify(colors), {
+    httpOnly: false,
+    sameSite: "lax",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 365,
+  });
+}
+
+export async function getFunMode(): Promise<boolean> {
+  const store = await cookies();
+  return parseFunMode(store.get(FUN_MODE_COOKIE)?.value);
+}
+
+export async function setFunModeCookie(on: boolean): Promise<void> {
+  const store = await cookies();
+  store.set(FUN_MODE_COOKIE, serializeFunMode(on), {
     httpOnly: false,
     sameSite: "lax",
     path: "/",

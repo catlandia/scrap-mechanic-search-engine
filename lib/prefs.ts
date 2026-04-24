@@ -21,6 +21,23 @@ export function parseLocale(raw: string | undefined): Locale {
     : DEFAULT_LOCALE;
 }
 
+// Opt-in "Fun Mode". Off by default — the Creator wants the normie experience
+// to stay strictly functional: the real deploy countdown still renders so
+// visitors get their warning, just without the SFX; prank announcements from
+// /admin/abuse (fake reboot) are suppressed entirely. Toggling Fun Mode on
+// enables the deploy SFX and makes the visitor eligible to see prank rows.
+export const FUN_MODE_COOKIE = "smse_fun_mode";
+export const DEFAULT_FUN_MODE = false;
+
+export function parseFunMode(raw: string | undefined): boolean {
+  if (raw === "1" || raw === "true") return true;
+  return DEFAULT_FUN_MODE;
+}
+
+export function serializeFunMode(on: boolean): string {
+  return on ? "1" : "0";
+}
+
 export const RATING_MODES = ["steam", "site", "both"] as const;
 export type RatingMode = (typeof RATING_MODES)[number];
 export const DEFAULT_RATING_MODE: RatingMode = "both";

@@ -55,7 +55,7 @@ interface ActiveAnnouncement {
  * but swap the final line to "just kidding :^)" and self-hide after
  * PRANK_TAIL_MS. They never auto-reload.
  */
-export function DeployBanner() {
+export function DeployBanner({ funMode }: { funMode: boolean }) {
   const [announcement, setAnnouncement] = useState<ActiveAnnouncement | null>(
     null,
   );
@@ -157,21 +157,24 @@ export function DeployBanner() {
   // Countdown jingle — fires once when a new announcement first appears.
   // Play() may reject when the visitor hasn't interacted with the page yet
   // (autoplay policy) — silently ignored, the banner still shows.
+  // Gated on Fun Mode: normies still see the countdown but hear nothing.
   useEffect(() => {
     if (!announcement) return;
+    if (!funMode) return;
     if (countdownPlayedForRef.current === announcement.id) return;
     if (announcement.completedAt !== null) return;
     countdownPlayedForRef.current = announcement.id;
     const a = new Audio("/sfx/deploy-countdown.mp3");
     countdownAudioRef.current = a;
     a.play().catch(() => {});
-  }, [announcement]);
+  }, [announcement, funMode]);
 
   // Zero-hit sting — fires once the moment remaining first crosses 0.
   // Cuts off the countdown jingle if it's still playing so the two
   // tracks don't overlap.
   useEffect(() => {
     if (!announcement) return;
+    if (!funMode) return;
     if (zeroPlayedForRef.current === announcement.id) return;
     if (announcement.completedAt !== null) return;
     const serverNow = now + serverOffset;
@@ -185,7 +188,7 @@ export function DeployBanner() {
     }
     const a = new Audio("/sfx/deploy-live.mp3");
     a.play().catch(() => {});
-  }, [announcement, now, serverOffset]);
+  }, [announcement, now, serverOffset, funMode]);
 
   // Auto-reload only once the deploy is marked complete AND the serving
   // deployment's build id has flipped to something other than the one this
@@ -221,6 +224,12 @@ export function DeployBanner() {
   }, [announcement, hasBuildSwapped]);
 
   if (!announcement) return null;
+
+  // Prank announcements from /admin/abuse (fake reboot etc.) are purely a
+  // Fun-Mode-only feature — visitors who opted out of Fun Mode should see
+  // nothing at all for them. Real deploy rows still render regardless
+  // because they're a genuine warning that the site is about to restart.
+  if (announcement.isPrank && !funMode) return null;
 
   // If this announcement was already the reason for a reload AND the new
   // bundle is already serving, we're on the fresh bundle post-reload —

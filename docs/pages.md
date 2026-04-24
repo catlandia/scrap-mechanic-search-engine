@@ -33,7 +33,7 @@ All public pages are in `app/` using Next.js 15 App Router. Server Components by
 | `/minigames/scrapcha` | `app/minigames/scrapcha/page.tsx` | Scrapcha — endless character-identification game. Same character pool as `/verify`, different session cookie, no skip button, does not grant the `bot_verified` cookie. |
 | `/minigames/silence` | `app/minigames/silence/page.tsx` | V9.2+. Live counter showing time elapsed since the most recent Scrap Mechanic Steam news item. Fetches `ISteamNews/GetNewsForApp` via `lib/steam/news.ts` with 10-min server-side revalidation; client ticks every second. `robots: noindex`. |
 | `/minigames/blockdle` | `app/minigames/blockdle/page.tsx` | Blockdle — near-impossible Scrap Mechanic info guesser. `?mode=daily\|endless` (default `daily`). 500+ blocks, ten tries, nine attribute reveals per guess (inventory type, category, material, flammable, level, durability, density, friction, buoyancy). Daily shares one UTC-seeded secret across all users with a Wordle-style emoji share-result; endless tracks streak / best / wins / losses per-session. Daily mode renders two leaderboards below the game — today's finishers (by fewest guesses) and all-time champions (by total wins, tiebreak avg guesses). Signed-in-only recording. Full game details in [blockdle.md](blockdle.md). |
-| `/settings` | `app/settings/page.tsx` | User preferences hub (theme, ratings, account links, help) |
+| `/settings` | `app/settings/page.tsx` | User preferences hub (language, theme, ratings, **Fun Mode**, account links, help) |
 | `/settings/theme` | `app/settings/theme/page.tsx` | Custom theme editor |
 | `/terms` | `app/terms/page.tsx` | Terms of use |
 | `/privacy` | `app/privacy/page.tsx` | Privacy policy |
@@ -216,13 +216,15 @@ The drawer auto-closes on route change (`usePathname` effect) and locks `documen
 
 ---
 
-## Rating display (`lib/prefs.ts` / `lib/prefs.server.ts`)
+## Preferences (`lib/prefs.ts` / `lib/prefs.server.ts`)
 
 The file is split intentionally:
-- `lib/prefs.ts` — constants (`RATING_MODES`, `DEFAULT_RATING_MODE`, `RATING_MODE_COOKIE`) and the `RatingMode` type. Safe for client components.
-- `lib/prefs.server.ts` — `getRatingMode()` / `setRatingModeCookie()` which call `next/headers`. Server-only.
+- `lib/prefs.ts` — constants (`RATING_MODES`, `FUN_MODE_COOKIE`, etc.) and parse helpers. Safe for client components.
+- `lib/prefs.server.ts` — `getRatingMode()` / `getFunMode()` / `setFunModeCookie()` etc. which call `next/headers`. Server-only.
 
 Mixing the two in one file (as the initial implementation did) crashes the production build because webpack refuses to bundle `next/headers` into a client module.
+
+**Fun Mode (`FUN_MODE_COOKIE = "smse_fun_mode"`, default off).** Opt-in toggle at `/settings` under "Fun Mode". Gates the purely-for-fun surface on the site: deploy-banner SFX, and the `/admin/abuse` fake-reboot prank (and any future prank rows). Real deploy warnings still render for visitors with Fun Mode off — they're a genuine "save your work, the site is restarting" heads-up — but silently. Prank announcements (`deploy_announcements.is_prank = true`) render nothing at all for non-fun-mode visitors so a Creator prank never bothers a normie. `app/layout.tsx` reads the cookie server-side and passes `funMode` as a prop to `DeployBanner`; the banner's `useEffect` that creates the SFX `Audio` elements early-returns when `funMode === false`, and a `funMode || !isPrank` render-guard at the top of the banner returns null for prank rows in normie sessions.
 
 `StarRating` (`components/StarRating.tsx`) prefers a raw `up / (up+down)` ratio over Steam's Wilson-smoothed `vote_score` whenever both counts are available — this avoids the "everything is 3 stars" regression where low-sample Steam scores collapse toward 0.5. Rating rendering requires ≥1 total vote (showcase mode — `MIN_VOTES_FOR_RATING` in `components/StarRating.tsx`; designed to live around 10 once vote volume catches up). Below the threshold the component shows `unrated` or `only N votes`.
 

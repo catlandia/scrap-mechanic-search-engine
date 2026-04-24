@@ -1,11 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
+import { FunModeToggle } from "@/components/FunModeToggle";
 import { RatingModeToggle } from "@/components/RatingModeToggle";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LocaleToggle } from "@/components/LocaleToggle";
 import { THEME_LABELS } from "@/lib/prefs";
-import { getLocale, getRatingMode, getTheme } from "@/lib/prefs.server";
+import {
+  getFunMode,
+  getLocale,
+  getRatingMode,
+  getTheme,
+} from "@/lib/prefs.server";
 import { getT } from "@/lib/i18n/server";
 import { getCurrentUser } from "@/lib/auth/session";
 import { isModerator } from "@/lib/auth/roles";
@@ -21,10 +27,11 @@ export const metadata: Metadata = {
 };
 
 export default async function SettingsPage() {
-  const [ratingMode, theme, locale, viewer] = await Promise.all([
+  const [ratingMode, theme, locale, funMode, viewer] = await Promise.all([
     getRatingMode(),
     getTheme(),
     getLocale(),
+    getFunMode(),
     getCurrentUser(),
   ]);
   const { t } = await getT();
@@ -72,6 +79,15 @@ export default async function SettingsPage() {
       >
         <Suspense>
           <RatingModeToggle current={ratingMode} alwaysShow />
+        </Suspense>
+      </SettingsSection>
+
+      <SettingsSection
+        title="Fun Mode"
+        description="Opt in to the bits of the site that exist purely for fun — deploy-banner SFX, Creator pranks from /admin/abuse like the fake reboot. Real deploy warnings still show with Fun Mode off (you still need to save your work before the site restarts), they just do it silently and without the pranks."
+      >
+        <Suspense>
+          <FunModeToggle current={funMode} />
         </Suspense>
       </SettingsSection>
 

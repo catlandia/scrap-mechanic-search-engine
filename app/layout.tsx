@@ -11,7 +11,12 @@ import { ToastProvider } from "@/components/Toast";
 import { getUnreadChangelogCount } from "@/lib/changelog/actions";
 import { getUnreadNotificationCountsByTier, getUserCounts } from "@/lib/db/queries";
 import type { NotificationTier } from "@/lib/db/schema";
-import { getCustomThemeColors, getRatingMode, getTheme } from "@/lib/prefs.server";
+import {
+  getCustomThemeColors,
+  getFunMode,
+  getRatingMode,
+  getTheme,
+} from "@/lib/prefs.server";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { getT } from "@/lib/i18n/server";
 import { LocaleProvider } from "@/lib/i18n/client";
@@ -86,6 +91,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   }
   const ratingMode = await getRatingMode();
   const theme = await getTheme();
+  const funMode = await getFunMode();
   const { locale, t } = await getT();
   const dict = getDictionary(locale);
   const browseItems = browseHrefs.map((b) => ({ href: b.href, label: t(b.key) }));
@@ -167,7 +173,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body className="min-h-screen bg-background text-foreground antialiased">
         <LocaleProvider locale={locale} dict={dict}>
         <ToastProvider>
-        <DeployBanner />
+        <DeployBanner funMode={funMode} />
         <BetaBanner />
         <header className="sticky top-0 z-30 border-b border-foreground/10 bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70">
           <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3 sm:flex-nowrap sm:gap-x-6">
