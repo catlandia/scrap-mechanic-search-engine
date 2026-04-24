@@ -1,11 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { cn } from "@/lib/utils";
 
 const POLL_MS = 8_000;
 const TICK_MS = 33;
-const CRITICAL_MS = 10_000;
 const RELOAD_FLAG_KEY = "smse_deploy_reloaded_id";
 
 interface ActiveAnnouncement {
@@ -104,7 +102,6 @@ export function DeployBanner() {
   }
 
   const remaining = announcement.scheduledAt - now;
-  const isCritical = remaining > 0 && remaining < CRITICAL_MS;
   const isCompleted = announcement.completedAt !== null;
   const isDeploying = !isCompleted && remaining <= 0;
   const clamped = Math.max(0, remaining);
@@ -115,10 +112,7 @@ export function DeployBanner() {
     <div
       role="alert"
       aria-live="assertive"
-      className={cn(
-        "sticky top-0 z-[60] w-full border-b border-red-900/60 bg-red-600 px-4 py-2 text-center text-sm font-semibold text-white shadow-md",
-        (isCritical || isDeploying) && "animate-pulse",
-      )}
+      className="sticky top-0 z-[60] w-full animate-pulse border-b border-red-900/60 bg-red-600 px-4 py-2 text-center text-sm font-semibold text-white shadow-md"
     >
       {isCompleted ? (
         <span>✅ New version is live — reloading the page…</span>
