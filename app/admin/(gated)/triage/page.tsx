@@ -116,6 +116,12 @@ export default async function TriagePage({
 
   return (
     <TriageStack
+      // React key changes whenever the filter does — forces a fresh
+      // mount so the internal buffer is rebuilt from the new cards
+      // prop. Without this the component's snapshot-on-mount stack
+      // state hangs on to the previously-filtered cards until the
+      // mod swipes through them all.
+      key={activeKind ?? "all"}
       cards={cards}
       totalPending={totalRow?.n ?? cards.length}
       communityPending={communityRow?.n ?? 0}

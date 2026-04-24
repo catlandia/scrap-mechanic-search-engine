@@ -37,13 +37,17 @@ export const metadata: Metadata = {
     siteName: "Scrap Mechanic Search Engine",
     url: "/",
     type: "website",
-    images: ["/logo-square.png"],
+    // `app/opengraph-image.tsx` auto-generates the default 1200×630 card
+    // for every page that doesn't supply its own — do NOT set `images`
+    // here, otherwise Next uses this static string instead of the
+    // dynamic image. Same applies to twitter below.
   },
   twitter: {
-    card: "summary",
+    // Big-image card in Discord / Twitter / Slack. Requires a wide OG
+    // image (≥1.91:1); the dynamic opengraph-image.tsx provides one.
+    card: "summary_large_image",
     title: siteTitle,
     description: siteDescription,
-    images: ["/logo-square.png"],
   },
 };
 

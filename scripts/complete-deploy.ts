@@ -13,11 +13,22 @@ import { deployAnnouncements } from "../lib/db/schema";
 // auto-reload onto the new bundle. If no announcement is pending (a bare
 // `git push` without `npm run deploy`), this is a no-op.
 async function main() {
+  // Only act inside a real Vercel build. On a developer's laptop `npm run
+  // build` uses the same DATABASE_URL (the prod one) — if we stamped
+  // completed_at from there, any live deploy countdown running at the
+  // same time would snap to "New version is live" prematurely and every
+  // visitor's tab would reload before the countdown even hit zero. The
+  // VERCEL env var is set to "1" by Vercel during deployments and is
+  // absent locally, so this is the right gate.
+  if (process.env.VERCEL !== "1") {
+    console.log(
+      "complete-deploy: not running inside a Vercel build, skipping.",
+    );
+    return;
+  }
+
   const url = process.env.DATABASE_URL;
   if (!url) {
-    // During preview builds or local `next build` DATABASE_URL may be
-    // absent; skip silently. The banner feature is only meaningful on
-    // prod anyway.
     console.log("complete-deploy: DATABASE_URL not set, skipping.");
     return;
   }
