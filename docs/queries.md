@@ -30,7 +30,7 @@ Returns the most-recent `deploy_announcements` row that's still "active", or `nu
 ### `getNewestApproved(limit, offset)`
 Returns `status=approved` creations ordered by `approvedAt DESC`. Used on the home page's "Newest additions" section, `/new`, and `/feed.xml`.
 
-**Tile thinning:** adds `TILE_THIN_CONDITION` — a stable per-row hash (`abs(hashtext(id)) % 20 = 0`) that admits ~5% of `kind='tile'` rows and 100% of everything else. Tiles ship in large batches (terrain packs, full map sets) and would otherwise dominate the mixed newest feed. The hash is deterministic so pagination and RSS-reader caches stay consistent. Hidden tiles remain in the catalogue and are fully visible on `/tiles`, any `/[kind]` page, and `searchApproved` (which deliberately skips thinning — explicit queries should return everything matching).
+**High-volume kind thinning:** adds `HIGH_VOLUME_THIN_CONDITION` — a stable per-row hash (`abs(hashtext(id)) % 20 = 0`) that admits ~5% of `kind IN ('tile', 'world')` rows and 100% of everything else. Both kinds ship in large batches (terrain packs, full map sets, entire survival worlds) and would otherwise dominate the mixed newest feed. The hash is deterministic so pagination and RSS-reader caches stay consistent. Hidden rows remain in the catalogue and are fully visible on `/tiles`, `/worlds`, any `/[kind]` page, and `searchApproved` (which deliberately skips thinning — explicit queries should return everything matching).
 
 ### `getApprovedByKind(kind, { sort, limit, offset })`
 Filter by one `kind`. Used on per-kind landing pages. Accepts any `SortMode` except `relevance` (which falls back to `newest` without a query string).

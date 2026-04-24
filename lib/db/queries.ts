@@ -170,14 +170,15 @@ function orderByForSort(sort: SortMode, q?: string): SQL {
   }
 }
 
-// Tiles ship in large batches (terrain packs, full map sets) and would
-// otherwise crowd out every other kind on the home page and /new. This
-// condition keeps roughly 5% of them — `mod 20 = 0` on a stable per-row
-// hash — so the visible set is deterministic across requests,
-// pagination, and cache. Hidden tiles stay in the catalogue; search,
-// /tiles, and /[kind]=tile routes all bypass this so anyone explicitly
-// looking for tiles gets the full list.
-export const TILE_THIN_CONDITION = sql`(${creations.kind} != 'tile' OR (abs(hashtext(${creations.id})) % 20) = 0)`;
+// Tiles and worlds both ship in large batches (terrain packs, full map
+// sets, entire survival worlds) and would otherwise crowd out every
+// other kind on the home page and /new. This condition keeps roughly
+// 5% of them — `mod 20 = 0` on a stable per-row hash — so the visible
+// set is deterministic across requests, pagination, and cache. Hidden
+// rows stay in the catalogue; search, /tiles, /worlds, and any kind-
+// scoped listing bypass this so anyone explicitly looking for one of
+// these kinds gets the full list.
+export const HIGH_VOLUME_THIN_CONDITION = sql`(${creations.kind} NOT IN ('tile', 'world') OR (abs(hashtext(${creations.id})) % 20) = 0)`;
 
 export async function getNewestApproved(
   limit = 24,
@@ -187,7 +188,7 @@ export async function getNewestApproved(
   return db
     .select(cardColumns)
     .from(creations)
-    .where(and(eq(creations.status, "approved"), TILE_THIN_CONDITION))
+    .where(and(eq(creations.status, "approved"), HIGH_VOLUME_THIN_CONDITION))
     .orderBy(desc(creations.approvedAt))
     .limit(limit)
     .offset(offset);
