@@ -2,7 +2,7 @@ import Link from "next/link";
 import { addCreation } from "@/app/admin/actions";
 import { FormSubmitButton } from "@/components/FormSubmitButton";
 import { getCurrentUser } from "@/lib/auth/session";
-import { effectiveRole, isCreator } from "@/lib/auth/roles";
+import { effectiveRole, isModerator } from "@/lib/auth/roles";
 
 export const dynamic = "force-dynamic";
 
@@ -15,14 +15,12 @@ export default async function AddPage({
 }) {
   const sp = await searchParams;
   const user = await getCurrentUser();
-  if (!user || !isCreator(effectiveRole(user))) {
+  if (!user || !isModerator(effectiveRole(user))) {
     return (
       <div className="mx-auto max-w-2xl rounded-lg border border-purple-500/40 bg-purple-500/10 p-6 text-sm">
-        <div className="text-lg font-semibold text-purple-200">Creator only.</div>
+        <div className="text-lg font-semibold text-purple-200">Mods only.</div>
         <p className="mt-2 text-purple-100/80">
-          Adding items directly by Workshop URL is reserved for the site
-          Creator. Moderators review community submissions and the auto-ingest
-          backlog in <Link href="/admin/triage" className="underline">Triage</Link>.
+          Adding items by Workshop URL is reserved for moderators and above.
         </p>
       </div>
     );

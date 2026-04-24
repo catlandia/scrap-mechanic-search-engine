@@ -304,8 +304,22 @@ html[data-theme="default"] .hover\:bg-rose-500\/25:hover {
   }
 }
 
+/* Wrapper owns the orbiting aura; the button sits on top of it. This
+   split is what actually makes the aura visible: putting a `z-index: -1`
+   pseudo-element directly on the button puts the aura *behind the button's
+   own gradient background*, so nothing shows. With a wrapper, the aura
+   is behind the button (in the wrapper's coordinate space) but still
+   in front of the wrapper itself, which is transparent. */
+.smse-extreme-wrapper {
+  position: relative;
+  display: inline-block;
+  border-radius: 9999px;
+  isolation: isolate;
+}
+
 .smse-extreme-toggle {
   position: relative;
+  z-index: 1;
   background-image: linear-gradient(
     90deg,
     #ff4d4d,
@@ -323,17 +337,17 @@ html[data-theme="default"] .hover\:bg-rose-500\/25:hover {
   text-shadow: 0 1px 1px rgba(255, 255, 255, 0.6);
 }
 
-/* Orbiting aura, only visible when the toggle is on. Sits behind the pill
-   via a ::before pseudo-element so it doesn't steal clicks. Two effects
-   compound: one spin rotation carries the coloured conic gradient around
-   the button, and a pulse keyframe breathes the opacity/blur so the
-   lights feel like they're "coming out" rather than static. */
-.smse-extreme-toggle[data-extreme="on"]::before {
+/* Orbiting aura, only visible when the wrapper is flagged as on. Two
+   effects compound: one spin rotation carries the coloured conic
+   gradient around the button, and a pulse keyframe breathes the
+   opacity/blur so the lights feel like they're "coming out" rather
+   than static. */
+.smse-extreme-wrapper[data-extreme="on"]::before {
   content: "";
   position: absolute;
-  inset: -14px;
+  inset: -18px;
   border-radius: inherit;
-  z-index: -1;
+  z-index: 0;
   background: conic-gradient(
     from 0deg,
     #ff4d4d,
@@ -347,8 +361,8 @@ html[data-theme="default"] .hover\:bg-rose-500\/25:hover {
   animation:
     smse-rainbow-aura-spin 4s linear infinite,
     smse-rainbow-aura-pulse 2.2s ease-in-out infinite;
-  opacity: 0.75;
-  filter: blur(14px);
+  opacity: 0.85;
+  filter: blur(16px);
   pointer-events: none;
 }
 
@@ -357,31 +371,15 @@ html[data-theme="default"] .hover\:bg-rose-500\/25:hover {
     animation: none;
     background-position: 0% 50%;
   }
-  .smse-extreme-toggle[data-extreme="on"]::before {
+  .smse-extreme-wrapper[data-extreme="on"]::before {
     animation: none;
   }
 }
 
-/* Hitmarker sprite lifecycle — spawn at full opacity/scale, then fade
-   out and shrink a touch so the sprite clearly leaves instead of just
-   vanishing. The .55s duration matches HITMARKER_MS in the component
-   so the element hits opacity 0 at roughly the moment the setTimeout
-   unmounts it. Rotation is set inline per-sprite and must be preserved
-   by the keyframes — they only animate opacity + scale, not transform,
-   so the inline `rotate(...)` survives. */
-@keyframes smse-hitmarker-fade {
-  0% {
-    opacity: 1;
-  }
-  40% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-  }
-}
-
+/* Hitmarker sprite — no CSS animation. The element snaps in at full
+   opacity, stays static, and is unmounted by the component's setTimeout
+   after HITMARKER_MS. No fade = "sudden disappearance" per spec, and
+   rapid clicks stay crisp instead of smearing opacity into each other. */
 .smse-hitmarker {
-  animation: smse-hitmarker-fade 0.55s ease-out forwards;
-  will-change: opacity;
+  opacity: 1;
 }

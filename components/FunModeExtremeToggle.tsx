@@ -41,24 +41,32 @@ export function FunModeExtremeToggle({
       className="flex flex-col items-start gap-2"
     >
       <input type="hidden" name="next" value={nextUrl} />
-      <button
-        type="submit"
-        name="on"
-        value={nextValue}
-        disabled={disabled}
+      {/* Wrapper owns the orbiting aura; the button sits inside it with a
+          higher z-index. See .smse-extreme-wrapper in app/globals.css —
+          this split is what actually makes the lights visible instead of
+          being hidden behind the button's own gradient background. */}
+      <span
+        className="smse-extreme-wrapper"
         data-extreme={current ? "on" : "off"}
-        aria-pressed={current}
-        className={[
-          "smse-extreme-toggle",
-          "relative rounded-full px-5 py-2 text-sm font-bold uppercase tracking-wider",
-          "border-2 border-white/70 shadow-lg",
-          disabled
-            ? "cursor-not-allowed opacity-40 saturate-50"
-            : "cursor-pointer",
-        ].join(" ")}
       >
-        {label}
-      </button>
+        <button
+          type="submit"
+          name="on"
+          value={nextValue}
+          disabled={disabled}
+          aria-pressed={current}
+          className={[
+            "smse-extreme-toggle",
+            "rounded-full px-5 py-2 text-sm font-bold uppercase tracking-wider",
+            "border-2 border-white/70 shadow-lg",
+            disabled
+              ? "cursor-not-allowed opacity-40 saturate-50"
+              : "cursor-pointer",
+          ].join(" ")}
+        >
+          {label}
+        </button>
+      </span>
       <p className="text-xs text-foreground/60">
         {disabled
           ? "Turn Fun Mode on first — EXTREME needs Fun to be on."

@@ -555,7 +555,7 @@ function parsePublishedFileId(input: string): string | null {
  * for brand-new rows so suggestions still appear in the queue/triage.
  */
 export async function addCreation(formData: FormData) {
-  const actor = await requireCreator();
+  const actor = await requireMod();
   const raw = String(formData.get("input") ?? "").trim();
   const autoApprove = formData.get("approve") === "on";
 
@@ -1924,10 +1924,10 @@ export async function deleteCategory(formData: FormData) {
 // visitor's DeployBanner picks it up and runs the full 60-second
 // countdown path — same visuals, same SFX — then at zero swaps the
 // copy to "just kidding :^)" and self-hides. No git push, no build,
-// no reload. Any moderator tier can fire it; the prank only reaches
-// visitors who have Fun Mode on, so opted-out visitors aren't bothered.
+// no reload. Creator-only — the prank also only reaches visitors who
+// have Fun Mode on, so opted-out visitors aren't bothered.
 export async function triggerFakeReboot() {
-  await requireMod();
+  await requireCreator();
   const db = getDb();
   const scheduledAt = new Date(Date.now() + 60_000);
   await db.insert(deployAnnouncements).values({ scheduledAt, isPrank: true });

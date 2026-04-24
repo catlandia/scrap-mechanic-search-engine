@@ -18,12 +18,12 @@ The admin backend is gated at `/admin/*` by the middleware, requiring a Steam lo
 | `/admin/ingest` | Creator | Ingest run history + manual trigger. Creator-only since V9.0 — manual runs burn Steam API quota and can reshape the catalogue wholesale. |
 | `/admin/reports` | Mod+ | Community moderation reports |
 | `/admin/archive` | Mod+ (view only) | Archived creations |
-| `/admin/add` | Creator | Manually add a Workshop item by URL. Creator-only since V9.0 — bypasses the follower-count floor entirely so it needs the site owner's judgement. |
+| `/admin/add` | Moderator+ | Manually add a Workshop item by URL. Opened to mods/elite mods in V9.18 (was Creator-only V9.0–V9.17) so the whole mod tier can pull in small gems the cron wouldn't grab on its own. Bypasses the follower-count floor. |
 | `/admin/users` | Creator | User role + ban management |
 | `/admin/appeals` | Mod+ | Age-gate appeal queue — grant or dismiss appeals submitted via `/verify/appeal` |
 | `/admin/suggestions` | Creator | Feature suggestion board management |
 | `/admin/guide` | Mod+ | In-app moderator handbook. Sections are tier-gated — a regular mod only sees moderator-tier content, an elite sees mod+elite, the creator sees everything. |
-| `/admin/abuse` | Moderator+ | Throwaway-command sandbox (V9.10+, opened to mod tier in V9.16). First entry: **Fake reboot** — inserts an `is_prank=true` row into `deploy_announcements` so every **Fun-Mode-enabled** visitor sees the 60s countdown + SFX, then at zero the banner swaps to "just kidding :^)" and self-hides 10s later. Fun-Mode-off visitors see nothing for prank rows. No build, no reload. Not audited. |
+| `/admin/abuse` | Creator | Throwaway-command sandbox (V9.10+). First entry: **Fake reboot** — inserts an `is_prank=true` row into `deploy_announcements` so every **Fun-Mode-enabled** visitor sees the 60s countdown + SFX, then at zero the banner swaps to "just kidding :^)" and self-hides 10s later. Fun-Mode-off visitors see nothing for prank rows. No build, no reload. Not audited. Creator-only on purpose: this is the Creator's personal prank surface and mods shouldn't be able to fire it. |
 
 ---
 
@@ -150,8 +150,8 @@ The `metadata` jsonb carries contextual details (reason strings, prior values, c
 |---|---|
 | `triggerIngest(formData)` | Manual ingest run. Form fields: `pagesPerKind` (1–50, default 20), `order` (`trend`/`new`), `kinds[]` (checkboxes). Passes `skipAgeGate: true` and `minNewPerKind: 50` so runs actually surface novel items from a saturated trending top. Persists the form selection to the `smse_ingest_prefs` cookie so controls don't snap back to defaults after a run. `requireCreator()`. |
 | `getManualIngestPrefs()` | Helper (in `lib/admin/ingest-prefs.ts`) that reads the persisted form cookie. Called from the `/admin/ingest` page to set `defaultValue`s on the trigger form. |
-| `addCreation(urlOrId, autoApprove?)` | Manual item add by Steam URL or ID. `requireCreator()`. Bypasses the follower-count floor. |
-| `triggerFakeReboot()` | V9.10+. Inserts `deployAnnouncements { scheduledAt: now()+60s, isPrank: true }`. `requireMod()` since V9.16 (was `requireCreator()` before). Surface at `/admin/abuse`. |
+| `addCreation(urlOrId, autoApprove?)` | Manual item add by Steam URL or ID. `requireMod()` — opened to mods/elite mods in V9.18 (was Creator-only before) so mods can pull in small gems the cron wouldn't grab on its own. Bypasses the follower-count floor. |
+| `triggerFakeReboot()` | V9.10+. Inserts `deployAnnouncements { scheduledAt: now()+60s, isPrank: true }`. `requireCreator()`. Surface at `/admin/abuse`. |
 
 ---
 

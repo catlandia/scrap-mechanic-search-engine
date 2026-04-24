@@ -27,9 +27,10 @@ interface Hitmarker {
   rotation: number;
 }
 
-// Lifetime for the hitmarker sprite. Long enough to register, short enough
-// that rapid clicks don't stack into a pile that lingers on screen.
-const HITMARKER_MS = 550;
+// Lifetime for the hitmarker sprite. The element snaps out the instant
+// this timeout fires — no fade — so a rapid-fire sequence of clicks looks
+// crisp instead of smearing opacity into a pile.
+const HITMARKER_MS = 220;
 // Maximum random tilt off vertical, in degrees. ±20 is enough to feel
 // hand-stamped without the image going sideways.
 const MAX_TILT_DEG = 20;
