@@ -266,3 +266,98 @@ html[data-theme="default"] .bg-rose-500\/20 {
 html[data-theme="default"] .hover\:bg-rose-500\/25:hover {
   background-color: color-mix(in oklch, oklch(0.65 0.23 15) 42%, transparent);
 }
+
+/* ---------------------------------------------------------------------------
+   EXTREME FUN MODE toggle — rainbow gradient that scrolls continuously, and
+   when `data-extreme="on"` an orbiting coloured aura that rotates around
+   the pill to signal the active state. Scoped by class so the effect only
+   touches the specific toggle; nothing else on the page picks this up.
+   Respects prefers-reduced-motion: animation collapses to static gradient.
+--------------------------------------------------------------------------- */
+@keyframes smse-rainbow-scroll {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+
+@keyframes smse-rainbow-aura-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes smse-rainbow-aura-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+    filter: blur(12px);
+  }
+  50% {
+    opacity: 0.95;
+    filter: blur(18px);
+  }
+}
+
+.smse-extreme-toggle {
+  position: relative;
+  background-image: linear-gradient(
+    90deg,
+    #ff4d4d,
+    #ff9933,
+    #ffee33,
+    #66ff66,
+    #33ccff,
+    #9966ff,
+    #ff66cc,
+    #ff4d4d
+  );
+  background-size: 200% 100%;
+  animation: smse-rainbow-scroll 6s linear infinite;
+  color: #111;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.6);
+}
+
+/* Orbiting aura, only visible when the toggle is on. Sits behind the pill
+   via a ::before pseudo-element so it doesn't steal clicks. Two effects
+   compound: one spin rotation carries the coloured conic gradient around
+   the button, and a pulse keyframe breathes the opacity/blur so the
+   lights feel like they're "coming out" rather than static. */
+.smse-extreme-toggle[data-extreme="on"]::before {
+  content: "";
+  position: absolute;
+  inset: -14px;
+  border-radius: inherit;
+  z-index: -1;
+  background: conic-gradient(
+    from 0deg,
+    #ff4d4d,
+    #ffee33,
+    #66ff66,
+    #33ccff,
+    #9966ff,
+    #ff66cc,
+    #ff4d4d
+  );
+  animation:
+    smse-rainbow-aura-spin 4s linear infinite,
+    smse-rainbow-aura-pulse 2.2s ease-in-out infinite;
+  opacity: 0.75;
+  filter: blur(14px);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .smse-extreme-toggle {
+    animation: none;
+    background-position: 0% 50%;
+  }
+  .smse-extreme-toggle[data-extreme="on"]::before {
+    animation: none;
+  }
+}

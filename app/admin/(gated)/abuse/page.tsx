@@ -1,29 +1,20 @@
-import Link from "next/link";
 import { triggerFakeReboot } from "@/app/admin/actions";
 import { FormSubmitButton } from "@/components/FormSubmitButton";
 import { getCurrentUser } from "@/lib/auth/session";
-import { effectiveRole, isCreator } from "@/lib/auth/roles";
+import { effectiveRole, isModerator } from "@/lib/auth/roles";
 
 export const dynamic = "force-dynamic";
 
 export default async function AbusePage() {
   const user = await getCurrentUser();
-  if (!user || !isCreator(effectiveRole(user))) {
+  if (!user || !isModerator(effectiveRole(user))) {
     return (
       <div className="mx-auto max-w-2xl rounded-lg border border-purple-500/40 bg-purple-500/10 p-6 text-sm">
         <div className="text-lg font-semibold text-purple-200">
-          Creator only.
+          Mods &amp; Creator only.
         </div>
         <p className="mt-2 text-purple-100/80">
-          This one&apos;s a private sandbox. Moderators see{" "}
-          <Link href="/admin/triage" className="underline">
-            Triage
-          </Link>{" "}
-          and{" "}
-          <Link href="/admin/queue" className="underline">
-            Queue
-          </Link>{" "}
-          instead.
+          This surface is reserved for moderators and above.
         </p>
       </div>
     );
@@ -34,9 +25,11 @@ export default async function AbusePage() {
       <header className="space-y-1">
         <h1 className="text-2xl font-semibold">Admin abuse</h1>
         <p className="text-sm text-foreground/60">
-          Creator-only playground for throwaway commands. Nothing in here is
-          serious; nothing in here is audited. If it does something visible to
-          visitors, use it sparingly.
+          Mod + Creator playground for throwaway commands. Nothing in here is
+          serious; nothing in here is audited. Prank rows only reach visitors
+          who have Fun Mode turned on in /settings — anyone with Fun Mode off
+          sees nothing. Still, if it&apos;s visible to opted-in visitors, use
+          it sparingly.
         </p>
       </header>
 

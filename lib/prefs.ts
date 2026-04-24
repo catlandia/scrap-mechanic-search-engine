@@ -38,6 +38,25 @@ export function serializeFunMode(on: boolean): string {
   return on ? "1" : "0";
 }
 
+// "EXTREME FUN MODE" — a second opt-in tier on top of Fun Mode. Gated on
+// Fun Mode being on: turning Fun Mode off automatically clears this too
+// so the two can never be out of sync (extreme implies fun). The toggle
+// renders with an animated rainbow gradient and, when on, orbiting
+// coloured lights. For now the toggle has no runtime effect — future
+// work will hang random click effects and other ambient events off it,
+// but only when the Creator asks for them.
+export const FUN_MODE_EXTREME_COOKIE = "smse_fun_mode_extreme";
+export const DEFAULT_FUN_MODE_EXTREME = false;
+
+export function parseFunModeExtreme(raw: string | undefined): boolean {
+  if (raw === "1" || raw === "true") return true;
+  return DEFAULT_FUN_MODE_EXTREME;
+}
+
+export function serializeFunModeExtreme(on: boolean): string {
+  return on ? "1" : "0";
+}
+
 export const RATING_MODES = ["steam", "site", "both"] as const;
 export type RatingMode = (typeof RATING_MODES)[number];
 export const DEFAULT_RATING_MODE: RatingMode = "both";

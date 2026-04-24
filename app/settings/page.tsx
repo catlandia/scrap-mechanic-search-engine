@@ -2,12 +2,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { FunModeToggle } from "@/components/FunModeToggle";
+import { FunModeExtremeToggle } from "@/components/FunModeExtremeToggle";
 import { RatingModeToggle } from "@/components/RatingModeToggle";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LocaleToggle } from "@/components/LocaleToggle";
 import { THEME_LABELS } from "@/lib/prefs";
 import {
   getFunMode,
+  getFunModeExtreme,
   getLocale,
   getRatingMode,
   getTheme,
@@ -27,13 +29,15 @@ export const metadata: Metadata = {
 };
 
 export default async function SettingsPage() {
-  const [ratingMode, theme, locale, funMode, viewer] = await Promise.all([
-    getRatingMode(),
-    getTheme(),
-    getLocale(),
-    getFunMode(),
-    getCurrentUser(),
-  ]);
+  const [ratingMode, theme, locale, funMode, funModeExtreme, viewer] =
+    await Promise.all([
+      getRatingMode(),
+      getTheme(),
+      getLocale(),
+      getFunMode(),
+      getFunModeExtreme(),
+      getCurrentUser(),
+    ]);
   const { t } = await getT();
 
   return (
@@ -84,11 +88,30 @@ export default async function SettingsPage() {
 
       <SettingsSection
         title="Fun Mode"
-        description="Opt in to the bits of the site that exist purely for fun — deploy-banner SFX, Creator pranks from /admin/abuse like the fake reboot. Real deploy warnings still show with Fun Mode off (you still need to save your work before the site restarts), they just do it silently and without the pranks."
+        description="Opt in to the bits of the site that exist purely for fun — deploy-banner SFX, mod pranks from /admin/abuse like the fake reboot. Real deploy warnings still show with Fun Mode off (you still need to save your work before the site restarts), they just do it silently and without the pranks."
       >
-        <Suspense>
-          <FunModeToggle current={funMode} />
-        </Suspense>
+        <div className="space-y-4">
+          <Suspense>
+            <FunModeToggle current={funMode} />
+          </Suspense>
+          <div className="space-y-2 border-t border-border/60 pt-4">
+            <p className="text-xs text-foreground/60">
+              <span className="font-semibold text-foreground/80">
+                EXTREME FUN MODE.
+              </span>{" "}
+              Layered on top of Fun Mode. For now it&apos;s a blank button —
+              no effects are wired up yet. Once the Creator adds behaviour
+              this is where random click events and other ambient weirdness
+              will live. Turning Fun Mode off cascades this back to off.
+            </p>
+            <Suspense>
+              <FunModeExtremeToggle
+                current={funModeExtreme}
+                funModeOn={funMode}
+              />
+            </Suspense>
+          </div>
+        </div>
       </SettingsSection>
 
       {viewer && (

@@ -17,6 +17,7 @@ const baseNav = [
   { href: "/admin/appeals", label: "Appeals" },
   { href: "/admin/archive", label: "Archive" },
   { href: "/admin/tags", label: "Tags" },
+  { href: "/admin/abuse", label: "Admin Abuse" },
 ];
 const creatorNav = [
   { href: "/admin/add", label: "Add" },
@@ -26,7 +27,6 @@ const creatorNav = [
   { href: "/admin/changelog", label: "Changelog" },
   { href: "/admin/users", label: "Users" },
   { href: "/admin/badges", label: "Badges" },
-  { href: "/admin/abuse", label: "Admin Abuse" },
 ];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
