@@ -168,6 +168,12 @@ export default async function ProfilePage({ params }: { params: Params }) {
       <section className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
         <Stat label="Site ID" value={`#${user.shortId}`} mono />
         <Stat label="On the site since" value={user.siteJoinedAt?.toLocaleDateString() ?? "—"} />
+        {isModerator(user.role as UserRole) && user.moderatorSinceAt && (
+          <Stat
+            label="Moderator since"
+            value={user.moderatorSinceAt.toLocaleDateString()}
+          />
+        )}
         {showModInfo && (
           <Stat
             label="Steam account since"

@@ -232,6 +232,13 @@
       "when": 1778100000000,
       "tag": "0032_beta_3_0_absence_prep_changelog",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1777024336632,
+      "tag": "0033_nifty_power_man",
+      "breakpoints": true
     }
   ]
 }

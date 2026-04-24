@@ -1399,16 +1399,31 @@ export async function setUserRole(formData: FormData) {
 
   const db = getDb();
   const [target] = await db
-    .select({ role: users.role })
+    .select({
+      role: users.role,
+      moderatorSinceAt: users.moderatorSinceAt,
+    })
     .from(users)
     .where(eq(users.steamid, targetSteamid))
     .limit(1);
   if (!target) throw new Error("user_not_found");
   if (target.role === "creator") throw new Error("cannot_modify_creator");
 
+  // First-time promotion to mod+ stamps moderator_since_at. Subsequent
+  // promotions (e.g. after a demotion) preserve the original date so the
+  // profile badge reflects when they originally joined the team.
+  const wasMod = isModerator(target.role as "user" | "moderator" | "elite_moderator" | "creator");
+  const isNowMod = isModerator(newRole);
+  const updateSet: { role: typeof newRole; moderatorSinceAt?: Date } = {
+    role: newRole,
+  };
+  if (isNowMod && !wasMod && !target.moderatorSinceAt) {
+    updateSet.moderatorSinceAt = new Date();
+  }
+
   await db
     .update(users)
-    .set({ role: newRole })
+    .set(updateSet)
     .where(eq(users.steamid, targetSteamid));
 
   await logModAction({

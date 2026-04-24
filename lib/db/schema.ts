@@ -284,6 +284,13 @@ export const users = pgTable(
     ageGateAppealHandledAt: timestamp("age_gate_appeal_handled_at", {
       withTimezone: true,
     }),
+    // First time this user was promoted to moderator or higher. Preserved
+    // across demotions — re-promoted users keep their original date. Null
+    // for users who've never held a mod+ role. Display only while current
+    // role is still mod+ (see /profile/[steamid]).
+    moderatorSinceAt: timestamp("moderator_since_at", {
+      withTimezone: true,
+    }),
   },
   (t) => [
     index("users_role_idx").on(t.role),
