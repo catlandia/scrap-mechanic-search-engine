@@ -14,7 +14,7 @@ The admin backend is gated at `/admin/*` by the middleware, requiring a Steam lo
 | `/admin/triage` | Mod+ | Review pending items |
 | `/admin/queue` | Mod+ | Confirmed-tag queue for approved items |
 | `/admin/tags` | Mod+ | Create/manage taxonomy (creator + created_at stamped since V9.1) |
-| `/admin/audit` | Mod+ | Mod action audit log (V9.1+). Filter by actor/action/target; paged 50 rows. |
+| `/admin/audit` | Creator | Mod action audit log (V9.1+, Creator-only since V9.3). Filter by actor/action/target; paged 50 rows. |
 | `/admin/ingest` | Creator | Ingest run history + manual trigger. Creator-only since V9.0 — manual runs burn Steam API quota and can reshape the catalogue wholesale. |
 | `/admin/reports` | Mod+ | Community moderation reports |
 | `/admin/archive` | Mod+ (view only) | Archived creations |
@@ -79,7 +79,7 @@ All helpers check `effectiveRole` (ban-aware), not `user.role` directly. **Every
 
 ### Audit log (V9.1+)
 
-Every non-trivial admin server action calls `logModAction({ actor, action, targetType, targetId, summary, metadata })` from `lib/audit/log.ts` on success. Rows land in `mod_actions` and surface at `/admin/audit`. Helper is never-throws so a failed insert can't unwind the mod action itself.
+Every non-trivial admin server action calls `logModAction({ actor, action, targetType, targetId, summary, metadata })` from `lib/audit/log.ts` on success. Rows land in `mod_actions` and surface at `/admin/audit` (Creator-only view since V9.3 — the log exists for the Creator to review coverage on return, not for mods to self-audit or look at each other). Helper is never-throws so a failed insert can't unwind the mod action itself.
 
 Action naming is `<noun>.<verb>` and stable — external consumers (filter UI, dashboards) match on these exact strings:
 

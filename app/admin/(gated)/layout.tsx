@@ -17,11 +17,11 @@ const baseNav = [
   { href: "/admin/appeals", label: "Appeals" },
   { href: "/admin/archive", label: "Archive" },
   { href: "/admin/tags", label: "Tags" },
-  { href: "/admin/audit", label: "Audit" },
 ];
 const creatorNav = [
   { href: "/admin/add", label: "Add" },
   { href: "/admin/ingest", label: "Ingest" },
+  { href: "/admin/audit", label: "Audit" },
   { href: "/admin/suggestions", label: "Suggestions" },
   { href: "/admin/changelog", label: "Changelog" },
   { href: "/admin/users", label: "Users" },

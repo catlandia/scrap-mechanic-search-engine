@@ -3,6 +3,8 @@ import { and, desc, eq, sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import { modActions, users } from "@/lib/db/schema";
 import { parsePageIndex } from "@/lib/db/queries";
+import { getCurrentUser } from "@/lib/auth/session";
+import { effectiveRole, isCreator } from "@/lib/auth/roles";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +22,20 @@ export default async function AuditPage({
 }: {
   searchParams: SearchParams;
 }) {
+  const user = await getCurrentUser();
+  if (!user || !isCreator(effectiveRole(user))) {
+    return (
+      <div className="mx-auto max-w-2xl rounded-lg border border-purple-500/40 bg-purple-500/10 p-6 text-sm">
+        <div className="text-lg font-semibold text-purple-200">Creator only.</div>
+        <p className="mt-2 text-purple-100/80">
+          The audit feed is reserved for the site Creator. Moderators are
+          trusted to exercise their tools — the log exists so the Creator
+          can review coverage when they return, not to surveil the team.
+        </p>
+      </div>
+    );
+  }
+
   const sp = await searchParams;
   const pageIndex = parsePageIndex(sp.page);
   const actorFilter = (sp.actor ?? "").trim();
