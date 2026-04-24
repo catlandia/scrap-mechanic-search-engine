@@ -75,14 +75,28 @@ npm run db:push
 - `0002–0009` — community features, roles, comments, suggestions, votes
 - `0010` — `hard_banned` column on users (V4.8)
 
-Always run `db:migrate` against the production Neon DB after deploying schema changes.
+Migrations also run automatically during every Vercel build — `scripts/migrate.ts` sits between the asset-fetch scripts and `next build` in `package.json`'s `build` command. This means a schema change plus its code change can ship together in one push: the migration runs before `next build`, Neon gets the new column, and the new code finds it there. If a migration fails the whole deploy fails (fail-fast), and prod stays on the previous working version.
+
+---
+
+## Deploying with a visitor countdown (`npm run deploy`)
+
+For human-initiated pushes, run `npm run deploy` instead of `git push`. The script:
+
+1. Writes a row to `deploy_announcements` with `scheduled_at = now() + 60s`.
+2. Every page on the live site starts showing a sticky red top-bar countdown (`components/DeployBanner.tsx` polls `/api/deploy-announcement` every 8s, ticks locally at ~30fps for smooth milliseconds, pulses under 10s).
+3. Counts down in the terminal for 60 seconds.
+4. Runs `git push` → triggers Vercel build → runs migrations → deploys.
+5. The banner automatically shows "Deploying now — please wait…" for a 30-second grace window once the countdown hits zero, then self-hides.
+
+This gives every active visitor warning before the site flickers through a rolling deploy. Skip it for docs-only or backend-only changes where no visitor will notice the redeploy.
 
 ---
 
 ## Build
 
 ```bash
-npm run build        # type-check + bundle
+npm run build        # runs: fetch-captcha → fetch-blockdle → migrate → next build
 npm run typecheck    # tsc --noEmit (CI check)
 npm run lint         # next lint
 ```

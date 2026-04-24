@@ -96,6 +96,20 @@ One row per Steam account that has ever logged in.
 | `ageGateAppealHandledAt` | timestamptz NULL | Set when a mod grants or dismisses an age-gate appeal. Drives the `/admin/appeals` filter: the queue only shows users whose latest appeal was submitted after this timestamp (or whose timestamp is null). |
 | `moderatorSinceAt` | timestamptz NULL | Stamped the first time `setUserRole` promotes a user to moderator-or-higher. Preserved across demotions — if the same user is later demoted and re-promoted, the original date stands. Display on `/profile/[steamid]` is gated on the user currently being mod+, so demoted users stop seeing the stat even though the column keeps the history. Migration 0033 backfills from the earliest `user.setRole` audit entry whose `metadata.to ∈ mod+`, falling back to `siteJoinedAt` for the Creator and any pre-V9.1 grants. |
 
+---
+
+### `deploy_announcements`
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | serial PK | |
+| `scheduledAt` | timestamptz | Moment the banner's countdown hits zero — typically `now() + 60s` when `scripts/deploy.ts` inserts the row. |
+| `createdAt` | timestamptz | Defaults to `now()`. Preserved so the table doubles as a deploy log. |
+
+**Indexes:** `scheduled_at DESC` (fast lookup of the latest active row).
+
+Written by `scripts/deploy.ts` (invoked via `npm run deploy`) 60 seconds before pushing. Read by `getActiveDeployAnnouncement()` — keeps the row "active" for 30s past `scheduledAt` to match the client banner's "Deploying now…" grace window. Rows are never deleted.
+
 **Indexes:** `role`, `bannedUntil`
 
 ---

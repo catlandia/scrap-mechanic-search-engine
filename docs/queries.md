@@ -24,6 +24,9 @@ The denormalized `siteWeightedUp/Down` columns avoid a GROUP BY join on every ca
 
 ## Public Listing Queries
 
+### `getActiveDeployAnnouncement()`
+Returns the most-recent `deploy_announcements` row whose `scheduled_at` is still within the 30-second post-countdown grace window, or `null`. Powers `/api/deploy-announcement`, which the client `DeployBanner` polls. Old rows naturally stop being returned once their grace period lapses — no cron needed to clean them up.
+
 ### `getNewestApproved(limit, offset)`
 Returns `status=approved` creations ordered by `approvedAt DESC`. Used on the home page's "Newest additions" section, `/new`, and `/feed.xml`.
 

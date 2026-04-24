@@ -753,9 +753,25 @@ export const changelogReads = pgTable("changelog_reads", {
     .defaultNow(),
 });
 
+// Scheduled deploy announcements. Each row represents "at scheduled_at,
+// someone is going to push a new version live." The site reads the most
+// recent row whose scheduled_at is within a short window (future or up to
+// 30s past) and renders a top-bar countdown. Inserted by `scripts/deploy.ts`
+// 60 seconds before running `git push`, so visitors see the warning before
+// Vercel starts the rebuild. Rows are never deleted — they serve as a
+// lightweight deploy log too.
+export const deployAnnouncements = pgTable("deploy_announcements", {
+  id: serial("id").primaryKey(),
+  scheduledAt: timestamp("scheduled_at", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
 export type ChangelogEntry = typeof changelogEntries.$inferSelect;
 export type NewChangelogEntry = typeof changelogEntries.$inferInsert;
 export type ChangelogRead = typeof changelogReads.$inferSelect;
+export type DeployAnnouncement = typeof deployAnnouncements.$inferSelect;
 
 export type Comment = typeof comments.$inferSelect;
 export type NewComment = typeof comments.$inferInsert;

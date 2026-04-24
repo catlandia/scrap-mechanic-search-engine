@@ -5,6 +5,7 @@ import { UserMenu } from "@/components/UserMenu";
 import { MobileNav } from "@/components/MobileNav";
 import { NavDropdown } from "@/components/NavDropdown";
 import { BetaBanner } from "@/components/BetaBanner";
+import { DeployBanner } from "@/components/DeployBanner";
 import { GuideLink } from "@/components/GuideLink";
 import { ToastProvider } from "@/components/Toast";
 import { getUnreadChangelogCount } from "@/lib/changelog/actions";
@@ -162,6 +163,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body className="min-h-screen bg-background text-foreground antialiased">
         <LocaleProvider locale={locale} dict={dict}>
         <ToastProvider>
+        <DeployBanner />
         <BetaBanner />
         <header className="sticky top-0 z-30 border-b border-foreground/10 bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70">
           <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3 sm:flex-nowrap sm:gap-x-6">

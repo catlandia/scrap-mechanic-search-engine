@@ -239,6 +239,13 @@
       "when": 1777024336632,
       "tag": "0033_nifty_power_man",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1777025397467,
+      "tag": "0034_black_strong_guy",
+      "breakpoints": true
     }
   ]
 }

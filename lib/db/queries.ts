@@ -10,6 +10,7 @@ import {
   creationViews,
   creationVotes,
   creations,
+  deployAnnouncements,
   favorites,
   notifications,
   reports,
@@ -17,6 +18,7 @@ import {
   tags,
   users,
   type CreationKind,
+  type DeployAnnouncement,
   type Notification,
   type NotificationTier,
 } from "./schema";
@@ -1297,4 +1299,21 @@ export async function getUserSubmissions(userId: string, limit = 50, offset = 0)
     .orderBy(desc(creations.ingestedAt))
     .limit(limit)
     .offset(offset);
+}
+
+/**
+ * Returns the most-recent deploy announcement whose scheduled moment is
+ * within the active window (up to 30 seconds past), or null. The 30-second
+ * tail matches the client banner's "Deploying now — please wait…" grace
+ * period — once the tail elapses the banner disappears on its own.
+ */
+export async function getActiveDeployAnnouncement(): Promise<DeployAnnouncement | null> {
+  const db = getDb();
+  const [row] = await db
+    .select()
+    .from(deployAnnouncements)
+    .where(sql`${deployAnnouncements.scheduledAt} + interval '30 seconds' > now()`)
+    .orderBy(desc(deployAnnouncements.scheduledAt))
+    .limit(1);
+  return row ?? null;
 }
