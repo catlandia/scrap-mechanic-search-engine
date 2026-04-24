@@ -33,15 +33,32 @@ Both endpoints check `Authorization: Bearer <CRON_SECRET>` before running.
 
 ```ts
 runIngest({
-  kinds?: SteamKind[],        // default: ALL_KINDS
-  pagesPerKind?: number,      // default: 1 (cron); up to 20 (manual trigger)
-  numPerPage?: number,        // default: 50
+  kinds?: SteamKind[],             // default: ALL_KINDS
+  pagesPerKind?: number,           // default: 5 — hard page ceiling per kind
+  numPerPage?: number,             // default: 50
+  minNewPerKind?: number,          // default: 0 (no early stop). When > 0,
+                                   // stop paging a kind once this many
+                                   // novel-for-us items are collected.
+  order?: "trend" | "new",         // default: "trend" — RankedByTrend vs
+                                   // RankedByPublicationDate
 })
 ```
 
 ### Manual trigger
 
-The admin can trigger ingest from `/admin/ingest` with an optional `pagesPerKind` override (1–20). This is useful for deep-scanning after a gap or when seeding a fresh database.
+The admin can trigger ingest from `/admin/ingest` with three controls:
+
+- **Order** — `Best (trending)` or `Newest`. Picks the Steam ranking the
+  pipeline pages through. Newest is useful when the trending list is
+  dominated by already-triaged items and we want the freshest uploads
+  regardless of popularity.
+- **Pages per kind** — upper page ceiling per kind (1–20).
+- **Kinds** — checkboxes for each SteamKind. Unticking a box excludes that
+  kind from the run entirely; leaving all ticked means "everything".
+
+Manual runs pass `minNewPerKind = 50` so already-decided items don't burn
+the page budget — the pipeline keeps paging past them until it finds a
+fresh page worth of novel items per kind (bounded by `pagesPerKind`).
 
 ---
 

@@ -7,6 +7,8 @@ import { FormSubmitButton } from "@/components/FormSubmitButton";
 import { IngestProgress } from "@/components/admin/IngestProgress";
 import { getCurrentUser } from "@/lib/auth/session";
 import { effectiveRole, isCreator } from "@/lib/auth/roles";
+import { ALL_KINDS } from "@/lib/ingest/pipeline";
+import { STEAM_KIND_TAGS } from "@/lib/steam/client";
 
 export const dynamic = "force-dynamic";
 
@@ -48,15 +50,26 @@ export default async function IngestPage() {
           <h1 className="text-2xl font-semibold">Ingest runs</h1>
           <p className="text-sm text-foreground/50">
             Most recent 20 runs. Already-approved and already-rejected items
-            are skipped entirely, so bumping pages-per-kind digs deeper into
-            the Workshop trending list instead of re-scanning the top.
+            are skipped entirely, so the pipeline keeps paging past them
+            until it gathers genuinely new items per kind.
           </p>
         </div>
         <form
           action={triggerIngest}
-          className="flex w-full max-w-md flex-col gap-2 rounded-md border border-border bg-card p-3 sm:w-auto"
+          className="flex w-full max-w-md flex-col gap-3 rounded-md border border-border bg-card p-3 sm:w-auto"
         >
-          <div className="flex items-end gap-2">
+          <div className="flex flex-wrap items-end gap-2">
+            <label className="flex flex-col gap-1 text-xs text-foreground/60">
+              Order
+              <select
+                name="order"
+                defaultValue="trend"
+                className="rounded border border-border bg-background px-2 py-1 text-sm text-foreground"
+              >
+                <option value="trend">Best (trending)</option>
+                <option value="new">Newest</option>
+              </select>
+            </label>
             <label className="flex flex-col gap-1 text-xs text-foreground/60">
               Pages per kind
               <input
@@ -77,6 +90,25 @@ export default async function IngestPage() {
               Run ingest now
             </FormSubmitButton>
           </div>
+          <fieldset className="flex flex-col gap-1">
+            <legend className="text-xs text-foreground/60">
+              Kinds (leave all ticked for everything)
+            </legend>
+            <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-foreground/80 sm:grid-cols-3">
+              {ALL_KINDS.map((k) => (
+                <label key={k} className="flex items-center gap-1.5">
+                  <input
+                    type="checkbox"
+                    name="kinds"
+                    value={k}
+                    defaultChecked
+                    className="h-3.5 w-3.5 rounded border-border bg-background accent-accent"
+                  />
+                  {STEAM_KIND_TAGS[k]}
+                </label>
+              ))}
+            </div>
+          </fieldset>
           {/* Inside the form so useFormStatus sees it. Component self-hides
               when there's nothing in flight. */}
           <IngestProgress />

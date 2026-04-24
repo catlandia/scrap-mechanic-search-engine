@@ -50,10 +50,58 @@ export function DeployBanner() {
   // sting doesn't retrigger every render tick once remaining <= 0.
   const countdownPlayedForRef = useRef<number | null>(null);
   const zeroPlayedForRef = useRef<number | null>(null);
-  // Keeps a handle on the countdown jingle's Audio element so the zero-hit
-  // sting can cut it off mid-play — the sting always wins, regardless of
-  // how long the jingle file is.
+  // Pre-allocated Audio elements so mobile browsers can play them later.
+  // Mobile Safari / Chrome block `new Audio(src).play()` when the call
+  // doesn't happen inside a user-gesture stack; the banner's audio fires
+  // reactively in response to a server poll, so creating the elements on
+  // demand always hits that block. We create them on mount and unlock
+  // them the first time the user touches the page — once unlocked, later
+  // .play() calls on the same element succeed without a fresh gesture.
   const countdownAudioRef = useRef<HTMLAudioElement | null>(null);
+  const stingAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const countdown = new Audio("/sfx/deploy-countdown.mp3");
+    const sting = new Audio("/sfx/deploy-live.mp3");
+    countdown.preload = "auto";
+    sting.preload = "auto";
+    countdownAudioRef.current = countdown;
+    stingAudioRef.current = sting;
+
+    let unlocked = false;
+    const unlock = () => {
+      if (unlocked) return;
+      unlocked = true;
+      // Prime each element with a muted play/pause inside the gesture
+      // stack. iOS treats this as "the user authorised this element";
+      // subsequent unmuted play() calls on the same element work.
+      for (const a of [countdown, sting]) {
+        a.muted = true;
+        const p = a.play();
+        if (p && typeof p.then === "function") {
+          p.then(() => {
+            a.pause();
+            a.currentTime = 0;
+            a.muted = false;
+          }).catch(() => {
+            a.muted = false;
+          });
+        }
+      }
+      document.removeEventListener("pointerdown", unlock);
+      document.removeEventListener("touchstart", unlock);
+      document.removeEventListener("keydown", unlock);
+    };
+    document.addEventListener("pointerdown", unlock);
+    document.addEventListener("touchstart", unlock, { passive: true });
+    document.addEventListener("keydown", unlock);
+    return () => {
+      document.removeEventListener("pointerdown", unlock);
+      document.removeEventListener("touchstart", unlock);
+      document.removeEventListener("keydown", unlock);
+    };
+  }, []);
 
   useEffect(() => {
     cancelledRef.current = false;
@@ -119,8 +167,9 @@ export function DeployBanner() {
     if (countdownPlayedForRef.current === announcement.id) return;
     if (announcement.completedAt !== null) return;
     countdownPlayedForRef.current = announcement.id;
-    const a = new Audio("/sfx/deploy-countdown.mp3");
-    countdownAudioRef.current = a;
+    const a = countdownAudioRef.current;
+    if (!a) return;
+    a.currentTime = 0;
     a.play().catch(() => {});
   }, [announcement]);
 
@@ -135,12 +184,13 @@ export function DeployBanner() {
     if (announcement.scheduledAt - serverNow > 0) return;
     zeroPlayedForRef.current = announcement.id;
     const prev = countdownAudioRef.current;
-    if (prev) {
+    if (prev && !prev.paused) {
       prev.pause();
       prev.currentTime = 0;
-      countdownAudioRef.current = null;
     }
-    const a = new Audio("/sfx/deploy-live.mp3");
+    const a = stingAudioRef.current;
+    if (!a) return;
+    a.currentTime = 0;
     a.play().catch(() => {});
   }, [announcement, now, serverOffset]);
 

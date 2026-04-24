@@ -15,7 +15,8 @@ import {
   tags,
   users,
 } from "@/lib/db/schema";
-import { runIngest } from "@/lib/ingest/pipeline";
+import { ALL_KINDS, runIngest, type IngestOrder } from "@/lib/ingest/pipeline";
+import type { SteamKind } from "@/lib/steam/client";
 import { CREATION_KINDS, ingestRuns, type IngestProgress } from "@/lib/db/schema";
 import { getCurrentUser, isBanned } from "@/lib/auth/session";
 import { effectiveRole, isModerator } from "@/lib/auth/roles";
@@ -345,21 +346,46 @@ export async function getLatestIngestProgress(): Promise<{
 export async function triggerIngest(formData?: FormData): Promise<void> {
   const actor = await requireCreator();
   let pagesPerKind: number | undefined;
+  let order: IngestOrder = "trend";
+  let kinds: SteamKind[] | undefined;
   if (formData) {
     const raw = formData.get("pagesPerKind");
     const parsed = raw != null ? Number(raw) : NaN;
     if (Number.isInteger(parsed) && parsed > 0 && parsed <= 20) {
       pagesPerKind = parsed;
     }
+    const rawOrder = String(formData.get("order") ?? "");
+    if (rawOrder === "new") order = "new";
+
+    const rawKinds = formData.getAll("kinds").map(String);
+    const selected = rawKinds.filter((k): k is SteamKind =>
+      (ALL_KINDS as string[]).includes(k),
+    );
+    if (selected.length > 0 && selected.length < ALL_KINDS.length) {
+      kinds = selected;
+    }
   }
-  // Manual admin runs explicitly want to dig the depth the moderator typed —
-  // no early-stop. The cron path opts into minNewPerKind; this one doesn't.
-  await runIngest({ pagesPerKind, minNewPerKind: 0 });
+  const effectivePages = pagesPerKind ?? 5;
+  // Manual admin runs: skip already-fetched items and keep paging until we
+  // gather a fresh page worth of novel discoveries per kind, bounded by the
+  // pages ceiling the moderator typed. Without the minNewPerKind target, a
+  // run targeting the "best" list would often burn its whole page budget
+  // re-seeing the same top-of-trending items that were already decided.
+  await runIngest({
+    pagesPerKind: effectivePages,
+    minNewPerKind: 50,
+    order,
+    kinds,
+  });
   await logModAction({
     actor,
     action: "ingest.manualRun",
-    summary: `Manual ingest run (${pagesPerKind ?? "default"} pages/kind)`,
-    metadata: { pagesPerKind: pagesPerKind ?? null },
+    summary: `Manual ingest run (${pagesPerKind ?? "default"} pages/kind, order=${order}, kinds=${kinds ? kinds.join(",") : "all"})`,
+    metadata: {
+      pagesPerKind: pagesPerKind ?? null,
+      order,
+      kinds: kinds ?? null,
+    },
   });
   revalidatePath("/admin/queue");
   revalidatePath("/admin/triage");

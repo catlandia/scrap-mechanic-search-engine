@@ -13,6 +13,7 @@ import {
   detectKind,
   fetchWorkshopContributors,
   pickFullDescription,
+  QUERY_TYPE,
   queryFiles,
   resolvePlayerNames,
   STEAM_KIND_TAGS,
@@ -22,6 +23,8 @@ import {
 } from "@/lib/steam/client";
 import { classify } from "@/lib/tagger/classify";
 import { thresholdsForKind } from "./thresholds";
+
+export type IngestOrder = "trend" | "new";
 
 export interface IngestOptions {
   kinds?: SteamKind[];
@@ -40,6 +43,14 @@ export interface IngestOptions {
    * we keep digging deeper until the page yields fresh discoveries.
    */
   minNewPerKind?: number;
+  /**
+   * Which Steam ranking to page through. `trend` (default) is the current
+   * Workshop "best / trending" list; `new` is RankedByPublicationDate, the
+   * newest-first list. The pipeline skips already-decided items in either
+   * mode — so `new` keeps paging past stale top-of-new entries until fresh
+   * rows are found.
+   */
+  order?: IngestOrder;
 }
 
 export interface IngestResult {
@@ -155,9 +166,14 @@ export async function runIngest(options: IngestOptions = {}): Promise<IngestResu
   // of already-decided items stacked at the top.
   const pagesPerKind = options.pagesPerKind ?? 5;
   const numPerPage = options.numPerPage ?? 50;
-  // 0 means "no early stop" — used by manual admin runs where the moderator
-  // explicitly asked to dig a specific depth.
+  // 0 = no early stop (scan to the page ceiling). Both cron and manual runs
+  // now opt into a non-zero target so already-decided top-of-list items
+  // don't silently eat the page budget.
   const minNewPerKind = options.minNewPerKind ?? 0;
+  const queryType =
+    options.order === "new"
+      ? QUERY_TYPE.RankedByPublicationDate
+      : QUERY_TYPE.RankedByTrend;
 
   // Preload ids of items we've already approved, rejected, or creator-deleted
   // so ingest skips them completely — both the QueryFiles processing and the
@@ -261,6 +277,7 @@ export async function runIngest(options: IngestOptions = {}): Promise<IngestResu
           requiredTags: [requiredTag],
           numPerPage,
           cursor,
+          queryType,
         });
         totalFetched += items.length;
         for (const item of items) {
