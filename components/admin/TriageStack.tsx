@@ -206,6 +206,12 @@ export function TriageStack({
 
   function onPointerDown(e: React.PointerEvent<HTMLDivElement>) {
     if (busy.current) return;
+    // Don't hijack pointer events that started on an interactive child.
+    // setPointerCapture below would otherwise swallow the click and links
+    // like "Steam ↗" never navigate.
+    const target = e.target as HTMLElement;
+    if (target.closest("a, button, input, textarea, select, [role='button']"))
+      return;
     (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
     dragStart.current = e.clientX;
   }
@@ -276,11 +282,12 @@ export function TriageStack({
       </header>
 
       {/* Stack needs its own relative positioning context so the absolutely
-          positioned cards land on top of each other. Min-height is generous
-          so the short-description placeholder still looks intentional on
-          sparse items, but the card itself can grow past this via the
-          intrinsic height of its content. */}
-      <div className="relative min-h-[calc(100vh-220px)]">
+          positioned cards land on top of each other. Min-height lives on
+          the current card itself (below) — putting it on this parent would
+          stretch the parent past the current card's intrinsic height on
+          short items, which let the absolutely-positioned `next` card bleed
+          through in the gap and the sticky footer overlap that text. */}
+      <div className="relative">
         {next && (
           <TriageCardView
             key={next.id}
@@ -532,7 +539,12 @@ function TriageCardView({
       onPointerUp={onPointerUp}
       onPointerCancel={onPointerCancel}
     >
-      <div className="flex flex-col overflow-hidden rounded-xl border border-border bg-card shadow-2xl">
+      <div
+        className={cn(
+          "flex flex-col overflow-hidden rounded-xl border border-border bg-card shadow-2xl",
+          role === "current" && "min-h-[calc(100vh-220px)]",
+        )}
+      >
         <div className="relative aspect-video w-full bg-black">
           {card.thumbnailUrl ? (
             <Image
