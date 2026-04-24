@@ -3,12 +3,22 @@
 import { useEffect, useRef, useState } from "react";
 
 const POLL_MS = 8_000;
+// Once the announcement flips to completedAt but the serving build id still
+// matches what the client was loaded with, Vercel is still uploading /
+// promoting the new deployment. Poll faster during that window so the
+// reload fires within a couple of seconds of the traffic swap instead of
+// up to eight.
+const POLL_MS_WAITING_FOR_SWAP = 2_000;
 const TICK_MS = 33;
 const RELOAD_FLAG_KEY = "smse_deploy_reloaded_id";
 // Prank banners self-hide this many ms past scheduled_at, independently
 // of the server poll, so the "just kidding :^)" line disappears at the
 // same moment on every device without depending on the 8s poll cadence.
 const PRANK_TAIL_MS = 10_000;
+// Baked into the client bundle at build time (see next.config.ts). On
+// Vercel this is VERCEL_GIT_COMMIT_SHA; on local dev it's a fallback that
+// matches whatever the dev server returns, so no reload ever fires.
+const CLIENT_BUILD_ID = process.env.NEXT_PUBLIC_BUILD_ID ?? "dev";
 
 interface ActiveAnnouncement {
   id: number;
@@ -43,6 +53,7 @@ export function DeployBanner() {
     null,
   );
   const [serverOffset, setServerOffset] = useState<number>(0);
+  const [serverBuildId, setServerBuildId] = useState<string | null>(null);
   const [now, setNow] = useState<number>(() => Date.now());
   const cancelledRef = useRef(false);
   // Tracks which announcement id we've already fired each sound for so
@@ -103,8 +114,12 @@ export function DeployBanner() {
     };
   }, []);
 
+  const hasBuildSwapped =
+    serverBuildId !== null && serverBuildId !== CLIENT_BUILD_ID;
+
   useEffect(() => {
     cancelledRef.current = false;
+    let timer: ReturnType<typeof setTimeout> | null = null;
     async function poll() {
       try {
         const res = await fetch("/api/deploy-announcement", {
@@ -112,7 +127,7 @@ export function DeployBanner() {
         });
         if (!res.ok) return;
         const data = (await res.json()) as
-          | { active: false; serverNow: number }
+          | { active: false; serverNow: number; serverBuildId?: string }
           | {
               active: true;
               id: number;
@@ -120,6 +135,7 @@ export function DeployBanner() {
               completedAt: string | null;
               isPrank?: boolean;
               serverNow: number;
+              serverBuildId?: string;
             };
         if (cancelledRef.current) return;
         // Correct for any clock skew between this device and the server.
@@ -127,6 +143,7 @@ export function DeployBanner() {
         // this response; one-way network latency introduces a small error
         // (~ms to tens of ms) which is invisible at second-level display.
         setServerOffset(data.serverNow - Date.now());
+        if (data.serverBuildId) setServerBuildId(data.serverBuildId);
         if (!data.active) {
           setAnnouncement(null);
           return;
@@ -145,13 +162,30 @@ export function DeployBanner() {
         // state stays on screen instead of flickering off.
       }
     }
+    function schedule(delay: number) {
+      if (cancelledRef.current) return;
+      timer = setTimeout(async () => {
+        await poll();
+        // Poll faster while we're waiting for Vercel to swap traffic to
+        // the new bundle; the announcement is marked complete but the
+        // serving deployment hasn't flipped yet. Slow back down otherwise.
+        const waitingForSwap =
+          announcement?.completedAt != null &&
+          !announcement.isPrank &&
+          !hasBuildSwapped;
+        schedule(waitingForSwap ? POLL_MS_WAITING_FOR_SWAP : POLL_MS);
+      }, delay);
+    }
     poll();
-    const id = setInterval(poll, POLL_MS);
+    schedule(POLL_MS);
     return () => {
       cancelledRef.current = true;
-      clearInterval(id);
+      if (timer) clearTimeout(timer);
     };
-  }, []);
+    // We intentionally recreate the poll loop when the completed/swap state
+    // changes so the cadence can step down from 8s to 2s as soon as we see
+    // completedAt without waiting one full slow poll first.
+  }, [announcement?.completedAt, announcement?.isPrank, hasBuildSwapped]);
 
   useEffect(() => {
     if (announcement === null) return;
@@ -194,28 +228,39 @@ export function DeployBanner() {
     a.play().catch(() => {});
   }, [announcement, now, serverOffset]);
 
-  // Auto-reload once the deploy is marked complete, but only once per
-  // announcement — sessionStorage flag keeps the new page from reloading
-  // itself in a loop if completedAt is still within the 2-minute query
-  // window on the fresh bundle. Prank rows never reach this path because
+  // Auto-reload only once the deploy is marked complete AND the serving
+  // deployment's build id has flipped to something other than the one this
+  // tab was loaded from. complete-deploy.ts stamps completedAt at the end
+  // of `next build`, but Vercel may still be uploading lambdas + warming
+  // the CDN for another 30–60s after that — reloading on completedAt alone
+  // sometimes landed visitors back on the OLD bundle. Once hasBuildSwapped
+  // is true we know routing is already on the new deployment, so the
+  // reload lands them on the fresh code. sessionStorage flag keeps the
+  // fresh page from reloading itself in a loop during the 2-minute
+  // completed-tail window. Prank rows never reach this path because
   // completedAt stays null for their entire lifecycle.
   useEffect(() => {
     if (!announcement || announcement.completedAt === null) return;
     if (announcement.isPrank) return;
+    if (!hasBuildSwapped) return;
     if (typeof window === "undefined") return;
     const seenId = window.sessionStorage.getItem(RELOAD_FLAG_KEY);
     if (seenId === String(announcement.id)) return;
     window.sessionStorage.setItem(RELOAD_FLAG_KEY, String(announcement.id));
     const t = setTimeout(() => window.location.reload(), 1500);
     return () => clearTimeout(t);
-  }, [announcement]);
+  }, [announcement, hasBuildSwapped]);
 
   if (!announcement) return null;
 
-  // If this announcement was already the reason for a reload, it's the
-  // same visit — don't show the "just completed" state again.
+  // If this announcement was already the reason for a reload AND the new
+  // bundle is already serving, we're on the fresh bundle post-reload —
+  // hide the banner. If completedAt is set but the build id still matches
+  // the old one, we're on the OLD tab waiting for the swap; keep showing
+  // the banner so the user sees progress instead of an empty bar.
   if (
     announcement.completedAt !== null &&
+    hasBuildSwapped &&
     typeof window !== "undefined" &&
     window.sessionStorage.getItem(RELOAD_FLAG_KEY) === String(announcement.id)
   ) {
@@ -244,8 +289,12 @@ export function DeployBanner() {
     >
       {announcement.isPrank && remaining <= 0 ? (
         <span>just kidding :^)</span>
-      ) : isCompleted ? (
+      ) : isCompleted && hasBuildSwapped ? (
         <span>✅ New version is live — reloading the page…</span>
+      ) : isCompleted ? (
+        <span>
+          New version built — waiting for it to go live on the CDN…
+        </span>
       ) : isDeploying ? (
         <span>
           Deploying now — the page will auto-refresh when the new version is
