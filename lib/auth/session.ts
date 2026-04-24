@@ -4,8 +4,16 @@ import { cache } from "react";
 import { and, eq, isNull, lt, or, sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import { users, type User } from "@/lib/db/schema";
+import { getPlayerSummary, getSmPlaytimeMinutes } from "@/lib/steam/client";
 
 export const SESSION_COOKIE_NAME = "smse_session";
+
+// How old the Steam profile snapshot (persona name, avatar, playtime) can
+// get before getCurrentUser re-pulls it from the Steam Web API. 10 minutes
+// is tight enough that a rename feels near-real-time on the next visit,
+// loose enough that casual page-load bursts don't hammer Steam's quota.
+// At worst one fetch per user per 10 minutes.
+const PROFILE_REFRESH_STALE_MS = 10 * 60 * 1000;
 
 export interface UserSession {
   steamid?: string;
@@ -48,6 +56,12 @@ export async function getUserSession() {
  * Hard-banned users always resolve as null — their session cookie is
  * effectively dead weight, and routes that depend on getCurrentUser will
  * treat them as ghosts until they sign out or the ban lifts.
+ *
+ * Steam profile data (persona name, avatar, playtime) is re-pulled from
+ * the Steam Web API when it's older than PROFILE_REFRESH_STALE_MS so a
+ * user renaming themselves on Steam sees the change reflected on the site
+ * on their next visit, without having to sign out and back in. At most
+ * one Steam API call per user per refresh window.
  */
 export const getCurrentUser = cache(async (): Promise<User | null> => {
   const session = await getUserSession();
@@ -80,8 +94,70 @@ export const getCurrentUser = cache(async (): Promise<User | null> => {
   } catch {
     // Presence tracking is best-effort — never let it block auth.
   }
-  return user;
+
+  return await maybeRefreshSteamProfile(user);
 });
+
+async function maybeRefreshSteamProfile(user: User): Promise<User> {
+  const apiKey = process.env.STEAM_API_KEY;
+  if (!apiKey) return user;
+
+  const lastRefresh = user.profileRefreshedAt?.getTime() ?? 0;
+  const staleMs = Date.now() - lastRefresh;
+  if (staleMs < PROFILE_REFRESH_STALE_MS) return user;
+
+  try {
+    const [profile, playtime] = await Promise.all([
+      getPlayerSummary(apiKey, user.steamid),
+      getSmPlaytimeMinutes(apiKey, user.steamid).catch(() => null),
+    ]);
+
+    if (!profile) {
+      // Couldn't load the summary but Steam didn't throw — just stamp the
+      // timestamp so we don't retry immediately on every subsequent
+      // request. The existing snapshot stays.
+      const db = getDb();
+      await db
+        .update(users)
+        .set({ profileRefreshedAt: sql`now()` })
+        .where(eq(users.steamid, user.steamid));
+      return { ...user, profileRefreshedAt: new Date() };
+    }
+
+    const nextPersona = profile.personaname ?? user.personaName;
+    const nextAvatar =
+      profile.avatarfull ?? profile.avatarmedium ?? user.avatarUrl;
+    const nextProfileUrl = profile.profileurl ?? user.profileUrl;
+    const nextPlaytime = playtime ?? user.smPlaytimeMinutes;
+    const refreshedAt = new Date();
+
+    const db = getDb();
+    await db
+      .update(users)
+      .set({
+        personaName: nextPersona,
+        avatarUrl: nextAvatar,
+        profileUrl: nextProfileUrl,
+        smPlaytimeMinutes: nextPlaytime,
+        profileRefreshedAt: sql`now()`,
+      })
+      .where(eq(users.steamid, user.steamid));
+
+    return {
+      ...user,
+      personaName: nextPersona,
+      avatarUrl: nextAvatar,
+      profileUrl: nextProfileUrl,
+      smPlaytimeMinutes: nextPlaytime,
+      profileRefreshedAt: refreshedAt,
+    };
+  } catch {
+    // Steam API hiccup — return the stale snapshot, try again next
+    // request. Not stamping profileRefreshedAt means a subsequent
+    // request will retry rather than wait a full refresh window.
+    return user;
+  }
+}
 
 export function isBanned(user: User | null | undefined): boolean {
   if (!user) return false;

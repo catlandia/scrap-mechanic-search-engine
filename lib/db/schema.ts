@@ -291,6 +291,14 @@ export const users = pgTable(
     moderatorSinceAt: timestamp("moderator_since_at", {
       withTimezone: true,
     }),
+    // Last time we re-pulled this user's Steam profile (persona name,
+    // avatar, playtime). Bumped in getCurrentUser on a 10-minute cadence
+    // so a user renaming themselves on Steam sees the new name reflected
+    // across the site on their next visit without having to sign out /
+    // back in. Null = never refreshed post-signup.
+    profileRefreshedAt: timestamp("profile_refreshed_at", {
+      withTimezone: true,
+    }),
   },
   (t) => [
     index("users_role_idx").on(t.role),

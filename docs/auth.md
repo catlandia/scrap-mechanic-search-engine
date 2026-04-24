@@ -53,6 +53,8 @@ GET /auth/logout
 
 `getCurrentUser()` is wrapped in React's `cache()` so it runs at most once per request regardless of how many server components call it. Side effect: bumps the signed-in user's `lastSeenAt` at most once per minute via a conditional UPDATE — this powers the footer's "online now" counter. Wrapped in try/catch so a DB hiccup on the presence write never breaks auth.
 
+**Steam profile refresh (V9.7).** The persona name, avatar, and playtime on the `users` row are snapshots taken during sign-in, so if a user renames themselves on Steam the site would keep showing the old name until they signed out and back in. `getCurrentUser` now re-pulls the Steam Web API when `profileRefreshedAt` is either null or older than 10 minutes: one `GetPlayerSummaries` call + one `GetOwnedGames` call for playtime, then an UPDATE that rewrites persona/avatar/profile URL/playtime and stamps `profileRefreshedAt = now()`. At most one pair of Steam API calls per user per 10 minutes; a STEAM_API_KEY miss or Steam-side hiccup silently falls back to the stale snapshot (not stamping the timestamp so the next request retries). Everywhere that renders a user's name reads `users.persona_name` at query time, so a single update propagates site-wide.
+
 **`isBanned(user)`** — returns `true` if `bannedUntil` is in the future.
 **`isMuted(user)`** — returns `true` if `mutedUntil` is in the future.
 
