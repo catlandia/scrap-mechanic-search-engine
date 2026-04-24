@@ -168,6 +168,14 @@ function orderByForSort(sort: SortMode, q?: string): SQL {
   }
 }
 
+// Tiles ship in large batches (terrain packs, full map sets) and would
+// otherwise crowd out every other kind in mixed listings. This condition
+// keeps roughly 25% of them — a stable per-row hash so the visible set is
+// deterministic across requests, pagination, and cache. The /tiles kind
+// page and kind-scoped /[kind] route skip this so users who explicitly
+// ask for tiles still see the full catalogue.
+export const TILE_THIN_CONDITION = sql`(${creations.kind} != 'tile' OR (abs(hashtext(${creations.id})) % 4) = 0)`;
+
 export async function getNewestApproved(
   limit = 24,
   offset = 0,
@@ -176,7 +184,7 @@ export async function getNewestApproved(
   return db
     .select(cardColumns)
     .from(creations)
-    .where(eq(creations.status, "approved"))
+    .where(and(eq(creations.status, "approved"), TILE_THIN_CONDITION))
     .orderBy(desc(creations.approvedAt))
     .limit(limit)
     .offset(offset);
@@ -284,6 +292,9 @@ export async function searchApproved(
 
   if (filters.kind) {
     where.push(eq(creations.kind, filters.kind));
+  } else {
+    // No explicit kind → this is a cross-kind search, apply tile thinning.
+    where.push(TILE_THIN_CONDITION);
   }
 
   if (filters.tagSlugs && filters.tagSlugs.length > 0) {
