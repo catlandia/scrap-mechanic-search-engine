@@ -37,13 +37,13 @@ export const metadata: Metadata = {
     siteName: "Scrap Mechanic Search Engine",
     url: "/",
     type: "website",
-    images: ["/logo.png"],
+    images: ["/logo-square.png"],
   },
   twitter: {
     card: "summary",
     title: siteTitle,
     description: siteDescription,
-    images: ["/logo.png"],
+    images: ["/logo-square.png"],
   },
 };
 
