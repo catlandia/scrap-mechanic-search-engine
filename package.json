@@ -5,7 +5,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "next dev",
-    "build": "tsx scripts/fetch-captcha-images.ts && tsx scripts/fetch-blockdle-data.ts && next build",
+    "build": "tsx scripts/fetch-captcha-images.ts && tsx scripts/fetch-blockdle-data.ts && tsx scripts/migrate.ts && next build",
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
