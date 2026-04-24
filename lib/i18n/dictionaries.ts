@@ -73,6 +73,8 @@ const en: Dictionary = {
   "creators.creationCountOne": "{count} creation",
   "creators.creationCountMany": "{count} creations",
   "creators.unknownName": "(unknown)",
+  "creators.filterAll": "All kinds",
+  "creators.filterAria": "Filter creators by kind",
 
   // /search
   "search.title": "Search",
@@ -346,6 +348,8 @@ const ru: Dictionary = {
   "creators.creationCountOne": "{count} объект",
   "creators.creationCountMany": "{count} объектов",
   "creators.unknownName": "(без имени)",
+  "creators.filterAll": "Все виды",
+  "creators.filterAria": "Фильтр авторов по виду",
 
   "search.title": "Поиск",
   "search.placeholder": "Ищите по названиям и описаниям…",
@@ -607,6 +611,8 @@ const de: Dictionary = {
   "creators.creationCountOne": "{count} Eintrag",
   "creators.creationCountMany": "{count} Einträge",
   "creators.unknownName": "(unbekannt)",
+  "creators.filterAll": "Alle Arten",
+  "creators.filterAria": "Ersteller nach Art filtern",
 
   "search.title": "Suche",
   "search.placeholder": "Titel und Beschreibungen durchsuchen…",
@@ -869,6 +875,8 @@ const pl: Dictionary = {
   "creators.creationCountOne": "{count} praca",
   "creators.creationCountMany": "{count} prac",
   "creators.unknownName": "(nieznany)",
+  "creators.filterAll": "Wszystkie rodzaje",
+  "creators.filterAria": "Filtruj twórców według rodzaju",
 
   "search.title": "Szukaj",
   "search.placeholder": "Przeszukuj tytuły i opisy…",
@@ -1131,6 +1139,8 @@ const uk: Dictionary = {
   "creators.creationCountOne": "{count} робота",
   "creators.creationCountMany": "{count} робіт",
   "creators.unknownName": "(без імені)",
+  "creators.filterAll": "Усі види",
+  "creators.filterAria": "Фільтр авторів за видом",
 
   "search.title": "Пошук",
   "search.placeholder": "Шукати в назвах та описах…",
@@ -1394,6 +1404,8 @@ const zh: Dictionary = {
   "creators.creationCountOne": "{count} 件作品",
   "creators.creationCountMany": "{count} 件作品",
   "creators.unknownName": "（未知）",
+  "creators.filterAll": "全部类型",
+  "creators.filterAria": "按类型筛选创作者",
 
   "search.title": "搜索",
   "search.placeholder": "搜索标题与描述…",

@@ -69,13 +69,95 @@ export const BADGES: Record<string, BadgeDef> = {
     pill: "bg-amber-500/15 text-amber-300 border-amber-500/50",
     grantKind: "auto",
   },
+  top_creator_blueprint: {
+    slug: "top_creator_blueprint",
+    name: "Top Blueprint creator",
+    description:
+      "Currently holds the most approved Blueprint creations on the site (including co-authored items). Awarded automatically.",
+    icon: "🏗️",
+    pill: "bg-amber-500/15 text-amber-300 border-amber-500/50",
+    grantKind: "auto",
+  },
+  top_creator_mod: {
+    slug: "top_creator_mod",
+    name: "Top Mod creator",
+    description:
+      "Currently holds the most approved Mod creations on the site (including co-authored items). Awarded automatically.",
+    icon: "🔧",
+    pill: "bg-amber-500/15 text-amber-300 border-amber-500/50",
+    grantKind: "auto",
+  },
+  top_creator_world: {
+    slug: "top_creator_world",
+    name: "Top World creator",
+    description:
+      "Currently holds the most approved World creations on the site (including co-authored items). Awarded automatically.",
+    icon: "🌍",
+    pill: "bg-amber-500/15 text-amber-300 border-amber-500/50",
+    grantKind: "auto",
+  },
+  top_creator_challenge: {
+    slug: "top_creator_challenge",
+    name: "Top Challenge creator",
+    description:
+      "Currently holds the most approved Challenge creations on the site (including co-authored items). Awarded automatically.",
+    icon: "🎯",
+    pill: "bg-amber-500/15 text-amber-300 border-amber-500/50",
+    grantKind: "auto",
+  },
+  top_creator_tile: {
+    slug: "top_creator_tile",
+    name: "Top Tile creator",
+    description:
+      "Currently holds the most approved Tile creations on the site (including co-authored items). Awarded automatically.",
+    icon: "🧩",
+    pill: "bg-amber-500/15 text-amber-300 border-amber-500/50",
+    grantKind: "auto",
+  },
+  top_creator_custom_game: {
+    slug: "top_creator_custom_game",
+    name: "Top Custom-Game creator",
+    description:
+      "Currently holds the most approved Custom-Game creations on the site (including co-authored items). Awarded automatically.",
+    icon: "🎮",
+    pill: "bg-amber-500/15 text-amber-300 border-amber-500/50",
+    grantKind: "auto",
+  },
+  top_creator_terrain_asset: {
+    slug: "top_creator_terrain_asset",
+    name: "Top Terrain creator",
+    description:
+      "Currently holds the most approved Terrain Asset creations on the site (including co-authored items). Awarded automatically.",
+    icon: "🏔️",
+    pill: "bg-amber-500/15 text-amber-300 border-amber-500/50",
+    grantKind: "auto",
+  },
+  top_creator_other: {
+    slug: "top_creator_other",
+    name: "Top Other creator",
+    description:
+      "Currently holds the most approved Other creations on the site (including co-authored items). Awarded automatically.",
+    icon: "⭐",
+    pill: "bg-amber-500/15 text-amber-300 border-amber-500/50",
+    grantKind: "auto",
+  },
 };
 
 // Auto-managed badges are granted/revoked by the system (not by mods or
 // the creator's /admin/badges autogrant allowlist). Listed here so the
 // /admin/badges + /admin/users UIs can hide their grant buttons and the
 // backfill script can skip them.
-export const SYSTEM_AUTO_BADGES: readonly string[] = ["top_creator"];
+export const SYSTEM_AUTO_BADGES: readonly string[] = [
+  "top_creator",
+  "top_creator_blueprint",
+  "top_creator_mod",
+  "top_creator_world",
+  "top_creator_challenge",
+  "top_creator_tile",
+  "top_creator_custom_game",
+  "top_creator_terrain_asset",
+  "top_creator_other",
+];
 
 export function getBadge(slug: string): BadgeDef | null {
   return BADGES[slug] ?? null;

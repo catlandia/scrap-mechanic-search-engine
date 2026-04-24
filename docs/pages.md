@@ -18,7 +18,7 @@ All public pages are in `app/` using Next.js 15 App Router. Server Components by
 | `/custom-games` | `app/[kind]/page.tsx` | |
 | `/terrain` | `app/[kind]/page.tsx` | |
 | `/search` | `app/search/page.tsx` | Full filter UI |
-| `/creators` | `app/creators/page.tsx` | All Workshop authors ranked by creation count, name-searchable |
+| `/creators` | `app/creators/page.tsx` | All Workshop authors ranked by creation count, name-searchable; optional `?kind=X` filter (V9.9) narrows the leaderboard to a single `CreationKind` |
 | `/creation/[id]` | `app/creation/[id]/page.tsx` | Accepts shortId or publishedfileid |
 | `/profile/[steamid]` | `app/profile/[steamid]/page.tsx` | User profile |
 | `/author/[steamid]` | `app/author/[steamid]/page.tsx` | Creator's items |

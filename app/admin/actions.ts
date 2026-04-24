@@ -39,7 +39,7 @@ import {
 } from "@/lib/badges/queries";
 import { resolveVanityUrl } from "@/lib/steam/client";
 import { logModAction } from "@/lib/audit/log";
-import { refreshTopCreatorBadge } from "@/lib/badges/top-creator";
+import { refreshAllTopCreatorBadges } from "@/lib/badges/top-creator";
 
 function parseKind(raw: FormDataEntryValue | null): string {
   const kind = String(raw ?? "other");
@@ -139,7 +139,7 @@ export async function approveCreation(formData: FormData) {
     summary: `Approved "${row?.title ?? id}" (${kind})`,
     metadata: { kind, tagCount: tagIds.length, community: !!row?.uploadedByUserId },
   });
-  await refreshTopCreatorBadge();
+  await refreshAllTopCreatorBadges();
 
   revalidatePath("/admin/queue");
   revalidatePath("/");
@@ -254,7 +254,7 @@ export async function quickApprove(formData: FormData) {
     summary: `Quick-approved "${row?.title ?? id}"`,
     metadata: { community: !!row?.uploadedByUserId },
   });
-  await refreshTopCreatorBadge();
+  await refreshAllTopCreatorBadges();
 
   revalidatePath("/admin/queue");
   revalidatePath("/");
@@ -681,7 +681,7 @@ export async function addCreation(formData: FormData) {
         metadata: { autoApprove, kind, isNew },
       });
       if (autoApprove) {
-        await refreshTopCreatorBadge();
+        await refreshAllTopCreatorBadges();
       }
 
       revalidatePath("/admin/queue");
@@ -750,7 +750,7 @@ export async function rescrapeCreatorsAction(formData: FormData) {
     summary: `Re-scraped contributors on ${creationId} (found ${result.contributors.length})`,
     metadata: { count: result.contributors.length },
   });
-  await refreshTopCreatorBadge();
+  await refreshAllTopCreatorBadges();
 
   const suffix = shortId ? `/creation/${shortId}` : `/creation/${creationId}`;
   redirect(`${suffix}?creators=ok_${result.contributors.length}`);
@@ -968,6 +968,10 @@ export async function setCreationKind(formData: FormData) {
     metadata: { from: existing.kind, to: kind },
   });
 
+  // Changing kind moves the row between per-kind crown buckets — both the
+  // old kind's leader and the new kind's leader can shift.
+  await refreshAllTopCreatorBadges();
+
   // Kind-listing pages (`/[kind]`) are force-dynamic so they re-query on
   // every request — no explicit revalidation needed for those. The
   // creation page itself and the home / /new feeds do need busting.
@@ -1024,7 +1028,7 @@ export async function deleteCreation(formData: FormData) {
     targetId: id,
     summary: `Hard-deleted "${row?.title ?? id}"`,
   });
-  await refreshTopCreatorBadge();
+  await refreshAllTopCreatorBadges();
 
   revalidatePath("/");
   revalidatePath("/new");
@@ -1242,7 +1246,7 @@ export async function archiveFromReport(formData: FormData) {
     summary: `Archived "${creationRow?.title ?? creationId}" via report #${id}${extra ? ` — ${extra}` : ""}`,
     metadata: { reportId: id, extra: extra || null, reason: row.reason },
   });
-  await refreshTopCreatorBadge();
+  await refreshAllTopCreatorBadges();
 
   revalidatePath("/admin/reports");
   revalidatePath("/admin/archive");
@@ -1307,7 +1311,7 @@ export async function archiveCreation(formData: FormData) {
     summary: `Archived "${creationRow?.title ?? id}"${note ? ` — ${note}` : ""}`,
     metadata: { note: note || null },
   });
-  await refreshTopCreatorBadge();
+  await refreshAllTopCreatorBadges();
 
   revalidatePath("/admin/archive");
   revalidatePath(`/creation/${id}`);
@@ -1354,7 +1358,7 @@ export async function restoreFromArchive(formData: FormData) {
     targetId: id,
     summary: `Restored creation ${id} from archive`,
   });
-  await refreshTopCreatorBadge();
+  await refreshAllTopCreatorBadges();
 
   revalidatePath("/admin/archive");
   revalidatePath(`/creation/${id}`);

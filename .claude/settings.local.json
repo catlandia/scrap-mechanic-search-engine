@@ -20,7 +20,11 @@
       "Bash(git commit -m ' *)",
       "Bash(npm run *)",
       "Bash(git commit *)",
-      "Bash(rm -rf \"app/api/captcha/debug\")"
+      "Bash(rm -rf \"app/api/captcha/debug\")",
+      "Bash(git pull *)",
+      "Bash(mv lib/blockdle/blocks.json.bak lib/blockdle/blocks.json)",
+      "Bash(mv lib/blockdle/icons.bak lib/blockdle/icons)",
+      "Bash(npx tsx *)"
     ],
     "deny": [
       "Bash(format *)",

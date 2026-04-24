@@ -499,87 +499,66 @@ export interface TopCreatorRow {
 // appears as both primary and co-author on the same item doesn't double-
 // count. Optional `q` filters by case-insensitive name substring.
 export async function getTopCreators(
-  opts: { q?: string; limit?: number; offset?: number } = {},
+  opts: {
+    q?: string;
+    limit?: number;
+    offset?: number;
+    kind?: CreationKind;
+  } = {},
 ): Promise<TopCreatorRow[]> {
   const db = getDb();
-  const { q = "", limit = 60, offset = 0 } = opts;
+  const { q = "", limit = 60, offset = 0, kind } = opts;
   const trimmedQ = q.trim();
   const hasQ = trimmedQ.length > 0;
   const like = `%${trimmedQ}%`;
+  const kindFilterPrimary = kind
+    ? sql`and ${creations.kind} = ${kind}`
+    : sql``;
+  const kindFilterCoauthor = kind ? sql`and c.kind = ${kind}` : sql``;
+  const nameFilter = hasQ
+    ? sql`where coalesce(u.persona_name, a.cached_name, '') ilike ${like}`
+    : sql``;
 
   // The filter (`name ilike ?`) runs against the live users.persona_name when
   // the creator has signed in, falling back to the cached creation author_name
   // — searching by whichever name the visitor is most likely to know.
-  const query = hasQ
-    ? sql`
-        with combined as (
-          select id as creation_id,
-                 ${creations.authorSteamid} as steamid,
-                 ${creations.authorName} as name
-          from ${creations}
-          where ${creations.status} = 'approved'
-            and ${creations.authorSteamid} is not null
-          union
-          select c.id,
-                 (elem->>'steamid')::text,
-                 (elem->>'name')::text
-          from ${creations} c, jsonb_array_elements(c.creators) as elem
-          where c.status = 'approved'
-        ),
-        agg as (
-          select steamid,
-                 max(name) as cached_name,
-                 count(distinct creation_id)::int as count
-          from combined
-          where steamid is not null
-          group by steamid
-        )
-        select a.steamid,
-               coalesce(u.persona_name, a.cached_name) as name,
-               u.avatar_url as avatar_url,
-               (u.steamid is not null) as signed_in,
-               a.count
-        from agg a
-        left join ${users} u on u.steamid = a.steamid
-        where coalesce(u.persona_name, a.cached_name, '') ilike ${like}
-        order by a.count desc, name asc nulls last
-        limit ${limit}
-        offset ${offset}
-      `
-    : sql`
-        with combined as (
-          select id as creation_id,
-                 ${creations.authorSteamid} as steamid,
-                 ${creations.authorName} as name
-          from ${creations}
-          where ${creations.status} = 'approved'
-            and ${creations.authorSteamid} is not null
-          union
-          select c.id,
-                 (elem->>'steamid')::text,
-                 (elem->>'name')::text
-          from ${creations} c, jsonb_array_elements(c.creators) as elem
-          where c.status = 'approved'
-        ),
-        agg as (
-          select steamid,
-                 max(name) as cached_name,
-                 count(distinct creation_id)::int as count
-          from combined
-          where steamid is not null
-          group by steamid
-        )
-        select a.steamid,
-               coalesce(u.persona_name, a.cached_name) as name,
-               u.avatar_url as avatar_url,
-               (u.steamid is not null) as signed_in,
-               a.count
-        from agg a
-        left join ${users} u on u.steamid = a.steamid
-        order by a.count desc, name asc nulls last
-        limit ${limit}
-        offset ${offset}
-      `;
+  const query = sql`
+    with combined as (
+      select id as creation_id,
+             ${creations.authorSteamid} as steamid,
+             ${creations.authorName} as name
+      from ${creations}
+      where ${creations.status} = 'approved'
+        and ${creations.authorSteamid} is not null
+        ${kindFilterPrimary}
+      union
+      select c.id,
+             (elem->>'steamid')::text,
+             (elem->>'name')::text
+      from ${creations} c, jsonb_array_elements(c.creators) as elem
+      where c.status = 'approved'
+        ${kindFilterCoauthor}
+    ),
+    agg as (
+      select steamid,
+             max(name) as cached_name,
+             count(distinct creation_id)::int as count
+      from combined
+      where steamid is not null
+      group by steamid
+    )
+    select a.steamid,
+           coalesce(u.persona_name, a.cached_name) as name,
+           u.avatar_url as avatar_url,
+           (u.steamid is not null) as signed_in,
+           a.count
+    from agg a
+    left join ${users} u on u.steamid = a.steamid
+    ${nameFilter}
+    order by a.count desc, name asc nulls last
+    limit ${limit}
+    offset ${offset}
+  `;
   const result = await db.execute(query);
   return (
     result.rows as Array<{

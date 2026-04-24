@@ -260,6 +260,13 @@
       "when": 1778500000000,
       "tag": "0036_low_ultimates",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1778600000000,
+      "tag": "0037_per_kind_top_creator_badges",
+      "breakpoints": true
     }
   ]
 }

@@ -3,6 +3,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { getTopCreators, parsePageIndex } from "@/lib/db/queries";
 import { getT } from "@/lib/i18n/server";
+import { CREATION_KINDS, type CreationKind } from "@/lib/db/schema";
+import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +17,20 @@ export const metadata: Metadata = {
 
 const PAGE_SIZE = 60;
 
-type SearchParams = Promise<{ q?: string; page?: string }>;
+// i18n keys for each kind pill's label — plural forms reuse the existing
+// `kind.*` dictionary entries already translated for /[kind] listing pages.
+const KIND_I18N_KEY: Record<CreationKind, string> = {
+  blueprint: "kind.blueprints",
+  mod: "kind.mods",
+  world: "kind.worlds",
+  challenge: "kind.challenges",
+  tile: "kind.tiles",
+  custom_game: "kind.customGames",
+  terrain_asset: "kind.terrain",
+  other: "kind.other",
+};
+
+type SearchParams = Promise<{ q?: string; page?: string; kind?: string }>;
 
 export default async function CreatorsPage({
   searchParams,
@@ -25,20 +40,28 @@ export default async function CreatorsPage({
   const sp = await searchParams;
   const q = (sp.q ?? "").trim();
   const pageIndex = parsePageIndex(sp.page, 50);
+  const activeKind = (CREATION_KINDS as readonly string[]).includes(
+    sp.kind ?? "",
+  )
+    ? (sp.kind as CreationKind)
+    : null;
 
   const rows = await getTopCreators({
     q,
     limit: PAGE_SIZE + 1,
     offset: pageIndex * PAGE_SIZE,
+    kind: activeKind ?? undefined,
   });
   const hasNext = rows.length > PAGE_SIZE;
   const displayed = rows.slice(0, PAGE_SIZE);
   const { t } = await getT();
 
-  function pageHref(target: number) {
+  function pageHref(target: number, kindOverride?: CreationKind | null) {
     const params = new URLSearchParams();
     if (q) params.set("q", q);
     if (target > 1) params.set("page", String(target));
+    const k = kindOverride === undefined ? activeKind : kindOverride;
+    if (k) params.set("kind", k);
     const s = params.toString();
     return s ? `/creators?${s}` : "/creators";
   }
@@ -50,7 +73,27 @@ export default async function CreatorsPage({
         <p className="text-sm text-foreground/60">{t("creators.subtitle")}</p>
       </header>
 
+      <nav
+        aria-label={t("creators.filterAria")}
+        className="flex flex-wrap gap-2"
+      >
+        <KindFilterPill
+          href={pageHref(1, null)}
+          label={t("creators.filterAll")}
+          active={activeKind === null}
+        />
+        {CREATION_KINDS.map((kind) => (
+          <KindFilterPill
+            key={kind}
+            href={pageHref(1, kind)}
+            label={t(KIND_I18N_KEY[kind])}
+            active={activeKind === kind}
+          />
+        ))}
+      </nav>
+
       <form action="/creators" className="flex gap-2">
+        {activeKind && <input type="hidden" name="kind" value={activeKind} />}
         <input
           type="search"
           name="q"
@@ -61,7 +104,7 @@ export default async function CreatorsPage({
         />
         {q && (
           <Link
-            href="/creators"
+            href={pageHref(1)}
             className="rounded-md border border-border px-3 py-2 text-sm text-foreground/60 hover:text-foreground"
           >
             {t("common.clear")}
@@ -154,5 +197,29 @@ export default async function CreatorsPage({
         )}
       </nav>
     </section>
+  );
+}
+
+function KindFilterPill({
+  href,
+  label,
+  active,
+}: {
+  href: string;
+  label: string;
+  active: boolean;
+}) {
+  return (
+    <Link
+      href={href}
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition",
+        active
+          ? "border-accent bg-accent/20 text-accent"
+          : "border-border bg-background/40 text-foreground/70 hover:border-accent/40 hover:text-foreground",
+      )}
+    >
+      {label}
+    </Link>
   );
 }

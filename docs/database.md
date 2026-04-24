@@ -324,7 +324,7 @@ in `lib/badges/definitions.ts`, not this table.
 **PK:** `(userId, badgeSlug)`
 **Indexes:** `badgeSlug`
 
-**Auto-managed slugs (V9.1+):** `SYSTEM_AUTO_BADGES` in `lib/badges/definitions.ts` lists badges the system rewrites itself (`top_creator`). Manual grant UI is hidden for these and `grantBadgeAction` refuses them with `badge_system_auto_managed`.
+**Auto-managed slugs (V9.1+):** `SYSTEM_AUTO_BADGES` in `lib/badges/definitions.ts` lists badges the system rewrites itself (`top_creator` plus the eight per-kind siblings `top_creator_blueprint` / `_mod` / `_world` / `_challenge` / `_tile` / `_custom_game` / `_terrain_asset` / `_other` added in V9.9). Manual grant UI is hidden for these and `grantBadgeAction` refuses them with `badge_system_auto_managed`. `refreshAllTopCreatorBadges()` in `lib/badges/top-creator.ts` is the single entry point that recomputes the overall crown + every per-kind sibling; it runs from every server action that can shift an approved count (approve, quick-approve, archive, restore, delete, admin-add auto-approve, `setCreationKind`, re-scrape creators).
 
 ---
 
