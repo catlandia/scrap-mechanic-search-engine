@@ -32,7 +32,10 @@ npm run db:migrate       # apply migrations via scripts/migrate.ts
 npm run db:push          # drizzle-kit push (dev-only shortcut)
 npm run db:studio        # Drizzle Studio GUI
 npm run db:seed          # seed categories + starter tags
+npm run deploy           # announce 60s countdown banner to live visitors, then git push
 ```
+
+**Always push via `npm run deploy`, never bare `git push`.** The script inserts a `deploy_announcements` row 60 seconds before pushing so every live visitor sees a countdown banner with SFX and has time to save/finish what they're doing before the site restarts. The countdown banner is a feature, not decoration — skipping it silently kicks anyone mid-action into a broken flow. Exception: zero-visitor moments where nobody could be impacted (very early morning, or if the working tree really has nothing visitors could notice like a README-only change) — and even then, the cost of running `npm run deploy` is sixty seconds.
 
 Env vars live in `.env.local` (see `.env.example`). Required for full operation: `DATABASE_URL`, `STEAM_API_KEY`, `CRON_SECRET`, `ADMIN_PASSWORD`, `SESSION_SECRET` (≥ 32 chars), `NEXT_PUBLIC_SITE_URL`.
 

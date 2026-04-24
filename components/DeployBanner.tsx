@@ -50,6 +50,10 @@ export function DeployBanner() {
   // sting doesn't retrigger every render tick once remaining <= 0.
   const countdownPlayedForRef = useRef<number | null>(null);
   const zeroPlayedForRef = useRef<number | null>(null);
+  // Keeps a handle on the countdown jingle's Audio element so the zero-hit
+  // sting can cut it off mid-play — the sting always wins, regardless of
+  // how long the jingle file is.
+  const countdownAudioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     cancelledRef.current = false;
@@ -116,10 +120,13 @@ export function DeployBanner() {
     if (announcement.completedAt !== null) return;
     countdownPlayedForRef.current = announcement.id;
     const a = new Audio("/sfx/deploy-countdown.mp3");
+    countdownAudioRef.current = a;
     a.play().catch(() => {});
   }, [announcement]);
 
   // Zero-hit sting — fires once the moment remaining first crosses 0.
+  // Cuts off the countdown jingle if it's still playing so the two
+  // tracks don't overlap.
   useEffect(() => {
     if (!announcement) return;
     if (zeroPlayedForRef.current === announcement.id) return;
@@ -127,6 +134,12 @@ export function DeployBanner() {
     const serverNow = now + serverOffset;
     if (announcement.scheduledAt - serverNow > 0) return;
     zeroPlayedForRef.current = announcement.id;
+    const prev = countdownAudioRef.current;
+    if (prev) {
+      prev.pause();
+      prev.currentTime = 0;
+      countdownAudioRef.current = null;
+    }
     const a = new Audio("/sfx/deploy-live.mp3");
     a.play().catch(() => {});
   }, [announcement, now, serverOffset]);

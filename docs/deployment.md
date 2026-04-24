@@ -81,15 +81,17 @@ Migrations also run automatically during every Vercel build — `scripts/migrate
 
 ## Deploying with a visitor countdown (`npm run deploy`)
 
-For human-initiated pushes, run `npm run deploy` instead of `git push`. The script:
+**Every push to `main` must go through `npm run deploy` — never bare `git push`.** The 60-second countdown isn't cosmetic. Visitors may be in the middle of something that breaks when the site restarts: composing a long comment, tagging a pending item in `/admin/triage`, filling out a `/submit` form, mid-swipe through a triage stack. The banner gives them a visible + audible heads-up so they can finish or save before the bundle flips. A bare `git push` skips all of that and silently yanks the rug out from under anyone mid-action.
+
+The only legitimate exception is a change no visitor could possibly notice (repo-internal docs, a commit to a branch other than `main`, etc.) — and the cost of running `npm run deploy` is still only 60 seconds, so erring toward running it is almost always correct.
+
+The script:
 
 1. Writes a row to `deploy_announcements` with `scheduled_at = now() + 60s`.
-2. Every page on the live site starts showing a sticky red top-bar countdown (`components/DeployBanner.tsx` polls `/api/deploy-announcement` every 8s, ticks locally at ~30fps for smooth milliseconds, pulses under 10s). Two SFX fire alongside the visual — `public/sfx/deploy-countdown.mp3` the moment a new announcement first appears on the client, and `public/sfx/deploy-live.mp3` the instant the countdown hits zero. Each is keyed per-announcement via a ref so polls + render ticks can't retrigger. `audio.play()` rejections from the browser autoplay policy are swallowed silently, so a visitor who hasn't interacted with the page still sees the banner; they just miss the sound. The same banner also serves the Creator-only fake-reboot prank from `/admin/abuse` — rows with `is_prank = true` run the identical countdown + SFX path, then swap to "just kidding :^)" at zero and self-hide 10s later; `scripts/complete-deploy.ts` explicitly skips prank rows so a real deploy landing during a prank tail doesn't stamp the wrong row as live.
+2. Every page on the live site starts showing a sticky red top-bar countdown (`components/DeployBanner.tsx` polls `/api/deploy-announcement` every 8s, ticks locally at ~30fps for smooth milliseconds, pulses under 10s). Two SFX fire alongside the visual — `public/sfx/deploy-countdown.mp3` the moment a new announcement first appears on the client, and `public/sfx/deploy-live.mp3` the instant the countdown hits zero. Each is keyed per-announcement via a ref so polls + render ticks can't retrigger. The zero-hit sting cuts off the countdown jingle mid-play if it's still going (`countdownAudioRef.pause()` then a fresh `Audio` for the sting) so the two tracks can't overlap — the sting always wins. `audio.play()` rejections from the browser autoplay policy are swallowed silently, so a visitor who hasn't interacted with the page still sees the banner; they just miss the sound. The same banner also serves the Creator-only fake-reboot prank from `/admin/abuse` — rows with `is_prank = true` run the identical countdown + SFX path, then swap to "just kidding :^)" at zero and self-hide 10s later; `scripts/complete-deploy.ts` explicitly skips prank rows so a real deploy landing during a prank tail doesn't stamp the wrong row as live.
 3. Counts down in the terminal for 60 seconds.
 4. Runs `git push` → triggers Vercel build → runs migrations → deploys.
 5. The banner holds "Deploying now — the page will auto-refresh when the new version is ready." indefinitely — it never self-hides on a timer. `scripts/complete-deploy.ts` runs at the end of the Vercel build and stamps `completed_at` on the pending announcement. Clients see that on their next poll, the banner swaps to "✅ New version is live — reloading…", and the page auto-reloads onto the new bundle (one reload per announcement, guarded by sessionStorage so the new bundle doesn't reload itself in a loop).
-
-This gives every active visitor warning before the site flickers through a rolling deploy. Skip it for docs-only or backend-only changes where no visitor will notice the redeploy.
 
 ---
 
