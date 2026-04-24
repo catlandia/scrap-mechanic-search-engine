@@ -1,5 +1,11 @@
 # Project Overview
 
+## Top priority (next up)
+
+**Design a simple square logo.** Needed for the Steam Group + Curator avatar (created 2026-04-24 at `steamcommunity.com/groups/scrapmechanicsearchengine`), and then reusable as the site favicon / OG fallback / social-share icon. Has to work at small sizes (as low as 32 px) and read well on both light and dark backgrounds. No timeline — blocks no shipped features, but every outreach surface currently uses a placeholder.
+
+---
+
 ## What this is
 
 Scrap Mechanic Search Engine is a curated public directory of Steam Workshop creations for the game Scrap Mechanic (appid 387990). Visitors browse and search by category and tags to find quality creations without drowning in low-effort content.
