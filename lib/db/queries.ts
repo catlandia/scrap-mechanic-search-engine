@@ -613,12 +613,32 @@ export async function getUserCounts(): Promise<{ total: number; online: number }
 
 export async function getAllTags() {
   const db = getDb();
-  return db.select().from(tags).orderBy(tags.name);
+  // Explicit column list so the query keeps working if newer columns
+  // (created_by_user_id / created_at from V9.1) aren't yet applied in prod.
+  // Drizzle's `.select()` shorthand emits SELECT *, which errors if any
+  // schema column doesn't physically exist in the target DB.
+  return db
+    .select({
+      id: tags.id,
+      slug: tags.slug,
+      name: tags.name,
+      categoryId: tags.categoryId,
+    })
+    .from(tags)
+    .orderBy(tags.name);
 }
 
 export async function getAllCategories() {
   const db = getDb();
-  return db.select().from(categories).orderBy(categories.name);
+  return db
+    .select({
+      id: categories.id,
+      slug: categories.slug,
+      name: categories.name,
+      description: categories.description,
+    })
+    .from(categories)
+    .orderBy(categories.name);
 }
 
 // ---------------- v2.0 community helpers ----------------

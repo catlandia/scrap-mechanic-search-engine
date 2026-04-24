@@ -13,8 +13,27 @@ export default async function TagsPage() {
   const db = getDb();
   const [user, allCategories, allTags] = await Promise.all([
     getCurrentUser(),
-    db.select().from(categories).orderBy(categories.name),
-    db.select().from(tags).orderBy(tags.name),
+    // Narrow SELECT so this keeps working before the V9.1 migration runs
+    // in prod — `SELECT *` on categories/tags would demand created_at +
+    // created_by_user_id columns that may not exist yet.
+    db
+      .select({
+        id: categories.id,
+        slug: categories.slug,
+        name: categories.name,
+        description: categories.description,
+      })
+      .from(categories)
+      .orderBy(categories.name),
+    db
+      .select({
+        id: tags.id,
+        slug: tags.slug,
+        name: tags.name,
+        categoryId: tags.categoryId,
+      })
+      .from(tags)
+      .orderBy(tags.name),
   ]);
   const creatorView = isCreator(effectiveRole(user));
 
@@ -183,8 +202,11 @@ function TagGroup({
   creatorView,
 }: {
   label: string;
-  tags: Tag[];
-  allCategories: Category[];
+  // Narrowed shape so the component takes whatever columns the page actually
+  // selected (avoids demanding V9.1's created_at/_by_user_id columns that
+  // may not yet exist in prod).
+  tags: Pick<Tag, "id" | "slug" | "name" | "categoryId">[];
+  allCategories: Pick<Category, "id" | "slug" | "name" | "description">[];
   creatorView: boolean;
 }) {
   return (

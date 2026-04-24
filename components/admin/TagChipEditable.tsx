@@ -21,8 +21,10 @@ export function TagChipEditable({
   tag,
   allCategories,
 }: {
-  tag: Tag;
-  allCategories: Category[];
+  // Narrowed Pick<> so callers that don't select V9.1's created_at columns
+  // can still pass their rows through.
+  tag: Pick<Tag, "id" | "slug" | "name" | "categoryId">;
+  allCategories: Pick<Category, "id" | "slug" | "name" | "description">[];
 }) {
   const [open, setOpen] = useState(false);
   const [state, formAction, isPending] = useActionState(saveTag, INITIAL);
