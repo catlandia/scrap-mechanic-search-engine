@@ -22,7 +22,7 @@ const en: Dictionary = {
   "nav.submit": "Submit",
   "nav.signIn": "Sign in with Steam",
   "nav.settings": "Settings",
-  "nav.minigames": "Minigames",
+  "nav.minigames": "Minigames & Others",
 
   // Kinds
   "kind.blueprints": "Blueprints",
@@ -96,10 +96,13 @@ const en: Dictionary = {
   // Creation detail page
   // Minigames
   "minigames.eyebrow": "Break room",
-  "minigames.title": "Minigames",
+  "minigames.title": "Minigames & Others",
   "minigames.subtitle":
-    "Small Scrap Mechanic-themed diversions that live on the site. New ones will show up here as they're built.",
+    "Small Scrap Mechanic-themed diversions plus a few assorted oddities that live on the site. New ones show up here as they're built.",
   "minigames.playLabel": "Play",
+  "minigames.othersLabel": "Other",
+  "minigames.gamesHeading": "Games",
+  "minigames.othersHeading": "Others",
   "minigames.comingSoon": "More coming soon",
   "minigames.backToIndex": "← Minigames",
   "minigames.reset": "Reset stats",
@@ -167,6 +170,24 @@ const en: Dictionary = {
   "minigames.blockdle.error.duplicate": "Already guessed.",
   "minigames.blockdle.stat.wins": "Wins",
   "minigames.blockdle.stat.losses": "Losses",
+
+  "minigames.silence.name": "Scrap Mechanic silence",
+  "minigames.silence.blurb":
+    "How long since Axolot posted anything to the Steam news feed? The counter is ticking.",
+  "minigames.silence.title": "Time since the last Scrap Mechanic news",
+  "minigames.silence.subtitle":
+    "Live counter reading from the official Steam news feed for Scrap Mechanic (appid 387990). Patch, announcement, dev diary — whatever lands, resets the clock.",
+  "minigames.silence.months": "Months",
+  "minigames.silence.days": "Days",
+  "minigames.silence.hours": "Hours",
+  "minigames.silence.minutes": "Minutes",
+  "minigames.silence.seconds": "Seconds",
+  "minigames.silence.totalSeconds": "{n} seconds total.",
+  "minigames.silence.lastNewsLabel": "Latest news item",
+  "minigames.silence.disclaimer":
+    "A \"month\" here is a 30-day bucket — the vibe matters more than the calendar does. Data refreshes server-side every 10 minutes.",
+  "minigames.silence.error":
+    "Couldn't reach the Steam news feed right now. Try again in a few minutes.",
 
   "creation.backToNewest": "← Back to newest",
   "creation.by": "by",
@@ -279,7 +300,7 @@ const ru: Dictionary = {
   "nav.submit": "Добавить",
   "nav.signIn": "Войти через Steam",
   "nav.settings": "Настройки",
-  "nav.minigames": "Мини-игры",
+  "nav.minigames": "Мини-игры и прочее",
 
   "kind.blueprints": "Чертежи",
   "kind.mods": "Моды",
@@ -343,10 +364,13 @@ const ru: Dictionary = {
   "card.viewOnSteam": "Открыть в Steam",
 
   "minigames.eyebrow": "Комната отдыха",
-  "minigames.title": "Мини-игры",
+  "minigames.title": "Мини-игры и прочее",
   "minigames.subtitle":
-    "Небольшие развлечения по Scrap Mechanic прямо на сайте. Новые будут появляться по мере готовности.",
+    "Небольшие развлечения по Scrap Mechanic и ещё пара странностей прямо на сайте. Новые будут появляться по мере готовности.",
   "minigames.playLabel": "Играть",
+  "minigames.othersLabel": "Прочее",
+  "minigames.gamesHeading": "Игры",
+  "minigames.othersHeading": "Прочее",
   "minigames.comingSoon": "Скоро ещё",
   "minigames.backToIndex": "← К мини-играм",
   "minigames.reset": "Сбросить",
@@ -414,6 +438,24 @@ const ru: Dictionary = {
   "minigames.blockdle.error.duplicate": "Уже угадывали.",
   "minigames.blockdle.stat.wins": "Побед",
   "minigames.blockdle.stat.losses": "Поражений",
+
+  "minigames.silence.name": "Тишина Scrap Mechanic",
+  "minigames.silence.blurb":
+    "Сколько прошло с тех пор, как Axolot что-то опубликовали в ленте новостей Steam? Таймер идёт.",
+  "minigames.silence.title": "Сколько прошло с последней новости о Scrap Mechanic",
+  "minigames.silence.subtitle":
+    "Живой счётчик читает официальную ленту новостей Steam для Scrap Mechanic (appid 387990). Патч, анонс, заметка разработчика — что бы ни появилось, таймер сбрасывается.",
+  "minigames.silence.months": "Месяцев",
+  "minigames.silence.days": "Дней",
+  "minigames.silence.hours": "Часов",
+  "minigames.silence.minutes": "Минут",
+  "minigames.silence.seconds": "Секунд",
+  "minigames.silence.totalSeconds": "Всего {n} секунд.",
+  "minigames.silence.lastNewsLabel": "Последняя новость",
+  "minigames.silence.disclaimer":
+    "«Месяц» здесь — это условные 30 дней, вайб важнее календаря. Данные обновляются на сервере раз в 10 минут.",
+  "minigames.silence.error":
+    "Сейчас не удалось получить ленту новостей Steam. Попробуйте через несколько минут.",
 
   "creation.backToNewest": "← К новым",
   "creation.by": "от",
@@ -519,7 +561,7 @@ const de: Dictionary = {
   "nav.submit": "Einreichen",
   "nav.signIn": "Mit Steam anmelden",
   "nav.settings": "Einstellungen",
-  "nav.minigames": "Minispiele",
+  "nav.minigames": "Minispiele & mehr",
 
   "kind.blueprints": "Blaupausen",
   "kind.mods": "Mods",
@@ -583,10 +625,13 @@ const de: Dictionary = {
   "card.viewOnSteam": "Auf Steam ansehen",
 
   "minigames.eyebrow": "Pausenraum",
-  "minigames.title": "Minispiele",
+  "minigames.title": "Minispiele & mehr",
   "minigames.subtitle":
-    "Kleine Scrap-Mechanic-Ablenkungen direkt auf der Seite. Neue erscheinen hier, sobald sie fertig sind.",
+    "Kleine Scrap-Mechanic-Ablenkungen plus ein paar Eigenarten direkt auf der Seite. Neues erscheint hier, sobald es fertig ist.",
   "minigames.playLabel": "Spielen",
+  "minigames.othersLabel": "Sonstiges",
+  "minigames.gamesHeading": "Spiele",
+  "minigames.othersHeading": "Sonstiges",
   "minigames.comingSoon": "Weitere folgen",
   "minigames.backToIndex": "← Zu den Minispielen",
   "minigames.reset": "Zurücksetzen",
@@ -654,6 +699,24 @@ const de: Dictionary = {
   "minigames.blockdle.error.duplicate": "Schon geraten.",
   "minigames.blockdle.stat.wins": "Siege",
   "minigames.blockdle.stat.losses": "Niederlagen",
+
+  "minigames.silence.name": "Scrap-Mechanic-Stille",
+  "minigames.silence.blurb":
+    "Wie lange hat Axolot nichts mehr in den Steam-Newsfeed geschrieben? Die Uhr läuft.",
+  "minigames.silence.title": "Zeit seit der letzten Scrap-Mechanic-News",
+  "minigames.silence.subtitle":
+    "Live-Zähler, der den offiziellen Steam-Newsfeed für Scrap Mechanic (appid 387990) liest. Patch, Ankündigung, Dev-Notiz — sobald etwas landet, springt der Zähler zurück.",
+  "minigames.silence.months": "Monate",
+  "minigames.silence.days": "Tage",
+  "minigames.silence.hours": "Stunden",
+  "minigames.silence.minutes": "Minuten",
+  "minigames.silence.seconds": "Sekunden",
+  "minigames.silence.totalSeconds": "Insgesamt {n} Sekunden.",
+  "minigames.silence.lastNewsLabel": "Letzter News-Eintrag",
+  "minigames.silence.disclaimer":
+    "Ein „Monat” ist hier eine 30-Tage-Einheit — das Gefühl zählt mehr als der Kalender. Serverdaten werden alle 10 Minuten aufgefrischt.",
+  "minigames.silence.error":
+    "Der Steam-Newsfeed ist gerade nicht erreichbar. Versuch es in ein paar Minuten nochmal.",
 
   "creation.backToNewest": "← Zurück zu Neueste",
   "creation.by": "von",
@@ -760,7 +823,7 @@ const pl: Dictionary = {
   "nav.submit": "Dodaj",
   "nav.signIn": "Zaloguj przez Steam",
   "nav.settings": "Ustawienia",
-  "nav.minigames": "Minigry",
+  "nav.minigames": "Minigry i inne",
 
   "kind.blueprints": "Schematy",
   "kind.mods": "Mody",
@@ -824,10 +887,13 @@ const pl: Dictionary = {
   "card.viewOnSteam": "Zobacz na Steam",
 
   "minigames.eyebrow": "Sala relaksu",
-  "minigames.title": "Minigry",
+  "minigames.title": "Minigry i inne",
   "minigames.subtitle":
-    "Małe rozrywki w stylu Scrap Mechanic prosto na stronie. Kolejne pojawią się tu, gdy będą gotowe.",
+    "Małe rozrywki w stylu Scrap Mechanic plus kilka dziwactw prosto na stronie. Kolejne pojawią się tu, gdy będą gotowe.",
   "minigames.playLabel": "Zagraj",
+  "minigames.othersLabel": "Inne",
+  "minigames.gamesHeading": "Gry",
+  "minigames.othersHeading": "Inne",
   "minigames.comingSoon": "Wkrótce więcej",
   "minigames.backToIndex": "← Do minigier",
   "minigames.reset": "Zresetuj",
@@ -895,6 +961,24 @@ const pl: Dictionary = {
   "minigames.blockdle.error.duplicate": "Już zgadywane.",
   "minigames.blockdle.stat.wins": "Wygrane",
   "minigames.blockdle.stat.losses": "Przegrane",
+
+  "minigames.silence.name": "Cisza Scrap Mechanic",
+  "minigames.silence.blurb":
+    "Ile czasu minęło, odkąd Axolot coś wrzuciło na kanał wiadomości Steam? Zegar tyka.",
+  "minigames.silence.title": "Czas od ostatniej wiadomości o Scrap Mechanic",
+  "minigames.silence.subtitle":
+    "Licznik na żywo czyta oficjalny kanał wiadomości Steam dla Scrap Mechanic (appid 387990). Łatka, ogłoszenie, notka dewelopera — cokolwiek się pojawi, licznik się resetuje.",
+  "minigames.silence.months": "Miesięcy",
+  "minigames.silence.days": "Dni",
+  "minigames.silence.hours": "Godzin",
+  "minigames.silence.minutes": "Minut",
+  "minigames.silence.seconds": "Sekund",
+  "minigames.silence.totalSeconds": "Łącznie {n} sekund.",
+  "minigames.silence.lastNewsLabel": "Najnowsza wiadomość",
+  "minigames.silence.disclaimer":
+    "„Miesiąc” to tutaj umowne 30 dni — vibe ważniejszy niż kalendarz. Dane po stronie serwera odświeżają się co 10 minut.",
+  "minigames.silence.error":
+    "Nie udało się teraz pobrać kanału wiadomości Steam. Spróbuj za kilka minut.",
 
   "creation.backToNewest": "← Do najnowszych",
   "creation.by": "autor:",
@@ -1001,7 +1085,7 @@ const uk: Dictionary = {
   "nav.submit": "Додати",
   "nav.signIn": "Увійти через Steam",
   "nav.settings": "Налаштування",
-  "nav.minigames": "Міні-ігри",
+  "nav.minigames": "Міні-ігри та інше",
 
   "kind.blueprints": "Креслення",
   "kind.mods": "Моди",
@@ -1065,10 +1149,13 @@ const uk: Dictionary = {
   "card.viewOnSteam": "Відкрити в Steam",
 
   "minigames.eyebrow": "Зала відпочинку",
-  "minigames.title": "Міні-ігри",
+  "minigames.title": "Міні-ігри та інше",
   "minigames.subtitle":
-    "Невеликі розваги за Scrap Mechanic прямо на сайті. Нові з'являтимуться в міру готовності.",
+    "Невеликі розваги за Scrap Mechanic та кілька дивних штук просто на сайті. Нові з'являтимуться в міру готовності.",
   "minigames.playLabel": "Грати",
+  "minigames.othersLabel": "Інше",
+  "minigames.gamesHeading": "Ігри",
+  "minigames.othersHeading": "Інше",
   "minigames.comingSoon": "Скоро ще",
   "minigames.backToIndex": "← До міні-ігор",
   "minigames.reset": "Скинути",
@@ -1138,6 +1225,24 @@ const uk: Dictionary = {
   "minigames.blockdle.error.duplicate": "Вже вгадували.",
   "minigames.blockdle.stat.wins": "Перемоги",
   "minigames.blockdle.stat.losses": "Поразки",
+
+  "minigames.silence.name": "Тиша Scrap Mechanic",
+  "minigames.silence.blurb":
+    "Скільки часу минуло, відколи Axolot щось писали в стрічці новин Steam? Годинник іде.",
+  "minigames.silence.title": "Скільки минуло від останньої новини про Scrap Mechanic",
+  "minigames.silence.subtitle":
+    "Живий лічильник читає офіційну стрічку новин Steam для Scrap Mechanic (appid 387990). Патч, анонс, нотатка розробника — щойно щось з'являється, таймер скидається.",
+  "minigames.silence.months": "Місяців",
+  "minigames.silence.days": "Днів",
+  "minigames.silence.hours": "Годин",
+  "minigames.silence.minutes": "Хвилин",
+  "minigames.silence.seconds": "Секунд",
+  "minigames.silence.totalSeconds": "Усього {n} секунд.",
+  "minigames.silence.lastNewsLabel": "Остання новина",
+  "minigames.silence.disclaimer":
+    "«Місяць» тут — умовні 30 днів, вайб важливіший за календар. Дані оновлюються на сервері раз на 10 хвилин.",
+  "minigames.silence.error":
+    "Наразі не вдалося отримати стрічку новин Steam. Спробуйте за кілька хвилин.",
 
   "creation.backToNewest": "← До нових",
   "creation.by": "від",
@@ -1243,7 +1348,7 @@ const zh: Dictionary = {
   "nav.submit": "提交",
   "nav.signIn": "使用 Steam 登录",
   "nav.settings": "设置",
-  "nav.minigames": "小游戏",
+  "nav.minigames": "小游戏与其他",
 
   "kind.blueprints": "蓝图",
   "kind.mods": "模组",
@@ -1307,10 +1412,13 @@ const zh: Dictionary = {
   "card.viewOnSteam": "在 Steam 中查看",
 
   "minigames.eyebrow": "休息室",
-  "minigames.title": "小游戏",
+  "minigames.title": "小游戏与其他",
   "minigames.subtitle":
-    "站内的 Scrap Mechanic 主题小消遣。做好一个就上一个。",
+    "站内的 Scrap Mechanic 主题小消遣,外加一些其他小东西。做好一个就上一个。",
   "minigames.playLabel": "开始",
+  "minigames.othersLabel": "其他",
+  "minigames.gamesHeading": "游戏",
+  "minigames.othersHeading": "其他",
   "minigames.comingSoon": "敬请期待",
   "minigames.backToIndex": "← 返回小游戏",
   "minigames.reset": "重置",
@@ -1380,6 +1488,24 @@ const zh: Dictionary = {
   "minigames.blockdle.error.duplicate": "已经猜过了。",
   "minigames.blockdle.stat.wins": "胜",
   "minigames.blockdle.stat.losses": "负",
+
+  "minigames.silence.name": "Scrap Mechanic 沉默计时",
+  "minigames.silence.blurb":
+    "距 Axolot 上次在 Steam 新闻中发帖已经多久了?计时器正在走。",
+  "minigames.silence.title": "距上一条 Scrap Mechanic 新闻已过多久",
+  "minigames.silence.subtitle":
+    "实时计数器,读取 Scrap Mechanic(appid 387990)的官方 Steam 新闻流。补丁、公告、开发者日志 — 只要有新内容,计时就归零。",
+  "minigames.silence.months": "月",
+  "minigames.silence.days": "天",
+  "minigames.silence.hours": "时",
+  "minigames.silence.minutes": "分",
+  "minigames.silence.seconds": "秒",
+  "minigames.silence.totalSeconds": "共 {n} 秒。",
+  "minigames.silence.lastNewsLabel": "最新新闻",
+  "minigames.silence.disclaimer":
+    "这里的「月」是按 30 天估的 — 感觉比精确日历更重要。服务器数据每 10 分钟刷新一次。",
+  "minigames.silence.error":
+    "目前无法获取 Steam 新闻流,请稍后几分钟再试。",
 
   "creation.backToNewest": "← 返回最新",
   "creation.by": "作者:",

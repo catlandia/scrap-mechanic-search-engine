@@ -29,8 +29,9 @@ All public pages are in `app/` using Next.js 15 App Router. Server Components by
 | `/submit` | `app/submit/page.tsx` | Submit a Workshop item |
 | `/suggestions` | `app/suggestions/page.tsx` | Ideas board — tabbed below `lg`, three-column kanban (Approved / Implemented / Rejected) at `lg+` |
 | `/suggestions/new` | `app/suggestions/new/page.tsx` | Submit a suggestion (noindex) |
-| `/minigames` | `app/minigames/page.tsx` | Landing page for in-site minigames |
+| `/minigames` | `app/minigames/page.tsx` | Landing page for "Minigames & Others" (V9.2+). Two labelled sections — **Games** (Scrapcha, Blockdle) and **Others** (Scrap Mechanic silence counter). |
 | `/minigames/scrapcha` | `app/minigames/scrapcha/page.tsx` | Scrapcha — endless character-identification game. Same character pool as `/verify`, different session cookie, no skip button, does not grant the `bot_verified` cookie. |
+| `/minigames/silence` | `app/minigames/silence/page.tsx` | V9.2+. Live counter showing time elapsed since the most recent Scrap Mechanic Steam news item. Fetches `ISteamNews/GetNewsForApp` via `lib/steam/news.ts` with 10-min server-side revalidation; client ticks every second. `robots: noindex`. |
 | `/minigames/blockdle` | `app/minigames/blockdle/page.tsx` | Blockdle — near-impossible Scrap Mechanic info guesser. `?mode=daily\|endless` (default `daily`). 500+ blocks, ten tries, nine attribute reveals per guess (inventory type, category, material, flammable, level, durability, density, friction, buoyancy). Daily shares one UTC-seeded secret across all users with a Wordle-style emoji share-result; endless tracks streak / best / wins / losses per-session. Daily mode renders two leaderboards below the game — today's finishers (by fewest guesses) and all-time champions (by total wins, tiebreak avg guesses). Signed-in-only recording. Full game details in [blockdle.md](blockdle.md). |
 | `/settings` | `app/settings/page.tsx` | User preferences hub (theme, ratings, account links, help) |
 | `/settings/theme` | `app/settings/theme/page.tsx` | Custom theme editor |
