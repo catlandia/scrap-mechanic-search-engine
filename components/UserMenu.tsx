@@ -132,15 +132,6 @@ export function UserMenu({
           <RoleBadge role={displayRole} className="hidden xl:inline-flex" />
         )}
       </Link>
-      <form action="/auth/logout" method="post" className="hidden xl:block">
-        <button
-          type="submit"
-          className="text-xs text-foreground/40 hover:text-foreground/70"
-          title="Sign out"
-        >
-          sign out
-        </button>
-      </form>
     </div>
   );
 }

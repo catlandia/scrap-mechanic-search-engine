@@ -2,7 +2,7 @@
 
 ## Next planned feature
 
-**Per-kind top-creator badges + kind filter on `/creators`.** Extend the current single `top_creator` 👑 so every `CreationKind` (blueprint / mod / world / challenge / tile / custom_game / terrain_asset / other) has its own auto-managed crown badge awarded to whoever holds the most approved creations of that kind. Then add a kind filter on `/creators` mirroring the V9.6 triage filter. Full design in `C:\Users\arkad\.claude\plans\top-creator-per-kind-badges.md` — nothing implemented yet, the plan covers badge catalog, SQL, refresh wiring, and all edge cases.
+_Nothing currently queued — the previous entry (per-kind top-creator crowns + `/creators` kind filter) shipped in V9.9._
 
 ---
 

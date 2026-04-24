@@ -195,9 +195,8 @@ Site-upvote sorts order by net score (`up - down`). No vote floor — zero-vote 
 **User menu (signed in, `components/UserMenu.tsx`):**
 - Tier bells (one per notification tier the viewer has access to — user / moderator / elite_moderator / creator) with unread badges → `/me/notifications[?tier=…]`. Hidden when banned.
 - Avatar + persona name (name hidden `<xl`) + role badge
-- Sign out (`xl+`; sign-out on narrower viewports lives in the drawer)
 
-Submit / Favourites / Admin / Settings are deliberately NOT in UserMenu — they're in the main nav, the drawer, and/or rendered as standalone top-bar elements in `app/layout.tsx`. Keeping them out of UserMenu is what lets the header fit at `lg`.
+Submit / Favourites / Admin / Settings are deliberately NOT in UserMenu — they're in the main nav, the drawer, and/or rendered as standalone top-bar elements in `app/layout.tsx`. Keeping them out of UserMenu is what lets the header fit at `lg`. **Sign out is also no longer in UserMenu or the mobile drawer** (V9.18) — the only logout affordance on the live site is the button inside the Account section of `/settings`. Keeping the logout surface scoped to settings prevents accidental sign-outs from the main chrome.
 
 Unread notification count is fetched server-side in `app/layout.tsx` on every render and passed as a prop to `UserMenu`.
 
@@ -205,7 +204,7 @@ Unread notification count is fetched server-side in `app/layout.tsx` on every re
 - Primary nav links (Newest / kinds / Search / Ideas) with active-route highlight
 - Extra links: About, How to use the site, Support the site, Settings, Your favourites (signed-in), Notifications (signed-in), Your submissions (signed-in), Admin triage (mods+)
 - Rating-mode toggle
-- Sign in / Sign out button
+- Sign in button (signed-out viewers only). Sign out lives exclusively in `/settings`.
 
 The drawer auto-closes on route change (`usePathname` effect) and locks `document.body` overflow while open.
 

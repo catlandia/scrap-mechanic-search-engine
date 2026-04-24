@@ -69,4 +69,3 @@ Env vars live in `.env.local` (see `.env.example`). Required for full operation:
 - The tagger runs only on newly-inserted creations (not on updates) so admin confirmations survive re-ingest.
 - `app/[kind]/page.tsx` uses `generateStaticParams` against a whitelist; unknown slugs 404.
 - `creations.searchVector` is a generated-stored tsvector column. Postgres maintains it automatically on insert/update — app code never writes it.
-- Full implementation plan: `C:\Users\arkad\.claude\plans\hello-i-want-to-kind-avalanche.md`.
