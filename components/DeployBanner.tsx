@@ -19,11 +19,20 @@ interface ActiveAnnouncement {
  * post-build step). Once completedAt is seen the client auto-reloads
  * once per announcement so the user lands on the new bundle without
  * having to refresh manually.
+ *
+ * The countdown is server-synchronized: every poll returns the server's
+ * current wall-clock time, and the client stores the offset between its
+ * own Date.now() and the server's. Render math uses the corrected
+ * server-perspective time, so every tab across every device sees the
+ * same countdown regardless of local clock drift. Between polls the
+ * client relies on local time *passage* being accurate (monotonic) —
+ * only absolute clock skew matters, and that's re-synced every 8s.
  */
 export function DeployBanner() {
   const [announcement, setAnnouncement] = useState<ActiveAnnouncement | null>(
     null,
   );
+  const [serverOffset, setServerOffset] = useState<number>(0);
   const [now, setNow] = useState<number>(() => Date.now());
   const cancelledRef = useRef(false);
 
@@ -36,14 +45,20 @@ export function DeployBanner() {
         });
         if (!res.ok) return;
         const data = (await res.json()) as
-          | { active: false }
+          | { active: false; serverNow: number }
           | {
               active: true;
               id: number;
               scheduledAt: string;
               completedAt: string | null;
+              serverNow: number;
             };
         if (cancelledRef.current) return;
+        // Correct for any clock skew between this device and the server.
+        // serverNow was stamped at the moment the server started building
+        // this response; one-way network latency introduces a small error
+        // (~ms to tens of ms) which is invisible at second-level display.
+        setServerOffset(data.serverNow - Date.now());
         if (!data.active) {
           setAnnouncement(null);
           return;
@@ -101,7 +116,8 @@ export function DeployBanner() {
     return null;
   }
 
-  const remaining = announcement.scheduledAt - now;
+  const serverNow = now + serverOffset;
+  const remaining = announcement.scheduledAt - serverNow;
   const isCompleted = announcement.completedAt !== null;
   const isDeploying = !isCompleted && remaining <= 0;
   const clamped = Math.max(0, remaining);
