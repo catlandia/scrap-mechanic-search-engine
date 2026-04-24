@@ -233,6 +233,8 @@ Runtime effects live in `components/ExtremeFunEffects.tsx`, mounted once in `app
 
 Assets live in `public/fun/` (`hitmarker.png`, `hitmarker.mp3`, `nuke.mp4`) — all three are small (PNG ~15 KB, MP3 ~2 KB, MP4 ~65 KB) so shipping them in the static bundle is free.
 
+**Conditional preload.** `app/layout.tsx` emits `<link rel="preload">` tags in `<head>` keyed off the server-read funMode / funModeExtreme cookies: Fun-Mode-on visitors preload the two deploy SFX (`/sfx/deploy-countdown.mp3`, `/sfx/deploy-live.mp3`); Extreme-Fun-Mode-on visitors additionally preload `/fun/hitmarker.png`, `/fun/hitmarker.mp3`, `/fun/nuke.mp4`. Normies fetch none of it — the whole point of the gating is to not waste their bandwidth on flair they've opted out of. When the corresponding effect later fires (`new Audio(url)` in DeployBanner, the click-spawned `<img>` / `<Audio>` in ExtremeFunEffects, the `<video>` overlay), the browser serves from the preload cache instead of racing an uncached fetch.
+
 `StarRating` (`components/StarRating.tsx`) prefers a raw `up / (up+down)` ratio over Steam's Wilson-smoothed `vote_score` whenever both counts are available — this avoids the "everything is 3 stars" regression where low-sample Steam scores collapse toward 0.5. Rating rendering requires ≥1 total vote (showcase mode — `MIN_VOTES_FOR_RATING` in `components/StarRating.tsx`; designed to live around 10 once vote volume catches up). Below the threshold the component shows `unrated` or `only N votes`.
 
 ---

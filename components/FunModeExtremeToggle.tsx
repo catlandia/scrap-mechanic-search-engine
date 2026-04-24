@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname, useSearchParams } from "next/navigation";
+import { useT } from "@/lib/i18n/client";
 
 /**
  * Toggle for EXTREME FUN MODE. Flips the cookie; the root layout then
@@ -29,10 +30,13 @@ export function FunModeExtremeToggle({
   const sp = useSearchParams();
   const qs = sp.toString();
   const nextUrl = qs ? `${pathname}?${qs}` : pathname;
+  const { t } = useT();
 
   const disabled = !funModeOn;
   const nextValue = current ? "0" : "1";
-  const label = current ? "EXTREME FUN — ON" : "EXTREME FUN — OFF";
+  const label = current
+    ? t("settings.funMode.extremeLabelOn")
+    : t("settings.funMode.extremeLabelOff");
 
   return (
     <form
@@ -69,10 +73,10 @@ export function FunModeExtremeToggle({
       </span>
       <p className="text-xs text-foreground/60">
         {disabled
-          ? "Turn Fun Mode on first — EXTREME needs Fun to be on."
+          ? t("settings.funMode.extremeHintDisabled")
           : current
-            ? "Clicks spawn a tilted hitmarker + sound (can overlap). The fake-reboot alarm now triggers a silent fullscreen nuke video. Turn it off if it gets annoying."
-            : "Flip it on to arm click effects + the nuke video on the alarm."}
+            ? t("settings.funMode.extremeHintOn")
+            : t("settings.funMode.extremeHintOff")}
       </p>
     </form>
   );

@@ -1,112 +1,99 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getT } from "@/lib/i18n/server";
 
-export const metadata: Metadata = {
-  title: "Terms",
-  description: "Rules for using the site and posting content.",
-  alternates: { canonical: "/terms" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getT();
+  return {
+    title: t("terms.metadataTitle"),
+    description: t("terms.metadataDescription"),
+    alternates: { canonical: "/terms" },
+  };
+}
 
-export default function TermsPage() {
+export default async function TermsPage() {
+  const { t } = await getT();
   return (
     <article className="mx-auto max-w-3xl space-y-6 text-sm leading-relaxed text-foreground/80">
       <header className="space-y-2">
-        <h1 className="text-3xl font-bold text-foreground">Terms of use</h1>
-        <p className="text-foreground/50">Last updated April 2026.</p>
+        <h1 className="text-3xl font-bold text-foreground">
+          {t("terms.heading")}
+        </h1>
+        <p className="text-foreground/50">{t("terms.lastUpdated")}</p>
       </header>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold text-foreground">What this site is</h2>
-        <p>
-          Scrap Mechanic Search Engine is a free, community-run directory that
-          links to Steam Workshop creations for the game Scrap Mechanic. We are
-          not affiliated with Axolot Games or Valve. Workshop items themselves
-          are hosted on Steam; we only store metadata (title, description,
-          tags, thumbnail URL) and link back.
-        </p>
+        <h2 className="text-lg font-semibold text-foreground">
+          {t("terms.h2What")}
+        </h2>
+        <p>{t("terms.pWhat")}</p>
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold text-foreground">Account</h2>
+        <h2 className="text-lg font-semibold text-foreground">
+          {t("terms.h2Account")}
+        </h2>
         <p>
-          Signing in uses Steam OpenID — we never see your Steam password. By
-          signing in you agree to these terms and to our{" "}
+          {t("terms.pAccount1")}
           <Link href="/privacy" className="text-accent hover:underline">
-            privacy policy
+            {t("terms.pAccountLink")}
           </Link>
-          . You are responsible for keeping your Steam account secure.
-        </p>
-      </section>
-
-      <section className="space-y-3">
-        <h2 className="text-lg font-semibold text-foreground">Community rules</h2>
-        <p>When posting comments, tags, suggestions, or submissions:</p>
-        <ul className="list-disc space-y-1 pl-6 text-foreground/70">
-          <li>Be decent. No harassment, slurs, or threats.</li>
-          <li>No spam, ads, or off-topic content.</li>
-          <li>
-            Only submit Workshop items for Scrap Mechanic (appid&nbsp;387990).
-            Submissions for other games are rejected automatically.
-          </li>
-          <li>
-            Don&apos;t post someone else&apos;s personal information.
-          </li>
-          <li>Don&apos;t try to break, brute-force, or exploit the site.</li>
-        </ul>
-        <p>
-          Moderators can hide content, warn, mute, or ban accounts that break
-          these rules. Severe or repeated abuse may result in a permanent ban.
-        </p>
-      </section>
-
-      <section className="space-y-3">
-        <h2 className="text-lg font-semibold text-foreground">Your content</h2>
-        <p>
-          Comments and suggestions you post stay credited to your persona name
-          and may be kept in threaded form even after you leave, so ongoing
-          discussions still make sense. You retain ownership of anything you
-          write; by posting it you grant the site a non-exclusive right to
-          display it to other users.
+          {t("terms.pAccount2")}
         </p>
       </section>
 
       <section className="space-y-3">
         <h2 className="text-lg font-semibold text-foreground">
-          Workshop content and takedowns
+          {t("terms.h2Rules")}
+        </h2>
+        <p>{t("terms.pRulesIntro")}</p>
+        <ul className="list-disc space-y-1 pl-6 text-foreground/70">
+          <li>{t("terms.liRulesDecent")}</li>
+          <li>{t("terms.liRulesSpam")}</li>
+          <li>{t("terms.liRulesAppid")}</li>
+          <li>{t("terms.liRulesPii")}</li>
+          <li>{t("terms.liRulesExploit")}</li>
+        </ul>
+        <p>{t("terms.pRulesMods")}</p>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold text-foreground">
+          {t("terms.h2Content")}
+        </h2>
+        <p>{t("terms.pContent")}</p>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold text-foreground">
+          {t("terms.h2Takedowns")}
         </h2>
         <p>
-          The actual files and images for each Workshop item are hosted by
-          Steam. If your Workshop item is listed here and you want it removed
-          (e.g., you unpublished it on Steam), open an issue on the
-          project&apos;s{" "}
+          {t("terms.pTakedowns1")}
           <a
             href="https://github.com/catlandia/scrap-mechanic-search-engine/issues"
             target="_blank"
             rel="noreferrer"
             className="text-accent hover:underline"
           >
-            GitHub repository
-          </a>{" "}
-          or contact a moderator and we&apos;ll take it down.
+            {t("terms.pTakedownsLink")}
+          </a>
+          {t("terms.pTakedowns2")}
         </p>
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold text-foreground">No warranty</h2>
-        <p>
-          The site is provided as-is. Features can change or disappear, the
-          site can go down, data can be wrong. Don&apos;t rely on it for
-          anything important.
-        </p>
+        <h2 className="text-lg font-semibold text-foreground">
+          {t("terms.h2Warranty")}
+        </h2>
+        <p>{t("terms.pWarranty")}</p>
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold text-foreground">Changes</h2>
-        <p>
-          We may update these terms. Material changes will be noted in the
-          release notes. Continued use after a change means you accept the
-          updated version.
-        </p>
+        <h2 className="text-lg font-semibold text-foreground">
+          {t("terms.h2Changes")}
+        </h2>
+        <p>{t("terms.pChanges")}</p>
       </section>
     </article>
   );

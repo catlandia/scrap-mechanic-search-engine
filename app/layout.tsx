@@ -131,13 +131,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const customColors = theme === "custom" ? await getCustomThemeColors() : null;
   const showAdminLink = !!user && isModerator(user.role as UserRole);
   const extraLinks = [
-    { href: "/about", label: "About the site" },
-    { href: "/guide", label: "How to use the site" },
-    { href: "/support", label: "Support the site" },
-    { href: "/settings", label: "Settings" },
-    ...(user ? [{ href: "/me/favourites", label: "Your favourites" }] : []),
-    ...(user ? [{ href: "/me/notifications", label: "Notifications" }] : []),
-    ...(user ? [{ href: "/me/submissions", label: "Your submissions" }] : []),
+    { href: "/about", label: t("nav.about") },
+    { href: "/guide", label: t("nav.guide") },
+    { href: "/support", label: t("nav.support") },
+    { href: "/settings", label: t("nav.settings") },
+    ...(user ? [{ href: "/me/favourites", label: t("nav.favourites") }] : []),
+    ...(user ? [{ href: "/me/notifications", label: t("nav.notifications") }] : []),
+    ...(user ? [{ href: "/me/submissions", label: t("nav.submissions") }] : []),
     ...(showAdminLink
       ? [{ href: "/admin/triage", label: t("nav.adminTriage") }]
       : []),
@@ -173,6 +173,36 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               __html: `html[data-theme="custom"]{--color-background:${customColors.background};--color-foreground:${customColors.foreground};--color-card:${customColors.card};--color-card-hover:${customColors.card};--color-muted:${customColors.foreground};--color-accent:${customColors.accent};--color-accent-strong:${customColors.accent};--color-border:${customColors.border};}`,
             }}
           />
+        )}
+        {/* Preload the SFX/video assets for the feature tiers that are
+            actually on. Normies with Fun Mode off fetch none of this —
+            no wasted bandwidth. Fun-Mode-on visitors pay for the two
+            deploy banner clips even outside a deploy window so the first
+            click of the SFX (or the moment the banner first ticks) plays
+            out of cache rather than racing an uncached fetch. Extreme on
+            adds the three click/nuke assets on top. Order matters only
+            to the extent that the deploy sounds are more time-sensitive
+            than the click effects — list them first. */}
+        {funMode && (
+          <>
+            <link
+              rel="preload"
+              as="audio"
+              href="/sfx/deploy-countdown.mp3"
+            />
+            <link
+              rel="preload"
+              as="audio"
+              href="/sfx/deploy-live.mp3"
+            />
+          </>
+        )}
+        {funMode && funModeExtreme && (
+          <>
+            <link rel="preload" as="image" href="/fun/hitmarker.png" />
+            <link rel="preload" as="audio" href="/fun/hitmarker.mp3" />
+            <link rel="preload" as="video" href="/fun/nuke.mp4" />
+          </>
         )}
       </head>
       <body className="min-h-screen bg-background text-foreground antialiased">

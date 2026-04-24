@@ -6,12 +6,14 @@ import { getT } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Submit a creation — Scrap Mechanic Search Engine",
-  description:
-    "Submit a Scrap Mechanic Steam Workshop creation the cron hasn't found yet. Approved items appear on the public feed with a Community badge crediting you.",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getT();
+  return {
+    title: t("submit.metadataTitle"),
+    description: t("submit.metadataDescription"),
+    robots: { index: false, follow: false },
+  };
+}
 
 const MIN_STEAM_AGE_DAYS = 7;
 
@@ -46,13 +48,11 @@ export default async function SubmitPage() {
         </p>
         <h1 className="text-3xl font-bold">{t("submit.title")}</h1>
         <p className="text-sm text-foreground/60">
-          Got a gem the cron hasn&apos;t found yet? Submit any Steam Workshop
-          URL or id — a moderator will review it and it&apos;ll land on the
-          public feed with a{" "}
+          {t("submit.introBefore")}{" "}
           <span className="rounded bg-purple-500/30 px-1 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-purple-200">
-            Community
+            {t("submit.introCommunityBadge")}
           </span>{" "}
-          badge crediting you.
+          {t("submit.introAfter")}
         </p>
         <p className="text-xs text-foreground/50">{t("submit.tagsEnglishDisclaimer")}</p>
       </header>
@@ -80,39 +80,29 @@ export default async function SubmitPage() {
       ) : gateReason === "private_profile" ? (
         <div className="space-y-3 rounded-md border border-amber-500/40 bg-amber-500/10 px-5 py-4 text-sm">
           <div className="font-semibold text-amber-200">
-            We couldn&apos;t verify your Steam account age.
+            {t("submit.privateProfileTitle")}
           </div>
           <p className="text-foreground/70">
-            Your Steam profile is private, so the account-creation date is
-            hidden. Make your profile public and sign in again — or send a
-            moderator a quick appeal and they&apos;ll flip the gate on your
-            account manually.
+            {t("submit.privateProfileBody")}
           </p>
           <Link
             href="/verify/appeal"
             className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-medium text-black hover:bg-accent-strong"
           >
-            Appeal the age gate →
+            {t("submit.privateProfileAppeal")}
           </Link>
         </div>
       ) : gateReason === "too_young" ? (
         <div className="space-y-3 rounded-md border border-amber-500/40 bg-amber-500/10 px-5 py-4 text-sm">
           <div className="font-semibold text-amber-200">
-            Your Steam account is less than 7 days old.
+            {t("submit.tooYoungTitle")}
           </div>
-          <p className="text-foreground/70">
-            This is a hard-coded cooldown to stop fresh sock-puppet accounts
-            from spamming the site. It&apos;s{" "}
-            <strong>not something a moderator can bypass</strong> for the
-            too-new case — you just have to wait it out.
-          </p>
+          <p className="text-foreground/70">{t("submit.tooYoungBody")}</p>
           {ageThrough && (
             <p className="text-foreground/70">
-              Your account clears the gate on{" "}
-              <strong className="text-amber-200">
-                {ageThrough.toLocaleDateString()}
-              </strong>
-              . Come back then.
+              {t("submit.tooYoungClearsOn", {
+                date: ageThrough.toLocaleDateString(),
+              })}
             </p>
           )}
         </div>
@@ -121,20 +111,19 @@ export default async function SubmitPage() {
       )}
 
       <div className="rounded-md border border-border bg-card/40 p-4 text-xs text-foreground/60">
-        <div className="font-medium text-foreground/70">Accepted forms</div>
+        <div className="font-medium text-foreground/70">
+          {t("submit.acceptedForms")}
+        </div>
         <ul className="mt-2 space-y-1 font-mono">
           <li>https://steamcommunity.com/sharedfiles/filedetails/?id=3706129300</li>
           <li>https://steamcommunity.com/workshop/filedetails/?id=3706129300</li>
           <li>3706129300</li>
         </ul>
-        <p className="mt-3 text-foreground/50">
-          Submitted items go into the mod triage queue. They appear publicly
-          once approved; the cron won&apos;t also try to re-ingest them.
-        </p>
+        <p className="mt-3 text-foreground/50">{t("submit.queueExplain")}</p>
         <p className="mt-2 text-foreground/50">
-          Curious what gets in and why?{" "}
+          {t("submit.curious")}{" "}
           <Link href="/about" className="text-accent hover:underline">
-            How it works
+            {t("submit.howItWorks")}
           </Link>
           .
         </p>

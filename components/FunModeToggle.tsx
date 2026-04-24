@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname, useSearchParams } from "next/navigation";
+import { useT } from "@/lib/i18n/client";
 import { cn } from "@/lib/utils";
 
 export function FunModeToggle({ current }: { current: boolean }) {
@@ -8,6 +9,7 @@ export function FunModeToggle({ current }: { current: boolean }) {
   const sp = useSearchParams();
   const qs = sp.toString();
   const nextUrl = qs ? `${pathname}?${qs}` : pathname;
+  const { t } = useT();
 
   return (
     <form
@@ -18,7 +20,7 @@ export function FunModeToggle({ current }: { current: boolean }) {
       <input type="hidden" name="next" value={nextUrl} />
       <div
         role="group"
-        aria-label="Fun Mode"
+        aria-label={t("settings.funMode.title")}
         className="inline-flex overflow-hidden rounded border border-border bg-card/60"
       >
         <button
@@ -33,7 +35,7 @@ export function FunModeToggle({ current }: { current: boolean }) {
               : "text-foreground/55 hover:bg-foreground/5 hover:text-foreground",
           )}
         >
-          Off
+          {t("settings.funMode.off")}
         </button>
         <button
           type="submit"
@@ -47,11 +49,13 @@ export function FunModeToggle({ current }: { current: boolean }) {
               : "text-foreground/55 hover:bg-foreground/5 hover:text-foreground",
           )}
         >
-          On
+          {t("settings.funMode.on")}
         </button>
       </div>
       <span className="text-xs text-foreground/60">
-        {current ? "Sounds + pranks are on." : "Silent, no pranks."}
+        {current
+          ? t("settings.funMode.onHint")
+          : t("settings.funMode.offHint")}
       </span>
     </form>
   );

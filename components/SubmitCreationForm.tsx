@@ -6,10 +6,12 @@ import { useState, useTransition } from "react";
 import { submitCreation, type SubmitResult } from "@/lib/community/actions";
 import { Spinner } from "@/components/Spinner";
 import { useToast } from "@/components/Toast";
+import { useT } from "@/lib/i18n/client";
 
 export function SubmitCreationForm() {
   const router = useRouter();
   const toast = useToast();
+  const { t } = useT();
   const [input, setInput] = useState("");
   const [result, setResult] = useState<SubmitResult | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -25,7 +27,7 @@ export function SubmitCreationForm() {
       if (r.ok) {
         setInput("");
         router.refresh();
-        toast.success(`${r.title} queued for mod review.`);
+        toast.success(t("submit.form.queuedToast", { title: r.title }));
       } else if (r.error) {
         toast.error(r.error);
       }
@@ -40,7 +42,7 @@ export function SubmitCreationForm() {
       >
         <label className="block">
           <span className="mb-1 block text-sm text-foreground/70">
-            Steam Workshop URL or published-file ID
+            {t("submit.form.urlLabel")}
           </span>
           <input
             value={input}
@@ -48,7 +50,7 @@ export function SubmitCreationForm() {
             type="text"
             required
             autoFocus
-            placeholder="https://steamcommunity.com/sharedfiles/filedetails/?id=..."
+            placeholder={t("submit.form.urlPlaceholder")}
             className="w-full rounded border border-border bg-background px-3 py-2 text-sm focus:border-accent focus:outline-none"
           />
         </label>
@@ -59,7 +61,9 @@ export function SubmitCreationForm() {
           className="inline-flex items-center gap-2 rounded-md bg-accent px-4 py-2 text-sm font-medium text-black hover:bg-accent-strong disabled:opacity-50"
         >
           {isPending && <Spinner size="sm" />}
-          {isPending ? "Submitting…" : "Submit for review"}
+          {isPending
+            ? t("submit.form.submitPending")
+            : t("submit.form.submitButton")}
         </button>
       </form>
 
@@ -69,9 +73,10 @@ export function SubmitCreationForm() {
           aria-live="polite"
           className="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm"
         >
-          Thanks — <strong>{result.title}</strong> is now pending mod review.{" "}
+          {t("submit.form.pendingBefore")} <strong>{result.title}</strong>{" "}
+          {t("submit.form.pendingAfter")}{" "}
           <Link href="/" className="text-emerald-300 hover:underline">
-            Back to home ↗
+            {t("submit.form.backHome")}
           </Link>
         </div>
       )}

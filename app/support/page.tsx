@@ -1,134 +1,121 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getT } from "@/lib/i18n/server";
 
-export const metadata: Metadata = {
-  title: "Support the site",
-  description:
-    "Concrete ways you can help keep the Scrap Mechanic Search Engine running and growing — from sharing links to flagging bugs.",
-  alternates: { canonical: "/support" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getT();
+  return {
+    title: t("support.metadataTitle"),
+    description: t("support.metadataDescription"),
+    alternates: { canonical: "/support" },
+  };
+}
 
-export default function SupportPage() {
+export default async function SupportPage() {
+  const { t } = await getT();
   return (
     <article className="mx-auto max-w-3xl space-y-8">
       <header className="space-y-2">
         <p className="text-xs uppercase tracking-widest text-accent">
-          Get involved
+          {t("support.eyebrow")}
         </p>
-        <h1 className="text-3xl font-bold">How you can help</h1>
-        <p className="text-sm text-foreground/70">
-          The site runs on free tiers right now, which keeps it online but
-          not self-growing — it stays useful because people like you pitch
-          in. Here&apos;s everything that actually moves the needle.
-        </p>
+        <h1 className="text-3xl font-bold">{t("support.heading")}</h1>
+        <p className="text-sm text-foreground/70">{t("support.intro")}</p>
       </header>
 
       <section className="space-y-3 rounded-lg border border-border bg-card/60 p-5">
-        <h2 className="text-lg font-semibold">Spread the word</h2>
+        <h2 className="text-lg font-semibold">{t("support.spreadHeading")}</h2>
         <p className="text-sm leading-relaxed text-foreground/80">
-          Most people hunting for Scrap Mechanic creations still dig through
-          Steam&apos;s native Workshop browser. Telling a friend, posting a
-          link in a Discord, or sharing a creation on Reddit is by far the
-          single biggest thing you can do.
+          {t("support.spreadP1")}
         </p>
         <p className="text-sm leading-relaxed text-foreground/80">
-          Every creation page now has a <strong>Share</strong> button next to{" "}
-          <em>View on Steam Workshop</em> — one click copies the link.
+          {t("support.spreadP2Before")}{" "}
+          <strong>{t("support.spreadP2ShareLabel")}</strong>{" "}
+          {t("support.spreadP2Between")}{" "}
+          <em>{t("support.spreadP2ViewLabel")}</em>{" "}
+          {t("support.spreadP2After")}
         </p>
         <p className="text-sm leading-relaxed text-foreground/80">
-          There&apos;s also a{" "}
+          {t("support.spreadP3Before")}{" "}
           <a
             href="https://steamcommunity.com/groups/scrapmechanicsearchengine"
             target="_blank"
             rel="noreferrer"
             className="text-accent hover:underline"
           >
-            Steam Group
+            {t("support.spreadP3SteamGroup")}
           </a>
-          {" "}— joining is free and members get announcements in their Steam
-          client when new picks are posted.
+          {" "}
+          {t("support.spreadP3After")}
         </p>
       </section>
 
       <section className="space-y-3 rounded-lg border border-border bg-card/60 p-5">
-        <h2 className="text-lg font-semibold">Submit creations we&apos;ve missed</h2>
+        <h2 className="text-lg font-semibold">{t("support.submitHeading")}</h2>
         <p className="text-sm leading-relaxed text-foreground/80">
-          The auto-ingest only picks up trending items. Hidden gems that
-          never went viral slip through. If you have one in mind — your own
-          or someone else&apos;s — drop the Workshop URL at{" "}
+          {t("support.submitP1Before")}{" "}
           <Link href="/submit" className="text-accent hover:underline">
-            /submit
+            {t("support.submitP1Link")}
           </Link>
-          . A moderator reviews it and it goes live.
+          {t("support.submitP1After")}
         </p>
       </section>
 
       <section className="space-y-3 rounded-lg border border-border bg-card/60 p-5">
-        <h2 className="text-lg font-semibold">Vote and tag</h2>
+        <h2 className="text-lg font-semibold">{t("support.voteHeading")}</h2>
         <p className="text-sm leading-relaxed text-foreground/80">
-          Every approved creation has up/down votes and a community tag
-          system. The more people who vote on creations, the better the
-          rating sorts work. If a creation is missing a tag you&apos;d search
-          for — add it. At +3 net votes, it becomes visible to everyone.
+          {t("support.voteP1")}
         </p>
       </section>
 
       <section className="space-y-3 rounded-lg border border-border bg-card/60 p-5">
-        <h2 className="text-lg font-semibold">Report what&apos;s wrong</h2>
+        <h2 className="text-lg font-semibold">{t("support.reportHeading")}</h2>
         <p className="text-sm leading-relaxed text-foreground/80">
-          Every creation page has a <strong>Report</strong> button. Wrong
-          tags, low quality, spam, missing co-authors — if something&apos;s
-          off, flag it. A moderator handles it and the catalogue gets a
-          little better.
+          {t("support.reportP1Before")}{" "}
+          <strong>{t("support.reportP1Label")}</strong>{" "}
+          {t("support.reportP1After")}
         </p>
         <p className="text-sm leading-relaxed text-foreground/80">
-          Individual comments can be reported too.
+          {t("support.reportP2")}
         </p>
       </section>
 
       <section className="space-y-3 rounded-lg border border-border bg-card/60 p-5">
-        <h2 className="text-lg font-semibold">Suggest features</h2>
+        <h2 className="text-lg font-semibold">{t("support.suggestHeading")}</h2>
         <p className="text-sm leading-relaxed text-foreground/80">
-          Almost every meaningful improvement to the site came from a user
-          idea. Drop yours on the{" "}
+          {t("support.suggestP1Before")}{" "}
           <Link href="/suggestions" className="text-accent hover:underline">
-            ideas board
+            {t("support.suggestP1Link")}
           </Link>{" "}
-          — it&apos;s a public, voted, triaged list, not a black hole.
+          {t("support.suggestP1After")}
         </p>
       </section>
 
       <section className="space-y-3 rounded-lg border border-border bg-card/60 p-5">
-        <h2 className="text-lg font-semibold">Flag bugs</h2>
+        <h2 className="text-lg font-semibold">{t("support.bugsHeading")}</h2>
         <p className="text-sm leading-relaxed text-foreground/80">
-          Found something broken, ugly, or unclear? Post it on the ideas
-          board with the bug tag or open an issue on{" "}
+          {t("support.bugsP1Before")}{" "}
           <a
             href="https://github.com/catlandia/scrap-mechanic-search-engine"
             target="_blank"
             rel="noreferrer"
             className="text-accent hover:underline"
           >
-            GitHub
+            {t("support.bugsP1GitHub")}
           </a>
-          . Verified bug reports earn the 🐛{" "}
-          <strong>Bug hunter</strong> badge.
+          {t("support.bugsP1After")}{" "}
+          <strong>{t("support.bugsP1BadgeLabel")}</strong>{" "}
+          {t("support.bugsP1BadgeAfter")}
         </p>
       </section>
 
       <section className="space-y-3 rounded-lg border border-border bg-card/60 p-5">
-        <h2 className="text-lg font-semibold">Money support</h2>
+        <h2 className="text-lg font-semibold">{t("support.moneyHeading")}</h2>
         <p className="text-sm leading-relaxed text-foreground/80">
-          Right now there&apos;s no way to donate — I haven&apos;t set up a
-          Patreon, Ko-fi, or anything similar yet. But if the site grows,
-          it&apos;ll eventually outgrow the free tiers, and at that point
-          financial support would genuinely help keep it online and
-          improving. If you&apos;d like to contribute that way later, check
-          back — I&apos;ll add a link here when something&apos;s set up.
+          {t("support.moneyP1")}
         </p>
         <p className="text-sm leading-relaxed text-foreground/80">
-          In the meantime the items above are the most useful things you
-          can do.
+          {t("support.moneyP2")}
         </p>
       </section>
     </article>

@@ -87,8 +87,8 @@ export default async function SettingsPage() {
       </SettingsSection>
 
       <SettingsSection
-        title="Fun Mode"
-        description="Opt in to the bits of the site that exist purely for fun — deploy-banner SFX, mod pranks from /admin/abuse like the fake reboot. Real deploy warnings still show with Fun Mode off (you still need to save your work before the site restarts), they just do it silently and without the pranks."
+        title={t("settings.funMode.title")}
+        description={t("settings.funMode.hint")}
       >
         <div className="space-y-4">
           <Suspense>
@@ -97,13 +97,9 @@ export default async function SettingsPage() {
           <div className="space-y-2 border-t border-border/60 pt-4">
             <p className="text-xs text-foreground/60">
               <span className="font-semibold text-foreground/80">
-                EXTREME FUN MODE.
+                {t("settings.funMode.extremeTitle")}
               </span>{" "}
-              Layered on top of Fun Mode. Every click spawns a hitmarker
-              sprite and sound at your cursor (they can overlap on rapid
-              clicks), and when the deploy-banner alarm hits zero a silent
-              fullscreen nuke video plays for a few seconds before closing
-              itself. Turning Fun Mode off cascades this back to off.
+              {t("settings.funMode.extremeDescription")}
             </p>
             <Suspense>
               <FunModeExtremeToggle

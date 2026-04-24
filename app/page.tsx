@@ -22,12 +22,12 @@ export const metadata: Metadata = {
 const FEATURED_KINDS: Array<{
   kind: "blueprint" | "mod" | "world" | "challenge" | "tile";
   href: string;
-  label: string;
+  labelKey: string;
 }> = [
-  { kind: "blueprint", href: "/blueprints", label: "Popular Blueprints" },
-  { kind: "mod", href: "/mods", label: "Popular Mods" },
-  { kind: "world", href: "/worlds", label: "Popular Worlds" },
-  { kind: "challenge", href: "/challenges", label: "Popular Challenges" },
+  { kind: "blueprint", href: "/blueprints", labelKey: "home.popularBlueprints" },
+  { kind: "mod", href: "/mods", labelKey: "home.popularMods" },
+  { kind: "world", href: "/worlds", labelKey: "home.popularWorlds" },
+  { kind: "challenge", href: "/challenges", labelKey: "home.popularChallenges" },
 ];
 
 export default async function HomePage() {
@@ -74,14 +74,14 @@ export default async function HomePage() {
       <JsonLd data={websiteJsonLd} />
       <section className="rounded-lg border border-accent/30 bg-accent/5 px-5 py-4 text-sm leading-relaxed text-foreground/80 sm:px-6">
         <p>
-          Want to help keep this project growing? Head over to{" "}
+          {t("home.supportCalloutBefore")}{" "}
           <Link
             href="/support"
             className="font-semibold text-accent hover:underline"
           >
-            Support the site
+            {t("home.supportCalloutLink")}
           </Link>{" "}
-          to see concrete ways you can pitch in.
+          {t("home.supportCalloutAfter")}
         </p>
       </section>
       <section className="space-y-4">
@@ -92,24 +92,23 @@ export default async function HomePage() {
           {t("home.heroTitle")}
         </h1>
         <p className="max-w-2xl text-lg text-foreground/70">
-          Hand-curated Blueprints, Mods, Worlds, and more. Combine tags like{" "}
+          {t("home.descriptionBefore")}{" "}
           <Link href="/search?tags=house,car" className="text-accent hover:underline">
-            house + car
+            {t("home.descriptionExample1")}
           </Link>{" "}
-          to find a drivable camper — or{" "}
+          {t("home.descriptionBetween")}{" "}
           <Link href="/search?tags=walker,mech" className="text-accent hover:underline">
-            walker + mech
+            {t("home.descriptionExample2")}
           </Link>{" "}
-          for a hexapod. Low-effort creations are filtered out.
+          {t("home.descriptionAfter")}
         </p>
         {hasAny && (
           <div className="inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/10 px-3 py-1 text-sm">
             <span aria-hidden>📚</span>
-            <span className="font-semibold tabular-nums text-accent">
-              {total.toLocaleString()}
-            </span>
             <span className="text-foreground/70">
-              creation{total === 1 ? "" : "s"} indexed
+              {total === 1
+                ? t("home.indexedOne", { count: total.toLocaleString() })
+                : t("home.indexedMany", { count: total.toLocaleString() })}
             </span>
           </div>
         )}
@@ -127,7 +126,7 @@ export default async function HomePage() {
         </section>
       ) : !hasAny ? (
         <section className="rounded-md border border-border bg-card/60 px-5 py-8 text-sm text-foreground/60">
-          No approved creations yet. Kick off an ingest and review the queue.
+          {t("home.emptyState")}
         </section>
       ) : (
         <>
@@ -147,9 +146,9 @@ export default async function HomePage() {
             return (
               <section key={kind.kind} className="space-y-4">
                 <div className="flex items-baseline justify-between">
-                  <h2 className="text-xl font-semibold">{kind.label}</h2>
+                  <h2 className="text-xl font-semibold">{t(kind.labelKey)}</h2>
                   <Link href={kind.href} className="text-sm text-accent hover:underline">
-                    More →
+                    {t("common.more")}
                   </Link>
                 </div>
                 <CreationGrid items={items} ratingMode={ratingMode} />

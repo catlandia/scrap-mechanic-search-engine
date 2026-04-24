@@ -1,123 +1,98 @@
 import type { Metadata } from "next";
+import { getT } from "@/lib/i18n/server";
 
-export const metadata: Metadata = {
-  title: "Privacy",
-  description: "What we collect, why, and how long we keep it.",
-  alternates: { canonical: "/privacy" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getT();
+  return {
+    title: t("privacy.metadataTitle"),
+    description: t("privacy.metadataDescription"),
+    alternates: { canonical: "/privacy" },
+  };
+}
 
-export default function PrivacyPage() {
+export default async function PrivacyPage() {
+  const { t } = await getT();
   return (
     <article className="mx-auto max-w-3xl space-y-6 text-sm leading-relaxed text-foreground/80">
       <header className="space-y-2">
-        <h1 className="text-3xl font-bold text-foreground">Privacy</h1>
-        <p className="text-foreground/50">Last updated April 2026.</p>
+        <h1 className="text-3xl font-bold text-foreground">
+          {t("privacy.h1")}
+        </h1>
+        <p className="text-foreground/50">{t("privacy.lastUpdated")}</p>
       </header>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold text-foreground">The short version</h2>
-        <p>
-          This is a community-run, non-commercial directory of Scrap Mechanic
-          Workshop creations. We don&apos;t sell data, we don&apos;t run ads, we
-          don&apos;t have an analytics tracker following you around. If you never
-          sign in, we never see who you are.
-        </p>
+        <h2 className="text-lg font-semibold text-foreground">
+          {t("privacy.h2Short")}
+        </h2>
+        <p>{t("privacy.pShort")}</p>
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold text-foreground">What we store</h2>
-        <p>If you sign in with Steam, we save:</p>
+        <h2 className="text-lg font-semibold text-foreground">
+          {t("privacy.h2Store")}
+        </h2>
+        <p>{t("privacy.pStoreIntro")}</p>
         <ul className="list-disc space-y-1 pl-6 text-foreground/70">
-          <li>Your public SteamID, persona name, and avatar URL.</li>
-          <li>
-            Your Steam account age and Scrap Mechanic playtime — these come from
-            Steam and are used to filter brand-new throwaway accounts.
-          </li>
-          <li>
-            The times you signed in, commented, voted, favourited, or submitted
-            an item — so moderators can keep the site readable.
-          </li>
+          <li>{t("privacy.liStoreId")}</li>
+          <li>{t("privacy.liStoreAge")}</li>
+          <li>{t("privacy.liStoreActivity")}</li>
         </ul>
-        <p>
-          We <strong>do not</strong> collect your email, password, phone number,
-          real name, IP address, or browsing history.
-        </p>
+        <p dangerouslySetInnerHTML={{ __html: t("privacy.pStoreNot") }} />
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold text-foreground">Cookies</h2>
+        <h2 className="text-lg font-semibold text-foreground">
+          {t("privacy.h2Cookies")}
+        </h2>
         <ul className="list-disc space-y-1 pl-6 text-foreground/70">
-          <li>
-            <code className="text-foreground">smse_session</code> — signed-in session,
-            expires after a week of inactivity.
-          </li>
-          <li>
-            <code className="text-foreground">smse_captcha</code> — short-lived
-            (30&nbsp;min) state for the anti-bot challenge.
-          </li>
-          <li>
-            <code className="text-foreground">bot_verified</code> — set after you
-            pass the challenge, lasts 30 days.
-          </li>
-          <li>
-            <code className="text-foreground">smse_rating_mode</code> — remembers
-            whether you prefer Steam ratings, site ratings, or both.
-          </li>
-          <li>
-            <code className="text-foreground">smse_theme</code> — remembers your
-            chosen colour theme.
-          </li>
+          <li dangerouslySetInnerHTML={{ __html: t("privacy.liCookieSession") }} />
+          <li dangerouslySetInnerHTML={{ __html: t("privacy.liCookieCaptcha") }} />
+          <li dangerouslySetInnerHTML={{ __html: t("privacy.liCookieBotVerified") }} />
+          <li dangerouslySetInnerHTML={{ __html: t("privacy.liCookieRatingMode") }} />
+          <li dangerouslySetInnerHTML={{ __html: t("privacy.liCookieTheme") }} />
         </ul>
-        <p>
-          All cookies are first-party, signed / HTTP-only where it matters.
-          No advertising trackers.
-        </p>
+        <p>{t("privacy.pCookieFooter")}</p>
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold text-foreground">Where the data lives</h2>
+        <h2 className="text-lg font-semibold text-foreground">
+          {t("privacy.h2Where")}
+        </h2>
         <ul className="list-disc space-y-1 pl-6 text-foreground/70">
-          <li>Database: Neon (serverless Postgres, free tier).</li>
-          <li>Hosting: Vercel.</li>
-          <li>Workshop metadata &amp; thumbnails: Steam (hotlinked).</li>
+          <li>{t("privacy.liWhereDb")}</li>
+          <li>{t("privacy.liWhereHost")}</li>
+          <li>{t("privacy.liWhereSteam")}</li>
         </ul>
-        <p>
-          Vercel and Neon may keep ephemeral operational logs. We don&apos;t put
-          personal data in log messages beyond what&apos;s needed to fix bugs.
-        </p>
+        <p>{t("privacy.pWhereLogs")}</p>
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold text-foreground">Your controls</h2>
+        <h2 className="text-lg font-semibold text-foreground">
+          {t("privacy.h2Controls")}
+        </h2>
         <ul className="list-disc space-y-1 pl-6 text-foreground/70">
+          <li>{t("privacy.liControlsStop")}</li>
           <li>
-            Stop using the site any time — logged-out visitors leave no
-            identifying data.
-          </li>
-          <li>
-            Ask for deletion of your account data by opening an issue on the
-            project&apos;s{" "}
+            {t("privacy.liControlsDeletePre")}
             <a
               href="https://github.com/catlandia/scrap-mechanic-search-engine/issues"
               target="_blank"
               rel="noreferrer"
               className="text-accent hover:underline"
             >
-              GitHub
+              {t("privacy.liControlsDeleteLink")}
             </a>
-            . Content you posted (comments, suggestions) may be anonymised
-            rather than deleted to keep discussion threads readable.
+            {t("privacy.liControlsDeletePost")}
           </li>
         </ul>
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold text-foreground">Changes</h2>
-        <p>
-          If this policy meaningfully changes, the update will be announced in
-          the site&apos;s release notes. This page will always show the latest
-          version.
-        </p>
+        <h2 className="text-lg font-semibold text-foreground">
+          {t("privacy.h2Changes")}
+        </h2>
+        <p>{t("privacy.pChanges")}</p>
       </section>
     </article>
   );

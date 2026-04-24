@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { useT } from "@/lib/i18n/client";
 
 export default function Error({
   error,
@@ -9,6 +10,8 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const { t } = useT();
+
   useEffect(() => {
     console.error(error);
   }, [error]);
@@ -20,10 +23,10 @@ export default function Error({
       <div aria-hidden className="text-3xl">
         ⚠
       </div>
-      <h1 className="text-xl font-semibold text-foreground">Something went wrong.</h1>
-      <p className="text-sm text-foreground/70">
-        We hit an unexpected error loading this page. Please try again in a moment.
-      </p>
+      <h1 className="text-xl font-semibold text-foreground">
+        {t("error.title")}
+      </h1>
+      <p className="text-sm text-foreground/70">{t("error.body")}</p>
       {error.digest && (
         <p className="text-[11px] text-foreground/40">ref: {error.digest}</p>
       )}
@@ -32,7 +35,7 @@ export default function Error({
         onClick={reset}
         className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-black hover:bg-accent-strong"
       >
-        Try again
+        {t("error.retry")}
       </button>
       {isDev && (
         <pre className="mt-4 overflow-auto whitespace-pre-wrap rounded bg-black/40 p-3 text-left font-mono text-xs text-red-200">

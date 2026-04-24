@@ -1,16 +1,21 @@
 import { getNewestApproved } from "@/lib/db/queries";
+import { getT } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
 
-const KIND_LABEL: Record<string, string> = {
-  blueprint: "Blueprint",
-  mod: "Mod",
-  world: "World",
-  challenge: "Challenge",
-  tile: "Tile",
-  custom_game: "Custom Game",
-  terrain_asset: "Terrain",
-  other: "Other",
+// DB kind value → translation key for the singular form used in RSS
+// category + description lines. Kept as a map rather than dynamic key
+// interpolation so a typo in a kind slug is a compile error rather
+// than a silently-untranslated category.
+const KIND_KEY: Record<string, string> = {
+  blueprint: "kind.blueprint",
+  mod: "kind.mod",
+  world: "kind.world",
+  challenge: "kind.challenge",
+  tile: "kind.tile",
+  custom_game: "kind.customGame",
+  terrain_asset: "kind.terrainAsset",
+  other: "kind.other",
 };
 
 function escapeXml(s: string): string {
@@ -24,14 +29,17 @@ function escapeXml(s: string): string {
 
 export async function GET() {
   const site = process.env.NEXT_PUBLIC_SITE_URL ?? "https://scrap-mechanic-search-engine.vercel.app";
-  const rows = await getNewestApproved(50, 0);
+  const [rows, { t, locale }] = await Promise.all([
+    getNewestApproved(50, 0),
+    getT(),
+  ]);
   const now = new Date().toUTCString();
 
   const items = rows
     .map((r) => {
       const link = `${site}/creation/${r.shortId ?? r.id}`;
-      const kind = KIND_LABEL[r.kind] ?? "Creation";
-      const author = r.authorName ? ` by ${r.authorName}` : "";
+      const kind = KIND_KEY[r.kind] ? t(KIND_KEY[r.kind]) : t("kind.creationFallback");
+      const author = r.authorName ? ` ${t("rss.by")} ${r.authorName}` : "";
       const pubDate = r.approvedAt ? new Date(r.approvedAt).toUTCString() : now;
       const description = `${kind}${author}`;
       return `    <item>
@@ -48,11 +56,11 @@ export async function GET() {
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Scrap Mechanic Search Engine — Newest</title>
+    <title>${escapeXml(t("rss.title"))}</title>
     <link>${site}</link>
     <atom:link href="${site}/feed.xml" rel="self" type="application/rss+xml" />
-    <description>Newest approved Scrap Mechanic Steam Workshop creations on the Scrap Mechanic Search Engine.</description>
-    <language>en</language>
+    <description>${escapeXml(t("rss.description"))}</description>
+    <language>${locale}</language>
     <lastBuildDate>${now}</lastBuildDate>
 ${items}
   </channel>

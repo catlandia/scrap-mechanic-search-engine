@@ -24,8 +24,14 @@ const en: Dictionary = {
   "nav.settings": "Settings",
   "nav.minigames": "Minigames & Others",
   "nav.adminTriage": "Admin triage",
+  "nav.about": "About the site",
+  "nav.guide": "How to use the site",
+  "nav.support": "Support the site",
+  "nav.favourites": "Your favourites",
+  "nav.notifications": "Notifications",
+  "nav.submissions": "Your submissions",
 
-  // Kinds
+  // Kinds (plural — category listing)
   "kind.blueprints": "Blueprints",
   "kind.mods": "Mods",
   "kind.worlds": "Worlds",
@@ -35,12 +41,83 @@ const en: Dictionary = {
   "kind.terrain": "Terrain",
   "kind.other": "Other",
 
+  // Kinds (singular — used in RSS category labels, per-item badges, etc.)
+  "kind.blueprint": "Blueprint",
+  "kind.mod": "Mod",
+  "kind.world": "World",
+  "kind.challenge": "Challenge",
+  "kind.tile": "Tile",
+  "kind.customGame": "Custom Game",
+  "kind.terrainAsset": "Terrain",
+  "kind.creationFallback": "Creation",
+
+  // RSS feed
+  "rss.title": "Scrap Mechanic Search Engine — Newest",
+  "rss.description":
+    "Newest approved Scrap Mechanic Steam Workshop creations on the Scrap Mechanic Search Engine.",
+  "rss.by": "by",
+
+  // /submit
+  "submit.metadataTitle": "Submit a creation — Scrap Mechanic Search Engine",
+  "submit.metadataDescription":
+    "Submit a Scrap Mechanic Steam Workshop creation the cron hasn't found yet. Approved items appear on the public feed with a Community badge crediting you.",
+  "submit.introBefore":
+    "Got a gem the cron hasn't found yet? Submit any Steam Workshop URL or id — a moderator will review it and it'll land on the public feed with a",
+  "submit.introCommunityBadge": "Community",
+  "submit.introAfter": "badge crediting you.",
+  "submit.privateProfileTitle": "We couldn't verify your Steam account age.",
+  "submit.privateProfileBody":
+    "Your Steam profile is private, so the account-creation date is hidden. Make your profile public and sign in again — or send a moderator a quick appeal and they'll flip the gate on your account manually.",
+  "submit.privateProfileAppeal": "Appeal the age gate →",
+  "submit.tooYoungTitle": "Your Steam account is less than 7 days old.",
+  "submit.tooYoungBody":
+    "This is a hard-coded cooldown to stop fresh sock-puppet accounts from spamming the site. It's not something a moderator can bypass for the too-new case — you just have to wait it out.",
+  "submit.tooYoungBodyStrong": "not something a moderator can bypass",
+  "submit.tooYoungClearsOn":
+    "Your account clears the gate on {date}. Come back then.",
+  "submit.acceptedForms": "Accepted forms",
+  "submit.queueExplain":
+    "Submitted items go into the mod triage queue. They appear publicly once approved; the cron won't also try to re-ingest them.",
+  "submit.curious": "Curious what gets in and why?",
+  "submit.howItWorks": "How it works",
+  "submit.form.urlLabel": "Steam Workshop URL or published-file ID",
+  "submit.form.urlPlaceholder":
+    "https://steamcommunity.com/sharedfiles/filedetails/?id=...",
+  "submit.form.submitPending": "Submitting…",
+  "submit.form.submitButton": "Submit for review",
+  "submit.form.successToast":
+    "Submitted — a moderator will review it shortly.",
+  "submit.form.errorToast": "Couldn't submit. Try again or check the URL.",
+  "submit.form.queuedToast": "{title} queued for mod review.",
+  "submit.form.pendingBefore": "Thanks —",
+  "submit.form.pendingAfter": "is now pending mod review.",
+  "submit.form.backHome": "Back to home ↗",
+
   // Home
   "home.heroTitle": "Find the good stuff from the Workshop.",
   "home.newestHeading": "Newest additions",
   "home.browseHeading": "Browse the catalogue",
   "home.viewAll": "View all →",
   "home.noItems": "No approved items yet.",
+  "home.supportCalloutBefore":
+    "Want to help keep this project growing? Head over to",
+  "home.supportCalloutLink": "Support the site",
+  "home.supportCalloutAfter": "to see concrete ways you can pitch in.",
+  "home.descriptionBefore":
+    "Hand-curated Blueprints, Mods, Worlds, and more. Combine tags like",
+  "home.descriptionExample1": "house + car",
+  "home.descriptionBetween": "to find a drivable camper — or",
+  "home.descriptionExample2": "walker + mech",
+  "home.descriptionAfter":
+    "for a hexapod. Low-effort creations are filtered out.",
+  "home.indexedOne": "{count} creation indexed",
+  "home.indexedMany": "{count} creations indexed",
+  "home.emptyState":
+    "No approved creations yet. Kick off an ingest and review the queue.",
+  "home.popularBlueprints": "Popular Blueprints",
+  "home.popularMods": "Popular Mods",
+  "home.popularWorlds": "Popular Worlds",
+  "home.popularChallenges": "Popular Challenges",
 
   // Generic
   "common.loading": "Loading…",
@@ -285,9 +362,132 @@ const en: Dictionary = {
   "settings.terms": "Terms",
   "settings.privacy": "Privacy",
 
+  // Settings — Fun Mode
+  "settings.funMode.title": "Fun Mode",
+  "settings.funMode.hint":
+    "Opt in to the bits of the site that exist purely for fun — deploy-banner SFX, mod pranks from /admin/abuse like the fake reboot. Real deploy warnings still show with Fun Mode off (you still need to save your work before the site restarts), they just do it silently and without the pranks.",
+  "settings.funMode.off": "Off",
+  "settings.funMode.on": "On",
+  "settings.funMode.offHint": "Silent, no pranks.",
+  "settings.funMode.onHint": "Sounds + pranks are on.",
+  "settings.funMode.extremeTitle": "EXTREME FUN MODE.",
+  "settings.funMode.extremeDescription":
+    "Layered on top of Fun Mode. Every click spawns a hitmarker sprite and sound at your cursor (they can overlap on rapid clicks), and when the deploy-banner alarm hits zero a silent fullscreen nuke video plays for a few seconds before closing itself. Turning Fun Mode off cascades this back to off.",
+  "settings.funMode.extremeLabelOn": "EXTREME FUN — ON",
+  "settings.funMode.extremeLabelOff": "EXTREME FUN — OFF",
+  "settings.funMode.extremeHintDisabled":
+    "Turn Fun Mode on first — EXTREME needs Fun to be on.",
+  "settings.funMode.extremeHintOn":
+    "Clicks spawn a tilted hitmarker + sound (can overlap). The fake-reboot alarm now triggers a silent fullscreen nuke video. Turn it off if it gets annoying.",
+  "settings.funMode.extremeHintOff":
+    "Flip it on to arm click effects + the nuke video on the alarm.",
+
+  // Error / 404 / fatal
+  "error.title": "Something went wrong.",
+  "error.body":
+    "We hit an unexpected error loading this page. Please try again in a moment.",
+  "error.retry": "Try again",
+  "globalError.title": "Something went wrong.",
+  "globalError.body":
+    "A fatal error prevented the page from loading. Please try again.",
+  "globalError.retry": "Try again",
+  "notFound.eyebrow": "404",
+  "notFound.title": "Nothing here.",
+  "notFound.body":
+    "The page or creation you were looking for isn't on the site.",
+  "notFound.home": "Back to home",
+  "notFound.search": "Search for a creation →",
+
   // Footer
   "footer.online": "{online} online",
   "footer.signedInTotal": "{total} signed-in users total",
+
+  // /support
+  "support.metadataTitle": "Support the site",
+  "support.metadataDescription":
+    "Concrete ways you can help keep the Scrap Mechanic Search Engine running and growing — from sharing links to flagging bugs.",
+  "support.eyebrow": "Get involved",
+  "support.heading": "How you can help",
+  "support.intro":
+    "The site runs on free tiers right now, which keeps it online but not self-growing — it stays useful because people like you pitch in. Here's everything that actually moves the needle.",
+  "support.spreadHeading": "Spread the word",
+  "support.spreadP1":
+    "Most people hunting for Scrap Mechanic creations still dig through Steam's native Workshop browser. Telling a friend, posting a link in a Discord, or sharing a creation on Reddit is by far the single biggest thing you can do.",
+  "support.spreadP2Before": "Every creation page now has a",
+  "support.spreadP2ShareLabel": "Share",
+  "support.spreadP2Between": "button next to",
+  "support.spreadP2ViewLabel": "View on Steam Workshop",
+  "support.spreadP2After": "— one click copies the link.",
+  "support.spreadP3Before": "There's also a",
+  "support.spreadP3SteamGroup": "Steam Group",
+  "support.spreadP3After":
+    "— joining is free and members get announcements in their Steam client when new picks are posted.",
+  "support.submitHeading": "Submit creations we've missed",
+  "support.submitP1Before":
+    "The auto-ingest only picks up trending items. Hidden gems that never went viral slip through. If you have one in mind — your own or someone else's — drop the Workshop URL at",
+  "support.submitP1Link": "/submit",
+  "support.submitP1After": ". A moderator reviews it and it goes live.",
+  "support.voteHeading": "Vote and tag",
+  "support.voteP1":
+    "Every approved creation has up/down votes and a community tag system. The more people who vote on creations, the better the rating sorts work. If a creation is missing a tag you'd search for — add it. At +3 net votes, it becomes visible to everyone.",
+  "support.reportHeading": "Report what's wrong",
+  "support.reportP1Before": "Every creation page has a",
+  "support.reportP1Label": "Report",
+  "support.reportP1After":
+    "button. Wrong tags, low quality, spam, missing co-authors — if something's off, flag it. A moderator handles it and the catalogue gets a little better.",
+  "support.reportP2": "Individual comments can be reported too.",
+  "support.suggestHeading": "Suggest features",
+  "support.suggestP1Before":
+    "Almost every meaningful improvement to the site came from a user idea. Drop yours on the",
+  "support.suggestP1Link": "ideas board",
+  "support.suggestP1After":
+    "— it's a public, voted, triaged list, not a black hole.",
+  "support.bugsHeading": "Flag bugs",
+  "support.bugsP1Before":
+    "Found something broken, ugly, or unclear? Post it on the ideas board with the bug tag or open an issue on",
+  "support.bugsP1GitHub": "GitHub",
+  "support.bugsP1After": ". Verified bug reports earn the 🐛",
+  "support.bugsP1BadgeLabel": "Bug hunter",
+  "support.bugsP1BadgeAfter": "badge.",
+  "support.moneyHeading": "Money support",
+  "support.moneyP1":
+    "Right now there's no way to donate — I haven't set up a Patreon, Ko-fi, or anything similar yet. But if the site grows, it'll eventually outgrow the free tiers, and at that point financial support would genuinely help keep it online and improving. If you'd like to contribute that way later, check back — I'll add a link here when something's set up.",
+  "support.moneyP2":
+    "In the meantime the items above are the most useful things you can do.",
+
+  // /about
+  "about.metadataTitle": "About · Scrap Mechanic Search Engine",
+  "about.metadataDescription":
+    "How the Scrap Mechanic Search Engine curates, ingests, and reviews Workshop creations.",
+  "about.eyebrow": "How it works",
+  "about.heading": "What is this site?",
+  "about.shortVersion": "The short version",
+  "about.shortVersionBody":
+    "A hand-curated, searchable directory of Scrap Mechanic Steam Workshop creations. Quality is prioritised over quantity: every item on the public site has been through a human review step, and low-traction items are filtered before they ever reach that review.",
+  "about.pipelineHeading": "The pipeline",
+  "about.step1Heading": "1. Auto-ingest",
+  "about.step1Body":
+    "A daily cron fetches the newest Workshop entries via the Steam Web API. Items that fall below a per-kind follower and age threshold get filtered out — this keeps fresh zero-sub uploads and vote-farmable items out of the triage queue.",
+  "about.step1TableHeading": "Minimum thresholds",
+  "about.step1TableKind": "Kind",
+  "about.step1TableMinSubs": "Min. subscribers",
+  "about.step1TableMinAge": "Min. age",
+  "about.step2Heading": "2. Human review",
+  "about.step2Body":
+    "Everything that passes the gate lands in a moderator triage queue. Moderators approve, reject, or ask for changes. Approved items get public tags and appear in the catalogue; rejected items stay out of future ingests.",
+  "about.step3Heading": "3. Community submissions",
+  "about.step3BodyBefore":
+    "Anyone with a verified Steam account can manually suggest an item via",
+  "about.step3Submit": "/submit",
+  "about.step3BodyAfter":
+    ". These bypass the follower/age filter but still go through the same moderator review — community submissions are flagged so mods can prioritise them.",
+  "about.whatIfHeading": "What if my creation doesn't show up?",
+  "about.whatIfBody":
+    "If a creation isn't on the site, it's almost always because it's below the auto-ingest threshold and nobody has manually submitted it yet. Submit it at /submit — it takes ten seconds and a mod usually reviews within a day or two.",
+  "about.costHeading": "Costs & sustainability",
+  "about.costBody":
+    "The whole stack runs on free tiers — Vercel Hobby for hosting, Neon Postgres for the database, Steam's public Web API for the data. No paid services, no ads, no trackers beyond basic server analytics. If you want to help keep it that way, see the /support page.",
+  "about.thresholdsDays": "{n} days",
 
   // Locale picker
   "locale.picker.label": "Language",
@@ -305,6 +505,12 @@ const ru: Dictionary = {
   "nav.settings": "Настройки",
   "nav.minigames": "Мини-игры и прочее",
   "nav.adminTriage": "Админ",
+  "nav.about": "О сайте",
+  "nav.guide": "Как пользоваться сайтом",
+  "nav.support": "Поддержать сайт",
+  "nav.favourites": "Ваши избранные",
+  "nav.notifications": "Уведомления",
+  "nav.submissions": "Ваши заявки",
 
   "kind.blueprints": "Чертежи",
   "kind.mods": "Моды",
@@ -315,11 +521,83 @@ const ru: Dictionary = {
   "kind.terrain": "Рельеф",
   "kind.other": "Прочее",
 
+  "kind.blueprint": "Чертёж",
+  "kind.mod": "Мод",
+  "kind.world": "Мир",
+  "kind.challenge": "Испытание",
+  "kind.tile": "Тайл",
+  "kind.customGame": "Кастомная игра",
+  "kind.terrainAsset": "Рельеф",
+  "kind.creationFallback": "Объект",
+
+  "rss.title": "Scrap Mechanic Search Engine — Новое",
+  "rss.description":
+    "Самые свежие одобренные объекты из Мастерской Scrap Mechanic на Scrap Mechanic Search Engine.",
+  "rss.by": "автор:",
+
+  "submit.metadataTitle": "Предложить объект — Scrap Mechanic Search Engine",
+  "submit.metadataDescription":
+    "Предложите объект из Мастерской Scrap Mechanic, который ещё не нашёл крон. Одобренные объекты появляются в публичной ленте с бейджем «Community», отмечающим ваш вклад.",
+  "submit.introBefore":
+    "Нашли что-то стоящее, чего ещё нет в каталоге? Отправьте любую ссылку или ID из Мастерской Steam — модератор проверит, и объект появится в публичной ленте с бейджем",
+  "submit.introCommunityBadge": "Community",
+  "submit.introAfter": "отмечающим ваш вклад.",
+  "submit.privateProfileTitle":
+    "Мы не смогли проверить возраст вашего аккаунта Steam.",
+  "submit.privateProfileBody":
+    "Ваш профиль Steam закрыт, поэтому дата создания скрыта. Сделайте профиль публичным и войдите ещё раз — или отправьте модератору апелляцию, и он откроет ограничение вручную.",
+  "submit.privateProfileAppeal": "Подать апелляцию →",
+  "submit.tooYoungTitle": "Вашему аккаунту Steam меньше 7 дней.",
+  "submit.tooYoungBody":
+    "Это жёсткий таймер, чтобы новые фейковые аккаунты не спамили сайт. Это не то, что модератор может обойти в случае «слишком свежего» аккаунта — просто придётся подождать.",
+  "submit.tooYoungBodyStrong": "не то, что модератор может обойти",
+  "submit.tooYoungClearsOn":
+    "Ограничение снимется {date}. Возвращайтесь тогда.",
+  "submit.acceptedForms": "Поддерживаемые форматы",
+  "submit.queueExplain":
+    "Заявки попадают в очередь модерации. Они появляются публично после одобрения; крон не будет пытаться повторно их обработать.",
+  "submit.curious": "Интересно, что попадает и почему?",
+  "submit.howItWorks": "Как это работает",
+  "submit.form.urlLabel": "Ссылка на Мастерскую Steam или ID published-file",
+  "submit.form.urlPlaceholder":
+    "https://steamcommunity.com/sharedfiles/filedetails/?id=...",
+  "submit.form.submitPending": "Отправляем…",
+  "submit.form.submitButton": "Отправить на рассмотрение",
+  "submit.form.successToast":
+    "Отправлено — модератор вскоре проверит.",
+  "submit.form.errorToast":
+    "Не удалось отправить. Попробуйте снова или проверьте ссылку.",
+  "submit.form.queuedToast": "{title} в очереди на модерацию.",
+  "submit.form.pendingBefore": "Спасибо —",
+  "submit.form.pendingAfter": "ожидает проверки модератором.",
+  "submit.form.backHome": "На главную ↗",
+
   "home.heroTitle": "Найдите лучшее из Мастерской.",
   "home.newestHeading": "Последние добавления",
   "home.browseHeading": "Смотреть каталог",
   "home.viewAll": "Смотреть всё →",
   "home.noItems": "Пока нет одобренных объектов.",
+  "home.supportCalloutBefore":
+    "Хотите помочь проекту развиваться? Загляните на",
+  "home.supportCalloutLink": "Поддержать сайт",
+  "home.supportCalloutAfter":
+    "— там конкретные способы внести вклад.",
+  "home.descriptionBefore":
+    "Вручную отобранные Чертежи, Моды, Миры и другое. Комбинируйте теги, например",
+  "home.descriptionExample1": "дом + машина",
+  "home.descriptionBetween":
+    "— чтобы найти жилой фургон, или",
+  "home.descriptionExample2": "шагоход + мех",
+  "home.descriptionAfter":
+    "— для гексапода. Низкокачественные творения отсеиваются.",
+  "home.indexedOne": "{count} объект в каталоге",
+  "home.indexedMany": "{count} объектов в каталоге",
+  "home.emptyState":
+    "Пока нет одобренных объектов. Запустите сбор и проверьте очередь.",
+  "home.popularBlueprints": "Популярные чертежи",
+  "home.popularMods": "Популярные моды",
+  "home.popularWorlds": "Популярные миры",
+  "home.popularChallenges": "Популярные испытания",
 
   "common.loading": "Загрузка…",
   "common.save": "Сохранить",
@@ -551,8 +829,217 @@ const ru: Dictionary = {
   "settings.terms": "Условия",
   "settings.privacy": "Конфиденциальность",
 
+  "settings.funMode.title": "Весёлый режим",
+  "settings.funMode.hint":
+    "Включите разделы сайта, которые существуют исключительно ради веселья — звуки баннера развёртывания, модераторские шутки из /admin/abuse вроде фейковой перезагрузки. Настоящие предупреждения о развёртывании всё равно показываются, если режим выключен (вам всё же нужно сохранить работу перед перезапуском сайта), просто без звука и без шуток.",
+  "settings.funMode.off": "Выкл.",
+  "settings.funMode.on": "Вкл.",
+  "settings.funMode.offHint": "Без звука, без шуток.",
+  "settings.funMode.onHint": "Звуки и шутки включены.",
+  "settings.funMode.extremeTitle": "ЭКСТРЕМАЛЬНЫЙ ВЕСЁЛЫЙ РЕЖИМ.",
+  "settings.funMode.extremeDescription":
+    "Надстройка поверх Весёлого режима. Каждый клик порождает спрайт-хитмаркер и звук у курсора (быстрые клики могут накладываться), а когда сигнал баннера развёртывания достигает нуля — на весь экран беззвучно воспроизводится видео ядерного взрыва, которое закрывается само по окончании. Выключение Весёлого режима автоматически выключает и этот.",
+  "settings.funMode.extremeLabelOn": "ЭКСТРЕМАЛЬНОЕ ВЕСЕЛЬЕ — ВКЛ.",
+  "settings.funMode.extremeLabelOff": "ЭКСТРЕМАЛЬНОЕ ВЕСЕЛЬЕ — ВЫКЛ.",
+  "settings.funMode.extremeHintDisabled":
+    "Сначала включите Весёлый режим — ЭКСТРЕМАЛЬНОМУ нужен базовый.",
+  "settings.funMode.extremeHintOn":
+    "Клики порождают наклонённый хитмаркер и звук (могут накладываться). Сигнал фейковой перезагрузки теперь запускает беззвучное полноэкранное видео ядерного взрыва. Выключите, если надоест.",
+  "settings.funMode.extremeHintOff":
+    "Включите, чтобы активировать эффекты кликов и видео ядерного взрыва на сигнал тревоги.",
+
+  "error.title": "Что-то пошло не так.",
+  "error.body":
+    "Произошла непредвиденная ошибка при загрузке страницы. Попробуйте ещё раз через минуту.",
+  "error.retry": "Повторить",
+  "globalError.title": "Что-то пошло не так.",
+  "globalError.body":
+    "Критическая ошибка не позволила загрузить страницу. Попробуйте ещё раз.",
+  "globalError.retry": "Повторить",
+  "notFound.eyebrow": "404",
+  "notFound.title": "Здесь ничего нет.",
+  "notFound.body":
+    "Страница или объект, который вы искали, на сайте отсутствует.",
+  "notFound.home": "Вернуться на главную",
+  "notFound.search": "Искать объекты →",
+
   "footer.online": "{online} онлайн",
   "footer.signedInTotal": "всего {total} зарегистрированных",
+
+  "support.metadataTitle": "Поддержать сайт",
+  "support.metadataDescription":
+    "Конкретные способы помочь Scrap Mechanic Search Engine работать и развиваться — от репостов ссылок до сообщений об ошибках.",
+  "support.eyebrow": "Присоединяйтесь",
+  "support.heading": "Как вы можете помочь",
+  "support.intro":
+    "Сейчас сайт работает на бесплатных тарифах — этого хватает, чтобы он был онлайн, но не чтобы он рос сам по себе. Он остаётся полезным благодаря таким людям, как вы. Вот всё, что реально имеет значение.",
+  "support.spreadHeading": "Расскажите другим",
+  "support.spreadP1":
+    "Большинство людей, ищущих творения для Scrap Mechanic, до сих пор копаются во встроенном браузере Мастерской Steam. Рассказать другу, кинуть ссылку в Discord или поделиться творением на Reddit — это безусловно самое важное, что вы можете сделать.",
+  "support.spreadP2Before": "На странице каждого творения теперь есть кнопка",
+  "support.spreadP2ShareLabel": "Поделиться",
+  "support.spreadP2Between": "рядом с",
+  "support.spreadP2ViewLabel": "Открыть в Steam Workshop",
+  "support.spreadP2After": "— один клик копирует ссылку.",
+  "support.spreadP3Before": "Ещё есть",
+  "support.spreadP3SteamGroup": "Steam Group",
+  "support.spreadP3After":
+    "— вступление бесплатное, а участники получают уведомления в клиенте Steam, когда появляются новые подборки.",
+  "support.submitHeading": "Присылайте пропущенные творения",
+  "support.submitP1Before":
+    "Автоматический сбор подхватывает только трендовые работы. Скрытые жемчужины, которые так и не стали вирусными, проскакивают мимо. Если у вас есть такая на примете — своя или чужая — киньте ссылку на Мастерскую на",
+  "support.submitP1Link": "/submit",
+  "support.submitP1After": ". Модератор проверит её, и она появится на сайте.",
+  "support.voteHeading": "Голосуйте и ставьте теги",
+  "support.voteP1":
+    "У каждого одобренного творения есть голоса «за»/«против» и система пользовательских тегов. Чем больше людей голосует за творения, тем лучше работает сортировка по рейтингу. Если у творения не хватает тега, по которому вы бы его искали — добавьте его. При +3 чистых голосах тег становится виден всем.",
+  "support.reportHeading": "Сообщайте о проблемах",
+  "support.reportP1Before": "На странице каждого творения есть кнопка",
+  "support.reportP1Label": "Пожаловаться",
+  "support.reportP1After":
+    ". Неправильные теги, низкое качество, спам, неуказанные соавторы — если что-то не так, отметьте это. Модератор разберётся, и каталог станет чуть лучше.",
+  "support.reportP2": "Отдельные комментарии тоже можно отправить на рассмотрение.",
+  "support.suggestHeading": "Предлагайте идеи",
+  "support.suggestP1Before":
+    "Почти каждое значимое улучшение сайта пришло от пользователя. Оставляйте свои на",
+  "support.suggestP1Link": "доске идей",
+  "support.suggestP1After":
+    "— это публичный список с голосованием и разбором, а не чёрная дыра.",
+  "support.bugsHeading": "Сообщайте об ошибках",
+  "support.bugsP1Before":
+    "Нашли что-то сломанное, уродливое или непонятное? Напишите на доску идей с тегом bug или откройте issue на",
+  "support.bugsP1GitHub": "GitHub",
+  "support.bugsP1After": ". За подтверждённые баг-репорты даётся 🐛 значок",
+  "support.bugsP1BadgeLabel": "Охотник за багами",
+  "support.bugsP1BadgeAfter": ".",
+  "support.moneyHeading": "Финансовая поддержка",
+  "support.moneyP1":
+    "Пока что пожертвований нет — я ещё не завёл ни Patreon, ни Ko-fi, ни чего-либо подобного. Но если сайт вырастет, он рано или поздно упрётся в лимиты бесплатных тарифов, и тогда финансовая поддержка действительно поможет держать его онлайн и развивать. Если захотите поддержать проект позже — заглядывайте сюда, я добавлю ссылку, когда всё настрою.",
+  "support.moneyP2":
+    "А пока перечисленное выше — самое полезное, что вы можете сделать.",
+
+  "about.metadataTitle": "О проекте · Scrap Mechanic Search Engine",
+  "about.metadataDescription":
+    "Как Scrap Mechanic Search Engine отбирает, загружает и проверяет творения из Мастерской.",
+  "about.eyebrow": "Как это работает",
+  "about.heading": "Что это за сайт?",
+  "about.shortVersion": "Если коротко",
+  "about.shortVersionBody":
+    "Вручную отобранный поисковый каталог творений из Мастерской Steam для Scrap Mechanic. Качество важнее количества: каждая позиция на публичном сайте прошла проверку модератором, а материалы с низким интересом отсеиваются ещё до этой проверки.",
+  "about.pipelineHeading": "Конвейер",
+  "about.step1Heading": "1. Автоматическая загрузка",
+  "about.step1Body":
+    "Ежедневный cron получает новейшие записи из Мастерской через Steam Web API. Позиции, не дотягивающие до порога подписчиков и возраста для своего типа, отсеиваются — это не даёт свежим загрузкам без подписчиков и материалам с накрученными голосами попасть в очередь модерации.",
+  "about.step1TableHeading": "Минимальные пороги",
+  "about.step1TableKind": "Тип",
+  "about.step1TableMinSubs": "Мин. подписчиков",
+  "about.step1TableMinAge": "Мин. возраст",
+  "about.step2Heading": "2. Проверка человеком",
+  "about.step2Body":
+    "Всё, что прошло фильтр, попадает в очередь модерации. Модераторы одобряют, отклоняют или запрашивают изменения. Одобренные позиции получают публичные теги и появляются в каталоге; отклонённые больше не попадают в будущие загрузки.",
+  "about.step3Heading": "3. Заявки от сообщества",
+  "about.step3BodyBefore":
+    "Любой пользователь с подтверждённым аккаунтом Steam может вручную предложить материал через",
+  "about.step3Submit": "/submit",
+  "about.step3BodyAfter":
+    ". Такие заявки обходят фильтр по подписчикам и возрасту, но проходят ту же модерацию — они помечаются, чтобы модераторы могли отдать им приоритет.",
+  "about.whatIfHeading": "Что если моего творения нет на сайте?",
+  "about.whatIfBody":
+    "Если творения нет на сайте, почти всегда это потому, что оно ниже порога автоматической загрузки и его ещё никто не предложил вручную. Отправьте его через /submit — это занимает десять секунд, и модератор обычно рассматривает заявку за день-два.",
+  "about.costHeading": "Расходы и устойчивость",
+  "about.costBody":
+    "Весь стек работает на бесплатных тарифах — Vercel Hobby для хостинга, Neon Postgres для базы данных, публичный Steam Web API для данных. Никаких платных сервисов, рекламы и трекеров, кроме базовой серверной аналитики. Если вы хотите помочь сохранить это, загляните на страницу /support.",
+  "about.thresholdsDays": "{n} дн.",
+
+  "terms.metadataTitle": "Условия",
+  "terms.metadataDescription":
+    "Правила использования сайта и публикации материалов.",
+  "terms.heading": "Условия использования",
+  "terms.lastUpdated": "Последнее обновление — апрель 2026 г.",
+  "terms.h2What": "Что это за сайт",
+  "terms.pWhat":
+    "Scrap Mechanic Search Engine — это бесплатный каталог, который ведёт сообщество и в котором собраны ссылки на творения Steam Workshop для игры Scrap Mechanic. Мы не связаны с Axolot Games или Valve. Сами файлы Workshop хранятся в Steam; мы храним только метаданные (название, описание, теги, URL миниатюры) и ссылки на оригинал.",
+  "terms.h2Account": "Аккаунт",
+  "terms.pAccount1":
+    "Для входа используется Steam OpenID — мы никогда не видим ваш пароль Steam. Входя на сайт, вы соглашаетесь с настоящими условиями и нашей ",
+  "terms.pAccountLink": "политикой конфиденциальности",
+  "terms.pAccount2":
+    ". Вы несёте ответственность за безопасность своего аккаунта Steam.",
+  "terms.h2Rules": "Правила сообщества",
+  "terms.pRulesIntro":
+    "При публикации комментариев, тегов, предложений или материалов:",
+  "terms.liRulesDecent": "Ведите себя достойно. Никаких оскорблений, травли или угроз.",
+  "terms.liRulesSpam": "Никакого спама, рекламы или офтопика.",
+  "terms.liRulesAppid":
+    "Отправляйте только творения Workshop для Scrap Mechanic (appid 387990). Заявки на другие игры отклоняются автоматически.",
+  "terms.liRulesPii": "Не публикуйте личную информацию других людей.",
+  "terms.liRulesExploit":
+    "Не пытайтесь сломать, взломать перебором или использовать уязвимости сайта.",
+  "terms.pRulesMods":
+    "Модераторы могут скрывать материалы, выносить предупреждения, отключать доступ к чату или блокировать аккаунты, нарушающие эти правила. За грубые или систематические нарушения может быть назначена бессрочная блокировка.",
+  "terms.h2Content": "Ваш контент",
+  "terms.pContent":
+    "Комментарии и предложения, которые вы публикуете, остаются подписанными вашим persona-именем и могут сохраняться в виде цепочек обсуждений даже после того, как вы покинете сайт, чтобы ранее начатые дискуссии оставались понятными. Все права на написанное сохраняются за вами; публикуя материал, вы предоставляете сайту неисключительное право отображать его другим пользователям.",
+  "terms.h2Takedowns": "Контент Workshop и запросы на удаление",
+  "terms.pTakedowns1":
+    "Сами файлы и изображения каждого творения Workshop размещены в Steam. Если ваше творение Workshop указано здесь и вы хотите его удалить (например, вы сняли его с публикации в Steam), откройте issue в ",
+  "terms.pTakedownsLink": "репозитории GitHub",
+  "terms.pTakedowns2":
+    " проекта или обратитесь к модератору, и мы его уберём.",
+  "terms.h2Warranty": "Отсутствие гарантий",
+  "terms.pWarranty":
+    "Сайт предоставляется «как есть». Функции могут меняться или исчезать, сайт может быть недоступен, данные могут содержать ошибки. Не полагайтесь на него в важных вопросах.",
+  "terms.h2Changes": "Изменения",
+  "terms.pChanges":
+    "Мы можем обновлять настоящие условия. О существенных изменениях будет сообщено в примечаниях к выпускам. Продолжение использования сайта после изменений означает согласие с обновлённой версией.",
+
+  "privacy.metadataTitle": "Конфиденциальность",
+  "privacy.metadataDescription":
+    "Что мы собираем, зачем и как долго храним.",
+  "privacy.h1": "Конфиденциальность",
+  "privacy.lastUpdated": "Последнее обновление: апрель 2026 года.",
+  "privacy.h2Short": "Кратко",
+  "privacy.pShort":
+    "Это некоммерческий каталог творений Scrap Mechanic Workshop, управляемый сообществом. Мы не продаём данные, не показываем рекламу и не используем трекеры аналитики, которые следят за вами. Если вы не войдёте в систему, мы никогда не узнаем, кто вы.",
+  "privacy.h2Store": "Что мы храним",
+  "privacy.pStoreIntro": "Если вы входите через Steam, мы сохраняем:",
+  "privacy.liStoreId": "Ваш публичный SteamID, имя профиля и URL аватара.",
+  "privacy.liStoreAge":
+    "Возраст вашей учётной записи Steam и время, проведённое в Scrap Mechanic, — эти данные поступают из Steam и используются для отсеивания одноразовых аккаунтов, созданных только что.",
+  "privacy.liStoreActivity":
+    "Время, когда вы входили в систему, оставляли комментарии, голосовали, добавляли в избранное или отправляли материалы, — чтобы модераторы могли поддерживать читаемость сайта.",
+  "privacy.pStoreNot":
+    "Мы <strong>не</strong> собираем вашу электронную почту, пароль, номер телефона, настоящее имя, IP-адрес или историю посещений.",
+  "privacy.h2Cookies": "Cookie-файлы",
+  "privacy.liCookieSession":
+    "<code>smse_session</code> — сессия входа, истекает после недели бездействия.",
+  "privacy.liCookieCaptcha":
+    "<code>smse_captcha</code> — кратковременное состояние (30 мин) для проверки на бота.",
+  "privacy.liCookieBotVerified":
+    "<code>bot_verified</code> — устанавливается после прохождения проверки, действует 30 дней.",
+  "privacy.liCookieRatingMode":
+    "<code>smse_rating_mode</code> — запоминает, какие оценки вы предпочитаете: Steam, сайта или и те, и другие.",
+  "privacy.liCookieTheme":
+    "<code>smse_theme</code> — запоминает выбранную вами цветовую тему.",
+  "privacy.pCookieFooter":
+    "Все cookie-файлы являются первичными, подписаны и используют HTTP-only там, где это важно. Никаких рекламных трекеров.",
+  "privacy.h2Where": "Где хранятся данные",
+  "privacy.liWhereDb": "База данных: Neon (бессерверный Postgres, бесплатный тариф).",
+  "privacy.liWhereHost": "Хостинг: Vercel.",
+  "privacy.liWhereSteam": "Метаданные и миниатюры Workshop: Steam (прямые ссылки).",
+  "privacy.pWhereLogs":
+    "Vercel и Neon могут вести краткосрочные операционные журналы. Мы не включаем в журналы персональные данные сверх того, что необходимо для исправления ошибок.",
+  "privacy.h2Controls": "Ваши возможности управления",
+  "privacy.liControlsStop":
+    "Прекратите использовать сайт в любое время — посетители без входа не оставляют идентифицирующих данных.",
+  "privacy.liControlsDeletePre":
+    "Запросите удаление данных вашей учётной записи, открыв issue в ",
+  "privacy.liControlsDeleteLink": "GitHub",
+  "privacy.liControlsDeletePost":
+    " проекта. Ваш размещённый контент (комментарии, предложения) может быть анонимизирован, а не удалён, чтобы сохранить читаемость обсуждений.",
+  "privacy.h2Changes": "Изменения",
+  "privacy.pChanges":
+    "Если эта политика существенно изменится, обновление будет объявлено в примечаниях к выпуску на сайте. Данная страница всегда показывает актуальную версию.",
 
   "locale.picker.label": "Язык",
 };
@@ -569,6 +1056,12 @@ const de: Dictionary = {
   "nav.settings": "Einstellungen",
   "nav.minigames": "Minispiele & mehr",
   "nav.adminTriage": "Admin triage",
+  "nav.about": "Über die Seite",
+  "nav.guide": "So benutzt du die Seite",
+  "nav.support": "Die Seite unterstützen",
+  "nav.favourites": "Deine Favoriten",
+  "nav.notifications": "Benachrichtigungen",
+  "nav.submissions": "Deine Einreichungen",
 
   "kind.blueprints": "Blaupausen",
   "kind.mods": "Mods",
@@ -579,7 +1072,79 @@ const de: Dictionary = {
   "kind.terrain": "Gelände",
   "kind.other": "Sonstiges",
 
+  "kind.blueprint": "Blaupause",
+  "kind.mod": "Mod",
+  "kind.world": "Welt",
+  "kind.challenge": "Challenge",
+  "kind.tile": "Tile",
+  "kind.customGame": "Custom Game",
+  "kind.terrainAsset": "Gelände",
+  "kind.creationFallback": "Kreation",
+
+  "rss.title": "Scrap Mechanic Search Engine — Neueste",
+  "rss.description":
+    "Die neuesten freigegebenen Scrap-Mechanic-Steam-Workshop-Kreationen auf der Scrap Mechanic Search Engine.",
+  "rss.by": "von",
+
+  "submit.metadataTitle": "Kreation einreichen — Scrap Mechanic Search Engine",
+  "submit.metadataDescription":
+    "Reiche eine Scrap-Mechanic-Steam-Workshop-Kreation ein, die der Cron noch nicht gefunden hat. Freigegebene Einträge erscheinen im öffentlichen Feed mit einem Community-Badge, der dich auszeichnet.",
+  "submit.introBefore":
+    "Eine Perle, die der Cron noch nicht gefunden hat? Reiche eine beliebige Steam-Workshop-URL oder -ID ein — ein Moderator prüft es und es landet mit einem",
+  "submit.introCommunityBadge": "Community",
+  "submit.introAfter": "Badge, der dich auszeichnet, im öffentlichen Feed.",
+  "submit.privateProfileTitle":
+    "Wir konnten das Alter deines Steam-Kontos nicht überprüfen.",
+  "submit.privateProfileBody":
+    "Dein Steam-Profil ist privat, daher ist das Erstellungsdatum verborgen. Stelle dein Profil öffentlich und melde dich erneut an — oder sende einem Moderator einen kurzen Einspruch, dann schaltet er dein Konto manuell frei.",
+  "submit.privateProfileAppeal": "Alters-Gate-Einspruch →",
+  "submit.tooYoungTitle": "Dein Steam-Konto ist weniger als 7 Tage alt.",
+  "submit.tooYoungBody":
+    "Das ist ein fest eingebauter Cooldown, damit frische Sock-Puppet-Konten die Seite nicht spammen. Das kann ein Moderator im Fall „zu frisch“ nicht umgehen — du musst einfach warten.",
+  "submit.tooYoungBodyStrong": "kann ein Moderator nicht umgehen",
+  "submit.tooYoungClearsOn":
+    "Dein Konto passiert das Gate am {date}. Komm dann wieder.",
+  "submit.acceptedForms": "Akzeptierte Formen",
+  "submit.queueExplain":
+    "Eingereichte Einträge landen in der Moderator-Triage-Warteschlange. Sie erscheinen öffentlich erst nach Freigabe; der Cron versucht nicht, sie erneut einzuholen.",
+  "submit.curious": "Neugierig, was reinkommt und warum?",
+  "submit.howItWorks": "Wie es funktioniert",
+  "submit.form.urlLabel": "Steam-Workshop-URL oder Published-File-ID",
+  "submit.form.urlPlaceholder":
+    "https://steamcommunity.com/sharedfiles/filedetails/?id=...",
+  "submit.form.submitPending": "Wird gesendet…",
+  "submit.form.submitButton": "Zur Prüfung einreichen",
+  "submit.form.successToast":
+    "Eingereicht — ein Moderator schaut es sich bald an.",
+  "submit.form.errorToast":
+    "Einreichung fehlgeschlagen. Versuche es erneut oder prüfe die URL.",
+  "submit.form.queuedToast": "{title} in der Mod-Warteschlange.",
+  "submit.form.pendingBefore": "Danke —",
+  "submit.form.pendingAfter": "wartet jetzt auf die Mod-Prüfung.",
+  "submit.form.backHome": "Zurück zur Startseite ↗",
+
   "home.heroTitle": "Finde das Gute aus dem Workshop.",
+  "home.supportCalloutBefore":
+    "Willst du, dass dieses Projekt weiter wächst? Schau auf",
+  "home.supportCalloutLink": "Die Seite unterstützen",
+  "home.supportCalloutAfter":
+    ", um konkrete Wege zu sehen, wie du mitmachen kannst.",
+  "home.descriptionBefore":
+    "Handverlesene Blaupausen, Mods, Welten und mehr. Kombiniere Tags wie",
+  "home.descriptionExample1": "Haus + Auto",
+  "home.descriptionBetween":
+    ", um ein fahrbares Wohnmobil zu finden — oder",
+  "home.descriptionExample2": "Läufer + Mech",
+  "home.descriptionAfter":
+    "für einen Hexapoden. Kreationen mit geringem Aufwand werden herausgefiltert.",
+  "home.indexedOne": "{count} Kreation indexiert",
+  "home.indexedMany": "{count} Kreationen indexiert",
+  "home.emptyState":
+    "Noch keine freigegebenen Kreationen. Starte eine Erfassung und prüfe die Warteschlange.",
+  "home.popularBlueprints": "Beliebte Blaupausen",
+  "home.popularMods": "Beliebte Mods",
+  "home.popularWorlds": "Beliebte Welten",
+  "home.popularChallenges": "Beliebte Challenges",
   "home.newestHeading": "Neueste Einträge",
   "home.browseHeading": "Katalog durchstöbern",
   "home.viewAll": "Alle ansehen →",
@@ -816,8 +1381,219 @@ const de: Dictionary = {
   "settings.terms": "Nutzungsbedingungen",
   "settings.privacy": "Datenschutz",
 
+  "settings.funMode.title": "Spaß-Modus",
+  "settings.funMode.hint":
+    "Schalte die Teile der Seite frei, die rein zum Spaß existieren — Sound-Effekte im Deploy-Banner, Moderator-Pranks aus /admin/abuse wie der gefälschte Neustart. Echte Deploy-Warnungen werden auch bei ausgeschaltetem Spaß-Modus angezeigt (du musst trotzdem vor dem Neustart speichern), nur eben leise und ohne Pranks.",
+  "settings.funMode.off": "Aus",
+  "settings.funMode.on": "An",
+  "settings.funMode.offHint": "Leise, keine Pranks.",
+  "settings.funMode.onHint": "Sounds und Pranks sind an.",
+  "settings.funMode.extremeTitle": "EXTREMER SPAß-MODUS.",
+  "settings.funMode.extremeDescription":
+    "Eine weitere Stufe über dem Spaß-Modus. Jeder Klick erzeugt ein Treffer-Sprite und einen Sound an deinem Cursor (schnelle Klicks können sich überlagern), und wenn der Deploy-Banner-Alarm Null erreicht, läuft ein stummes Vollbild-Atomvideo einige Sekunden lang und schließt sich dann von selbst. Spaß-Modus abzuschalten setzt auch diesen zurück.",
+  "settings.funMode.extremeLabelOn": "EXTREMER SPAß — AN",
+  "settings.funMode.extremeLabelOff": "EXTREMER SPAß — AUS",
+  "settings.funMode.extremeHintDisabled":
+    "Schalte zuerst den Spaß-Modus ein — EXTREM braucht Spaß als Grundlage.",
+  "settings.funMode.extremeHintOn":
+    "Klicks erzeugen einen gekippten Hitmarker plus Sound (können sich überlappen). Der Fake-Reboot-Alarm löst jetzt ein stummes Vollbild-Atomvideo aus. Schalte es ab, wenn es nervt.",
+  "settings.funMode.extremeHintOff":
+    "Schalte ihn ein, um Klickeffekte und das Atomvideo beim Alarm scharfzustellen.",
+
+  "error.title": "Etwas ist schiefgelaufen.",
+  "error.body":
+    "Beim Laden dieser Seite ist ein unerwarteter Fehler aufgetreten. Bitte versuche es gleich noch einmal.",
+  "error.retry": "Erneut versuchen",
+  "globalError.title": "Etwas ist schiefgelaufen.",
+  "globalError.body":
+    "Ein schwerwiegender Fehler verhinderte das Laden der Seite. Bitte versuche es erneut.",
+  "globalError.retry": "Erneut versuchen",
+  "notFound.eyebrow": "404",
+  "notFound.title": "Hier ist nichts.",
+  "notFound.body":
+    "Die Seite oder Kreation, die du gesucht hast, existiert auf dieser Seite nicht.",
+  "notFound.home": "Zurück zur Startseite",
+  "notFound.search": "Nach einer Kreation suchen →",
+
   "footer.online": "{online} online",
   "footer.signedInTotal": "insgesamt {total} angemeldet",
+
+  "support.metadataTitle": "Die Seite unterstützen",
+  "support.metadataDescription":
+    "Konkrete Wege, mit denen du hilfst, die Scrap Mechanic Search Engine am Laufen zu halten und weiterzuentwickeln — vom Teilen von Links bis zum Melden von Bugs.",
+  "support.eyebrow": "Mitmachen",
+  "support.heading": "Wie du helfen kannst",
+  "support.intro":
+    "Die Seite läuft derzeit auf kostenlosen Tarifen — das hält sie online, lässt sie aber nicht von selbst wachsen. Sie bleibt nützlich, weil Leute wie du mitmachen. Hier ist alles, was wirklich einen Unterschied macht.",
+  "support.spreadHeading": "Sag es weiter",
+  "support.spreadP1":
+    "Die meisten, die nach Scrap-Mechanic-Kreationen suchen, wühlen sich immer noch durch Steams eigenen Workshop-Browser. Einem Freund Bescheid geben, einen Link in einem Discord posten oder eine Kreation auf Reddit teilen — das ist mit Abstand das Wirkungsvollste, was du tun kannst.",
+  "support.spreadP2Before": "Jede Kreationsseite hat jetzt einen",
+  "support.spreadP2ShareLabel": "Teilen",
+  "support.spreadP2Between": "-Button neben",
+  "support.spreadP2ViewLabel": "Auf Steam Workshop ansehen",
+  "support.spreadP2After": "— ein Klick kopiert den Link.",
+  "support.spreadP3Before": "Es gibt außerdem eine",
+  "support.spreadP3SteamGroup": "Steam Group",
+  "support.spreadP3After":
+    "— der Beitritt ist kostenlos, und Mitglieder bekommen Ankündigungen direkt in ihrem Steam-Client, sobald neue Picks gepostet werden.",
+  "support.submitHeading": "Fehlende Kreationen einreichen",
+  "support.submitP1Before":
+    "Die automatische Erfassung nimmt nur trendige Sachen auf. Versteckte Perlen, die nie viral gegangen sind, fallen durchs Raster. Wenn du eine kennst — deine eigene oder die von jemand anderem — wirf die Workshop-URL auf",
+  "support.submitP1Link": "/submit",
+  "support.submitP1After": "ein. Ein Moderator prüft sie und sie geht live.",
+  "support.voteHeading": "Abstimmen und taggen",
+  "support.voteP1":
+    "Jede freigeschaltete Kreation hat Up-/Down-Votes und ein Community-Tag-System. Je mehr Leute abstimmen, desto besser funktioniert die Bewertungssortierung. Wenn einer Kreation ein Tag fehlt, nach dem du suchen würdest — füg ihn hinzu. Bei +3 Netto-Stimmen wird er für alle sichtbar.",
+  "support.reportHeading": "Melde, was nicht passt",
+  "support.reportP1Before": "Jede Kreationsseite hat einen",
+  "support.reportP1Label": "Melden",
+  "support.reportP1After":
+    "-Button. Falsche Tags, schlechte Qualität, Spam, fehlende Co-Autoren — wenn etwas nicht stimmt, melde es. Ein Moderator kümmert sich darum und der Katalog wird ein Stück besser.",
+  "support.reportP2": "Einzelne Kommentare kann man ebenfalls melden.",
+  "support.suggestHeading": "Features vorschlagen",
+  "support.suggestP1Before":
+    "Fast jede nennenswerte Verbesserung an der Seite kam von einer Nutzeridee. Poste deine auf dem",
+  "support.suggestP1Link": "Ideen-Board",
+  "support.suggestP1After":
+    "— das ist eine öffentliche, abgestimmte, sortierte Liste, kein schwarzes Loch.",
+  "support.bugsHeading": "Bugs melden",
+  "support.bugsP1Before":
+    "Etwas kaputt, hässlich oder unklar gefunden? Poste es auf dem Ideen-Board mit dem Bug-Tag oder öffne ein Issue auf",
+  "support.bugsP1GitHub": "GitHub",
+  "support.bugsP1After": ". Bestätigte Bug-Meldungen bringen das 🐛",
+  "support.bugsP1BadgeLabel": "Bug-Jäger",
+  "support.bugsP1BadgeAfter": "-Abzeichen.",
+  "support.moneyHeading": "Finanzielle Unterstützung",
+  "support.moneyP1":
+    "Aktuell kann man nicht spenden — ich habe weder Patreon noch Ko-fi oder Ähnliches eingerichtet. Aber wenn die Seite wächst, sprengt sie irgendwann die kostenlosen Tarife, und dann würde finanzielle Unterstützung wirklich helfen, sie online zu halten und weiterzuentwickeln. Wenn du später auf diesem Weg beitragen möchtest — schau wieder vorbei, ich füge hier einen Link hinzu, sobald etwas eingerichtet ist.",
+  "support.moneyP2":
+    "Bis dahin sind die oben genannten Punkte das Nützlichste, was du tun kannst.",
+
+  "about.metadataTitle": "Über · Scrap Mechanic Search Engine",
+  "about.metadataDescription":
+    "Wie die Scrap Mechanic Search Engine Workshop-Kreationen kuratiert, erfasst und prüft.",
+  "about.eyebrow": "So funktioniert es",
+  "about.heading": "Was ist diese Seite?",
+  "about.shortVersion": "Die Kurzfassung",
+  "about.shortVersionBody":
+    "Ein handverlesenes, durchsuchbares Verzeichnis von Scrap Mechanic Steam Workshop-Kreationen. Qualität geht vor Quantität: Jeder Eintrag auf der öffentlichen Seite hat eine menschliche Prüfung durchlaufen, und Einträge mit geringer Resonanz werden bereits vor dieser Prüfung aussortiert.",
+  "about.pipelineHeading": "Der Ablauf",
+  "about.step1Heading": "1. Automatische Erfassung",
+  "about.step1Body":
+    "Ein täglicher Cron-Job ruft die neuesten Workshop-Einträge über die Steam Web API ab. Einträge, die unter einem für jede Art festgelegten Follower- und Alters-Schwellenwert liegen, werden herausgefiltert — so bleiben frische Uploads ohne Abonnenten und Einträge mit manipulierten Stimmen aus der Triage-Warteschlange fern.",
+  "about.step1TableHeading": "Mindest-Schwellenwerte",
+  "about.step1TableKind": "Art",
+  "about.step1TableMinSubs": "Min. Abonnenten",
+  "about.step1TableMinAge": "Min. Alter",
+  "about.step2Heading": "2. Menschliche Prüfung",
+  "about.step2Body":
+    "Alles, was den Filter passiert, landet in einer Moderatoren-Triage-Warteschlange. Moderatoren genehmigen, lehnen ab oder fordern Änderungen an. Genehmigte Einträge erhalten öffentliche Tags und erscheinen im Katalog; abgelehnte Einträge bleiben aus zukünftigen Erfassungen ausgeschlossen.",
+  "about.step3Heading": "3. Community-Einreichungen",
+  "about.step3BodyBefore":
+    "Jeder mit einem verifizierten Steam-Konto kann einen Eintrag manuell vorschlagen über",
+  "about.step3Submit": "/submit",
+  "about.step3BodyAfter":
+    ". Diese umgehen den Follower-/Alters-Filter, durchlaufen aber dieselbe Moderatorenprüfung — Community-Einreichungen werden markiert, damit Mods sie priorisieren können.",
+  "about.whatIfHeading": "Was, wenn meine Kreation nicht auftaucht?",
+  "about.whatIfBody":
+    "Wenn eine Kreation nicht auf der Seite ist, liegt das fast immer daran, dass sie unter dem Auto-Erfassungs-Schwellenwert liegt und noch niemand sie manuell eingereicht hat. Reiche sie unter /submit ein — das dauert zehn Sekunden, und ein Mod prüft sie in der Regel innerhalb von ein bis zwei Tagen.",
+  "about.costHeading": "Kosten & Nachhaltigkeit",
+  "about.costBody":
+    "Der gesamte Stack läuft auf kostenlosen Tarifen — Vercel Hobby fürs Hosting, Neon Postgres für die Datenbank, Steams öffentliche Web API für die Daten. Keine kostenpflichtigen Dienste, keine Werbung, keine Tracker abgesehen von grundlegender Server-Analytik. Wenn du helfen willst, das so zu halten, schau auf die Seite /support.",
+  "about.thresholdsDays": "{n} Tage",
+
+  "terms.metadataTitle": "Nutzungsbedingungen",
+  "terms.metadataDescription":
+    "Regeln für die Nutzung der Website und das Einstellen von Inhalten.",
+  "terms.heading": "Nutzungsbedingungen",
+  "terms.lastUpdated": "Zuletzt aktualisiert im April 2026.",
+  "terms.h2What": "Was diese Website ist",
+  "terms.pWhat":
+    "Scrap Mechanic Search Engine ist ein kostenloses, von der Community betriebenes Verzeichnis, das auf Steam-Workshop-Inhalte für das Spiel Scrap Mechanic verweist. Wir stehen in keinerlei Verbindung zu Axolot Games oder Valve. Die Workshop-Dateien selbst werden auf Steam gehostet; wir speichern lediglich Metadaten (Titel, Beschreibung, Tags, Vorschaubild-URL) und verlinken zurück.",
+  "terms.h2Account": "Konto",
+  "terms.pAccount1":
+    "Die Anmeldung erfolgt über Steam OpenID — Ihr Steam-Passwort sehen wir nie. Mit der Anmeldung stimmen Sie diesen Bedingungen und unserer ",
+  "terms.pAccountLink": "Datenschutzerklärung",
+  "terms.pAccount2":
+    " zu. Sie sind für die Sicherheit Ihres Steam-Kontos selbst verantwortlich.",
+  "terms.h2Rules": "Community-Regeln",
+  "terms.pRulesIntro":
+    "Wenn Sie Kommentare, Tags, Vorschläge oder Einreichungen veröffentlichen:",
+  "terms.liRulesDecent":
+    "Verhalten Sie sich anständig. Keine Belästigung, Beleidigungen oder Drohungen.",
+  "terms.liRulesSpam": "Kein Spam, keine Werbung, keine themenfremden Inhalte.",
+  "terms.liRulesAppid":
+    "Reichen Sie ausschließlich Workshop-Inhalte für Scrap Mechanic (appid 387990) ein. Einreichungen für andere Spiele werden automatisch abgelehnt.",
+  "terms.liRulesPii":
+    "Veröffentlichen Sie keine personenbezogenen Daten anderer Personen.",
+  "terms.liRulesExploit":
+    "Versuchen Sie nicht, die Website zu beschädigen, mittels Brute-Force-Angriff zu kompromittieren oder auszunutzen.",
+  "terms.pRulesMods":
+    "Moderatoren können Inhalte ausblenden sowie Konten verwarnen, stummschalten oder sperren, die gegen diese Regeln verstoßen. Schwere oder wiederholte Verstöße können zu einer dauerhaften Sperre führen.",
+  "terms.h2Content": "Ihre Inhalte",
+  "terms.pContent":
+    "Von Ihnen veröffentlichte Kommentare und Vorschläge bleiben Ihrem Persona-Namen zugeschrieben und können auch nach Ihrem Verlassen der Website in Thread-Form erhalten bleiben, damit laufende Diskussionen weiterhin nachvollziehbar sind. Die Urheberrechte an allem, was Sie verfassen, verbleiben bei Ihnen; mit der Veröffentlichung räumen Sie der Website ein einfaches, nicht ausschließliches Recht ein, diese Inhalte anderen Nutzern anzuzeigen.",
+  "terms.h2Takedowns": "Workshop-Inhalte und Löschanfragen",
+  "terms.pTakedowns1":
+    "Die eigentlichen Dateien und Bilder jedes Workshop-Inhalts werden von Steam gehostet. Falls Ihr Workshop-Inhalt hier aufgeführt ist und Sie dessen Entfernung wünschen (z. B. weil Sie ihn auf Steam depubliziert haben), eröffnen Sie bitte ein Issue im ",
+  "terms.pTakedownsLink": "GitHub-Repository",
+  "terms.pTakedowns2":
+    " des Projekts oder wenden Sie sich an einen Moderator; wir werden ihn dann entfernen.",
+  "terms.h2Warranty": "Keine Gewährleistung",
+  "terms.pWarranty":
+    "Die Website wird „wie besehen“ bereitgestellt. Funktionen können sich ändern oder entfallen, die Website kann ausfallen, Daten können fehlerhaft sein. Verlassen Sie sich bei wichtigen Angelegenheiten nicht darauf.",
+  "terms.h2Changes": "Änderungen",
+  "terms.pChanges":
+    "Wir können diese Bedingungen aktualisieren. Wesentliche Änderungen werden in den Versionshinweisen vermerkt. Die weitere Nutzung nach einer Änderung gilt als Annahme der aktualisierten Fassung.",
+
+  "privacy.metadataTitle": "Datenschutz",
+  "privacy.metadataDescription":
+    "Was wir erheben, warum und wie lange wir es speichern.",
+  "privacy.h1": "Datenschutz",
+  "privacy.lastUpdated": "Zuletzt aktualisiert im April 2026.",
+  "privacy.h2Short": "Die Kurzfassung",
+  "privacy.pShort":
+    "Dies ist ein von der Community betriebenes, nicht kommerzielles Verzeichnis von Scrap Mechanic Workshop-Kreationen. Wir verkaufen keine Daten, schalten keine Werbung und setzen keinen Analyse-Tracker ein, der Sie verfolgt. Wenn Sie sich nie anmelden, erfahren wir nie, wer Sie sind.",
+  "privacy.h2Store": "Was wir speichern",
+  "privacy.pStoreIntro": "Wenn Sie sich mit Steam anmelden, speichern wir:",
+  "privacy.liStoreId": "Ihre öffentliche SteamID, Ihren Personanamen und die URL Ihres Avatars.",
+  "privacy.liStoreAge":
+    "Das Alter Ihres Steam-Kontos und Ihre Scrap Mechanic-Spielzeit — diese Angaben stammen von Steam und werden verwendet, um neu erstellte Wegwerfkonten herauszufiltern.",
+  "privacy.liStoreActivity":
+    "Die Zeitpunkte, zu denen Sie sich angemeldet, kommentiert, abgestimmt, favorisiert oder einen Beitrag eingereicht haben — damit Moderatoren die Lesbarkeit der Seite wahren können.",
+  "privacy.pStoreNot":
+    "Wir erheben <strong>nicht</strong> Ihre E-Mail-Adresse, Ihr Passwort, Ihre Telefonnummer, Ihren echten Namen, Ihre IP-Adresse oder Ihren Browserverlauf.",
+  "privacy.h2Cookies": "Cookies",
+  "privacy.liCookieSession":
+    "<code>smse_session</code> — angemeldete Sitzung, läuft nach einer Woche Inaktivität ab.",
+  "privacy.liCookieCaptcha":
+    "<code>smse_captcha</code> — kurzlebiger Status (30 Min.) für die Anti-Bot-Prüfung.",
+  "privacy.liCookieBotVerified":
+    "<code>bot_verified</code> — wird nach bestandener Prüfung gesetzt, gilt 30 Tage.",
+  "privacy.liCookieRatingMode":
+    "<code>smse_rating_mode</code> — merkt sich, ob Sie Steam-Bewertungen, Website-Bewertungen oder beide bevorzugen.",
+  "privacy.liCookieTheme":
+    "<code>smse_theme</code> — merkt sich Ihr gewähltes Farbschema.",
+  "privacy.pCookieFooter":
+    "Alle Cookies sind First-Party, signiert und dort HTTP-only, wo es darauf ankommt. Keine Werbetracker.",
+  "privacy.h2Where": "Wo die Daten gespeichert werden",
+  "privacy.liWhereDb": "Datenbank: Neon (serverloses Postgres, kostenloser Tarif).",
+  "privacy.liWhereHost": "Hosting: Vercel.",
+  "privacy.liWhereSteam": "Workshop-Metadaten und Miniaturansichten: Steam (per Hotlink).",
+  "privacy.pWhereLogs":
+    "Vercel und Neon können kurzlebige Betriebsprotokolle aufbewahren. Wir nehmen keine personenbezogenen Daten in Protokolleinträge auf, die über das zur Fehlerbehebung Erforderliche hinausgehen.",
+  "privacy.h2Controls": "Ihre Kontrollmöglichkeiten",
+  "privacy.liControlsStop":
+    "Beenden Sie die Nutzung der Seite jederzeit — abgemeldete Besucher hinterlassen keine identifizierenden Daten.",
+  "privacy.liControlsDeletePre":
+    "Fordern Sie die Löschung Ihrer Kontodaten an, indem Sie ein Issue auf ",
+  "privacy.liControlsDeleteLink": "GitHub",
+  "privacy.liControlsDeletePost":
+    " des Projekts öffnen. Von Ihnen veröffentlichte Inhalte (Kommentare, Vorschläge) werden möglicherweise anonymisiert statt gelöscht, damit Diskussionsstränge lesbar bleiben.",
+  "privacy.h2Changes": "Änderungen",
+  "privacy.pChanges":
+    "Wenn sich diese Richtlinie wesentlich ändert, wird die Aktualisierung in den Versionshinweisen der Website angekündigt. Diese Seite zeigt stets die aktuellste Fassung.",
 
   "locale.picker.label": "Sprache",
 };
@@ -834,6 +1610,12 @@ const pl: Dictionary = {
   "nav.settings": "Ustawienia",
   "nav.minigames": "Minigry i inne",
   "nav.adminTriage": "Admin triage",
+  "nav.about": "O stronie",
+  "nav.guide": "Jak korzystać ze strony",
+  "nav.support": "Wesprzyj stronę",
+  "nav.favourites": "Twoje ulubione",
+  "nav.notifications": "Powiadomienia",
+  "nav.submissions": "Twoje zgłoszenia",
 
   "kind.blueprints": "Schematy",
   "kind.mods": "Mody",
@@ -844,7 +1626,80 @@ const pl: Dictionary = {
   "kind.terrain": "Teren",
   "kind.other": "Inne",
 
+  "kind.blueprint": "Schemat",
+  "kind.mod": "Mod",
+  "kind.world": "Świat",
+  "kind.challenge": "Wyzwanie",
+  "kind.tile": "Kafel",
+  "kind.customGame": "Gra niestandardowa",
+  "kind.terrainAsset": "Teren",
+  "kind.creationFallback": "Kreacja",
+
+  "rss.title": "Scrap Mechanic Search Engine — Najnowsze",
+  "rss.description":
+    "Najnowsze zatwierdzone kreacje z Warsztatu Scrap Mechanic na Scrap Mechanic Search Engine.",
+  "rss.by": "od",
+
+  "submit.metadataTitle":
+    "Prześlij kreację — Scrap Mechanic Search Engine",
+  "submit.metadataDescription":
+    "Prześlij kreację z Warsztatu Scrap Mechanic, której cron jeszcze nie znalazł. Zatwierdzone wpisy pojawiają się w publicznym feedzie z odznaką Community.",
+  "submit.introBefore":
+    "Masz perełkę, której cron jeszcze nie znalazł? Prześlij dowolny URL lub ID z Warsztatu Steam — moderator to sprawdzi i trafi to na publiczny feed z odznaką",
+  "submit.introCommunityBadge": "Community",
+  "submit.introAfter": "z twoim wkładem.",
+  "submit.privateProfileTitle":
+    "Nie mogliśmy zweryfikować wieku twojego konta Steam.",
+  "submit.privateProfileBody":
+    "Twój profil Steam jest prywatny, więc data utworzenia konta jest ukryta. Ustaw profil jako publiczny i zaloguj się ponownie — lub wyślij moderatorowi krótką odwoławczą prośbę, a on ręcznie odblokuje blokadę.",
+  "submit.privateProfileAppeal": "Odwołanie od blokady wiekowej →",
+  "submit.tooYoungTitle": "Twoje konto Steam ma mniej niż 7 dni.",
+  "submit.tooYoungBody":
+    "To zakodowany cooldown, żeby świeże sock-puppetowe konta nie spamowały strony. To nie jest coś, co moderator może obejść w przypadku „za świeżego” konta — po prostu musisz poczekać.",
+  "submit.tooYoungBodyStrong": "moderator nie może obejść",
+  "submit.tooYoungClearsOn":
+    "Twoje konto przejdzie blokadę {date}. Wróć wtedy.",
+  "submit.acceptedForms": "Akceptowane formaty",
+  "submit.queueExplain":
+    "Zgłoszenia trafiają do kolejki moderacji. Pojawiają się publicznie po zatwierdzeniu; cron nie będzie próbował ich ponownie przetworzyć.",
+  "submit.curious": "Ciekawy, co wchodzi i dlaczego?",
+  "submit.howItWorks": "Jak to działa",
+  "submit.form.urlLabel": "URL Warsztatu Steam lub published-file ID",
+  "submit.form.urlPlaceholder":
+    "https://steamcommunity.com/sharedfiles/filedetails/?id=...",
+  "submit.form.submitPending": "Wysyłanie…",
+  "submit.form.submitButton": "Wyślij do przeglądu",
+  "submit.form.successToast":
+    "Wysłane — moderator wkrótce to sprawdzi.",
+  "submit.form.errorToast":
+    "Nie udało się wysłać. Spróbuj ponownie lub sprawdź URL.",
+  "submit.form.queuedToast": "{title} w kolejce moderacji.",
+  "submit.form.pendingBefore": "Dzięki —",
+  "submit.form.pendingAfter": "oczekuje na przegląd moderatora.",
+  "submit.form.backHome": "Powrót do strony głównej ↗",
+
   "home.heroTitle": "Znajdź to, co najlepsze z Warsztatu.",
+  "home.supportCalloutBefore":
+    "Chcesz pomóc w rozwoju tego projektu? Zajrzyj na",
+  "home.supportCalloutLink": "Wesprzyj stronę",
+  "home.supportCalloutAfter":
+    ", aby zobaczyć konkretne sposoby, w jakie możesz pomóc.",
+  "home.descriptionBefore":
+    "Ręcznie wyselekcjonowane Schematy, Mody, Światy i inne. Łącz tagi, np.",
+  "home.descriptionExample1": "dom + samochód",
+  "home.descriptionBetween":
+    ", aby znaleźć kempera, albo",
+  "home.descriptionExample2": "krocząc + mech",
+  "home.descriptionAfter":
+    "— dla heksapoda. Niskiej jakości kreacje są odfiltrowywane.",
+  "home.indexedOne": "{count} kreacja w indeksie",
+  "home.indexedMany": "{count} kreacji w indeksie",
+  "home.emptyState":
+    "Jeszcze nie ma zatwierdzonych kreacji. Uruchom indeksację i przejrzyj kolejkę.",
+  "home.popularBlueprints": "Popularne schematy",
+  "home.popularMods": "Popularne mody",
+  "home.popularWorlds": "Popularne światy",
+  "home.popularChallenges": "Popularne wyzwania",
   "home.newestHeading": "Najnowsze pozycje",
   "home.browseHeading": "Przeglądaj katalog",
   "home.viewAll": "Zobacz wszystko →",
@@ -1081,8 +1936,219 @@ const pl: Dictionary = {
   "settings.terms": "Regulamin",
   "settings.privacy": "Prywatność",
 
+  "settings.funMode.title": "Tryb zabawy",
+  "settings.funMode.hint":
+    "Włącz elementy strony, które istnieją wyłącznie dla zabawy — efekty dźwiękowe banera wdrożenia, moderatorskie psoty z /admin/abuse, jak fałszywy restart. Prawdziwe ostrzeżenia o wdrożeniu nadal są wyświetlane przy wyłączonym Trybie zabawy (nadal musisz zapisać pracę przed restartem strony), tylko po cichu i bez psot.",
+  "settings.funMode.off": "Wył.",
+  "settings.funMode.on": "Wł.",
+  "settings.funMode.offHint": "Bez dźwięku, bez psot.",
+  "settings.funMode.onHint": "Dźwięki i psoty włączone.",
+  "settings.funMode.extremeTitle": "EKSTREMALNY TRYB ZABAWY.",
+  "settings.funMode.extremeDescription":
+    "Nadbudowa nad Trybem zabawy. Każde kliknięcie tworzy sprite hitmarkera i dźwięk przy kursorze (szybkie kliknięcia mogą się nakładać), a gdy alarm banera wdrożenia osiąga zero — na pełnym ekranie odtwarza się ciche wideo nuklearnego wybuchu, które zamyka się po zakończeniu. Wyłączenie Trybu zabawy kaskadowo wyłącza także ten.",
+  "settings.funMode.extremeLabelOn": "EKSTREMALNA ZABAWA — WŁ.",
+  "settings.funMode.extremeLabelOff": "EKSTREMALNA ZABAWA — WYŁ.",
+  "settings.funMode.extremeHintDisabled":
+    "Najpierw włącz Tryb zabawy — EKSTREMALNY wymaga podstawowego.",
+  "settings.funMode.extremeHintOn":
+    "Kliknięcia tworzą przechylony hitmarker + dźwięk (mogą się nakładać). Alarm fałszywego restartu uruchamia teraz ciche pełnoekranowe wideo nuklearnego wybuchu. Wyłącz, jeśli się znudzi.",
+  "settings.funMode.extremeHintOff":
+    "Włącz, aby aktywować efekty kliknięć i wideo nuklearnego wybuchu na alarm.",
+
+  "error.title": "Coś poszło nie tak.",
+  "error.body":
+    "Napotkaliśmy nieoczekiwany błąd podczas ładowania strony. Spróbuj ponownie za chwilę.",
+  "error.retry": "Spróbuj ponownie",
+  "globalError.title": "Coś poszło nie tak.",
+  "globalError.body":
+    "Krytyczny błąd uniemożliwił załadowanie strony. Spróbuj ponownie.",
+  "globalError.retry": "Spróbuj ponownie",
+  "notFound.eyebrow": "404",
+  "notFound.title": "Tu nic nie ma.",
+  "notFound.body":
+    "Strona lub kreacja, której szukałeś, nie znajduje się na stronie.",
+  "notFound.home": "Powrót do strony głównej",
+  "notFound.search": "Szukaj kreacji →",
+
   "footer.online": "{online} online",
   "footer.signedInTotal": "łącznie {total} zalogowanych",
+
+  "support.metadataTitle": "Wesprzyj stronę",
+  "support.metadataDescription":
+    "Konkretne sposoby, w jakie możesz pomóc utrzymać i rozwijać Scrap Mechanic Search Engine — od udostępniania linków po zgłaszanie błędów.",
+  "support.eyebrow": "Dołącz",
+  "support.heading": "Jak możesz pomóc",
+  "support.intro":
+    "Strona działa obecnie na darmowych planach — utrzymuje ją to w sieci, ale nie pozwala samodzielnie rosnąć. Pozostaje użyteczna dzięki takim ludziom jak ty. Oto wszystko, co naprawdę robi różnicę.",
+  "support.spreadHeading": "Rozpowszechniaj",
+  "support.spreadP1":
+    "Większość osób szukających kreacji do Scrap Mechanic wciąż przekopuje się przez natywną przeglądarkę Warsztatu Steam. Powiedzieć znajomemu, wrzucić link na Discord albo podzielić się kreacją na Reddicie — to zdecydowanie najważniejsza rzecz, jaką możesz zrobić.",
+  "support.spreadP2Before": "Każda strona kreacji ma teraz przycisk",
+  "support.spreadP2ShareLabel": "Udostępnij",
+  "support.spreadP2Between": "obok",
+  "support.spreadP2ViewLabel": "Zobacz w Steam Workshop",
+  "support.spreadP2After": "— jedno kliknięcie kopiuje link.",
+  "support.spreadP3Before": "Jest też",
+  "support.spreadP3SteamGroup": "Steam Group",
+  "support.spreadP3After":
+    "— dołączenie jest darmowe, a członkowie dostają ogłoszenia w swoim kliencie Steam, gdy pojawiają się nowe typy.",
+  "support.submitHeading": "Zgłaszaj pominięte kreacje",
+  "support.submitP1Before":
+    "Automatyczna indeksacja wyłapuje tylko trendujące pozycje. Ukryte perełki, które nigdy nie zrobiły furory, przelatują bokiem. Jeśli masz jakąś na myśli — swoją lub czyjąś — wrzuć link z Warsztatu na",
+  "support.submitP1Link": "/submit",
+  "support.submitP1After": ". Moderator ją sprawdzi i pójdzie na żywo.",
+  "support.voteHeading": "Głosuj i taguj",
+  "support.voteP1":
+    "Każda zatwierdzona kreacja ma głosy w górę/w dół i społecznościowy system tagów. Im więcej osób głosuje, tym lepiej działa sortowanie po ocenach. Jeśli kreacji brakuje tagu, po którym byś jej szukał — dodaj go. Przy +3 netto głosach staje się widoczny dla wszystkich.",
+  "support.reportHeading": "Zgłaszaj nieprawidłowości",
+  "support.reportP1Before": "Każda strona kreacji ma przycisk",
+  "support.reportP1Label": "Zgłoś",
+  "support.reportP1After":
+    ". Błędne tagi, niska jakość, spam, brakujący współautorzy — jeśli coś jest nie tak, zaznacz to. Moderator się tym zajmie, a katalog stanie się odrobinę lepszy.",
+  "support.reportP2": "Pojedyncze komentarze również można zgłaszać.",
+  "support.suggestHeading": "Proponuj funkcje",
+  "support.suggestP1Before":
+    "Niemal każda istotna poprawka strony wzięła się z pomysłu użytkownika. Wrzuć swój na",
+  "support.suggestP1Link": "tablicy pomysłów",
+  "support.suggestP1After":
+    "— to publiczna, przegłosowywana, posegregowana lista, a nie czarna dziura.",
+  "support.bugsHeading": "Zgłaszaj błędy",
+  "support.bugsP1Before":
+    "Znalazłeś coś zepsutego, brzydkiego albo niejasnego? Wrzuć to na tablicę pomysłów z tagiem bug albo otwórz issue na",
+  "support.bugsP1GitHub": "GitHub",
+  "support.bugsP1After": ". Za potwierdzone zgłoszenia błędów dostaje się odznakę 🐛",
+  "support.bugsP1BadgeLabel": "Łowca błędów",
+  "support.bugsP1BadgeAfter": ".",
+  "support.moneyHeading": "Wsparcie finansowe",
+  "support.moneyP1":
+    "Na razie nie ma jak wpłacić — nie założyłem jeszcze Patreona, Ko-fi ani niczego podobnego. Ale jeśli strona urośnie, w końcu przerośnie darmowe plany, a wtedy wsparcie finansowe naprawdę pomogłoby utrzymać ją online i rozwijać. Jeśli chciałbyś wesprzeć później — zajrzyj ponownie, dodam tu link, gdy tylko coś ustawię.",
+  "support.moneyP2":
+    "Tymczasem powyższe rzeczy to najbardziej przydatne, co możesz zrobić.",
+
+  "about.metadataTitle": "O projekcie · Scrap Mechanic Search Engine",
+  "about.metadataDescription":
+    "Jak Scrap Mechanic Search Engine selekcjonuje, pobiera i weryfikuje dzieła z Warsztatu.",
+  "about.eyebrow": "Jak to działa",
+  "about.heading": "Czym jest ta strona?",
+  "about.shortVersion": "W skrócie",
+  "about.shortVersionBody":
+    "Ręcznie selekcjonowany, przeszukiwalny katalog dzieł z Warsztatu Steam do Scrap Mechanic. Jakość ma priorytet nad ilością: każdy element na publicznej stronie przeszedł ręczną weryfikację, a materiały o niskim zainteresowaniu są odfiltrowywane jeszcze przed tym etapem.",
+  "about.pipelineHeading": "Potok",
+  "about.step1Heading": "1. Automatyczne pobieranie",
+  "about.step1Body":
+    "Codzienny cron pobiera najnowsze wpisy z Warsztatu przez Steam Web API. Elementy poniżej progu obserwujących i wieku dla danego typu są odfiltrowywane — dzięki temu świeże wysyłki bez subskrybentów i pozycje z nabijanymi głosami nie trafiają do kolejki moderacji.",
+  "about.step1TableHeading": "Minimalne progi",
+  "about.step1TableKind": "Typ",
+  "about.step1TableMinSubs": "Min. subskrybentów",
+  "about.step1TableMinAge": "Min. wiek",
+  "about.step2Heading": "2. Weryfikacja przez człowieka",
+  "about.step2Body":
+    "Wszystko, co przejdzie filtr, trafia do kolejki moderacji. Moderatorzy zatwierdzają, odrzucają lub proszą o zmiany. Zatwierdzone elementy otrzymują publiczne tagi i pojawiają się w katalogu; odrzucone są pomijane w przyszłych pobraniach.",
+  "about.step3Heading": "3. Zgłoszenia społeczności",
+  "about.step3BodyBefore":
+    "Każdy z zweryfikowanym kontem Steam może ręcznie zaproponować element przez",
+  "about.step3Submit": "/submit",
+  "about.step3BodyAfter":
+    ". Takie zgłoszenia omijają filtr obserwujących/wieku, ale przechodzą tę samą weryfikację moderatorską — zgłoszenia społeczności są oznaczane, aby moderatorzy mogli nadać im priorytet.",
+  "about.whatIfHeading": "Co jeśli mojego dzieła nie ma?",
+  "about.whatIfBody":
+    "Jeśli dzieła nie ma na stronie, to niemal zawsze dlatego, że jest poniżej progu automatycznego pobierania i nikt go jeszcze nie zgłosił ręcznie. Zgłoś je pod /submit — zajmuje to dziesięć sekund, a moderator zwykle rozpatruje zgłoszenie w ciągu dnia lub dwóch.",
+  "about.costHeading": "Koszty i stabilność",
+  "about.costBody":
+    "Cały stos działa na darmowych planach — Vercel Hobby do hostingu, Neon Postgres jako baza danych, publiczne Steam Web API jako źródło danych. Żadnych płatnych usług, reklam ani trackerów poza podstawową analityką serwera. Jeśli chcesz pomóc to utrzymać, zajrzyj na stronę /support.",
+  "about.thresholdsDays": "{n} dni",
+
+  "terms.metadataTitle": "Regulamin",
+  "terms.metadataDescription":
+    "Zasady korzystania z serwisu i publikowania treści.",
+  "terms.heading": "Regulamin korzystania",
+  "terms.lastUpdated": "Ostatnia aktualizacja: kwiecień 2026 r.",
+  "terms.h2What": "Czym jest ten serwis",
+  "terms.pWhat":
+    "Scrap Mechanic Search Engine to bezpłatny, prowadzony przez społeczność katalog zawierający odnośniki do treści Steam Workshop dla gry Scrap Mechanic. Nie jesteśmy powiązani z Axolot Games ani Valve. Same pliki Workshop są przechowywane w Steam; my zapisujemy jedynie metadane (tytuł, opis, tagi, adres URL miniatury) i prowadzimy z powrotem do źródła.",
+  "terms.h2Account": "Konto",
+  "terms.pAccount1":
+    "Logowanie odbywa się za pośrednictwem Steam OpenID — nigdy nie widzimy Twojego hasła do Steam. Logując się, akceptujesz niniejszy regulamin oraz naszą ",
+  "terms.pAccountLink": "politykę prywatności",
+  "terms.pAccount2":
+    ". Odpowiadasz za bezpieczeństwo własnego konta Steam.",
+  "terms.h2Rules": "Zasady społeczności",
+  "terms.pRulesIntro":
+    "Publikując komentarze, tagi, sugestie lub zgłoszenia:",
+  "terms.liRulesDecent":
+    "Zachowuj się przyzwoicie. Żadnego nękania, obelg ani gróźb.",
+  "terms.liRulesSpam":
+    "Żadnego spamu, reklam ani treści niezwiązanych z tematem.",
+  "terms.liRulesAppid":
+    "Zgłaszaj wyłącznie treści Workshop dla gry Scrap Mechanic (appid 387990). Zgłoszenia dotyczące innych gier są automatycznie odrzucane.",
+  "terms.liRulesPii": "Nie publikuj danych osobowych innych osób.",
+  "terms.liRulesExploit":
+    "Nie próbuj uszkadzać, łamać metodą brute-force ani wykorzystywać luk serwisu.",
+  "terms.pRulesMods":
+    "Moderatorzy mogą ukrywać treści, ostrzegać, wyciszać oraz blokować konta naruszające niniejsze zasady. Poważne lub powtarzające się naruszenia mogą skutkować trwałą blokadą.",
+  "terms.h2Content": "Twoje treści",
+  "terms.pContent":
+    "Publikowane przez Ciebie komentarze i sugestie pozostają przypisane do Twojego persona-name i mogą być zachowane w formie wątków także po Twoim odejściu, aby toczące się dyskusje pozostawały zrozumiałe. Zachowujesz prawa do wszystkiego, co napiszesz; publikując daną treść, udzielasz serwisowi niewyłącznego prawa do wyświetlania jej innym użytkownikom.",
+  "terms.h2Takedowns": "Treści Workshop i wnioski o usunięcie",
+  "terms.pTakedowns1":
+    "Właściwe pliki i obrazy każdej pozycji Workshop są hostowane przez Steam. Jeśli Twoja pozycja Workshop jest tutaj widoczna, a chcesz, aby została usunięta (np. wycofałeś/wycofałaś jej publikację na Steam), otwórz zgłoszenie w ",
+  "terms.pTakedownsLink": "repozytorium GitHub",
+  "terms.pTakedowns2":
+    " projektu lub skontaktuj się z moderatorem, a usuniemy ją.",
+  "terms.h2Warranty": "Brak gwarancji",
+  "terms.pWarranty":
+    "Serwis udostępniany jest „w stanie, w jakim jest”. Funkcje mogą się zmieniać lub znikać, serwis może być niedostępny, dane mogą być błędne. Nie polegaj na nim w sprawach istotnych.",
+  "terms.h2Changes": "Zmiany",
+  "terms.pChanges":
+    "Możemy aktualizować niniejszy regulamin. Istotne zmiany zostaną odnotowane w informacjach o wydaniu. Dalsze korzystanie z serwisu po zmianie oznacza akceptację zaktualizowanej wersji.",
+
+  "privacy.metadataTitle": "Prywatność",
+  "privacy.metadataDescription":
+    "Co zbieramy, dlaczego i jak długo to przechowujemy.",
+  "privacy.h1": "Prywatność",
+  "privacy.lastUpdated": "Ostatnia aktualizacja: kwiecień 2026.",
+  "privacy.h2Short": "W skrócie",
+  "privacy.pShort":
+    "Jest to prowadzony przez społeczność, niekomercyjny katalog dzieł ze Scrap Mechanic Workshop. Nie sprzedajemy danych, nie wyświetlamy reklam ani nie korzystamy z narzędzi analitycznych, które Cię śledzą. Jeśli nigdy się nie zalogujesz, nigdy nie dowiemy się, kim jesteś.",
+  "privacy.h2Store": "Co przechowujemy",
+  "privacy.pStoreIntro": "Jeśli zalogujesz się przez Steam, zapisujemy:",
+  "privacy.liStoreId": "Twój publiczny SteamID, nazwę profilu oraz adres URL awatara.",
+  "privacy.liStoreAge":
+    "Wiek Twojego konta Steam i czas gry w Scrap Mechanic — te dane pochodzą ze Steam i służą do odfiltrowywania świeżo utworzonych, jednorazowych kont.",
+  "privacy.liStoreActivity":
+    "Daty Twoich logowań, komentarzy, głosów, polubień i zgłoszeń — aby moderatorzy mogli utrzymać czytelność serwisu.",
+  "privacy.pStoreNot":
+    "<strong>Nie</strong> zbieramy Twojego adresu e-mail, hasła, numeru telefonu, prawdziwego imienia i nazwiska, adresu IP ani historii przeglądania.",
+  "privacy.h2Cookies": "Pliki cookie",
+  "privacy.liCookieSession":
+    "<code>smse_session</code> — sesja zalogowanego użytkownika, wygasa po tygodniu nieaktywności.",
+  "privacy.liCookieCaptcha":
+    "<code>smse_captcha</code> — krótkotrwały stan (30 min) dla weryfikacji przeciw botom.",
+  "privacy.liCookieBotVerified":
+    "<code>bot_verified</code> — ustawiany po pomyślnej weryfikacji, ważny 30 dni.",
+  "privacy.liCookieRatingMode":
+    "<code>smse_rating_mode</code> — zapamiętuje, czy preferujesz oceny Steam, oceny serwisu, czy obie.",
+  "privacy.liCookieTheme":
+    "<code>smse_theme</code> — zapamiętuje wybrany motyw kolorystyczny.",
+  "privacy.pCookieFooter":
+    "Wszystkie pliki cookie są własne, podpisane i oznaczone jako HTTP-only tam, gdzie jest to istotne. Żadnych reklamowych narzędzi śledzących.",
+  "privacy.h2Where": "Gdzie przechowywane są dane",
+  "privacy.liWhereDb": "Baza danych: Neon (bezserwerowy Postgres, darmowy plan).",
+  "privacy.liWhereHost": "Hosting: Vercel.",
+  "privacy.liWhereSteam": "Metadane i miniatury Workshop: Steam (bezpośrednie odnośniki).",
+  "privacy.pWhereLogs":
+    "Vercel i Neon mogą przechowywać krótkotrwałe dzienniki operacyjne. Nie umieszczamy w dziennikach danych osobowych poza tymi, które są niezbędne do naprawy błędów.",
+  "privacy.h2Controls": "Twoje kontrole",
+  "privacy.liControlsStop":
+    "Przestań korzystać z serwisu w dowolnym momencie — niezalogowani odwiedzający nie pozostawiają żadnych danych identyfikujących.",
+  "privacy.liControlsDeletePre":
+    "Poproś o usunięcie danych swojego konta, otwierając zgłoszenie na ",
+  "privacy.liControlsDeleteLink": "GitHub",
+  "privacy.liControlsDeletePost":
+    " projektu. Opublikowane przez Ciebie treści (komentarze, sugestie) mogą zostać zanonimizowane zamiast usunięte, aby zachować czytelność wątków dyskusji.",
+  "privacy.h2Changes": "Zmiany",
+  "privacy.pChanges":
+    "Jeśli niniejsza polityka ulegnie istotnej zmianie, aktualizacja zostanie ogłoszona w notach wydania serwisu. Ta strona zawsze pokazuje najnowszą wersję.",
 
   "locale.picker.label": "Język",
 };
@@ -1099,6 +2165,12 @@ const uk: Dictionary = {
   "nav.settings": "Налаштування",
   "nav.minigames": "Міні-ігри та інше",
   "nav.adminTriage": "Admin triage",
+  "nav.about": "Про сайт",
+  "nav.guide": "Як користуватися сайтом",
+  "nav.support": "Підтримати сайт",
+  "nav.favourites": "Ваші обрані",
+  "nav.notifications": "Сповіщення",
+  "nav.submissions": "Ваші заявки",
 
   "kind.blueprints": "Креслення",
   "kind.mods": "Моди",
@@ -1109,7 +2181,81 @@ const uk: Dictionary = {
   "kind.terrain": "Рельєф",
   "kind.other": "Інше",
 
+  "kind.blueprint": "Креслення",
+  "kind.mod": "Мод",
+  "kind.world": "Світ",
+  "kind.challenge": "Виклик",
+  "kind.tile": "Плитка",
+  "kind.customGame": "Власна гра",
+  "kind.terrainAsset": "Рельєф",
+  "kind.creationFallback": "Об'єкт",
+
+  "rss.title": "Scrap Mechanic Search Engine — Найновіші",
+  "rss.description":
+    "Найсвіжіші схвалені об'єкти Майстерні Scrap Mechanic на Scrap Mechanic Search Engine.",
+  "rss.by": "автор:",
+
+  "submit.metadataTitle":
+    "Запропонувати об'єкт — Scrap Mechanic Search Engine",
+  "submit.metadataDescription":
+    "Запропонуйте об'єкт із Майстерні Scrap Mechanic, який ще не знайшов крон. Схвалені об'єкти з'являються в публічній стрічці з бейджем Community.",
+  "submit.introBefore":
+    "Знайшли щось вартісне, чого ще немає в каталозі? Надішліть будь-яке посилання або ID із Майстерні Steam — модератор перевірить, і об'єкт з'явиться в публічній стрічці з бейджем",
+  "submit.introCommunityBadge": "Community",
+  "submit.introAfter": "що зазначає ваш внесок.",
+  "submit.privateProfileTitle":
+    "Ми не змогли перевірити вік вашого акаунта Steam.",
+  "submit.privateProfileBody":
+    "Ваш профіль Steam закритий, тому дата створення прихована. Зробіть профіль публічним і увійдіть знову — або надішліть модератору коротку апеляцію, і він відкриє обмеження вручну.",
+  "submit.privateProfileAppeal": "Подати апеляцію →",
+  "submit.tooYoungTitle":
+    "Вашому акаунту Steam менше 7 днів.",
+  "submit.tooYoungBody":
+    "Це жорсткий таймер, щоб свіжі фейкові акаунти не спамили сайт. Це не те, що модератор може обійти в разі «надто свіжого» акаунта — просто доведеться зачекати.",
+  "submit.tooYoungBodyStrong": "не те, що модератор може обійти",
+  "submit.tooYoungClearsOn":
+    "Обмеження зніметься {date}. Повертайтеся тоді.",
+  "submit.acceptedForms": "Підтримувані формати",
+  "submit.queueExplain":
+    "Заявки потрапляють у чергу модерації. Вони з'являються публічно після схвалення; крон не намагатиметься повторно їх обробити.",
+  "submit.curious": "Цікаво, що проходить і чому?",
+  "submit.howItWorks": "Як це працює",
+  "submit.form.urlLabel": "Посилання на Майстерню Steam або ID published-file",
+  "submit.form.urlPlaceholder":
+    "https://steamcommunity.com/sharedfiles/filedetails/?id=...",
+  "submit.form.submitPending": "Надсилаємо…",
+  "submit.form.submitButton": "Надіслати на розгляд",
+  "submit.form.successToast":
+    "Надіслано — модератор скоро перевірить.",
+  "submit.form.errorToast":
+    "Не вдалося надіслати. Спробуйте ще раз або перевірте посилання.",
+  "submit.form.queuedToast": "{title} у черзі модерації.",
+  "submit.form.pendingBefore": "Дякуємо —",
+  "submit.form.pendingAfter": "очікує перевірки модератором.",
+  "submit.form.backHome": "На головну ↗",
+
   "home.heroTitle": "Знайдіть найкраще з Майстерні.",
+  "home.supportCalloutBefore":
+    "Хочете допомогти проєкту розвиватися? Зазирніть на",
+  "home.supportCalloutLink": "Підтримати сайт",
+  "home.supportCalloutAfter":
+    "— там конкретні способи зробити внесок.",
+  "home.descriptionBefore":
+    "Вручну відібрані Креслення, Моди, Світи та інше. Комбінуйте теги, наприклад",
+  "home.descriptionExample1": "дім + машина",
+  "home.descriptionBetween":
+    "— щоб знайти жилий фургон, або",
+  "home.descriptionExample2": "крокохід + мех",
+  "home.descriptionAfter":
+    "— для гексапода. Низькоякісні творіння відсіюються.",
+  "home.indexedOne": "{count} об'єкт у каталозі",
+  "home.indexedMany": "{count} об'єктів у каталозі",
+  "home.emptyState":
+    "Поки немає схвалених творінь. Запустіть збір і перегляньте чергу.",
+  "home.popularBlueprints": "Популярні креслення",
+  "home.popularMods": "Популярні моди",
+  "home.popularWorlds": "Популярні світи",
+  "home.popularChallenges": "Популярні випробування",
   "home.newestHeading": "Найновіші надходження",
   "home.browseHeading": "Перегляд каталогу",
   "home.viewAll": "Дивитися все →",
@@ -1347,8 +2493,218 @@ const uk: Dictionary = {
   "settings.terms": "Умови",
   "settings.privacy": "Конфіденційність",
 
+  "settings.funMode.title": "Веселий режим",
+  "settings.funMode.hint":
+    "Увімкніть частини сайту, що існують суто заради розваги — звуки банера розгортання, модераторські жарти з /admin/abuse на кшталт фейкового перезавантаження. Справжні попередження про розгортання все одно відображаються, коли режим вимкнено (вам все ж потрібно зберегти роботу перед перезавантаженням сайту), просто без звуку й без жартів.",
+  "settings.funMode.off": "Вимк.",
+  "settings.funMode.on": "Увімк.",
+  "settings.funMode.offHint": "Без звуку, без жартів.",
+  "settings.funMode.onHint": "Звуки і жарти увімкнено.",
+  "settings.funMode.extremeTitle": "ЕКСТРЕМАЛЬНИЙ ВЕСЕЛИЙ РЕЖИМ.",
+  "settings.funMode.extremeDescription":
+    "Надбудова над Веселим режимом. Кожен клік породжує спрайт-хітмаркер і звук біля курсора (швидкі кліки можуть накладатися), а коли сигнал банера розгортання сягає нуля — на весь екран безшумно відтворюється відео ядерного вибуху, що закривається само по закінченні. Вимкнення Веселого режиму автоматично вимикає і цей.",
+  "settings.funMode.extremeLabelOn": "ЕКСТРЕМАЛЬНІ ВЕСЕЛОЩІ — УВІМК.",
+  "settings.funMode.extremeLabelOff": "ЕКСТРЕМАЛЬНІ ВЕСЕЛОЩІ — ВИМК.",
+  "settings.funMode.extremeHintDisabled":
+    "Спочатку увімкніть Веселий режим — ЕКСТРЕМАЛЬНОМУ потрібен базовий.",
+  "settings.funMode.extremeHintOn":
+    "Кліки породжують похилий хітмаркер + звук (можуть накладатися). Сигнал фейкового перезавантаження тепер запускає безшумне повноекранне відео ядерного вибуху. Вимкніть, якщо набридне.",
+  "settings.funMode.extremeHintOff":
+    "Увімкніть, щоб активувати ефекти кліків і відео ядерного вибуху на сигнал тривоги.",
+
+  "error.title": "Щось пішло не так.",
+  "error.body":
+    "Сталася непередбачувана помилка під час завантаження сторінки. Спробуйте ще раз через хвилину.",
+  "error.retry": "Спробувати ще",
+  "globalError.title": "Щось пішло не так.",
+  "globalError.body":
+    "Критична помилка не дозволила завантажити сторінку. Спробуйте ще раз.",
+  "globalError.retry": "Спробувати ще",
+  "notFound.eyebrow": "404",
+  "notFound.title": "Тут нічого немає.",
+  "notFound.body":
+    "Сторінки або об'єкта, який ви шукали, на сайті немає.",
+  "notFound.home": "Повернутися на головну",
+  "notFound.search": "Шукати об'єкт →",
+
   "footer.online": "{online} онлайн",
   "footer.signedInTotal": "всього {total} зареєстрованих",
+
+  "support.metadataTitle": "Підтримати сайт",
+  "support.metadataDescription":
+    "Конкретні способи допомогти Scrap Mechanic Search Engine працювати та розвиватися — від поширення посилань до повідомлень про помилки.",
+  "support.eyebrow": "Долучайтеся",
+  "support.heading": "Як ви можете допомогти",
+  "support.intro":
+    "Зараз сайт працює на безкоштовних тарифах — цього вистачає, щоб він був у мережі, але не для того, щоб він зростав сам. Він лишається корисним завдяки таким людям, як ви. Ось усе, що справді має значення.",
+  "support.spreadHeading": "Розкажіть іншим",
+  "support.spreadP1":
+    "Більшість людей, які шукають творіння для Scrap Mechanic, досі порпаються у вбудованому браузері Майстерні Steam. Розповісти другові, кинути посилання в Discord або поділитися творінням на Reddit — це беззаперечно найважливіше, що ви можете зробити.",
+  "support.spreadP2Before": "На сторінці кожного творіння тепер є кнопка",
+  "support.spreadP2ShareLabel": "Поділитися",
+  "support.spreadP2Between": "поруч із",
+  "support.spreadP2ViewLabel": "Відкрити у Steam Workshop",
+  "support.spreadP2After": "— один клік копіює посилання.",
+  "support.spreadP3Before": "Ще є",
+  "support.spreadP3SteamGroup": "Steam Group",
+  "support.spreadP3After":
+    "— вступ безкоштовний, а учасники отримують сповіщення у клієнті Steam, коли з'являються нові добірки.",
+  "support.submitHeading": "Надсилайте пропущені творіння",
+  "support.submitP1Before":
+    "Автоматичний збір підхоплює лише трендові речі. Приховані перлини, які так і не стали вірусними, проскакують повз. Якщо у вас є така на прикметі — своя чи чужа — киньте посилання з Майстерні на",
+  "support.submitP1Link": "/submit",
+  "support.submitP1After": ". Модератор перевірить її, і вона з'явиться на сайті.",
+  "support.voteHeading": "Голосуйте та ставте теги",
+  "support.voteP1":
+    "У кожного схваленого творіння є голоси «за»/«проти» та система тегів від спільноти. Що більше людей голосує, то краще працює сортування за рейтингом. Якщо творінню бракує тега, за яким ви б його шукали — додайте його. За +3 чистих голосів він стає видимим для всіх.",
+  "support.reportHeading": "Повідомляйте про проблеми",
+  "support.reportP1Before": "На сторінці кожного творіння є кнопка",
+  "support.reportP1Label": "Поскаржитися",
+  "support.reportP1After":
+    ". Неправильні теги, низька якість, спам, відсутні співавтори — якщо щось не так, позначте це. Модератор розбереться, і каталог стане трохи кращим.",
+  "support.reportP2": "Окремі коментарі теж можна надсилати на розгляд.",
+  "support.suggestHeading": "Пропонуйте ідеї",
+  "support.suggestP1Before":
+    "Майже кожне вагоме покращення сайту з'явилося з ідеї користувача. Лишайте свої на",
+  "support.suggestP1Link": "дошці ідей",
+  "support.suggestP1After":
+    "— це публічний список із голосуванням і розбором, а не чорна діра.",
+  "support.bugsHeading": "Повідомляйте про баги",
+  "support.bugsP1Before":
+    "Знайшли щось зламане, потворне або незрозуміле? Напишіть на дошку ідей із тегом bug або відкрийте issue на",
+  "support.bugsP1GitHub": "GitHub",
+  "support.bugsP1After": ". За підтверджені баг-звіти видають значок 🐛",
+  "support.bugsP1BadgeLabel": "Мисливець за багами",
+  "support.bugsP1BadgeAfter": ".",
+  "support.moneyHeading": "Фінансова підтримка",
+  "support.moneyP1":
+    "Наразі пожертв немає — я ще не завів ані Patreon, ані Ko-fi, ані чогось подібного. Але якщо сайт зросте, рано чи пізно він упреться в ліміти безкоштовних тарифів, і тоді фінансова підтримка справді допомогла б тримати його в мережі та розвивати. Якщо захочете підтримати проєкт згодом — зазирайте, я додам сюди посилання, щойно все налаштую.",
+  "support.moneyP2":
+    "А поки що перелічене вище — найкорисніше, що ви можете зробити.",
+
+  "about.metadataTitle": "Про проєкт · Scrap Mechanic Search Engine",
+  "about.metadataDescription":
+    "Як Scrap Mechanic Search Engine відбирає, завантажує та перевіряє творіння з Майстерні.",
+  "about.eyebrow": "Як це працює",
+  "about.heading": "Що це за сайт?",
+  "about.shortVersion": "Якщо коротко",
+  "about.shortVersionBody":
+    "Вручну відібраний пошуковий каталог творінь із Майстерні Steam для Scrap Mechanic. Якість важливіша за кількість: кожен запис на публічному сайті пройшов перевірку модератором, а матеріали з низьким інтересом відсіюються ще до цієї перевірки.",
+  "about.pipelineHeading": "Конвеєр",
+  "about.step1Heading": "1. Автоматичне завантаження",
+  "about.step1Body":
+    "Щоденний cron отримує найновіші записи з Майстерні через Steam Web API. Записи, що не дотягують до порогу підписників і віку для свого типу, відсіюються — це не дає свіжим завантаженням без підписників і матеріалам з накрученими голосами потрапити до черги модерації.",
+  "about.step1TableHeading": "Мінімальні пороги",
+  "about.step1TableKind": "Тип",
+  "about.step1TableMinSubs": "Мін. підписників",
+  "about.step1TableMinAge": "Мін. вік",
+  "about.step2Heading": "2. Перевірка людиною",
+  "about.step2Body":
+    "Усе, що проходить фільтр, потрапляє до черги модерації. Модератори схвалюють, відхиляють або запитують зміни. Схвалені записи отримують публічні теги та з'являються в каталозі; відхилені більше не потрапляють до майбутніх завантажень.",
+  "about.step3Heading": "3. Подання від спільноти",
+  "about.step3BodyBefore":
+    "Будь-хто з підтвердженим обліковим записом Steam може вручну запропонувати матеріал через",
+  "about.step3Submit": "/submit",
+  "about.step3BodyAfter":
+    ". Такі подання обходять фільтр за підписниками та віком, але проходять ту ж модерацію — вони позначаються, щоб модератори могли надати їм пріоритет.",
+  "about.whatIfHeading": "Що, якщо мого творіння немає на сайті?",
+  "about.whatIfBody":
+    "Якщо творіння немає на сайті, майже завжди це тому, що воно нижче порогу автоматичного завантаження і його ще ніхто не запропонував вручну. Надішліть його через /submit — це займає десять секунд, і модератор зазвичай розглядає заявку за день-два.",
+  "about.costHeading": "Витрати та стабільність",
+  "about.costBody":
+    "Весь стек працює на безкоштовних тарифах — Vercel Hobby для хостингу, Neon Postgres для бази даних, публічний Steam Web API для даних. Жодних платних сервісів, реклами чи трекерів, окрім базової серверної аналітики. Якщо хочете допомогти зберегти це, зазирніть на сторінку /support.",
+  "about.thresholdsDays": "{n} дн.",
+
+  "terms.metadataTitle": "Умови",
+  "terms.metadataDescription":
+    "Правила користування сайтом та публікації матеріалів.",
+  "terms.heading": "Умови користування",
+  "terms.lastUpdated": "Останнє оновлення — квітень 2026 р.",
+  "terms.h2What": "Що це за сайт",
+  "terms.pWhat":
+    "Scrap Mechanic Search Engine — це безкоштовний каталог, який веде спільнота та який містить посилання на творіння Steam Workshop для гри Scrap Mechanic. Ми не пов'язані з Axolot Games чи Valve. Самі файли Workshop розміщено у Steam; ми зберігаємо лише метадані (назву, опис, теги, URL мініатюри) і посилаємося на першоджерело.",
+  "terms.h2Account": "Обліковий запис",
+  "terms.pAccount1":
+    "Вхід відбувається через Steam OpenID — ми ніколи не бачимо вашого пароля Steam. Входячи, ви погоджуєтеся з цими умовами та нашою ",
+  "terms.pAccountLink": "політикою конфіденційності",
+  "terms.pAccount2":
+    ". Ви несете відповідальність за безпеку власного облікового запису Steam.",
+  "terms.h2Rules": "Правила спільноти",
+  "terms.pRulesIntro":
+    "Публікуючи коментарі, теги, пропозиції чи заявки:",
+  "terms.liRulesDecent":
+    "Поводьтеся гідно. Жодних переслідувань, образ чи погроз.",
+  "terms.liRulesSpam": "Жодного спаму, реклами чи офтопу.",
+  "terms.liRulesAppid":
+    "Надсилайте лише творіння Workshop для Scrap Mechanic (appid 387990). Заявки щодо інших ігор відхиляються автоматично.",
+  "terms.liRulesPii": "Не публікуйте особисту інформацію інших людей.",
+  "terms.liRulesExploit":
+    "Не намагайтеся зламати, здолати методом brute-force чи експлуатувати вразливості сайту.",
+  "terms.pRulesMods":
+    "Модератори можуть приховувати матеріали, виносити попередження, вимикати доступ до чату або блокувати облікові записи, що порушують ці правила. За серйозні або повторювані порушення може бути призначено постійне блокування.",
+  "terms.h2Content": "Ваш контент",
+  "terms.pContent":
+    "Опубліковані вами коментарі та пропозиції залишаються підписаними вашим persona-ім'ям і можуть зберігатися у вигляді гілок обговорення навіть після того, як ви залишите сайт, щоб розпочаті дискусії залишалися зрозумілими. Права на все написане залишаються за вами; публікуючи матеріал, ви надаєте сайту невиключне право показувати його іншим користувачам.",
+  "terms.h2Takedowns": "Контент Workshop та запити на видалення",
+  "terms.pTakedowns1":
+    "Самі файли й зображення кожного творіння Workshop розміщено на Steam. Якщо ваше творіння Workshop зазначене тут і ви хочете його прибрати (наприклад, ви зняли його з публікації у Steam), відкрийте issue у ",
+  "terms.pTakedownsLink": "репозиторії GitHub",
+  "terms.pTakedowns2":
+    " проєкту або зверніться до модератора — і ми його приберемо.",
+  "terms.h2Warranty": "Відсутність гарантій",
+  "terms.pWarranty":
+    "Сайт надається «як є». Функції можуть змінюватися чи зникати, сайт може бути недоступний, дані можуть містити помилки. Не покладайтеся на нього у важливих справах.",
+  "terms.h2Changes": "Зміни",
+  "terms.pChanges":
+    "Ми можемо оновлювати ці умови. Про суттєві зміни буде повідомлено у примітках до випусків. Продовження користування сайтом після змін означає вашу згоду з оновленою версією.",
+
+  "privacy.metadataTitle": "Конфіденційність",
+  "privacy.metadataDescription":
+    "Що ми збираємо, навіщо та як довго зберігаємо.",
+  "privacy.h1": "Конфіденційність",
+  "privacy.lastUpdated": "Останнє оновлення: квітень 2026 року.",
+  "privacy.h2Short": "Коротко",
+  "privacy.pShort":
+    "Це некомерційний каталог творінь Scrap Mechanic Workshop, який веде спільнота. Ми не продаємо дані, не показуємо реклами та не використовуємо аналітичних трекерів, що стежать за вами. Якщо ви ніколи не ввійдете в систему, ми ніколи не дізнаємося, хто ви.",
+  "privacy.h2Store": "Що ми зберігаємо",
+  "privacy.pStoreIntro": "Якщо ви входите через Steam, ми зберігаємо:",
+  "privacy.liStoreId": "Ваш публічний SteamID, ім'я профілю та URL аватара.",
+  "privacy.liStoreAge":
+    "Вік вашого облікового запису Steam і час гри у Scrap Mechanic — ці дані надходять зі Steam і використовуються для відсіювання щойно створених одноразових облікових записів.",
+  "privacy.liStoreActivity":
+    "Час, коли ви входили, залишали коментарі, голосували, додавали до обраного або надсилали матеріали, — щоб модератори могли підтримувати читабельність сайту.",
+  "privacy.pStoreNot":
+    "Ми <strong>не</strong> збираємо вашу електронну пошту, пароль, номер телефону, справжнє ім'я, IP-адресу чи історію переглядів.",
+  "privacy.h2Cookies": "Cookie-файли",
+  "privacy.liCookieSession":
+    "<code>smse_session</code> — сесія входу, завершується після тижня неактивності.",
+  "privacy.liCookieCaptcha":
+    "<code>smse_captcha</code> — короткочасний стан (30 хв) для перевірки на бота.",
+  "privacy.liCookieBotVerified":
+    "<code>bot_verified</code> — встановлюється після успішної перевірки, діє 30 днів.",
+  "privacy.liCookieRatingMode":
+    "<code>smse_rating_mode</code> — запам'ятовує, чи надаєте ви перевагу оцінкам Steam, оцінкам сайту або обом.",
+  "privacy.liCookieTheme":
+    "<code>smse_theme</code> — запам'ятовує обрану вами колірну тему.",
+  "privacy.pCookieFooter":
+    "Усі cookie-файли є власними, підписаними та позначеними HTTP-only там, де це важливо. Жодних рекламних трекерів.",
+  "privacy.h2Where": "Де зберігаються дані",
+  "privacy.liWhereDb": "База даних: Neon (безсерверний Postgres, безкоштовний тариф).",
+  "privacy.liWhereHost": "Хостинг: Vercel.",
+  "privacy.liWhereSteam": "Метадані та мініатюри Workshop: Steam (пряме посилання).",
+  "privacy.pWhereLogs":
+    "Vercel і Neon можуть зберігати короткочасні операційні журнали. Ми не розміщуємо у записах журналу персональних даних понад необхідне для виправлення помилок.",
+  "privacy.h2Controls": "Ваші інструменти контролю",
+  "privacy.liControlsStop":
+    "Припиніть користуватися сайтом у будь-який час — відвідувачі без входу не залишають жодних ідентифікаційних даних.",
+  "privacy.liControlsDeletePre":
+    "Попросіть видалити дані вашого облікового запису, створивши issue на ",
+  "privacy.liControlsDeleteLink": "GitHub",
+  "privacy.liControlsDeletePost":
+    " проєкту. Ваш розміщений вміст (коментарі, пропозиції) може бути анонімізовано, а не видалено, щоб зберегти читабельність обговорень.",
+  "privacy.h2Changes": "Зміни",
+  "privacy.pChanges":
+    "Якщо цю політику буде суттєво змінено, оновлення буде оголошено в примітках до випуску сайту. Ця сторінка завжди показує найновішу версію.",
 
   "locale.picker.label": "Мова",
 };
@@ -1365,6 +2721,12 @@ const zh: Dictionary = {
   "nav.settings": "设置",
   "nav.minigames": "小游戏与其他",
   "nav.adminTriage": "Admin triage",
+  "nav.about": "关于本站",
+  "nav.guide": "如何使用本站",
+  "nav.support": "支持本站",
+  "nav.favourites": "你的收藏",
+  "nav.notifications": "通知",
+  "nav.submissions": "你的提交",
 
   "kind.blueprints": "蓝图",
   "kind.mods": "模组",
@@ -1375,7 +2737,71 @@ const zh: Dictionary = {
   "kind.terrain": "地形",
   "kind.other": "其他",
 
+  "kind.blueprint": "蓝图",
+  "kind.mod": "模组",
+  "kind.world": "世界",
+  "kind.challenge": "挑战",
+  "kind.tile": "地块",
+  "kind.customGame": "自定义游戏",
+  "kind.terrainAsset": "地形",
+  "kind.creationFallback": "作品",
+
+  "rss.title": "Scrap Mechanic Search Engine — 最新",
+  "rss.description":
+    "Scrap Mechanic Search Engine 上最新已批准的 Scrap Mechanic 创意工坊作品。",
+  "rss.by": "作者:",
+
+  "submit.metadataTitle": "提交作品 — Scrap Mechanic Search Engine",
+  "submit.metadataDescription":
+    "提交一个 cron 尚未找到的 Scrap Mechanic 创意工坊作品。批准后将在公开动态中显示并带有 Community 标识。",
+  "submit.introBefore":
+    "有 cron 还没找到的宝藏作品？提交任意 Steam 创意工坊链接或 ID — 管理员审核后会在公开动态中出现,并带有",
+  "submit.introCommunityBadge": "Community",
+  "submit.introAfter": "标识。",
+  "submit.privateProfileTitle": "无法验证你的 Steam 账号年龄。",
+  "submit.privateProfileBody":
+    "你的 Steam 个人资料是私密的,因此账号创建日期被隐藏。请将个人资料设为公开并重新登录 — 或向管理员提交简短申诉,他们会手动解除限制。",
+  "submit.privateProfileAppeal": "申诉年龄限制 →",
+  "submit.tooYoungTitle": "你的 Steam 账号不足 7 天。",
+  "submit.tooYoungBody":
+    "这是硬编码的冷却期,防止新的小号账户刷屏。对于「过新」的情况,管理员无法绕过 — 你只能等待。",
+  "submit.tooYoungBodyStrong": "管理员无法绕过",
+  "submit.tooYoungClearsOn": "你的账号将在 {date} 通过限制。届时再来。",
+  "submit.acceptedForms": "支持的格式",
+  "submit.queueExplain":
+    "提交的内容将进入管理员审核队列。批准后公开显示;cron 不会重复获取。",
+  "submit.curious": "想知道什么会被收录,为什么?",
+  "submit.howItWorks": "工作原理",
+  "submit.form.urlLabel": "Steam 创意工坊链接或 published-file ID",
+  "submit.form.urlPlaceholder":
+    "https://steamcommunity.com/sharedfiles/filedetails/?id=...",
+  "submit.form.submitPending": "提交中…",
+  "submit.form.submitButton": "提交审核",
+  "submit.form.successToast": "已提交 — 管理员很快会审核。",
+  "submit.form.errorToast": "提交失败。请重试或检查链接。",
+  "submit.form.queuedToast": "{title} 已加入审核队列。",
+  "submit.form.pendingBefore": "谢谢 —",
+  "submit.form.pendingAfter": "正在等待管理员审核。",
+  "submit.form.backHome": "返回首页 ↗",
+
   "home.heroTitle": "从创意工坊中发现精华。",
+  "home.supportCalloutBefore":
+    "想帮助这个项目继续成长?请前往",
+  "home.supportCalloutLink": "支持本站",
+  "home.supportCalloutAfter": ",查看你可以具体做些什么。",
+  "home.descriptionBefore":
+    "人工精选的蓝图、模组、世界等。组合标签,如",
+  "home.descriptionExample1": "房子 + 汽车",
+  "home.descriptionBetween": "找到可驾驶房车,或",
+  "home.descriptionExample2": "行走 + 机甲",
+  "home.descriptionAfter": "找六足机器人。低质量作品会被过滤掉。",
+  "home.indexedOne": "已收录 {count} 件作品",
+  "home.indexedMany": "已收录 {count} 件作品",
+  "home.emptyState": "尚无通过审核的作品。启动收录并审核队列。",
+  "home.popularBlueprints": "热门蓝图",
+  "home.popularMods": "热门模组",
+  "home.popularWorlds": "热门世界",
+  "home.popularChallenges": "热门挑战",
   "home.newestHeading": "最新收录",
   "home.browseHeading": "浏览目录",
   "home.viewAll": "查看全部 →",
@@ -1613,8 +3039,207 @@ const zh: Dictionary = {
   "settings.terms": "条款",
   "settings.privacy": "隐私",
 
+  "settings.funMode.title": "趣味模式",
+  "settings.funMode.hint":
+    "加入纯属娱乐的部分 — 部署横幅音效、来自 /admin/abuse 的管理员恶作剧（如假重启）。关闭趣味模式后仍会显示真实的部署警告（你仍需在站点重启前保存工作），只是静音且没有恶作剧。",
+  "settings.funMode.off": "关",
+  "settings.funMode.on": "开",
+  "settings.funMode.offHint": "静音,没有恶作剧。",
+  "settings.funMode.onHint": "声音 + 恶作剧已开启。",
+  "settings.funMode.extremeTitle": "极致趣味模式。",
+  "settings.funMode.extremeDescription":
+    "叠加在趣味模式之上。每次点击都会在光标处生成一个命中标记精灵并播放音效（快速点击时可重叠），当部署横幅的警报归零时,一个静音全屏核爆视频会播放几秒钟后自动关闭。关闭趣味模式将级联关闭此项。",
+  "settings.funMode.extremeLabelOn": "极致趣味 — 开",
+  "settings.funMode.extremeLabelOff": "极致趣味 — 关",
+  "settings.funMode.extremeHintDisabled":
+    "请先开启趣味模式 — 极致需要趣味模式作为前提。",
+  "settings.funMode.extremeHintOn":
+    "点击会生成倾斜的命中标记和声音（可重叠）。假重启警报现在触发静音全屏核爆视频。若觉得烦人可关闭。",
+  "settings.funMode.extremeHintOff":
+    "开启它以启用点击效果和警报触发的核爆视频。",
+
+  "error.title": "出了点问题。",
+  "error.body": "加载此页面时遇到意外错误。请稍后重试。",
+  "error.retry": "重试",
+  "globalError.title": "出了点问题。",
+  "globalError.body": "致命错误导致页面无法加载。请重试。",
+  "globalError.retry": "重试",
+  "notFound.eyebrow": "404",
+  "notFound.title": "这里什么都没有。",
+  "notFound.body": "你要找的页面或作品不在本站。",
+  "notFound.home": "返回首页",
+  "notFound.search": "搜索作品 →",
+
   "footer.online": "{online} 在线",
   "footer.signedInTotal": "共 {total} 位已登录用户",
+
+  "support.metadataTitle": "支持本站",
+  "support.metadataDescription":
+    "你可以通过哪些具体方式帮助 Scrap Mechanic Search Engine 持续运行并不断发展——从分享链接到反馈 bug。",
+  "support.eyebrow": "参与进来",
+  "support.heading": "你可以怎样帮忙",
+  "support.intro":
+    "目前本站运行在免费额度上——这能让它保持在线,但无法自行成长。它之所以仍然有用,是因为像你这样的人愿意出一份力。下面列出的就是真正能起作用的事情。",
+  "support.spreadHeading": "广而告之",
+  "support.spreadP1":
+    "大多数寻找 Scrap Mechanic 作品的人仍然在 Steam 自带的创意工坊浏览器里翻找。告诉朋友、在 Discord 里贴个链接,或者把某个作品分享到 Reddit——这是你能做的影响最大的一件事。",
+  "support.spreadP2Before": "现在每个作品页面旁边都有一个",
+  "support.spreadP2ShareLabel": "分享",
+  "support.spreadP2Between": "按钮,紧挨着",
+  "support.spreadP2ViewLabel": "在 Steam Workshop 查看",
+  "support.spreadP2After": "——一键复制链接。",
+  "support.spreadP3Before": "还有一个",
+  "support.spreadP3SteamGroup": "Steam Group",
+  "support.spreadP3After":
+    "——免费加入,成员在 Steam 客户端里会收到新推荐发布时的通知。",
+  "support.submitHeading": "提交我们遗漏的作品",
+  "support.submitP1Before":
+    "自动抓取只会收录热门作品。那些从未走红的隐藏佳作会被漏掉。如果你心里有这样一个作品——你自己的或别人的——请把创意工坊链接发到",
+  "support.submitP1Link": "/submit",
+  "support.submitP1After": "。版主审核后就会上线。",
+  "support.voteHeading": "投票与打标签",
+  "support.voteP1":
+    "每个通过审核的作品都有顶/踩投票和社区标签系统。参与投票的人越多,评分排序就越准确。如果某个作品缺少你会搜索的标签——加上去。净票数达到 +3 时,它就会对所有人可见。",
+  "support.reportHeading": "反馈问题",
+  "support.reportP1Before": "每个作品页面都有一个",
+  "support.reportP1Label": "举报",
+  "support.reportP1After":
+    "按钮。标签错误、质量低劣、垃圾内容、遗漏合作者——只要有问题,就标记出来。版主会处理,目录也会因此变得更好一点。",
+  "support.reportP2": "单条评论也可以举报。",
+  "support.suggestHeading": "提建议",
+  "support.suggestP1Before":
+    "本站几乎每一项有意义的改进都源自用户的想法。把你的想法发到",
+  "support.suggestP1Link": "想法看板",
+  "support.suggestP1After":
+    "——那是一个公开、投票、分类整理的列表,不是黑洞。",
+  "support.bugsHeading": "反馈 bug",
+  "support.bugsP1Before":
+    "发现了坏掉的、难看的或令人困惑的东西?在想法看板上用 bug 标签发帖,或者到",
+  "support.bugsP1GitHub": "GitHub",
+  "support.bugsP1After": "上开一个 issue。经核实的 bug 报告可以获得 🐛",
+  "support.bugsP1BadgeLabel": "Bug 猎人",
+  "support.bugsP1BadgeAfter": "徽章。",
+  "support.moneyHeading": "资金支持",
+  "support.moneyP1":
+    "目前还没有捐赠渠道——我还没搭建 Patreon、Ko-fi 之类的东西。但如果本站发展起来,迟早会超出免费额度的范围,到那时财务支持会真正帮助它保持在线并持续改进。如果你希望日后以这种方式支持——请回来看看,等我搭好后会在这里加上链接。",
+  "support.moneyP2":
+    "在此期间,以上这些事情就是你能做的最有用的事。",
+
+  "about.metadataTitle": "关于 · Scrap Mechanic Search Engine",
+  "about.metadataDescription":
+    "Scrap Mechanic Search Engine 如何筛选、收录和审核创意工坊作品。",
+  "about.eyebrow": "运作方式",
+  "about.heading": "这是什么网站?",
+  "about.shortVersion": "简而言之",
+  "about.shortVersionBody":
+    "一个人工精选、可搜索的 Scrap Mechanic Steam 创意工坊作品目录。质量优先于数量:公开站点上的每一项作品都经过人工审核,低关注度作品在进入审核前就已被过滤。",
+  "about.pipelineHeading": "处理流程",
+  "about.step1Heading": "1. 自动收录",
+  "about.step1Body":
+    "每日 cron 任务通过 Steam Web API 获取最新的创意工坊作品。低于各类型订阅数和发布时长阈值的作品会被过滤掉——这样可以避免刚上传的零订阅作品和刷票作品进入审核队列。",
+  "about.step1TableHeading": "最低阈值",
+  "about.step1TableKind": "类型",
+  "about.step1TableMinSubs": "最少订阅数",
+  "about.step1TableMinAge": "最短时长",
+  "about.step2Heading": "2. 人工审核",
+  "about.step2Body":
+    "通过筛选的作品会进入版主审核队列。版主会批准、拒绝或要求修改。通过的作品会获得公开标签并出现在目录中;被拒绝的作品不会再出现在后续收录中。",
+  "about.step3Heading": "3. 社区提交",
+  "about.step3BodyBefore":
+    "任何拥有已验证 Steam 账户的用户都可以手动提交作品,通过",
+  "about.step3Submit": "/submit",
+  "about.step3BodyAfter":
+    "。这类提交会绕过订阅数/时长过滤,但仍需经过相同的版主审核——社区提交会被标记,以便版主优先处理。",
+  "about.whatIfHeading": "如果我的作品没有出现怎么办?",
+  "about.whatIfBody":
+    "如果某个作品不在站点上,几乎总是因为它低于自动收录阈值且还没有人手动提交。请在 /submit 提交——只需十秒,版主通常会在一两天内审核。",
+  "about.costHeading": "成本与可持续性",
+  "about.costBody":
+    "整个技术栈都运行在免费套餐上——Vercel Hobby 负责托管,Neon Postgres 作为数据库,Steam 公开 Web API 提供数据。没有付费服务、没有广告,除了基本的服务器分析外也没有任何追踪器。如果你想帮助维持这一点,请查看 /support 页面。",
+  "about.thresholdsDays": "{n} 天",
+
+  "terms.metadataTitle": "使用条款",
+  "terms.metadataDescription": "使用本站及发布内容的规则。",
+  "terms.heading": "使用条款",
+  "terms.lastUpdated": "最后更新于 2026 年 4 月。",
+  "terms.h2What": "本站简介",
+  "terms.pWhat":
+    "Scrap Mechanic Search Engine 是一个免费的、由社区运营的目录,汇集了指向游戏 Scrap Mechanic 的 Steam Workshop 创作的链接。我们与 Axolot Games 或 Valve 没有任何关联。Workshop 作品本身托管在 Steam 上;我们仅存储元数据(标题、简介、标签、缩略图 URL)并提供回链。",
+  "terms.h2Account": "账号",
+  "terms.pAccount1":
+    "登录采用 Steam OpenID — 我们绝不会看到您的 Steam 密码。登录即表示您同意本条款以及我们的",
+  "terms.pAccountLink": "隐私政策",
+  "terms.pAccount2": "。您须自行负责保障 Steam 账号的安全。",
+  "terms.h2Rules": "社区规则",
+  "terms.pRulesIntro": "在发表评论、添加标签、提出建议或提交作品时:",
+  "terms.liRulesDecent": "请保持基本礼貌。不得进行骚扰、辱骂或威胁。",
+  "terms.liRulesSpam": "不得发布垃圾信息、广告或与主题无关的内容。",
+  "terms.liRulesAppid":
+    "只能提交面向 Scrap Mechanic(appid 387990)的 Workshop 作品。其他游戏的提交将被自动拒绝。",
+  "terms.liRulesPii": "不得公开他人的个人信息。",
+  "terms.liRulesExploit": "不得试图破坏、暴力破解或利用本站漏洞。",
+  "terms.pRulesMods":
+    "对于违反上述规则的账号,管理员可以隐藏其内容,或对其进行警告、禁言及封禁。严重或屡次违规可能导致永久封禁。",
+  "terms.h2Content": "您的内容",
+  "terms.pContent":
+    "您发布的评论和建议将持续署名您的 persona 名称,即使您离开本站,也可能以线程形式保留,以便既有讨论仍能连贯阅读。您对自己所撰写的内容保留所有权;发布后,即授予本站以非独占方式向其他用户展示该内容的权利。",
+  "terms.h2Takedowns": "Workshop 内容与下架请求",
+  "terms.pTakedowns1":
+    "每件 Workshop 作品的实际文件与图片均由 Steam 托管。如果您的 Workshop 作品出现在本站,而您希望将其下架(例如您已在 Steam 上取消发布),请在本项目的",
+  "terms.pTakedownsLink": "GitHub 仓库",
+  "terms.pTakedowns2": "中提交 issue,或联系管理员,我们会将其移除。",
+  "terms.h2Warranty": "不提供任何保证",
+  "terms.pWarranty":
+    "本站以「现状」提供。功能可能变化或消失,站点可能宕机,数据可能存在错误。请勿将其用于任何重要用途。",
+  "terms.h2Changes": "变更",
+  "terms.pChanges":
+    "我们可能更新本条款。重大变更将在发行说明中注明。变更后继续使用本站,即视为您接受更新后的版本。",
+
+  "privacy.metadataTitle": "隐私",
+  "privacy.metadataDescription": "我们收集什么、为何收集以及保留多久。",
+  "privacy.h1": "隐私",
+  "privacy.lastUpdated": "最后更新于 2026 年 4 月。",
+  "privacy.h2Short": "简要版本",
+  "privacy.pShort":
+    "这是一个由社区运营、非商业性的 Scrap Mechanic Workshop 作品目录。我们不出售数据,不投放广告,也不使用跟踪您的分析工具。如果您从不登录,我们就永远不会知道您是谁。",
+  "privacy.h2Store": "我们存储什么",
+  "privacy.pStoreIntro": "如果您使用 Steam 登录,我们会保存:",
+  "privacy.liStoreId": "您公开的 SteamID、人物名称和头像 URL。",
+  "privacy.liStoreAge":
+    "您的 Steam 账户年龄和 Scrap Mechanic 游戏时长——这些信息来自 Steam,用于过滤新创建的一次性账户。",
+  "privacy.liStoreActivity":
+    "您登录、评论、投票、收藏或提交内容的时间——以便版主保持站点的可读性。",
+  "privacy.pStoreNot":
+    "我们<strong>不会</strong>收集您的电子邮箱、密码、电话号码、真实姓名、IP 地址或浏览历史。",
+  "privacy.h2Cookies": "cookie",
+  "privacy.liCookieSession":
+    "<code>smse_session</code>——登录会话,在不活动一周后过期。",
+  "privacy.liCookieCaptcha":
+    "<code>smse_captcha</code>——反机器人验证的短时状态(30 分钟)。",
+  "privacy.liCookieBotVerified":
+    "<code>bot_verified</code>——在您通过验证后设置,有效期 30 天。",
+  "privacy.liCookieRatingMode":
+    "<code>smse_rating_mode</code>——记住您偏好 Steam 评分、站点评分,或两者兼用。",
+  "privacy.liCookieTheme":
+    "<code>smse_theme</code>——记住您选择的颜色主题。",
+  "privacy.pCookieFooter":
+    "所有 cookie 均为第一方 cookie,在需要时经过签名或设为 HTTP-only。没有任何广告跟踪器。",
+  "privacy.h2Where": "数据存放在哪里",
+  "privacy.liWhereDb": "数据库:Neon(无服务器 Postgres,免费层)。",
+  "privacy.liWhereHost": "托管:Vercel。",
+  "privacy.liWhereSteam": "Workshop 元数据和缩略图:Steam(外链)。",
+  "privacy.pWhereLogs":
+    "Vercel 和 Neon 可能会保留短期的运行日志。除修复缺陷所必需之外,我们不会在日志信息中放入个人数据。",
+  "privacy.h2Controls": "您的控制权",
+  "privacy.liControlsStop":
+    "随时停止使用本站——已登出的访客不会留下任何可识别身份的数据。",
+  "privacy.liControlsDeletePre": "通过在项目的 ",
+  "privacy.liControlsDeleteLink": "GitHub",
+  "privacy.liControlsDeletePost":
+    " 上创建 issue,申请删除您的账户数据。您发布的内容(评论、建议)可能会被匿名化而非删除,以保持讨论串的可读性。",
+  "privacy.h2Changes": "变更",
+  "privacy.pChanges":
+    "如本政策发生重大变更,更新将在站点的发布说明中公告。本页面将始终显示最新版本。",
 
   "locale.picker.label": "语言",
 };
