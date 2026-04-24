@@ -1,24 +1,49 @@
 import { and, eq, inArray, isNotNull, sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
-import { creations, creationTags, tags } from "@/lib/db/schema";
+import {
+  CREATION_KINDS,
+  creations,
+  creationTags,
+  tags,
+  type CreationKind,
+} from "@/lib/db/schema";
 import { TriageStack, type TriageCard } from "@/components/admin/TriageStack";
 
 export const dynamic = "force-dynamic";
 
 const BATCH_SIZE = 50;
 
-export default async function TriagePage() {
+type SearchParams = Promise<{ kind?: string }>;
+
+export default async function TriagePage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
+  const params = await searchParams;
+  const activeKind = (CREATION_KINDS as readonly string[]).includes(
+    params.kind ?? "",
+  )
+    ? (params.kind as CreationKind)
+    : null;
+
   const db = getDb();
 
-  const [pending, totalRow, communityRow] = await Promise.all([
+  const filterWhere = activeKind
+    ? and(eq(creations.status, "pending"), eq(creations.kind, activeKind))
+    : eq(creations.status, "pending");
+
+  const [pending, totalRow, communityRow, kindBreakdown] = await Promise.all([
     db
       .select()
       .from(creations)
-      .where(eq(creations.status, "pending"))
+      .where(filterWhere)
       // Community-submitted rows float to the top of the stack — someone
       // took the trouble to flag them through /submit, so handle those
       // before chewing through the auto-ingested trending backlog. Within
-      // each group, most-popular first stays the best tiebreaker.
+      // each group, most-popular first stays the best tiebreaker. The
+      // kind filter (if any) narrows the pool before this ordering, so
+      // community rows still lead within the filtered kind.
       .orderBy(
         sql`${creations.uploadedByUserId} is not null desc, ${creations.subscriptions} desc`,
       )
@@ -26,19 +51,31 @@ export default async function TriagePage() {
     db
       .select({ n: sql<number>`count(*)::int` })
       .from(creations)
-      .where(eq(creations.status, "pending"))
+      .where(filterWhere)
       .then((r) => r[0]),
     db
       .select({ n: sql<number>`count(*)::int` })
       .from(creations)
-      .where(
-        and(
-          eq(creations.status, "pending"),
-          isNotNull(creations.uploadedByUserId),
-        ),
-      )
+      .where(and(filterWhere, isNotNull(creations.uploadedByUserId)))
       .then((r) => r[0]),
+    // Per-kind totals across the whole pending pool (ignoring the active
+    // filter) so every filter pill can show its own count — switching
+    // between filters shouldn't hide the sizes of the other buckets.
+    db
+      .select({
+        kind: creations.kind,
+        total: sql<number>`count(*)::int`,
+        community: sql<number>`count(*) filter (where ${creations.uploadedByUserId} is not null)::int`,
+      })
+      .from(creations)
+      .where(eq(creations.status, "pending"))
+      .groupBy(creations.kind),
   ]);
+
+  const kindCounts: Record<string, { total: number; community: number }> = {};
+  for (const row of kindBreakdown) {
+    kindCounts[row.kind] = { total: row.total, community: row.community };
+  }
 
   const ids = pending.map((p) => p.id);
   const tagRows =
@@ -82,6 +119,8 @@ export default async function TriagePage() {
       cards={cards}
       totalPending={totalRow?.n ?? cards.length}
       communityPending={communityRow?.n ?? 0}
+      activeKind={activeKind}
+      kindCounts={kindCounts}
     />
   );
 }

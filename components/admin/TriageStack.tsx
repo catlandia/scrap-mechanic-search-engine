@@ -71,10 +71,14 @@ export function TriageStack({
   cards,
   totalPending,
   communityPending,
+  activeKind = null,
+  kindCounts = {},
 }: {
   cards: TriageCard[];
   totalPending: number;
   communityPending: number;
+  activeKind?: string | null;
+  kindCounts?: Record<string, { total: number; community: number }>;
 }) {
   const router = useRouter();
   const toast = useToast();
@@ -229,17 +233,44 @@ export function TriageStack({
   }
 
   if (buffer.length === 0) {
+    const activeKindLabel = activeKind ? KIND_LABELS[activeKind] ?? activeKind : null;
     return (
-      <div className="mx-auto max-w-xl space-y-4 rounded-lg border border-border bg-card p-8 text-center">
-        <div className="text-5xl">🎉</div>
-        <h1 className="text-2xl font-semibold">Queue is clear.</h1>
-        <p className="text-foreground/60">
-          No pending creations right now. Run an ingest from{" "}
-          <Link href="/admin/ingest" className="text-accent hover:underline">
-            /admin/ingest
-          </Link>
-          .
-        </p>
+      <div className="flex flex-col gap-4">
+        <KindFilterBar activeKind={activeKind} kindCounts={kindCounts} />
+        <div className="mx-auto max-w-xl space-y-4 rounded-lg border border-border bg-card p-8 text-center">
+          <div className="text-5xl">🎉</div>
+          <h1 className="text-2xl font-semibold">
+            {activeKindLabel
+              ? `No pending ${activeKindLabel.toLowerCase()} creations.`
+              : "Queue is clear."}
+          </h1>
+          <p className="text-foreground/60">
+            {activeKindLabel ? (
+              <>
+                Other kinds may still have items waiting — clear the filter
+                above to see them, or run an ingest from{" "}
+                <Link
+                  href="/admin/ingest"
+                  className="text-accent hover:underline"
+                >
+                  /admin/ingest
+                </Link>
+                .
+              </>
+            ) : (
+              <>
+                No pending creations right now. Run an ingest from{" "}
+                <Link
+                  href="/admin/ingest"
+                  className="text-accent hover:underline"
+                >
+                  /admin/ingest
+                </Link>
+                .
+              </>
+            )}
+          </p>
+        </div>
       </div>
     );
   }
@@ -254,9 +285,17 @@ export function TriageStack({
 
   return (
     <div className="flex flex-col gap-4">
+      <KindFilterBar activeKind={activeKind} kindCounts={kindCounts} />
       <header className="flex flex-wrap items-baseline justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-semibold">Triage</h1>
+          <h1 className="text-2xl font-semibold">
+            Triage
+            {activeKind && (
+              <span className="ml-2 text-base font-normal text-foreground/60">
+                · {KIND_LABELS[activeKind] ?? activeKind} only
+              </span>
+            )}
+          </h1>
           <p className="text-xs text-foreground/50">
             Approve pushes the item to the public site without tagging.
             Untagged items land in{" "}
@@ -679,5 +718,95 @@ function ActionButton({
       <span>{label}</span>
       <span className="text-[10px] opacity-70">{shortcut}</span>
     </button>
+  );
+}
+
+// Kind filter — clicking a pill narrows the triage queue to that kind. The
+// "All" pill clears the filter. Each pill shows the total pending count for
+// its kind, with a smaller purple community-count badge when any of those
+// are user-submitted (which still sort first within the filtered slice).
+// Renders as links (full server reload) rather than client-side navigation
+// so the stack's buffer state resets cleanly — mid-animation swaps between
+// filters would be confusing.
+function KindFilterBar({
+  activeKind,
+  kindCounts,
+}: {
+  activeKind: string | null;
+  kindCounts: Record<string, { total: number; community: number }>;
+}) {
+  const kindsWithItems = Object.entries(kindCounts)
+    .filter(([, c]) => c.total > 0)
+    .sort(([, a], [, b]) => b.total - a.total);
+  const totalAll = Object.values(kindCounts).reduce((s, c) => s + c.total, 0);
+  const totalCommunityAll = Object.values(kindCounts).reduce(
+    (s, c) => s + c.community,
+    0,
+  );
+
+  if (totalAll === 0) {
+    return null;
+  }
+
+  return (
+    <nav
+      aria-label="Filter triage by kind"
+      className="flex flex-wrap gap-2 rounded-lg border border-border bg-card/60 p-2"
+    >
+      <KindFilterPill
+        href="/admin/triage"
+        label="All"
+        total={totalAll}
+        community={totalCommunityAll}
+        active={activeKind === null}
+      />
+      {kindsWithItems.map(([kind, counts]) => (
+        <KindFilterPill
+          key={kind}
+          href={`/admin/triage?kind=${kind}`}
+          label={KIND_LABELS[kind] ?? kind}
+          total={counts.total}
+          community={counts.community}
+          active={activeKind === kind}
+        />
+      ))}
+    </nav>
+  );
+}
+
+function KindFilterPill({
+  href,
+  label,
+  total,
+  community,
+  active,
+}: {
+  href: string;
+  label: string;
+  total: number;
+  community: number;
+  active: boolean;
+}) {
+  return (
+    <Link
+      href={href}
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition",
+        active
+          ? "border-accent bg-accent/20 text-accent"
+          : "border-border bg-background/40 text-foreground/70 hover:border-accent/40 hover:text-foreground",
+      )}
+    >
+      <span>{label}</span>
+      <span className="tabular-nums text-foreground/50">{total}</span>
+      {community > 0 && (
+        <span
+          className="rounded-full bg-purple-500/20 px-1.5 text-[10px] font-semibold text-purple-200"
+          title={`${community} community-submitted`}
+        >
+          +{community}
+        </span>
+      )}
+    </Link>
   );
 }
