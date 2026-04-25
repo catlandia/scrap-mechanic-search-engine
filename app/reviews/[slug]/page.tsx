@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getReviewBySlug, steamHeaderUrl } from "@/lib/reviews/actions";
+import { getReviewBySlug } from "@/lib/reviews/actions";
+import { steamHeaderUrl } from "@/lib/reviews/steam-header";
 import { Markdown } from "@/components/Markdown";
 import { ScoreBadge } from "../page";
 

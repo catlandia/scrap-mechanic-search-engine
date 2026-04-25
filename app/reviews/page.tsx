@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import {
   getPublishedReviews,
-  steamHeaderUrl,
   type GameReviewRow,
 } from "@/lib/reviews/actions";
+import { steamHeaderUrl } from "@/lib/reviews/steam-header";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
