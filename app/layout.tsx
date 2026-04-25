@@ -106,7 +106,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     { kind: "link", href: "/suggestions", label: t("nav.ideas") },
     { kind: "link", href: "/minigames", label: t("nav.minigames") },
     { kind: "link", href: "/changelog", label: t("nav.whatsNew") },
-    { kind: "link", href: "/reviews", label: t("nav.reviews") },
     { kind: "link", href: "/submit", label: t("nav.submit") },
   ];
   // Unread changelog entries drive the "What's new" top-bar badge. Bounded
@@ -135,6 +134,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     { href: "/about", label: t("nav.about") },
     { href: "/guide", label: t("nav.guide") },
     { href: "/support", label: t("nav.support") },
+    { href: "/reviews", label: t("nav.reviews") },
     { href: "/settings", label: t("nav.settings") },
     ...(user ? [{ href: "/me/favourites", label: t("nav.favourites") }] : []),
     ...(user ? [{ href: "/me/notifications", label: t("nav.notifications") }] : []),
@@ -339,6 +339,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             </Link>
             <Link href="/support" className="hover:text-foreground">
               Support
+            </Link>
+            <Link href="/reviews" className="hover:text-foreground">
+              Reviews
             </Link>
             <Link href="/settings" className="hover:text-foreground">
               Settings
