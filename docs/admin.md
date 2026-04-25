@@ -24,6 +24,7 @@ The admin backend is gated at `/admin/*` by the middleware, requiring a Steam lo
 | `/admin/suggestions` | Creator | Feature suggestion board management |
 | `/admin/guide` | Mod+ | In-app moderator handbook. Sections are tier-gated — a regular mod only sees moderator-tier content, an elite sees mod+elite, the creator sees everything. |
 | `/admin/abuse` | Creator | Throwaway-command sandbox (V9.10+). First entry: **Fake reboot** — inserts an `is_prank=true` row into `deploy_announcements` so every **Fun-Mode-enabled** visitor sees the 60s countdown + SFX, then at zero the banner swaps to "just kidding :^)" and self-hides 10s later. Fun-Mode-off visitors see nothing for prank rows. No build, no reload. Not audited. Creator-only on purpose: this is the Creator's personal prank surface and mods shouldn't be able to fire it. |
+| `/admin/reviews` | Creator | Game-reviews editor (V9.20+). Create / edit / publish / unpublish / soft-delete / restore. Drafts stay private; published rows appear on `/reviews`. Modeled on `/admin/changelog`. Server actions in `lib/reviews/actions.ts` all gate via `requireCreator()`. |
 
 ---
 

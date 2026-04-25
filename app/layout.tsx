@@ -106,6 +106,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     { kind: "link", href: "/suggestions", label: t("nav.ideas") },
     { kind: "link", href: "/minigames", label: t("nav.minigames") },
     { kind: "link", href: "/changelog", label: t("nav.whatsNew") },
+    { kind: "link", href: "/reviews", label: t("nav.reviews") },
     { kind: "link", href: "/submit", label: t("nav.submit") },
   ];
   // Unread changelog entries drive the "What's new" top-bar badge. Bounded

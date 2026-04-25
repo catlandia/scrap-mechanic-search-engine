@@ -443,6 +443,32 @@ Votes on feature suggestions.
 
 ---
 
+### `gameReviews` (V9.20+)
+
+Creator-authored sandbox-game reviews surfaced at `/reviews`. Modeled on `changelog_entries`: drafts (publishedAt null) are Creator-only, soft-delete preserves history.
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | serial PK | |
+| `slug` | text UNIQUE | URL slug. Auto-derived from title on insert/update; conflicts get `-2`, `-3`, … suffixes via `ensureUniqueSlug`. |
+| `title` | text NOT NULL | Game name. Capped at 140 chars. |
+| `steamAppId` | int NULL | Optional. When set, drives the Steam store link and a default header image via `steamHeaderUrl()` (Steam's CDN, no API call). |
+| `thumbnailUrl` | text NULL | Optional explicit override. Falls back to the Steam header derived from `steamAppId`. |
+| `score` | int NULL | 0–100, displays as `X.Y/10`. CHECK constraint `score IS NULL OR (score BETWEEN 0 AND 100)`. |
+| `body` | text NOT NULL default `''` | Markdown — rendered via `components/Markdown.tsx` (`react-markdown` + `remark-gfm`, no raw HTML, links open in new tab). Capped at 20000 chars. |
+| `pros` | jsonb<string[]> NOT NULL default `[]` | One bullet per line in admin form. Capped at 12 entries × 200 chars each. |
+| `cons` | jsonb<string[]> NOT NULL default `[]` | Same shape as `pros`. |
+| `authorUserId` | text → users.steamid (set null) | Stamped to the Creator on insert. Set-null on user delete keeps history. |
+| `publishedAt` | timestamptz NULL | Null = draft (Creator-only). Setting it flips the entry public on `/reviews`. |
+| `createdAt` / `updatedAt` | timestamptz NOT NULL default `now()` | |
+| `deletedAt` | timestamptz NULL | Soft delete. Public reader filters `deletedAt IS NULL`; admin sees everything. |
+
+**Indexes:** `published_at`, `slug`.
+
+Mutations and queries live in `lib/reviews/actions.ts` (server actions). Public-readable: `getPublishedReviews`, `getReviewBySlug`. Creator-only: `getAllReviewsForAdmin`, `createGameReview`, `updateGameReview`, `publishGameReview`, `unpublishGameReview`, `softDeleteGameReview`, `restoreGameReview`. Every mutation calls `requireCreator()` so a downgraded mod can't fabricate reviews even if they reach the server action directly.
+
+---
+
 ## Key Design Decisions
 
 **No transactions (neon-http driver).** Admin actions write sequentially. Small windows of partial state are accepted on failure. Never group writes in a way that requires atomicity.

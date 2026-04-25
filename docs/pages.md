@@ -39,6 +39,8 @@ All public pages are in `app/` using Next.js 15 App Router. Server Components by
 | `/privacy` | `app/privacy/page.tsx` | Privacy policy |
 | `/about` | `app/about/page.tsx` | Curation criteria — explains thresholds + admin review + community submission path |
 | `/support` | `app/support/page.tsx` | How visitors can help the site (share, submit, vote/tag, report, suggest, flag bugs). Notes that monetary support is welcome in principle but there is no donation channel wired up yet — a link will be added here once one exists. |
+| `/reviews` | `app/reviews/page.tsx` | V9.20+. Creator-authored sandbox-game reviews. Newest-first card grid; each card shows thumbnail, title, score badge (`X.Y/10`), date, snippet. Reads `getPublishedReviews()` (`deletedAt IS NULL AND publishedAt IS NOT NULL`). |
+| `/reviews/[slug]` | `app/reviews/[slug]/page.tsx` | V9.20+. Detail page — hero (thumbnail + title + score + Steam store link + date + author), pros/cons split panel (skipped if both empty), markdown body via `components/Markdown.tsx`. 404s on missing/draft/deleted slug. |
 | `/verify/appeal` | `app/verify/appeal/page.tsx` | Age-gate appeal form. Sign-in gated but NOT age-gated — private-profile users need it. Broadcasts `mod_age_gate_appeal` to moderator tier with the user's steamid + message. Rate-limited to 1 per 24 h. Noindex. |
 
 **Indexing:** `/me/*`, `/verify`, `/auth/*`, `/profile/[steamid]`, `/suggestions/new`, and `/submit` are all `noindex`. `robots.ts` disallows the same set plus `/admin/` and `/api/`.

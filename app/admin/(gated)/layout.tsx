@@ -24,6 +24,7 @@ const creatorNav = [
   { href: "/admin/audit", label: "Audit" },
   { href: "/admin/suggestions", label: "Suggestions" },
   { href: "/admin/changelog", label: "Changelog" },
+  { href: "/admin/reviews", label: "Reviews" },
   { href: "/admin/users", label: "Users" },
   { href: "/admin/badges", label: "Badges" },
   { href: "/admin/abuse", label: "Admin Abuse" },

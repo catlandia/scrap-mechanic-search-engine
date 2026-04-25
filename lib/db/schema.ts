@@ -795,6 +795,45 @@ export type NewChangelogEntry = typeof changelogEntries.$inferInsert;
 export type ChangelogRead = typeof changelogReads.$inferSelect;
 export type DeployAnnouncement = typeof deployAnnouncements.$inferSelect;
 
+// ---------------- Game reviews ----------------
+// Creator-authored sandbox-game reviews living at /reviews. Modeled on the
+// changelog table: drafts (publishedAt null) are creator-only, soft-delete
+// preserves history. score is stored 0–100 and rendered as X.Y/10. pros
+// and cons are short bullet lists rendered alongside the markdown body.
+export const gameReviews = pgTable(
+  "game_reviews",
+  {
+    id: serial("id").primaryKey(),
+    slug: text("slug").notNull().unique(),
+    title: text("title").notNull(),
+    steamAppId: integer("steam_app_id"),
+    thumbnailUrl: text("thumbnail_url"),
+    score: integer("score"),
+    body: text("body").notNull().default(""),
+    pros: jsonb("pros").$type<string[]>().notNull().default([]),
+    cons: jsonb("cons").$type<string[]>().notNull().default([]),
+    authorUserId: text("author_user_id").references(() => users.steamid, {
+      onDelete: "set null",
+    }),
+    publishedAt: timestamp("published_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
+  },
+  (t) => [
+    index("game_reviews_published_at_idx").on(t.publishedAt),
+    index("game_reviews_slug_idx").on(t.slug),
+    check("game_reviews_score_range", sql`${t.score} IS NULL OR (${t.score} >= 0 AND ${t.score} <= 100)`),
+  ],
+);
+
+export type GameReview = typeof gameReviews.$inferSelect;
+export type NewGameReview = typeof gameReviews.$inferInsert;
+
 export type Comment = typeof comments.$inferSelect;
 export type NewComment = typeof comments.$inferInsert;
 export type FeatureSuggestion = typeof featureSuggestions.$inferSelect;
