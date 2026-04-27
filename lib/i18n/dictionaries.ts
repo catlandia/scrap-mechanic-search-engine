@@ -5,10 +5,7 @@ import type { Locale } from "@/lib/prefs";
 //
 // Quality note: these translations are a first-pass AI-assisted seed. They're
 // good enough for short UI labels but native speakers should polish them —
-// especially RU/DE/PL tone and longer copy. Long-form legal / moderation
-// content (terms, privacy, guide, admin) is deliberately NOT translated here
-// and remains English: machine-translating legal/moderation copy risks real
-// harm.
+// especially the longer prose. /guide and /admin/* are still English-only.
 export type Dictionary = Record<string, string>;
 
 const en: Dictionary = {
@@ -489,6 +486,96 @@ const en: Dictionary = {
   "about.costBody":
     "The whole stack runs on free tiers — Vercel Hobby for hosting, Neon Postgres for the database, Steam's public Web API for the data. No paid services, no ads, no trackers beyond basic server analytics. If you want to help keep it that way, see the /support page.",
   "about.thresholdsDays": "{n} days",
+
+  "terms.metadataTitle": "Terms",
+  "terms.metadataDescription":
+    "Rules for using the site and posting content.",
+  "terms.heading": "Terms of use",
+  "terms.lastUpdated": "Last updated April 2026.",
+  "terms.h2What": "What this site is",
+  "terms.pWhat":
+    "Scrap Mechanic Search Engine is a free, community-run directory that links to Steam Workshop creations for the game Scrap Mechanic. We are not affiliated with Axolot Games or Valve. Workshop items themselves are hosted on Steam; we only store metadata (title, description, tags, thumbnail URL) and link back.",
+  "terms.h2Account": "Account",
+  "terms.pAccount1":
+    "Signing in uses Steam OpenID — we never see your Steam password. By signing in you agree to these terms and to our ",
+  "terms.pAccountLink": "privacy policy",
+  "terms.pAccount2":
+    ". You are responsible for keeping your Steam account secure.",
+  "terms.h2Rules": "Community rules",
+  "terms.pRulesIntro":
+    "When posting comments, tags, suggestions, or submissions:",
+  "terms.liRulesDecent": "Be decent. No harassment, slurs, or threats.",
+  "terms.liRulesSpam": "No spam, ads, or off-topic content.",
+  "terms.liRulesAppid":
+    "Only submit Workshop items for Scrap Mechanic (appid 387990). Submissions for other games are rejected automatically.",
+  "terms.liRulesPii": "Don't post someone else's personal information.",
+  "terms.liRulesExploit":
+    "Don't try to break, brute-force, or exploit the site.",
+  "terms.pRulesMods":
+    "Moderators can hide content, warn, mute, or ban accounts that break these rules. Severe or repeated abuse may result in a permanent ban.",
+  "terms.h2Content": "Your content",
+  "terms.pContent":
+    "Comments and suggestions you post stay credited to your persona name and may be kept in threaded form even after you leave, so ongoing discussions still make sense. You retain ownership of anything you write; by posting it you grant the site a non-exclusive right to display it to other users.",
+  "terms.h2Takedowns": "Workshop content and takedowns",
+  "terms.pTakedowns1":
+    "The actual files and images for each Workshop item are hosted by Steam. If your Workshop item is listed here and you want it removed (e.g., you unpublished it on Steam), open an issue on the project's ",
+  "terms.pTakedownsLink": "GitHub repository",
+  "terms.pTakedowns2":
+    " or contact a moderator and we'll take it down.",
+  "terms.h2Warranty": "No warranty",
+  "terms.pWarranty":
+    "The site is provided as-is. Features can change or disappear, the site can go down, data can be wrong. Don't rely on it for anything important.",
+  "terms.h2Changes": "Changes",
+  "terms.pChanges":
+    "We may update these terms. Material changes will be noted in the release notes. Continued use after a change means you accept the updated version.",
+
+  "privacy.metadataTitle": "Privacy",
+  "privacy.metadataDescription":
+    "What we collect, why, and how long we keep it.",
+  "privacy.h1": "Privacy",
+  "privacy.lastUpdated": "Last updated April 2026.",
+  "privacy.h2Short": "The short version",
+  "privacy.pShort":
+    "This is a community-run, non-commercial directory of Scrap Mechanic Workshop creations. We don't sell data, we don't run ads, we don't have an analytics tracker following you around. If you never sign in, we never see who you are.",
+  "privacy.h2Store": "What we store",
+  "privacy.pStoreIntro": "If you sign in with Steam, we save:",
+  "privacy.liStoreId": "Your public SteamID, persona name, and avatar URL.",
+  "privacy.liStoreAge":
+    "Your Steam account age and Scrap Mechanic playtime — these come from Steam and are used to filter brand-new throwaway accounts.",
+  "privacy.liStoreActivity":
+    "The times you signed in, commented, voted, favourited, or submitted an item — so moderators can keep the site readable.",
+  "privacy.pStoreNot":
+    "We <strong>do not</strong> collect your email, password, phone number, real name, IP address, or browsing history.",
+  "privacy.h2Cookies": "Cookies",
+  "privacy.liCookieSession":
+    "<code>smse_session</code> — signed-in session, expires after a week of inactivity.",
+  "privacy.liCookieCaptcha":
+    "<code>smse_captcha</code> — short-lived (30 min) state for the anti-bot challenge.",
+  "privacy.liCookieBotVerified":
+    "<code>bot_verified</code> — set after you pass the challenge, lasts 30 days.",
+  "privacy.liCookieRatingMode":
+    "<code>smse_rating_mode</code> — remembers whether you prefer Steam ratings, site ratings, or both.",
+  "privacy.liCookieTheme":
+    "<code>smse_theme</code> — remembers your chosen colour theme.",
+  "privacy.pCookieFooter":
+    "All cookies are first-party, signed / HTTP-only where it matters. No advertising trackers.",
+  "privacy.h2Where": "Where the data lives",
+  "privacy.liWhereDb": "Database: Neon (serverless Postgres, free tier).",
+  "privacy.liWhereHost": "Hosting: Vercel.",
+  "privacy.liWhereSteam": "Workshop metadata & thumbnails: Steam (hotlinked).",
+  "privacy.pWhereLogs":
+    "Vercel and Neon may keep ephemeral operational logs. We don't put personal data in log messages beyond what's needed to fix bugs.",
+  "privacy.h2Controls": "Your controls",
+  "privacy.liControlsStop":
+    "Stop using the site any time — logged-out visitors leave no identifying data.",
+  "privacy.liControlsDeletePre":
+    "Ask for deletion of your account data by opening an issue on the project's ",
+  "privacy.liControlsDeleteLink": "GitHub",
+  "privacy.liControlsDeletePost":
+    ". Content you posted (comments, suggestions) may be anonymised rather than deleted to keep discussion threads readable.",
+  "privacy.h2Changes": "Changes",
+  "privacy.pChanges":
+    "If this policy meaningfully changes, the update will be announced in the site's release notes. This page will always show the latest version.",
 
   // Locale picker
   "locale.picker.label": "Language",
