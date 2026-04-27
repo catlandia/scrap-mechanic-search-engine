@@ -11,7 +11,6 @@ import {
 import { stripBBCode } from "@/lib/steam/bbcode";
 import {
   detectKind,
-  fetchWorkshopContributors,
   pickFullDescription,
   QUERY_TYPE,
   queryFiles,
@@ -146,28 +145,6 @@ function buildRow(
     steamTags: tagNames,
     kind,
   };
-}
-
-/**
- * Run `fn` across `items` with at most `limit` concurrent in-flight promises.
- * Used to scrape Steam HTML pages for contributors without flooding their CDN.
- */
-async function parallelLimit<T, R>(
-  items: T[],
-  limit: number,
-  fn: (item: T) => Promise<R>,
-): Promise<R[]> {
-  const results: R[] = new Array(items.length);
-  let next = 0;
-  async function worker() {
-    while (true) {
-      const i = next++;
-      if (i >= items.length) return;
-      results[i] = await fn(items[i]);
-    }
-  }
-  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, () => worker()));
-  return results;
 }
 
 export async function runIngest(options: IngestOptions = {}): Promise<IngestResult> {
@@ -376,30 +353,15 @@ export async function runIngest(options: IngestOptions = {}): Promise<IngestResu
   }
 
   if (toInsert.length > 0) {
-    // Scrape multi-creator attribution from the rendered Workshop page —
-    // Steam's API only exposes the primary creator. Cap concurrency so we
-    // don't hammer steamcommunity.com; best-effort per item.
-    const contributorsByItem = await parallelLimit(
-      toInsert,
-      3,
-      async (c) => {
-        try {
-          const result = await fetchWorkshopContributors(
-            apiKey,
-            c.item.publishedfileid,
-          );
-          return result.ok ? result.contributors : [];
-        } catch {
-          return [];
-        }
-      },
-    );
-    const rows = toInsert.map((c, i) =>
-      buildRow(
-        c,
-        (c.item.creator && nameMap.get(c.item.creator)) ?? null,
-        contributorsByItem[i] ?? [],
-      ),
+    // No inline `fetchWorkshopContributors` here. Steam 429s push it to
+    // 30-60 s per row, and manual runs can produce hundreds of inserts —
+    // the per-row scrape blew the 300 s function budget and the final
+    // `ingest_runs` UPDATE never landed. New rows go in with `creators=[]`
+    // + `creators_refreshed_at=null`, which floats them to the front of
+    // `refreshStaleCreators` (daily 200 + weekly 500) so attribution
+    // lands within a day.
+    const rows = toInsert.map((c) =>
+      buildRow(c, (c.item.creator && nameMap.get(c.item.creator)) ?? null),
     );
     try {
       await db.insert(creations).values(rows);
