@@ -175,36 +175,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             }}
           />
         )}
-        {/* Preload the SFX/video assets for the feature tiers that are
-            actually on. Normies with Fun Mode off fetch none of this —
-            no wasted bandwidth. Fun-Mode-on visitors pay for the two
-            deploy banner clips even outside a deploy window so the first
-            click of the SFX (or the moment the banner first ticks) plays
-            out of cache rather than racing an uncached fetch. Extreme on
-            adds the three click/nuke assets on top. Order matters only
-            to the extent that the deploy sounds are more time-sensitive
-            than the click effects — list them first. */}
-        {funMode && (
-          <>
-            <link
-              rel="preload"
-              as="audio"
-              href="/sfx/deploy-countdown.mp3"
-            />
-            <link
-              rel="preload"
-              as="audio"
-              href="/sfx/deploy-live.mp3"
-            />
-          </>
-        )}
-        {funMode && funModeExtreme && (
-          <>
-            <link rel="preload" as="image" href="/fun/hitmarker.png" />
-            <link rel="preload" as="audio" href="/fun/hitmarker.mp3" />
-            <link rel="preload" as="video" href="/fun/nuke.mp4" />
-          </>
-        )}
       </head>
       <body className="min-h-screen bg-background text-foreground antialiased">
         <LocaleProvider locale={locale} dict={dict}>

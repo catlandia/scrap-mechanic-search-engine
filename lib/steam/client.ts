@@ -50,7 +50,11 @@ const PublishedFileSchema = z
     creator: z.string().optional(),
     filename: z.string().optional(),
     file_size: z.union([z.string(), z.number()]).optional(),
-    preview_url: z.string().url().optional(),
+    // Steam occasionally returns an empty string or non-URL value here
+    // (seen on a few challenge items). The strict `.url()` check would
+    // throw and lose every later item on that page — accept any string
+    // and let the renderer naturally drop a broken `<img src>`.
+    preview_url: z.string().optional(),
     title: z.string().optional().default(""),
     // Steam inconsistency: IPublishedFileService returns the long body in
     // `file_description` (if `return_short_description=false`) and the trimmed
