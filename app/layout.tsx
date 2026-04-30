@@ -6,6 +6,7 @@ import { MobileNav } from "@/components/MobileNav";
 import { NavDropdown } from "@/components/NavDropdown";
 import { BetaBanner } from "@/components/BetaBanner";
 import { DeployBanner } from "@/components/DeployBanner";
+import { CompareBasket } from "@/components/CompareBasket";
 import { ExtremeFunEffects } from "@/components/ExtremeFunEffects";
 import { GuideLink } from "@/components/GuideLink";
 import { ToastProvider } from "@/components/Toast";
@@ -181,6 +182,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <ToastProvider>
         <DeployBanner funMode={funMode} />
         <ExtremeFunEffects enabled={funMode && funModeExtreme} />
+        <CompareBasket />
         <BetaBanner />
         <header className="sticky top-0 z-30 border-b border-foreground/10 bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70">
           <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3 sm:flex-nowrap sm:gap-x-6">
