@@ -5,12 +5,16 @@
 // injects a small badge under the title:
 //   ✓ On SMSE — open  (links to the creation page)
 //   + Not on SMSE — submit (links to /submit?steam=…)
-// Cross-origin fetch is permitted by the manifest's host_permissions.
+//
+// The actual fetch lives in background.js — Firefox MV3 enforces the
+// page's CSP on content-script fetches, and Steam's CSP only whitelists
+// Steam domains, so we have to do the network call from the background
+// context where the page CSP doesn't apply.
 
 (() => {
   "use strict";
 
-  const SITE = "https://scrap-mechanic-search-engine.vercel.app";
+  const api = typeof browser !== "undefined" ? browser : chrome;
   const SM_APPIDS = ["387990", "588870"];
 
   function getPublishedFileId() {
@@ -76,13 +80,16 @@
     anchor.insertAdjacentElement("afterend", loading);
 
     try {
-      const res = await fetch(
-        `${SITE}/api/extension/lookup?steamId=${encodeURIComponent(id)}`,
-        { credentials: "omit", cache: "no-store" },
-      );
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      if (!data.ok) throw new Error("lookup error");
+      // Both Firefox and Chrome 100+ return a promise from sendMessage.
+      const response = await api.runtime.sendMessage({
+        type: "smse-lookup",
+        steamId: id,
+      });
+      if (!response || !response.ok) {
+        throw new Error(response?.error || "lookup failed");
+      }
+      const data = response.data;
+      if (!data || !data.ok) throw new Error("lookup error");
 
       let next;
       if (data.exists) {
