@@ -48,7 +48,12 @@ export async function GET(req: Request) {
   const site =
     process.env.NEXT_PUBLIC_SITE_URL ?? "https://scrap-mechanic-search-engine.vercel.app";
 
-  if (!row) {
+  // "Exists" only counts when the row is publicly visible — i.e. status
+  // = 'approved'. Pending submissions, rejected items, and soft-deleted
+  // rows must report as not-on-site so the badge doesn't link to a 404
+  // (rejected/deleted hide on /creation/[id] for non-mods) or mislead
+  // visitors into thinking a queued item is browseable.
+  if (!row || row.status !== "approved") {
     return Response.json(
       {
         ok: true,
@@ -77,9 +82,12 @@ export async function GET(req: Request) {
       submitUrl: `${site}/submit?steam=${steamId}`,
     },
     {
+      // Approved hits cache for 60s rather than the previous 5 min, so
+      // a creator-rejection or soft-delete clears from the badge in
+      // under a minute instead of taking up to five.
       headers: {
         ...CORS_HEADERS,
-        "Cache-Control": "public, max-age=300, s-maxage=300",
+        "Cache-Control": "public, max-age=60, s-maxage=60",
       },
     },
   );
