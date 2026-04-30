@@ -29,9 +29,25 @@ function ageGateReason(
   return ageDays < MIN_STEAM_AGE_DAYS ? "too_young" : "ok";
 }
 
-export default async function SubmitPage() {
+type SearchParams = Promise<{ steam?: string }>;
+
+export default async function SubmitPage({
+  searchParams,
+}: {
+  searchParams?: SearchParams;
+}) {
   const user = await getCurrentUser();
   const { t } = await getT();
+  const sp = searchParams ? await searchParams : undefined;
+  // Prefill the URL field when the visitor came in from the browser
+  // extension (or any external link with `?steam=…`). Accept either a raw
+  // publishedfileid or a full Steam URL — `submitCreation` parses both.
+  const rawSteam = sp?.steam?.trim() ?? "";
+  const prefill = /^\d{1,25}$/.test(rawSteam)
+    ? `https://steamcommunity.com/sharedfiles/filedetails/?id=${rawSteam}`
+    : rawSteam.startsWith("http")
+      ? rawSteam
+      : "";
   const gateReason = user ? ageGateReason(user) : "ok";
   const ageThrough =
     user?.steamCreatedAt
@@ -107,7 +123,7 @@ export default async function SubmitPage() {
           )}
         </div>
       ) : (
-        <SubmitCreationForm />
+        <SubmitCreationForm prefill={prefill} />
       )}
 
       <div className="rounded-md border border-border bg-card/40 p-4 text-xs text-foreground/60">

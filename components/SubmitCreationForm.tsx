@@ -8,11 +8,11 @@ import { Spinner } from "@/components/Spinner";
 import { useToast } from "@/components/Toast";
 import { useT } from "@/lib/i18n/client";
 
-export function SubmitCreationForm() {
+export function SubmitCreationForm({ prefill = "" }: { prefill?: string }) {
   const router = useRouter();
   const toast = useToast();
   const { t } = useT();
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState(prefill);
   const [result, setResult] = useState<SubmitResult | null>(null);
   const [isPending, startTransition] = useTransition();
 

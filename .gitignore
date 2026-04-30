@@ -45,3 +45,8 @@ Thumbs.db
 # worktrees shouldn't pollute git status or linting.
 .claude/scheduled_tasks.lock
 .claude/worktrees/
+
+# Built extension package — regenerated on demand from the extension/
+# source folder. Distributed via GitHub Releases / AMO / Chrome Web Store
+# rather than committed to history.
+/smse-extension.zip

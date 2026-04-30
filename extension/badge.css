@@ -1,0 +1,65 @@
+/* SMSE workshop badge — sits between the Steam item title and the
+   following content. Colours pick up the site's accent green so it reads
+   as "ours" but stays legible against Steam's dark theme. */
+
+.smse-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-family: "Motiva Sans", Arial, sans-serif;
+  font-size: 13px;
+  line-height: 1.3;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.35);
+  color: #d4dbe1;
+  max-width: 100%;
+}
+
+.smse-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  background: #888;
+}
+
+.smse-state-loading .smse-dot {
+  background: #aaa;
+  animation: smse-pulse 1.2s ease-in-out infinite;
+}
+
+.smse-state-exists {
+  border-color: rgba(82, 196, 26, 0.4);
+  background: rgba(82, 196, 26, 0.12);
+  color: #b5e8a0;
+}
+.smse-state-exists .smse-dot {
+  background: #52c41a;
+}
+
+.smse-state-missing {
+  border-color: rgba(245, 158, 11, 0.4);
+  background: rgba(245, 158, 11, 0.1);
+  color: #ffd591;
+}
+.smse-state-missing .smse-dot {
+  background: #f59e0b;
+}
+
+.smse-link {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.smse-link:hover {
+  text-decoration: none;
+}
+
+@keyframes smse-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
