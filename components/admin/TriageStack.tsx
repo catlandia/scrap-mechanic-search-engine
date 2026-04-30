@@ -284,7 +284,9 @@ export function TriageStack({
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    // pb-24 reserves space at the bottom of the page so the fixed action
+    // footer doesn't sit on top of the description's last paragraph.
+    <div className="flex flex-col gap-4 pb-24">
       <KindFilterBar activeKind={activeKind} kindCounts={kindCounts} />
       <header className="flex flex-wrap items-baseline justify-between gap-2">
         <div>
@@ -350,7 +352,12 @@ export function TriageStack({
         )}
       </div>
 
-      <footer className="sticky bottom-4 mt-5 flex items-center justify-center gap-4">
+      {/* Floating action bar — fixed to the viewport so the buttons stay
+          in the same spot no matter how long the description scrolls.
+          `sticky bottom-*` was unreliable inside this flex column: on tall
+          items the footer's natural position drifted off-screen and the
+          buttons disappeared until the moderator scrolled back up. */}
+      <footer className="fixed bottom-4 left-1/2 z-30 flex -translate-x-1/2 items-center justify-center gap-3 rounded-full border border-border bg-card/95 px-3 py-2 shadow-2xl backdrop-blur supports-[backdrop-filter]:bg-card/80">
         <ActionButton
           label="Reject"
           shortcut="←"
