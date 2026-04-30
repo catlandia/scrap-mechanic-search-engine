@@ -997,11 +997,11 @@ export async function removeCreationTag(formData: FormData) {
  * blocklist forever unless the creator manually flips it back.
  */
 export async function setCreationKind(formData: FormData) {
-  // Creator-only: after the V8.17 fallback-to-"mod" change, auto-ingest and
-  // /submit still occasionally misclassify an item (e.g. a blueprint tagged
-  // only as "Mod" on Steam). Rather than force the creator into the
-  // full admin-add dance, this lets them fix a single creation's kind
-  // inline from its own page.
+  // Creator-only: auto-ingest and /submit still occasionally misclassify an
+  // item (e.g. a creation tagged only with `Blocks and Parts` lands as a
+  // mod even when it's really a vehicle blueprint). Rather than force the
+  // creator into the full admin-add dance, this lets them fix a single
+  // creation's kind inline from its own page.
   const user = await requireCreator();
   const id = String(formData.get("creationId") ?? "");
   const kind = parseKind(formData.get("kind"));

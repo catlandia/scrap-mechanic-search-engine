@@ -12,9 +12,16 @@ export const SCRAP_MECHANIC_APPID = 387990;
 export const SCRAP_MECHANIC_APPIDS: readonly number[] = [387990, 588870];
 const STEAM_BASE = "https://api.steampowered.com";
 
+// The Scrap Mechanic Workshop has a "Mods" parent section but no literal
+// `Mod` tag — items in that section carry sub-tags like `Blocks and Parts`.
+// `Custom Game` is technically a Mods sub-section too, but it gets its own
+// kind here because it has its own canonical tag and dedicated browse page.
+// Querying `requiredtags=Mod` returns zero items, which is why the cron
+// produced 0 mods for the project's first six months (every indexed mod
+// arrived through user submissions via the fallback in `detectKind`).
 export const STEAM_KIND_TAGS = {
   blueprint: "Blueprint",
-  mod: "Mod",
+  mod: "Blocks and Parts",
   world: "World",
   challenge: "Challenge Pack",
   tile: "Tile",
