@@ -367,21 +367,21 @@ export function TriageStack({
           label="Reject"
           shortcut="←"
           variant="reject"
-          disabled={isPending}
+          disabled={false}
           onClick={() => act("reject")}
         />
         <ActionButton
           label="Skip"
           shortcut="Space"
           variant="skip"
-          disabled={isPending}
+          disabled={false}
           onClick={() => act("skip")}
         />
         <ActionButton
           label="Approve"
           shortcut="→"
           variant="approve"
-          disabled={isPending}
+          disabled={false}
           onClick={() => act("approve")}
         />
       </footer>
