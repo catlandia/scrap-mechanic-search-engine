@@ -4,5 +4,5 @@ export function steamHeaderUrl(
   steamAppId: number | null | undefined,
 ): string | null {
   if (!steamAppId || !Number.isFinite(steamAppId)) return null;
-  return `https://shared.cdn.steamstatic.com/store_item_assets/steam/apps/${steamAppId}/header.jpg`;
+  return `https://cdn.cloudflare.steamstatic.com/steam/apps/${steamAppId}/header.jpg`;
 }
