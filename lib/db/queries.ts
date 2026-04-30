@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, sql, type SQL } from "drizzle-orm";
+import { and, desc, eq, inArray, notInArray, sql, type SQL } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { getDb } from "./client";
 import {
@@ -575,6 +575,153 @@ export async function getTopCreators(
     signedIn: !!r.signed_in,
     count: r.count,
   }));
+}
+
+// "For you" feed. Scores candidate creations by how many of the viewer's
+// liked tags they carry, breaks ties on site upvote score and Steam subs,
+// and excludes anything the viewer has already favorited / voted on / viewed
+// / commented on. Signed-out viewers and viewers without enough positive
+// signal fall through to a plain trending feed so the slot still gives value.
+export async function getForYouFeed(
+  viewerSteamid: string | null,
+  limit = 12,
+): Promise<CreationCardRow[]> {
+  if (!viewerSteamid) return getTrendingFeed(limit);
+
+  const db = getDb();
+
+  // Liked tags = directly upvoted tags + tags carried by creations the viewer
+  // favorited or upvoted. Combining both pulls in implicit signal even when
+  // the viewer hasn't explicitly voted on tags yet.
+  const directLikedTags = await db
+    .select({ tagId: tagVotes.tagId })
+    .from(tagVotes)
+    .where(and(eq(tagVotes.userId, viewerSteamid), eq(tagVotes.value, 1)));
+
+  const favoritedIds = (
+    await db
+      .select({ id: favorites.creationId })
+      .from(favorites)
+      .where(eq(favorites.userId, viewerSteamid))
+  ).map((r) => r.id);
+  const upvotedIds = (
+    await db
+      .select({ id: creationVotes.creationId })
+      .from(creationVotes)
+      .where(
+        and(eq(creationVotes.userId, viewerSteamid), eq(creationVotes.value, 1)),
+      )
+  ).map((r) => r.id);
+  const positiveCreationIds = Array.from(
+    new Set([...favoritedIds, ...upvotedIds]),
+  );
+
+  let viaCreationsTags: number[] = [];
+  if (positiveCreationIds.length > 0) {
+    const rows = await db
+      .select({ tagId: creationTags.tagId })
+      .from(creationTags)
+      .where(
+        and(
+          inArray(creationTags.creationId, positiveCreationIds),
+          eq(creationTags.rejected, false),
+        ),
+      );
+    viaCreationsTags = rows.map((r) => r.tagId);
+  }
+
+  const likedTagIds = Array.from(
+    new Set([...directLikedTags.map((r) => r.tagId), ...viaCreationsTags]),
+  );
+
+  // Need at least two liked tags to call this a meaningful "for you" mix.
+  if (likedTagIds.length < 2) return getTrendingFeed(limit);
+
+  // "Seen" set — anything the viewer already engaged with shouldn't appear.
+  const seenRows = [
+    ...favoritedIds,
+    ...(
+      await db
+        .select({ id: creationVotes.creationId })
+        .from(creationVotes)
+        .where(eq(creationVotes.userId, viewerSteamid))
+    ).map((r) => r.id),
+    ...(
+      await db
+        .select({ id: creationViews.creationId })
+        .from(creationViews)
+        .where(eq(creationViews.userId, viewerSteamid))
+    ).map((r) => r.id),
+    ...(
+      await db
+        .select({ id: comments.creationId })
+        .from(comments)
+        .where(
+          and(
+            eq(comments.userId, viewerSteamid),
+            sql`${comments.creationId} IS NOT NULL`,
+          ),
+        )
+    )
+      .map((r) => r.id)
+      .filter((x): x is string => x != null),
+  ];
+  const seen = Array.from(new Set(seenRows));
+
+  const conditions: SQL[] = [
+    eq(creations.status, "approved"),
+    eq(creationTags.rejected, false),
+    inArray(creationTags.tagId, likedTagIds),
+  ];
+  if (seen.length > 0) conditions.push(notInArray(creations.id, seen));
+
+  const matchedRows = await db
+    .select({ ...cardColumns, overlap: sql<number>`count(*)::int` })
+    .from(creationTags)
+    .innerJoin(creations, eq(creations.id, creationTags.creationId))
+    .where(and(...conditions))
+    .groupBy(creations.id)
+    .orderBy(
+      sql`count(*) DESC`,
+      sql`(${creations.siteWeightedUp} - ${creations.siteWeightedDown}) DESC`,
+      desc(creations.subscriptions),
+    )
+    .limit(limit);
+
+  const matched: CreationCardRow[] = matchedRows.map((row) => {
+    const { overlap, ...rest } = row;
+    void overlap;
+    return rest as CreationCardRow;
+  });
+  if (matched.length >= limit) return matched;
+
+  // Top up with trending so the row is always full.
+  const have = new Set(matched.map((m) => m.id));
+  for (const id of seen) have.add(id);
+  const fill = await getTrendingFeed(limit * 2);
+  for (const t of fill) {
+    if (have.has(t.id)) continue;
+    matched.push(t);
+    if (matched.length >= limit) break;
+  }
+  return matched;
+}
+
+// Quality-ordered list used as the signed-out / cold-start "For you"
+// fallback. Sorted by site upvote net first (so curated signal beats raw
+// Steam popularity when the site has any signal at all), then Steam subs.
+// Tile/world thinning still applies so they don't dominate the row.
+export async function getTrendingFeed(limit: number): Promise<CreationCardRow[]> {
+  const db = getDb();
+  return db
+    .select(cardColumns)
+    .from(creations)
+    .where(and(eq(creations.status, "approved"), HIGH_VOLUME_THIN_CONDITION))
+    .orderBy(
+      sql`(${creations.siteWeightedUp} - ${creations.siteWeightedDown}) DESC`,
+      desc(creations.subscriptions),
+    )
+    .limit(limit);
 }
 
 export async function getApprovedKindCounts(): Promise<Record<string, number>> {
@@ -1157,6 +1304,101 @@ export function getProfileComments(
     viewerSteamid,
     limit,
   );
+}
+
+export interface AuthoredCommentRow {
+  id: number;
+  body: string;
+  createdAt: Date;
+  editedAt: Date | null;
+  deletedAt: Date | null;
+  votesUp: number;
+  votesDown: number;
+  // Exactly one of these target shapes is set per row.
+  creationTarget: {
+    id: string;
+    shortId: number | null;
+    title: string;
+    kind: string;
+  } | null;
+  profileTarget: {
+    steamid: string;
+    personaName: string;
+  } | null;
+}
+
+// Comments authored by `authorSteamid`, newest-first, with enough info on
+// each row to render a link back to the source (creation page or profile
+// wall). Soft-deleted rows are omitted unless the viewer is a moderator.
+export async function getCommentsByAuthor(
+  authorSteamid: string,
+  viewerIsMod: boolean,
+  limit = 25,
+): Promise<AuthoredCommentRow[]> {
+  const db = getDb();
+  const profileUser = alias(users, "profile_user");
+  const conditions: SQL[] = [eq(comments.userId, authorSteamid)];
+  if (!viewerIsMod) {
+    conditions.push(sql`${comments.deletedAt} IS NULL`);
+  }
+  const rows = await db
+    .select({
+      id: comments.id,
+      body: comments.body,
+      createdAt: comments.createdAt,
+      editedAt: comments.editedAt,
+      deletedAt: comments.deletedAt,
+      votesUp: comments.votesUp,
+      votesDown: comments.votesDown,
+      creationId: comments.creationId,
+      creationShortId: creations.shortId,
+      creationTitle: creations.title,
+      creationKind: creations.kind,
+      creationStatus: creations.status,
+      profileSteamid: comments.profileSteamid,
+      profilePersona: profileUser.personaName,
+    })
+    .from(comments)
+    .leftJoin(creations, eq(creations.id, comments.creationId))
+    .leftJoin(profileUser, eq(profileUser.steamid, comments.profileSteamid))
+    .where(and(...conditions))
+    .orderBy(desc(comments.createdAt))
+    .limit(limit);
+
+  return rows
+    .filter(
+      // Hide comments that point at non-approved creations (rejected /
+      // pending / archived) so we don't leak moderation state through the
+      // commenter's profile. Profile-wall comments always pass.
+      (r) =>
+        r.creationId == null ||
+        r.creationStatus === "approved" ||
+        viewerIsMod,
+    )
+    .map((r) => ({
+      id: r.id,
+      body: r.body,
+      createdAt: r.createdAt,
+      editedAt: r.editedAt,
+      deletedAt: r.deletedAt,
+      votesUp: r.votesUp,
+      votesDown: r.votesDown,
+      creationTarget:
+        r.creationId && r.creationTitle && r.creationKind
+          ? {
+              id: r.creationId,
+              shortId: r.creationShortId ?? null,
+              title: r.creationTitle,
+              kind: r.creationKind,
+            }
+          : null,
+      profileTarget: r.profileSteamid
+        ? {
+            steamid: r.profileSteamid,
+            personaName: r.profilePersona ?? "(unknown)",
+          }
+        : null,
+    }));
 }
 
 export async function getUserFavourites(

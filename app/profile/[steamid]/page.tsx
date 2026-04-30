@@ -11,6 +11,7 @@ import { ProfileCreations } from "@/components/profile/ProfileCreations";
 import { ProfileFavourites } from "@/components/profile/ProfileFavourites";
 import { SubmittedItems } from "@/components/profile/SubmittedItems";
 import { VoteHistory } from "@/components/profile/VoteHistory";
+import { RecentComments } from "@/components/profile/RecentComments";
 import { ROLE_LABELS, ROLE_STYLES } from "@/lib/auth/roles";
 import { BadgeList } from "@/components/BadgeList";
 import { CommentSection } from "@/components/CommentSection";
@@ -223,6 +224,10 @@ export default async function ProfilePage({ params }: { params: Params }) {
       <VoteHistory
         steamid={user.steamid}
         viewerSteamid={viewer?.steamid ?? null}
+      />
+      <RecentComments
+        steamid={user.steamid}
+        viewerIsMod={isModerator(viewer?.role as UserRole | undefined)}
       />
 
       <CommentSection

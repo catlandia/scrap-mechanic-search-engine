@@ -4,11 +4,13 @@ import { CreationGrid } from "@/components/CreationCard";
 import {
   getApprovedByKind,
   getApprovedKindCounts,
+  getForYouFeed,
   getNewestApproved,
 } from "@/lib/db/queries";
 import { getRatingMode } from "@/lib/prefs.server";
 import { getT } from "@/lib/i18n/server";
 import { JsonLd } from "@/components/JsonLd";
+import { getCurrentUser } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
 
@@ -31,22 +33,26 @@ const FEATURED_KINDS: Array<{
 ];
 
 export default async function HomePage() {
+  const viewer = await getCurrentUser();
   let newest: Awaited<ReturnType<typeof getNewestApproved>> = [];
   let counts: Record<string, number> = {};
   let perKind: Awaited<ReturnType<typeof getApprovedByKind>>[] = [];
+  let forYou: Awaited<ReturnType<typeof getForYouFeed>> = [];
   let dbError: string | null = null;
 
   try {
     const results = await Promise.all([
       getNewestApproved(12),
       getApprovedKindCounts(),
+      getForYouFeed(viewer?.steamid ?? null, 6),
       ...FEATURED_KINDS.map((k) =>
         getApprovedByKind(k.kind, { sort: "popular", limit: 6 }),
       ),
     ]);
     newest = results[0] as typeof newest;
     counts = results[1] as typeof counts;
-    perKind = results.slice(2) as typeof perKind;
+    forYou = results[2] as typeof forYou;
+    perKind = results.slice(3) as typeof perKind;
   } catch (err) {
     dbError = err instanceof Error ? err.message : String(err);
   }
@@ -130,6 +136,24 @@ export default async function HomePage() {
         </section>
       ) : (
         <>
+          {forYou.length > 0 && (
+            <section className="space-y-4">
+              <div className="flex items-baseline justify-between">
+                <h2 className="text-xl font-semibold">
+                  {viewer
+                    ? t("home.forYouHeading")
+                    : t("home.trendingHeading")}
+                </h2>
+                <span className="text-xs text-foreground/50">
+                  {viewer
+                    ? t("home.forYouHint")
+                    : t("home.trendingHint")}
+                </span>
+              </div>
+              <CreationGrid items={forYou} ratingMode={ratingMode} />
+            </section>
+          )}
+
           <section className="space-y-4">
             <div className="flex items-baseline justify-between">
               <h2 className="text-xl font-semibold">{t("home.newestHeading")}</h2>
