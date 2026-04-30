@@ -210,7 +210,8 @@ const en: Dictionary = {
   "me.submissions.empty": "You haven't submitted anything yet.",
   "me.notifications.title": "Your notifications",
   "me.notifications.empty": "No notifications yet.",
-  "me.notifications.markAllRead": "Mark all read",
+  "me.notifications.markAllRead": "Mark all as read ({count})",
+  "me.notifications.allReadEmpty": "All caught up",
 
   // CreationCard badges / labels
   "card.communityBadge": "Community",
@@ -822,7 +823,8 @@ const ru: Dictionary = {
   "me.submissions.empty": "Вы пока ничего не добавили.",
   "me.notifications.title": "Ваши уведомления",
   "me.notifications.empty": "Уведомлений пока нет.",
-  "me.notifications.markAllRead": "Отметить все как прочитанные",
+  "me.notifications.markAllRead": "Прочитать всё ({count})",
+  "me.notifications.allReadEmpty": "Всё прочитано",
 
   "card.communityBadge": "Сообщество",
   "card.unratedLabel": "Без оценки",
@@ -1420,7 +1422,8 @@ const de: Dictionary = {
   "me.submissions.empty": "Du hast noch nichts eingereicht.",
   "me.notifications.title": "Deine Benachrichtigungen",
   "me.notifications.empty": "Noch keine Benachrichtigungen.",
-  "me.notifications.markAllRead": "Alle als gelesen markieren",
+  "me.notifications.markAllRead": "Alle als gelesen markieren ({count})",
+  "me.notifications.allReadEmpty": "Alles gelesen",
 
   "card.communityBadge": "Community",
   "card.unratedLabel": "Ohne Bewertung",
@@ -2022,7 +2025,8 @@ const pl: Dictionary = {
   "me.submissions.empty": "Nic jeszcze nie zgłoszono.",
   "me.notifications.title": "Twoje powiadomienia",
   "me.notifications.empty": "Brak powiadomień.",
-  "me.notifications.markAllRead": "Oznacz wszystkie jako przeczytane",
+  "me.notifications.markAllRead": "Oznacz wszystkie jako przeczytane ({count})",
+  "me.notifications.allReadEmpty": "Wszystko przeczytane",
 
   "card.communityBadge": "Społeczność",
   "card.unratedLabel": "Bez oceny",
@@ -2625,7 +2629,8 @@ const uk: Dictionary = {
   "me.submissions.empty": "Ви ще нічого не надсилали.",
   "me.notifications.title": "Ваші сповіщення",
   "me.notifications.empty": "Сповіщень поки немає.",
-  "me.notifications.markAllRead": "Позначити всі як прочитані",
+  "me.notifications.markAllRead": "Прочитати все ({count})",
+  "me.notifications.allReadEmpty": "Усе прочитано",
 
   "card.communityBadge": "Спільнота",
   "card.unratedLabel": "Без оцінки",
@@ -3218,7 +3223,8 @@ const zh: Dictionary = {
   "me.submissions.empty": "你还没有提交任何内容。",
   "me.notifications.title": "你的通知",
   "me.notifications.empty": "暂无通知。",
-  "me.notifications.markAllRead": "全部标为已读",
+  "me.notifications.markAllRead": "全部标为已读 ({count})",
+  "me.notifications.allReadEmpty": "全部已读",
 
   "card.communityBadge": "社区",
   "card.unratedLabel": "未评分",

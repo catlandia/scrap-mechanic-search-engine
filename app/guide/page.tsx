@@ -204,6 +204,68 @@ export default function GuidePage() {
         </p>
       </Section>
 
+      <Section
+        n={11}
+        title="Browser extension (optional)"
+        summary="Adds a small badge on Steam Workshop pages showing if the item is on SMSE."
+      >
+        <p>
+          A small browser extension puts a green pill on every Scrap
+          Mechanic Workshop item that&apos;s already on the site (one click
+          opens it here) and an amber pill on items that aren&apos;t yet
+          (one click drops you on{" "}
+          <Link href="/submit" className="text-accent hover:underline">
+            /submit
+          </Link>{" "}
+          with the URL prefilled). Strictly optional — the site works fine
+          without it.
+        </p>
+        <p className="mt-2">
+          <a
+            href="/smse-extension.zip"
+            download
+            className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-medium text-black hover:bg-accent-strong"
+          >
+            Download the extension (.zip)
+          </a>
+        </p>
+        <p className="mt-3 text-xs text-foreground/60">
+          <strong>Firefox:</strong> open{" "}
+          <code className="rounded bg-black/30 px-1">
+            about:debugging#/runtime/this-firefox
+          </code>
+          , click <em>Load Temporary Add-on…</em>, pick the extracted
+          folder&apos;s <code className="rounded bg-black/30 px-1">manifest.json</code>.
+          (Firefox unloads temporary add-ons on restart; AMO listing
+          coming soon for one-click install.)
+          <br />
+          <strong>Chrome / Brave / Edge:</strong> open{" "}
+          <code className="rounded bg-black/30 px-1">
+            chrome://extensions
+          </code>
+          , toggle <em>Developer mode</em> on, click <em>Load unpacked</em>,
+          pick the extracted folder. (Chrome Web Store listing coming soon
+          for one-click install.)
+        </p>
+        <p className="mt-2 text-xs text-foreground/50">
+          The extension only sends the Workshop ID you&apos;re already
+          looking at to{" "}
+          <code className="rounded bg-black/30 px-1">
+            scrap-mechanic-search-engine.vercel.app
+          </code>{" "}
+          — no cookies, no tracking. Source on{" "}
+          <a
+            href="https://github.com/catlandia/scrap-mechanic-search-engine/tree/main/extension"
+            target="_blank"
+            rel="noreferrer"
+            className="text-accent hover:underline"
+          >
+            GitHub
+          </a>
+          .
+        </p>
+      </Section>
+
       <Roles />
       <Glossary />
 

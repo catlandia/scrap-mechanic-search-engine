@@ -18,6 +18,7 @@ import {
   type NotificationTier,
 } from "@/lib/db/schema";
 import { getT } from "@/lib/i18n/server";
+import { markEverythingAsRead } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -99,10 +100,28 @@ export default async function NotificationsPage({
   await markAllNotificationsRead(user.steamid, activeTier);
   const { t } = await getT();
 
+  const totalUnread = Object.values(unreadByTier).reduce(
+    (sum, n) => sum + n,
+    0,
+  );
+
   return (
     <div className="space-y-6">
-      <header>
+      <header className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-3xl font-bold">{t("me.notifications.title")}</h1>
+        <form action={markEverythingAsRead}>
+          <button
+            type="submit"
+            disabled={totalUnread === 0}
+            className="rounded-md border border-border bg-card px-3 py-1.5 text-xs text-foreground/70 hover:border-accent/60 hover:text-accent disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-border disabled:hover:text-foreground/40"
+          >
+            {totalUnread > 0
+              ? t("me.notifications.markAllRead", {
+                  count: totalUnread.toString(),
+                })
+              : t("me.notifications.allReadEmpty")}
+          </button>
+        </form>
       </header>
 
       {visibleTiers.length > 1 && (
