@@ -109,13 +109,24 @@ export default async function HomePage() {
           {t("home.descriptionAfter")}
         </p>
         {hasAny && (
-          <div className="inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/10 px-3 py-1 text-sm">
-            <span aria-hidden>📚</span>
-            <span className="text-foreground/70">
-              {total === 1
-                ? t("home.indexedOne", { count: total.toLocaleString() })
-                : t("home.indexedMany", { count: total.toLocaleString() })}
-            </span>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/10 px-3 py-1 text-sm">
+              <span aria-hidden>📚</span>
+              <span className="text-foreground/70">
+                {total === 1
+                  ? t("home.indexedOne", { count: total.toLocaleString() })
+                  : t("home.indexedMany", { count: total.toLocaleString() })}
+              </span>
+            </div>
+            <Link
+              href="/random"
+              prefetch={false}
+              className="inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/10 px-3 py-1 text-sm text-accent transition hover:bg-accent/20"
+              title={t("home.surpriseMeHint")}
+            >
+              <span aria-hidden>🎲</span>
+              <span>{t("home.surpriseMe")}</span>
+            </Link>
           </div>
         )}
       </section>

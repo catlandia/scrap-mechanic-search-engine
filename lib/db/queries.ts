@@ -429,6 +429,9 @@ export interface AuthorProfile {
   steamid: string;
   authorName: string | null;
   count: number;
+  totalSubs: number;
+  kindCounts: Record<string, number>;
+  topCreation: CreationCardRow | null;
 }
 
 /**
@@ -446,6 +449,7 @@ export async function getAuthorProfile(steamid: string): Promise<AuthorProfile |
   const [row] = await db
     .select({
       count: sql<number>`count(*)::int`,
+      totalSubs: sql<number>`coalesce(sum(${creations.subscriptions}), 0)::bigint`,
       // Prefer the primary authorName on rows where this steamid is primary;
       // fall back to the name stored inside the creators array for the
       // matching steamid (so contributors get a name even when they've
@@ -465,7 +469,36 @@ export async function getAuthorProfile(steamid: string): Promise<AuthorProfile |
     .from(creations)
     .where(and(eq(creations.status, "approved"), authorMatch(steamid)));
   if (!row || row.count === 0) return null;
-  return { steamid, authorName: row.authorName ?? null, count: row.count };
+
+  const kindRows = await db
+    .select({
+      kind: creations.kind,
+      n: sql<number>`count(*)::int`,
+    })
+    .from(creations)
+    .where(and(eq(creations.status, "approved"), authorMatch(steamid)))
+    .groupBy(creations.kind);
+  const kindCounts: Record<string, number> = {};
+  for (const k of kindRows) kindCounts[k.kind] = k.n;
+
+  const [top] = await db
+    .select(cardColumns)
+    .from(creations)
+    .where(and(eq(creations.status, "approved"), authorMatch(steamid)))
+    .orderBy(desc(creations.subscriptions))
+    .limit(1);
+
+  return {
+    steamid,
+    authorName: row.authorName ?? null,
+    count: row.count,
+    // sum() returns bigint as a string in pg drivers — coerce to number for
+    // consumers. Subs counts comfortably fit in a JS number even for the
+    // most prolific creator.
+    totalSubs: Number(row.totalSubs ?? 0),
+    kindCounts,
+    topCreation: (top as CreationCardRow | undefined) ?? null,
+  };
 }
 
 export async function getAuthorCreations(

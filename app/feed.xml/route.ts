@@ -1,4 +1,10 @@
-import { getNewestApproved } from "@/lib/db/queries";
+import {
+  getAuthorCreations,
+  getAuthorProfile,
+  getNewestApproved,
+  searchApproved,
+  type CreationCardRow,
+} from "@/lib/db/queries";
 import { getT } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
@@ -27,12 +33,51 @@ function escapeXml(s: string): string {
     .replace(/'/g, "&apos;");
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   const site = process.env.NEXT_PUBLIC_SITE_URL ?? "https://scrap-mechanic-search-engine.vercel.app";
-  const [rows, { t, locale }] = await Promise.all([
-    getNewestApproved(50, 0),
-    getT(),
-  ]);
+  const url = new URL(req.url);
+  const authorParam = url.searchParams.get("author")?.trim() ?? null;
+  const tagParam = url.searchParams.get("tag")?.trim() ?? null;
+
+  const { t, locale } = await getT();
+
+  let rows: CreationCardRow[];
+  let feedTitle = t("rss.title");
+  let feedDescription = t("rss.description");
+  let selfPath = "/feed.xml";
+
+  if (authorParam && /^\d{1,25}$/.test(authorParam)) {
+    // Per-author feed: validate the steamid is at least credited on
+    // something so we don't serve an empty channel for arbitrary input.
+    const profile = await getAuthorProfile(authorParam);
+    if (profile) {
+      rows = await getAuthorCreations(authorParam, {
+        sort: "newest",
+        limit: 50,
+      });
+      const name = profile.authorName ?? "Unknown author";
+      feedTitle = `${t("rss.titleByAuthor", { name })}`;
+      feedDescription = t("rss.descriptionByAuthor", { name });
+      selfPath = `/feed.xml?author=${authorParam}`;
+    } else {
+      rows = [];
+    }
+  } else if (tagParam && /^[a-z0-9-]{1,40}$/.test(tagParam)) {
+    // Per-tag feed: reuse the search query helper with a single tag slug
+    // and the newest sort so the feed surfaces fresh items, not popular
+    // ones (which is what RSS subscribers actually want).
+    const result = await searchApproved(
+      { tagSlugs: [tagParam], sort: "newest" },
+      0,
+      50,
+    );
+    rows = result.items;
+    feedTitle = t("rss.titleByTag", { tag: tagParam });
+    feedDescription = t("rss.descriptionByTag", { tag: tagParam });
+    selfPath = `/feed.xml?tag=${tagParam}`;
+  } else {
+    rows = await getNewestApproved(50, 0);
+  }
   const now = new Date().toUTCString();
 
   const items = rows
@@ -56,10 +101,10 @@ export async function GET() {
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>${escapeXml(t("rss.title"))}</title>
+    <title>${escapeXml(feedTitle)}</title>
     <link>${site}</link>
-    <atom:link href="${site}/feed.xml" rel="self" type="application/rss+xml" />
-    <description>${escapeXml(t("rss.description"))}</description>
+    <atom:link href="${site}${selfPath}" rel="self" type="application/rss+xml" />
+    <description>${escapeXml(feedDescription)}</description>
     <language>${locale}</language>
     <lastBuildDate>${now}</lastBuildDate>
 ${items}

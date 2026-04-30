@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { CreationGrid } from "@/components/CreationCard";
+import { CreationCard, CreationGrid } from "@/components/CreationCard";
 import { SortSelector } from "@/components/SortSelector";
 import {
   getAuthorCreations,
@@ -11,6 +11,7 @@ import {
   parseSortMode,
 } from "@/lib/db/queries";
 import { getRatingMode } from "@/lib/prefs.server";
+import { getT } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
 
@@ -66,6 +67,23 @@ export default async function AuthorPage({
   const hasNext = items.length > PAGE_SIZE;
   const displayed = items.slice(0, PAGE_SIZE);
   const ratingMode = await getRatingMode();
+  const { t } = await getT();
+
+  // Sort kind breakdown by count descending so the most prolific kind
+  // anchors the strip. Ties fall back to alphabetic for stable rendering.
+  const kindEntries = Object.entries(profile.kindCounts).sort(
+    (a, b) => b[1] - a[1] || a[0].localeCompare(b[0]),
+  );
+  const KIND_KEY: Record<string, string> = {
+    blueprint: "kind.blueprints",
+    mod: "kind.mods",
+    world: "kind.worlds",
+    challenge: "kind.challenges",
+    tile: "kind.tiles",
+    custom_game: "kind.customGames",
+    terrain_asset: "kind.terrain",
+    other: "kind.other",
+  };
 
   return (
     <div className="space-y-6">
@@ -82,13 +100,72 @@ export default async function AuthorPage({
               className="text-accent hover:underline"
             >
               Steam profile ↗
-            </a>
+            </a>{" "}
+            ·{" "}
+            <Link
+              href={`/feed.xml?author=${steamid}`}
+              prefetch={false}
+              className="text-accent hover:underline"
+            >
+              RSS ↗
+            </Link>
           </p>
         </div>
         <Suspense>
           <SortSelector current={sort} />
         </Suspense>
       </header>
+
+      <section className="grid gap-3 sm:grid-cols-3">
+        <div className="rounded-md border border-border bg-card/60 px-4 py-3">
+          <div className="text-[10px] uppercase tracking-widest text-foreground/40">
+            {t("author.totalCreations")}
+          </div>
+          <div className="mt-0.5 text-2xl font-semibold">
+            {profile.count.toLocaleString()}
+          </div>
+        </div>
+        <div className="rounded-md border border-border bg-card/60 px-4 py-3">
+          <div className="text-[10px] uppercase tracking-widest text-foreground/40">
+            {t("author.totalSubs")}
+          </div>
+          <div className="mt-0.5 text-2xl font-semibold">
+            {profile.totalSubs.toLocaleString()}
+          </div>
+        </div>
+        <div className="rounded-md border border-border bg-card/60 px-4 py-3">
+          <div className="text-[10px] uppercase tracking-widest text-foreground/40">
+            {t("author.kindBreakdown")}
+          </div>
+          <div className="mt-1 flex flex-wrap gap-1.5">
+            {kindEntries.map(([kind, n]) => (
+              <span
+                key={kind}
+                className="inline-flex items-center gap-1 rounded-full border border-foreground/15 bg-foreground/5 px-2 py-0.5 text-xs"
+              >
+                <span className="font-mono text-foreground/60">{n}</span>
+                <span className="text-foreground/80">
+                  {t(KIND_KEY[kind] ?? "kind.other")}
+                </span>
+              </span>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {profile.topCreation && pageIndex === 0 && (
+        <section className="space-y-2">
+          <div className="text-xs uppercase tracking-widest text-foreground/40">
+            {t("author.topCreation")}
+          </div>
+          <div className="max-w-sm">
+            <CreationCard
+              creation={profile.topCreation}
+              ratingMode={ratingMode}
+            />
+          </div>
+        </section>
+      )}
 
       <CreationGrid items={displayed} ratingMode={ratingMode} />
 
