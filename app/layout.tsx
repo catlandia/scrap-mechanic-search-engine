@@ -302,7 +302,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             uses Steam OpenID — we only ever see your public SteamID, never your password.
           </p>
           <p className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
-            <span>Made by CybeSlime2077.</span>
+            <span>Made by CyberSlime2077.</span>
             <Link href="/about" className="hover:text-foreground">
               About
             </Link>

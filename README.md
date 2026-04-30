@@ -6,7 +6,7 @@ A curated, community-run directory of Scrap Mechanic Steam Workshop creations. B
 
 Public beta. Free to use, no ads, no premium features, runs entirely on free-tier infrastructure.
 
-> Fan project by CybeSlime2077. **Not affiliated with Axolot Games or Valve.**
+> Fan project by CyberSlime2077. **Not affiliated with Axolot Games or Valve.**
 
 ## What it does
 
