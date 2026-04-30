@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Scrap Mechanic Search Engine",
   "short_name": "SMSE",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Shows a badge on Scrap Mechanic Workshop item pages: ✓ on Scrap Mechanic Search Engine, or one-click submit if it isn't.",
   "homepage_url": "https://scrap-mechanic-search-engine.vercel.app",
   "icons": {

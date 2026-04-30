@@ -76,6 +76,11 @@
     const anchor = findInjectionAnchor();
     if (!anchor) return;
 
+    // Each extension reload reruns this script against the live tab. Strip
+    // any badges from the previous run before injecting, otherwise reloads
+    // stack up a row of duplicate pills.
+    document.querySelectorAll(".smse-badge").forEach((el) => el.remove());
+
     const loading = makeBadge("loading", "Checking SMSE…");
     anchor.insertAdjacentElement("afterend", loading);
 
