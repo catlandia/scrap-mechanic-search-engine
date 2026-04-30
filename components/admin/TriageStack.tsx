@@ -139,23 +139,28 @@ export function TriageStack({
       if (action === "reject" && options?.reason) {
         fd.append("reason", options.reason);
       }
+      // Optimistic advance: as soon as the exit animation finishes we move
+      // to the next card, regardless of how long the server action takes.
+      // Previously we awaited the server before advancing, which on a
+      // slow Neon round-trip felt like the buttons "didn't respond" for
+      // up to a second per click.
+      window.setTimeout(advance, ANIM_MS);
       startTransition(async () => {
         try {
           if (action === "approve") await quickApprove(fd);
           else await rejectCreation(fd);
         } catch (err) {
-          // Recover the card in-place — un-animate, leave stack index alone,
-          // surface the error. Otherwise a failed server action silently
-          // skips the card while the DB still shows it pending.
-          setExit(null);
-          setDrag(0);
-          busy.current = false;
+          // The moderator has already visually moved past this card. We
+          // can't yank them back without being jarring, so surface the
+          // failure as a toast — they can refresh to re-triage if needed.
+          // The DB row stays pending, so the card will return to the queue
+          // on the next /admin/triage load.
           toast.error(
-            err instanceof Error ? err.message : "Action failed.",
+            err instanceof Error
+              ? `${action} failed for "${current.title}" — ${err.message}. Refresh to retry.`
+              : `${action} failed for "${current.title}". Refresh to retry.`,
           );
-          return;
         }
-        window.setTimeout(advance, ANIM_MS);
       });
     },
     [current, toast],
