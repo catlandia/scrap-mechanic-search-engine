@@ -4,6 +4,31 @@ All typed query helpers are in `lib/db/queries.ts`. These are the read-side coun
 
 ---
 
+## Caching
+
+The hot public-page queries are wrapped with `unstable_cache` so listings and creation detail render from memory across requests. The internal implementation lives under `_xxxUncached` names; the public exports (`getNewestApproved`, `getApprovedByKind`, `getApprovedKindCounts`, `getTopTagsForKind`, `searchApproved`, `getCreationDetail`, `getCreationVoteBreakdown`, `getCreationSiteCounts`, `getPublicReportBadge`) are the cache-wrapped versions, so call sites in pages don't change.
+
+Tags and TTLs:
+
+| Tag | Queries | TTL | Flushed by |
+|---|---|---|---|
+| `creations-list` | newest, by-kind, kind-counts, search | 2–10 min | `flushCreationListings` / `flushTagCatalog` in `app/admin/actions.ts` |
+| `creations-tags` | top-tags-for-kind | 10 min | `flushTagCatalog` |
+| `creation-detail` | creation row + tags + categories | 5 min | `flushCreationDetail` / above helpers |
+| `creation-reports` | public report badge | 10 min | `flushReportBadges` |
+| (none, TTL-only) | vote breakdown, site counts | 60 s | TTL alone |
+
+**Why TTL-only on votes/site-counts:** users vote and favourite frequently; revalidating per-action would defeat the cache. A 60s window of stale counts is acceptable.
+
+**Why coarse tags:** the catalog is small (~1k creations) and admin actions are infrequent. Flushing all listings when one row is approved costs a single rebuild on the next read; finer-grained per-creation tags would complicate the wrapper without measurable benefit.
+
+**Stale-window trade-offs you should know about:**
+- Listings sorted by Steam vote score / popular / favorites can be up to 5 min behind the underlying `creations` row. The weekly Steam refresh writes happen at 3 AM Monday, so the staleness only matters in that narrow window.
+- `getCreationDetail` returns the basic tag list (no vote info). The displayed-with-votes list comes from `getCreationTagsWithVotes` (uncached, viewer-keyed), so suggested/voted tags appear immediately even though the cached detail is 5 min stale.
+- The community write paths (`lib/community/actions.ts`) intentionally do **not** flush tags — vote/favourite/report writes are high-frequency, and the TTL caches absorb them.
+
+---
+
 ## Card Row Type
 
 Most list views use `CreationCardRow` — a minimal set of columns returned for grid display:

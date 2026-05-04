@@ -1,5 +1,6 @@
 import { and, desc, eq, inArray, notInArray, sql, type SQL } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
+import { unstable_cache } from "next/cache";
 import { getDb } from "./client";
 import {
   categories,
@@ -22,6 +23,24 @@ import {
   type Notification,
   type NotificationTier,
 } from "./schema";
+
+// Cache tags used by queries below. Admin actions call `revalidateTag(tag)`
+// after mutating the underlying data. Tags are coarse on purpose — flushing
+// all listings when one creation is approved is fine because admin actions
+// are infrequent and the cache rebuilds on demand.
+//
+// `creations-list`  — listings (newest, by-kind, kind counts, search)
+// `creations-tags`  — top-tags-for-kind (sidebar filter on /[kind])
+// `creation-detail` — creation row + tags + categories
+// `creation-reports`— public report badge on /creation/[id]
+//
+// Vote breakdown and site counts use TTL-only caching (no tag) because
+// users vote/favourite frequently and per-action revalidation would defeat
+// the cache. A 60s window of stale counts is acceptable.
+export const CACHE_TAG_CREATIONS_LIST = "creations-list";
+export const CACHE_TAG_CREATIONS_TAGS = "creations-tags";
+export const CACHE_TAG_CREATION_DETAIL = "creation-detail";
+export const CACHE_TAG_CREATION_REPORTS = "creation-reports";
 
 export interface CreationCardRow {
   id: string;
@@ -180,7 +199,7 @@ function orderByForSort(sort: SortMode, q?: string): SQL {
 // these kinds gets the full list.
 export const HIGH_VOLUME_THIN_CONDITION = sql`(${creations.kind} NOT IN ('tile', 'world') OR (abs(hashtext(${creations.id})) % 20) = 0)`;
 
-export async function getNewestApproved(
+async function _getNewestApprovedUncached(
   limit = 24,
   offset = 0,
 ): Promise<CreationCardRow[]> {
@@ -194,6 +213,12 @@ export async function getNewestApproved(
     .offset(offset);
 }
 
+export const getNewestApproved = unstable_cache(
+  _getNewestApprovedUncached,
+  ["getNewestApproved"],
+  { tags: [CACHE_TAG_CREATIONS_LIST], revalidate: 300 },
+);
+
 export interface KindTopTag {
   id: number;
   slug: string;
@@ -205,7 +230,7 @@ export interface KindTopTag {
 // creation_tags row — community nominations below the +3 visibility threshold
 // don't appear on many creations in practice, so they rarely rise to the top
 // 20 and it's not worth the extra JOIN to filter them out here.
-export async function getTopTagsForKind(
+async function _getTopTagsForKindUncached(
   kind: CreationKind,
   limit = 20,
 ): Promise<KindTopTag[]> {
@@ -232,7 +257,13 @@ export async function getTopTagsForKind(
     .limit(limit);
 }
 
-export async function getApprovedByKind(
+export const getTopTagsForKind = unstable_cache(
+  _getTopTagsForKindUncached,
+  ["getTopTagsForKind"],
+  { tags: [CACHE_TAG_CREATIONS_TAGS], revalidate: 600 },
+);
+
+async function _getApprovedByKindUncached(
   kind: CreationKind,
   opts: { sort?: SortMode; limit?: number; offset?: number } = {},
 ): Promise<CreationCardRow[]> {
@@ -246,6 +277,12 @@ export async function getApprovedByKind(
     .limit(limit)
     .offset(offset);
 }
+
+export const getApprovedByKind = unstable_cache(
+  _getApprovedByKindUncached,
+  ["getApprovedByKind"],
+  { tags: [CACHE_TAG_CREATIONS_LIST], revalidate: 300 },
+);
 
 export interface SearchFilters {
   kind?: string;
@@ -286,7 +323,7 @@ export interface SearchPage {
   pageSize: number;
 }
 
-export async function searchApproved(
+async function _searchApprovedUncached(
   filters: SearchFilters,
   page = 0,
   pageSize = 24,
@@ -377,6 +414,12 @@ export async function searchApproved(
   return { items, total: countRow?.n ?? 0, page, pageSize };
 }
 
+export const searchApproved = unstable_cache(
+  _searchApprovedUncached,
+  ["searchApproved"],
+  { tags: [CACHE_TAG_CREATIONS_LIST], revalidate: 120 },
+);
+
 export interface CreationDetail {
   creation: typeof creations.$inferSelect;
   tags: { id: number; slug: string; name: string }[];
@@ -388,7 +431,7 @@ export interface CreationDetail {
  * publishedfileid (numeric string). Short IDs stay under 500M; modern Scrap
  * Mechanic publishedfileids are already 3.7B+, so the ranges never collide.
  */
-export async function getCreationDetail(input: string): Promise<CreationDetail | null> {
+async function _getCreationDetailUncached(input: string): Promise<CreationDetail | null> {
   const db = getDb();
   let creation: typeof creations.$inferSelect | undefined;
 
@@ -424,6 +467,12 @@ export async function getCreationDetail(input: string): Promise<CreationDetail |
 
   return { creation, tags: tagRows, categories: categoryRows };
 }
+
+export const getCreationDetail = unstable_cache(
+  _getCreationDetailUncached,
+  ["getCreationDetail"],
+  { tags: [CACHE_TAG_CREATION_DETAIL], revalidate: 300 },
+);
 
 export interface AuthorProfile {
   steamid: string;
@@ -757,7 +806,7 @@ export async function getTrendingFeed(limit: number): Promise<CreationCardRow[]>
     .limit(limit);
 }
 
-export async function getApprovedKindCounts(): Promise<Record<string, number>> {
+async function _getApprovedKindCountsUncached(): Promise<Record<string, number>> {
   const db = getDb();
   const rows = await db
     .select({ kind: creations.kind, n: sql<number>`count(*)::int` })
@@ -766,6 +815,12 @@ export async function getApprovedKindCounts(): Promise<Record<string, number>> {
     .groupBy(creations.kind);
   return Object.fromEntries(rows.map((r) => [r.kind, r.n]));
 }
+
+export const getApprovedKindCounts = unstable_cache(
+  _getApprovedKindCountsUncached,
+  ["getApprovedKindCounts"],
+  { tags: [CACHE_TAG_CREATIONS_LIST], revalidate: 600 },
+);
 
 // Footer presence counters. One scan with a FILTER aggregate returns both
 // `total` (excluding hard-banned) and `online` (`lastSeenAt` within the
@@ -960,7 +1015,7 @@ export async function getCreationTagsWithVotes(
   });
 }
 
-export async function getCreationVoteBreakdown(
+async function _getCreationVoteBreakdownUncached(
   creationId: string,
 ): Promise<RoleVoteBreakdown> {
   const db = getDb();
@@ -974,6 +1029,14 @@ export async function getCreationVoteBreakdown(
   for (const v of rows) applyVote(bd, v.value, v.role);
   return bd;
 }
+
+// TTL-only cache: votes change frequently and per-action revalidation would
+// defeat the purpose. 60s of staleness on a vote breakdown is acceptable.
+export const getCreationVoteBreakdown = unstable_cache(
+  _getCreationVoteBreakdownUncached,
+  ["getCreationVoteBreakdown"],
+  { revalidate: 60 },
+);
 
 export async function getUserVoteOnCreation(
   creationId: string,
@@ -1017,7 +1080,7 @@ export interface SiteActivityCounts {
   siteViews: number;
 }
 
-export async function getCreationSiteCounts(
+async function _getCreationSiteCountsUncached(
   creationId: string,
 ): Promise<SiteActivityCounts> {
   const db = getDb();
@@ -1034,6 +1097,14 @@ export async function getCreationSiteCounts(
     siteViews: viewRow?.n ?? 0,
   };
 }
+
+// TTL-only cache: views and favourites tick on every signed-in pageview.
+// 60s of staleness on the displayed counts is acceptable.
+export const getCreationSiteCounts = unstable_cache(
+  _getCreationSiteCountsUncached,
+  ["getCreationSiteCounts"],
+  { revalidate: 60 },
+);
 
 /**
  * Records that a signed-in user viewed a creation's detail page. First visit
@@ -1077,7 +1148,7 @@ export interface PublicReportBadge {
  * Returns the most recently-actioned public report for a creation, or null.
  * Only status='actioned' rows surface — open reports stay private to mods.
  */
-export async function getPublicReportBadge(
+async function _getPublicReportBadgeUncached(
   creationId: string,
 ): Promise<PublicReportBadge | null> {
   const db = getDb();
@@ -1116,6 +1187,12 @@ export async function getPublicReportBadge(
       }
     : null;
 }
+
+export const getPublicReportBadge = unstable_cache(
+  _getPublicReportBadgeUncached,
+  ["getPublicReportBadge"],
+  { tags: [CACHE_TAG_CREATION_REPORTS], revalidate: 600 },
+);
 
 export interface ModReportRow {
   id: number;

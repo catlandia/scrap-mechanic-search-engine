@@ -119,6 +119,7 @@ No paid build tools. No Turbopack in production (standard webpack).
 
 - **Cron jobs:** Max 2 cron jobs, minimum 1-day interval. Both our jobs are daily/weekly — within limits.
 - **Function timeout:** 10 seconds default. Ingest and refresh are designed to be chunked. If a single ingest run times out, re-run manually with fewer pages.
+- **Fluid Active CPU:** 4 hours/month. SSR public pages (`/`, `/[kind]`, `/creation/[id]`, `/search`, `/new`) all use `force-dynamic` for cookies/auth, so Next's route cache doesn't help. The countermeasure is `unstable_cache` on the underlying DB query helpers in `lib/db/queries.ts` — see `docs/queries.md` for tags / TTLs / when admin actions flush them. Without that layer, organic traffic growth blows the 4h cap by mid-month.
 - **Bandwidth:** Free tier is generous. Steam thumbnails are hotlinked from Steam's CDN — we serve no images ourselves.
 - **Postgres:** Neon free tier has 0.5 GB storage and connection pooling limits. At expected scale (tens of thousands of creations) this is sufficient.
 

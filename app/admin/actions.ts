@@ -1,9 +1,15 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { and, desc, eq, inArray, ne, sql } from "drizzle-orm";
+import {
+  CACHE_TAG_CREATIONS_LIST,
+  CACHE_TAG_CREATIONS_TAGS,
+  CACHE_TAG_CREATION_DETAIL,
+  CACHE_TAG_CREATION_REPORTS,
+} from "@/lib/db/queries";
 import { getDb } from "@/lib/db/client";
 import {
   categories,
@@ -47,6 +53,26 @@ import {
 import { resolveVanityUrl } from "@/lib/steam/client";
 import { logModAction } from "@/lib/audit/log";
 import { refreshAllTopCreatorBadges } from "@/lib/badges/top-creator";
+
+// Cache-flush helpers. These pair with the `unstable_cache` wrappers in
+// lib/db/queries.ts so admin actions invalidate the relevant slices instead
+// of waiting for TTL.
+function flushCreationListings() {
+  revalidateTag(CACHE_TAG_CREATIONS_LIST);
+  revalidateTag(CACHE_TAG_CREATION_DETAIL);
+}
+function flushCreationDetail() {
+  revalidateTag(CACHE_TAG_CREATION_DETAIL);
+}
+function flushTagCatalog() {
+  revalidateTag(CACHE_TAG_CREATIONS_TAGS);
+  revalidateTag(CACHE_TAG_CREATIONS_LIST);
+  revalidateTag(CACHE_TAG_CREATION_DETAIL);
+}
+function flushReportBadges() {
+  revalidateTag(CACHE_TAG_CREATION_REPORTS);
+  revalidateTag(CACHE_TAG_CREATION_DETAIL);
+}
 
 function parseKind(raw: FormDataEntryValue | null): string {
   const kind = String(raw ?? "other");
@@ -151,6 +177,7 @@ export async function approveCreation(formData: FormData) {
   revalidatePath("/admin/queue");
   revalidatePath("/");
   revalidatePath("/new");
+  flushCreationListings();
 }
 
 export async function rejectCreation(formData: FormData) {
@@ -266,6 +293,7 @@ export async function quickApprove(formData: FormData) {
   revalidatePath("/admin/queue");
   revalidatePath("/");
   revalidatePath("/new");
+  flushCreationListings();
 }
 
 export async function saveCreationTags(formData: FormData) {
@@ -321,6 +349,7 @@ export async function confirmCreationTag(formData: FormData) {
     metadata: { tagId },
   });
   revalidatePath(`/creation/${creationId}`);
+  flushCreationDetail();
   revalidatePath("/admin/queue");
 }
 
@@ -474,6 +503,7 @@ export async function createTag(formData: FormData) {
   });
 
   revalidatePath("/admin/tags");
+  flushTagCatalog();
   revalidatePath("/admin/queue");
 }
 
@@ -530,6 +560,7 @@ export async function updateTag(formData: FormData) {
   });
 
   revalidatePath("/admin/tags");
+  flushTagCatalog();
   revalidatePath("/admin/queue");
   revalidatePath("/search");
 }
@@ -750,6 +781,7 @@ export async function addCreation(formData: FormData) {
       revalidatePath("/admin/queue");
       revalidatePath("/");
       revalidatePath("/new");
+      flushCreationListings();
     }
   } catch (err) {
     errorMsg = err instanceof Error ? err.message : String(err);
@@ -795,6 +827,7 @@ export async function rescrapeCreatorsAction(formData: FormData) {
     .where(eq(creations.id, creationId));
 
   revalidatePath(`/creation/${creationId}`);
+  flushCreationDetail();
   if (shortId) revalidatePath(`/creation/${shortId}`);
   revalidatePath("/creators");
   // Revalidate every contributor's author + profile page so the new
@@ -988,6 +1021,7 @@ export async function removeCreationTag(formData: FormData) {
   });
 
   revalidatePath(`/creation/${creationId}`);
+  flushCreationDetail();
 }
 
 /**
@@ -1040,6 +1074,7 @@ export async function setCreationKind(formData: FormData) {
   // creation page itself and the home / /new feeds do need busting.
   revalidatePath("/");
   revalidatePath("/new");
+  flushCreationListings();
   revalidatePath("/search");
   revalidatePath(`/creation/${id}`);
 }
@@ -1095,9 +1130,11 @@ export async function deleteCreation(formData: FormData) {
 
   revalidatePath("/");
   revalidatePath("/new");
+  flushCreationListings();
   revalidatePath("/admin/queue");
   revalidatePath("/admin/triage");
   revalidatePath("/admin/reports");
+  flushReportBadges();
   revalidatePath(`/creation/${id}`);
 }
 
@@ -1126,6 +1163,7 @@ export async function clearReport(formData: FormData) {
   });
 
   revalidatePath("/admin/reports");
+  flushReportBadges();
   revalidatePath("/");
 }
 
@@ -1167,9 +1205,11 @@ export async function actionReport(formData: FormData) {
   });
 
   revalidatePath("/admin/reports");
+  flushReportBadges();
   revalidatePath(`/creation/${row.creationId}`);
   revalidatePath("/");
   revalidatePath("/new");
+  flushCreationListings();
 }
 
 export async function deleteCommentFromReport(formData: FormData) {
@@ -1225,6 +1265,7 @@ export async function deleteCommentFromReport(formData: FormData) {
   });
 
   revalidatePath("/admin/reports");
+  flushReportBadges();
   if (target?.creationId) revalidatePath(`/creation/${target.creationId}`);
   if (target?.profileSteamid) revalidatePath(`/profile/${target.profileSteamid}`);
 }
@@ -1312,10 +1353,12 @@ export async function archiveFromReport(formData: FormData) {
   await refreshAllTopCreatorBadges();
 
   revalidatePath("/admin/reports");
+  flushReportBadges();
   revalidatePath("/admin/archive");
   revalidatePath(`/creation/${row.creationId}`);
   revalidatePath("/");
   revalidatePath("/new");
+  flushCreationListings();
 }
 
 /**
@@ -1380,6 +1423,7 @@ export async function archiveCreation(formData: FormData) {
   revalidatePath(`/creation/${id}`);
   revalidatePath("/");
   revalidatePath("/new");
+  flushCreationListings();
 }
 
 /**
@@ -1427,6 +1471,7 @@ export async function restoreFromArchive(formData: FormData) {
   revalidatePath(`/creation/${id}`);
   revalidatePath("/");
   revalidatePath("/new");
+  flushCreationListings();
 }
 
 const ASSIGNABLE_ROLES = ["user", "moderator", "elite_moderator"] as const;
@@ -1896,6 +1941,7 @@ export async function createCategory(formData: FormData) {
   });
 
   revalidatePath("/admin/tags");
+  flushTagCatalog();
 }
 
 // Creator-only because it's destructive and can't be undone from the UI.
@@ -1917,6 +1963,7 @@ export async function deleteCategory(formData: FormData) {
     summary: `Deleted category #${id}`,
   });
   revalidatePath("/admin/tags");
+  flushTagCatalog();
   revalidatePath("/search");
 }
 
