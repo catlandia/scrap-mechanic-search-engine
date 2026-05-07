@@ -793,7 +793,7 @@ export async function getForYouFeed(
 // fallback. Sorted by site upvote net first (so curated signal beats raw
 // Steam popularity when the site has any signal at all), then Steam subs.
 // Tile/world thinning still applies so they don't dominate the row.
-export async function getTrendingFeed(limit: number): Promise<CreationCardRow[]> {
+async function _getTrendingFeedUncached(limit: number): Promise<CreationCardRow[]> {
   const db = getDb();
   return db
     .select(cardColumns)
@@ -805,6 +805,12 @@ export async function getTrendingFeed(limit: number): Promise<CreationCardRow[]>
     )
     .limit(limit);
 }
+
+export const getTrendingFeed = unstable_cache(
+  _getTrendingFeedUncached,
+  ["getTrendingFeed"],
+  { tags: [CACHE_TAG_CREATIONS_LIST], revalidate: 300 },
+);
 
 async function _getApprovedKindCountsUncached(): Promise<Record<string, number>> {
   const db = getDb();
