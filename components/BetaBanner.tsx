@@ -6,7 +6,7 @@ import { useT } from "@/lib/i18n/client";
 
 // Bump the version suffix whenever banner copy meaningfully changes — a new
 // key re-shows the banner to users who dismissed the previous message.
-const DISMISS_KEY = "smse_beta_dismissed_v3_0";
+const DISMISS_KEY = "smse_beta_dismissed_v3_1";
 
 export function BetaBanner() {
   const { t } = useT();
@@ -40,12 +40,12 @@ export function BetaBanner() {
     >
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2 text-xs sm:text-sm">
         <span className="font-semibold uppercase tracking-wider text-amber-300">
-          Beta 3.0
+          Beta 3.1
         </span>
         <span className="text-foreground/70">
           <span className="font-semibold text-amber-200">New:</span>{" "}
-          Ukrainian + Chinese translations, a Top creator crown badge, a
-          full moderator audit log, mod pings on every community submission.{" "}
+          a public site stats page, sandbox-game reviews, side-by-side
+          creation comparisons, and a Workshop browser extension.{" "}
           <Link
             href="/changelog"
             className="text-amber-200 underline underline-offset-2 hover:text-foreground"
