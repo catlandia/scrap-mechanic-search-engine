@@ -16,6 +16,7 @@ Tags and TTLs:
 | `creations-tags` | top-tags-for-kind | 10 min | `flushTagCatalog` |
 | `creation-detail` | creation row + tags + categories | 5 min | `flushCreationDetail` / above helpers |
 | `creation-reports` | public report badge | 10 min | `flushReportBadges` |
+| `stats` | catalogue totals, approvals-by-month, top tags, top creations | 1 h | `flushCreationListings` / `flushTagCatalog` (V9.35+) |
 | (none, TTL-only) | vote breakdown, site counts | 60 s | TTL alone |
 
 **Why TTL-only on votes/site-counts:** users vote and favourite frequently; revalidating per-action would defeat the cache. A 60s window of stale counts is acceptable.
@@ -163,7 +164,29 @@ Returns all categories ordered by name.
 
 ### `getApprovedKindCounts()`
 
-Returns a `Record<Kind, number>` mapping each kind to its count of approved creations. Used on the home page dashboard.
+Returns a `Record<Kind, number>` mapping each kind to its count of approved creations. Used on the home page dashboard and `/stats`.
+
+---
+
+## `/stats` Aggregates (V9.35+)
+
+All six queries below are wrapped in `unstable_cache` with the `stats` tag and a 1 h TTL. The page hits all six in a single `Promise.all`. Flushed alongside listings whenever an admin action shifts the approved set.
+
+### `getCatalogueTotals()`
+
+One scan over `creations` (sum of subscriptions + Steam favourites) plus three small count(*) hits on `favorites`, `comments` (excluding soft-deleted), and `creationVotes`, plus a `COUNT(DISTINCT author_steamid)`. Returned together because they all power the top-of-page tile row and there's no value caching them separately. `totalSubscriptions` and `totalSteamFavorites` use `coalesce(sum(...), 0)` so an empty catalogue returns 0 instead of NULL; both are cast through `Number(...)` because Postgres returns `bigint` as a string over neon-http.
+
+### `getApprovalsByMonth(months = 12)`
+
+Returns `{ monthIso, count }[]` ordered oldest-first. Built with a `generate_series` scaffold so a quiet month renders as a zero-height bar instead of collapsing the chart's x-axis. `monthIso` is the first-of-month date in `YYYY-MM-DD` form for client-side label formatting.
+
+### `getTopTagsOverall(limit = 10)`
+
+The site-wide variant of `getTopTagsForKind`. Joins `creationTags` → `creations` (approved only, non-rejected tag rows) → `tags`, groups by tag, orders by count desc. Powers the `/stats` "Top tags" chip row; chips link to `/search?tags=<slug>`.
+
+### `getMostSubscribedCreations(limit = 5)` / `getMostFavouritedCreations(limit = 5)`
+
+Two ranking queries. The first is a straight `ORDER BY subscriptions DESC` over `creations`. The second LEFT-JOINs `favorites`, groups by `creations.id`, orders by site-favourite count desc, and filters out zero-favourite rows so the list isn't padded with creations that simply happen to be at the top of an arbitrary tiebreak when no one has favourited anything yet. Returns the standard `CreationCardRow` shape — the favourites variant adds a `siteFavorites` field.
 
 ### `getUserCounts()`
 

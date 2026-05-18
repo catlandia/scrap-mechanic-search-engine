@@ -9,6 +9,7 @@ import {
   CACHE_TAG_CREATIONS_TAGS,
   CACHE_TAG_CREATION_DETAIL,
   CACHE_TAG_CREATION_REPORTS,
+  CACHE_TAG_STATS,
 } from "@/lib/db/queries";
 import { getDb } from "@/lib/db/client";
 import {
@@ -60,6 +61,11 @@ import { refreshAllTopCreatorBadges } from "@/lib/badges/top-creator";
 function flushCreationListings() {
   revalidateTag(CACHE_TAG_CREATIONS_LIST);
   revalidateTag(CACHE_TAG_CREATION_DETAIL);
+  // Listing-shaped admin actions (approve / archive / restore / delete /
+  // setKind) also change the catalogue totals, kind counts, top tags, and
+  // approval timeline that /stats reads — pair the flush so the page
+  // updates on the next visit instead of waiting out the 1h TTL.
+  revalidateTag(CACHE_TAG_STATS);
 }
 function flushCreationDetail() {
   revalidateTag(CACHE_TAG_CREATION_DETAIL);
@@ -68,6 +74,7 @@ function flushTagCatalog() {
   revalidateTag(CACHE_TAG_CREATIONS_TAGS);
   revalidateTag(CACHE_TAG_CREATIONS_LIST);
   revalidateTag(CACHE_TAG_CREATION_DETAIL);
+  revalidateTag(CACHE_TAG_STATS);
 }
 function flushReportBadges() {
   revalidateTag(CACHE_TAG_CREATION_REPORTS);

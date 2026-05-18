@@ -120,6 +120,13 @@ export default async function AboutPage() {
           {t("about.costBody")}
         </p>
       </section>
+
+      <p className="text-sm text-foreground/60">
+        Curious how big the catalogue actually is?{" "}
+        <Link href="/stats" className="text-accent hover:underline">
+          See the site stats →
+        </Link>
+      </p>
     </article>
   );
 }

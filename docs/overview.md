@@ -2,7 +2,7 @@
 
 ## Next planned feature
 
-_Nothing currently queued — the previous entry (per-kind top-creator crowns + `/creators` kind filter) shipped in V9.9._
+_Nothing currently queued — the previous entry (public `/stats` dashboard) shipped in V9.35._
 
 ---
 

@@ -41,6 +41,7 @@ export const CACHE_TAG_CREATIONS_LIST = "creations-list";
 export const CACHE_TAG_CREATIONS_TAGS = "creations-tags";
 export const CACHE_TAG_CREATION_DETAIL = "creation-detail";
 export const CACHE_TAG_CREATION_REPORTS = "creation-reports";
+export const CACHE_TAG_STATS = "stats";
 
 export interface CreationCardRow {
   id: string;
@@ -1646,6 +1647,203 @@ export async function getUserSubmissions(userId: string, limit = 50, offset = 0)
  * time to see the completed state and auto-reload). Older rows are still
  * in the table as a deploy log but don't surface on the banner.
  */
+// ---------------- /stats aggregates (V9.35) ----------------
+//
+// All wrapped in unstable_cache with a 1h TTL and the `stats` tag. Admin
+// actions that move the needle (approve / quick-approve / archive / restore
+// / delete / setKind) flush via `flushStats`. Per-creation counts on the
+// catalogue are small enough at current scale that the queries are cheap
+// (full scans of `creations` with sums); the cache exists mostly to keep
+// /stats off the CPU meter when it gets a hot spike.
+
+export interface CatalogueTotals {
+  approvedCreations: number;
+  totalSubscriptions: number;
+  totalSteamFavorites: number;
+  totalSiteFavorites: number;
+  totalComments: number;
+  totalCreationVotes: number;
+  uniqueAuthors: number;
+}
+
+async function _getCatalogueTotalsUncached(): Promise<CatalogueTotals> {
+  const db = getDb();
+  // One scan over creations for the catalogue-side aggregates; two tiny
+  // count(*) hits for the user-generated tables. Run in parallel.
+  const [
+    creationRow,
+    favRow,
+    commentRow,
+    voteRow,
+    authorRow,
+  ] = await Promise.all([
+    db
+      .select({
+        approvedCreations: sql<number>`count(*)::int`,
+        totalSubscriptions: sql<number>`coalesce(sum(${creations.subscriptions}), 0)::bigint`,
+        totalSteamFavorites: sql<number>`coalesce(sum(${creations.favorites}), 0)::bigint`,
+      })
+      .from(creations)
+      .where(eq(creations.status, "approved")),
+    db.select({ n: sql<number>`count(*)::int` }).from(favorites),
+    db
+      .select({ n: sql<number>`count(*)::int` })
+      .from(comments)
+      .where(sql`${comments.deletedAt} is null`),
+    db.select({ n: sql<number>`count(*)::int` }).from(creationVotes),
+    db
+      .select({ n: sql<number>`count(distinct ${creations.authorSteamid})::int` })
+      .from(creations)
+      .where(eq(creations.status, "approved")),
+  ]);
+  return {
+    approvedCreations: creationRow[0]?.approvedCreations ?? 0,
+    // bigint comes back as a string from Neon HTTP; coerce.
+    totalSubscriptions: Number(creationRow[0]?.totalSubscriptions ?? 0),
+    totalSteamFavorites: Number(creationRow[0]?.totalSteamFavorites ?? 0),
+    totalSiteFavorites: favRow[0]?.n ?? 0,
+    totalComments: commentRow[0]?.n ?? 0,
+    totalCreationVotes: voteRow[0]?.n ?? 0,
+    uniqueAuthors: authorRow[0]?.n ?? 0,
+  };
+}
+
+export const getCatalogueTotals = unstable_cache(
+  _getCatalogueTotalsUncached,
+  ["getCatalogueTotals"],
+  { tags: [CACHE_TAG_STATS], revalidate: 3600 },
+);
+
+export interface MonthlyApproval {
+  /** ISO-formatted first-of-month, UTC. */
+  monthIso: string;
+  count: number;
+}
+
+// `date_trunc('month', approved_at)` groups every approval into the calendar
+// month it landed on. The generate_series scaffold fills in zero rows so a
+// quiet month shows up on the chart instead of collapsing the x-axis.
+async function _getApprovalsByMonthUncached(months = 12): Promise<MonthlyApproval[]> {
+  const db = getDb();
+  const result = await db.execute(sql`
+    with span as (
+      select generate_series(
+        date_trunc('month', now()) - make_interval(months => ${months - 1}),
+        date_trunc('month', now()),
+        interval '1 month'
+      )::date as month
+    )
+    select to_char(span.month, 'YYYY-MM-DD') as month,
+           coalesce(count(${creations.id}), 0)::int as count
+    from span
+    left join ${creations}
+      on ${creations.status} = 'approved'
+     and date_trunc('month', ${creations.approvedAt}) = span.month
+    group by span.month
+    order by span.month asc
+  `);
+  return (result.rows as Array<{ month: string; count: number }>).map((r) => ({
+    monthIso: r.month,
+    count: Number(r.count),
+  }));
+}
+
+export const getApprovalsByMonth = unstable_cache(
+  _getApprovalsByMonthUncached,
+  ["getApprovalsByMonth"],
+  { tags: [CACHE_TAG_STATS], revalidate: 3600 },
+);
+
+export interface TopTagRow {
+  id: number;
+  slug: string;
+  name: string;
+  count: number;
+}
+
+// Top tags across the entire approved catalogue (no kind filter — the
+// per-kind variant already exists at getTopTagsForKind).
+async function _getTopTagsOverallUncached(limit = 10): Promise<TopTagRow[]> {
+  const db = getDb();
+  return db
+    .select({
+      id: tags.id,
+      slug: tags.slug,
+      name: tags.name,
+      count: sql<number>`count(*)::int`,
+    })
+    .from(creationTags)
+    .innerJoin(creations, eq(creations.id, creationTags.creationId))
+    .innerJoin(tags, eq(tags.id, creationTags.tagId))
+    .where(
+      and(eq(creations.status, "approved"), eq(creationTags.rejected, false)),
+    )
+    .groupBy(tags.id, tags.slug, tags.name)
+    .orderBy(desc(sql`count(*)`))
+    .limit(limit);
+}
+
+export const getTopTagsOverall = unstable_cache(
+  _getTopTagsOverallUncached,
+  ["getTopTagsOverall"],
+  { tags: [CACHE_TAG_STATS], revalidate: 3600 },
+);
+
+async function _getMostSubscribedCreationsUncached(
+  limit = 5,
+): Promise<CreationCardRow[]> {
+  const db = getDb();
+  return db
+    .select(cardColumns)
+    .from(creations)
+    .where(eq(creations.status, "approved"))
+    .orderBy(desc(creations.subscriptions))
+    .limit(limit);
+}
+
+export const getMostSubscribedCreations = unstable_cache(
+  _getMostSubscribedCreationsUncached,
+  ["getMostSubscribedCreations"],
+  { tags: [CACHE_TAG_STATS], revalidate: 3600 },
+);
+
+export interface CardRowWithSiteFavs extends CreationCardRow {
+  siteFavorites: number;
+}
+
+// Most-favourited on the *site* — counts rows in `favorites` joined to each
+// creation, not Steam's denormalised favourite count. The COALESCE on the
+// join is what surfaces zero-favourite items as zero rather than NULL when
+// we widen this later; the LIMIT keeps the result tight regardless.
+async function _getMostFavouritedCreationsUncached(
+  limit = 5,
+): Promise<CardRowWithSiteFavs[]> {
+  const db = getDb();
+  const rows = await db
+    .select({
+      ...cardColumns,
+      siteFavorites: sql<number>`count(${favorites.userId})::int`,
+    })
+    .from(creations)
+    .leftJoin(favorites, eq(favorites.creationId, creations.id))
+    .where(eq(creations.status, "approved"))
+    .groupBy(creations.id)
+    .orderBy(desc(sql`count(${favorites.userId})`), desc(creations.subscriptions))
+    .limit(limit);
+  // Drop creations with zero site favourites — showing "Top favourited" with
+  // a row that has 0 favourites reads as broken. If we end up with fewer
+  // than `limit` we just render what's there.
+  return rows.filter((r) => r.siteFavorites > 0);
+}
+
+export const getMostFavouritedCreations = unstable_cache(
+  _getMostFavouritedCreationsUncached,
+  ["getMostFavouritedCreations"],
+  { tags: [CACHE_TAG_STATS], revalidate: 3600 },
+);
+
+// ---------------- end /stats aggregates ----------------
+
 export async function getActiveDeployAnnouncement(): Promise<DeployAnnouncement | null> {
   const db = getDb();
   // Real rows: alive while uncompleted, plus a 2-minute tail after
