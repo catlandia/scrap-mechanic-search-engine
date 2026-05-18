@@ -171,6 +171,7 @@ Site-upvote sorts order by net score (`up - down`). No vote floor — zero-vote 
 - Moderator-since date — shown in the stat grid next to the join date when the user is currently mod+. Sourced from `users.moderatorSinceAt` (stamped on first promotion, preserved across demotions).
 - Moderation status (ban, mute, warnings) — visible to the user themselves and mods+
 - Hard-ban indicator (`🔒 Hard-banned`) — visible to creator
+- **Author stats strip (V9.36+)** — three-tile row mirroring `/author/[steamid]`: Creations count, Total subscribers (sum of `subscriptions` across credited approved items), and By Kind pills. Followed by the user's **Top creation** card (highest-subscribed item). Driven by the same `getAuthorProfile(steamid)` helper the `/author` page uses, so the figures match. The whole block silently drops when the user has zero credited creations (pure commenters / voters). Pre-V9.36 these stats only rendered on `/author/[steamid]` — once an author signed up on the site, every link in the UI started pointing at `/profile/[steamid]` instead and they vanished from view.
 - **Creations** — workshop items they authored or co-authored, first 24 with a "View all →" link to `/author/[steamid]` when there are more. Reuses `getAuthorCreations`. Renders only when they're credited on at least one approved item.
 - **Submitted to the site** — items whose `uploadedByUserId` is this steamid (who pressed Submit, not who made it)
 - **Favourites** and **Vote history**

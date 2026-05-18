@@ -4,7 +4,8 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { eq } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
-import { users, type UserRole } from "@/lib/db/schema";
+import { users, type CreationKind, type UserRole } from "@/lib/db/schema";
+import { CreationCard } from "@/components/CreationCard";
 import { RoleBadge } from "@/components/RoleBadge";
 import { UserName } from "@/components/UserName";
 import { ProfileCreations } from "@/components/profile/ProfileCreations";
@@ -20,6 +21,23 @@ import { getAuthorProfile, getProfileComments } from "@/lib/db/queries";
 import { getCurrentUser, isBanned, isMuted } from "@/lib/auth/session";
 import { isModerator } from "@/lib/auth/roles";
 import { canSeeModInfo } from "@/lib/auth/viewer-is";
+import { getRatingMode } from "@/lib/prefs.server";
+
+// Plural kind labels, matching the author page so the kind-breakdown pills
+// read the same way on /profile and /author. English-only for now (the
+// /author page i18ns these via dictionary keys, but the rest of /profile is
+// English-only — keeping the page consistent inside itself is more valuable
+// than partial i18n on one strip).
+const KIND_LABEL_PLURAL: Record<CreationKind, string> = {
+  blueprint: "Blueprints",
+  mod: "Mods",
+  world: "Worlds",
+  challenge: "Challenges",
+  tile: "Tiles",
+  custom_game: "Custom Games",
+  terrain_asset: "Terrain Assets",
+  other: "Other",
+};
 
 export const dynamic = "force-dynamic";
 
@@ -98,7 +116,21 @@ export default async function ProfilePage({ params }: { params: Params }) {
 
   const viewer = await getCurrentUser();
   const showModInfo = canSeeModInfo(viewer, user.steamid);
-  const badges = await getUserBadges(user.steamid);
+  // Authored-creations summary — same shape as /author/[steamid] so the
+  // signed-up author still gets the Creations / Total Subs / By Kind /
+  // Top Creation strip a visitor would see if they typed /author/<id>
+  // directly. Returns null for users with no credited creations, in which
+  // case the whole strip silently drops out below.
+  const [badges, authorProfile, ratingMode] = await Promise.all([
+    getUserBadges(user.steamid),
+    getAuthorProfile(user.steamid),
+    getRatingMode(),
+  ]);
+  const kindEntries = authorProfile
+    ? Object.entries(authorProfile.kindCounts).sort(
+        (a, b) => b[1] - a[1] || a[0].localeCompare(b[0]),
+      )
+    : [];
 
   const role = user.role as UserRole;
   const style = ROLE_STYLES[role] ?? ROLE_STYLES.user;
@@ -217,6 +249,61 @@ export default async function ProfilePage({ params }: { params: Params }) {
             )}
           </section>
         )}
+
+      {authorProfile && authorProfile.count > 0 && (
+        <>
+          <section className="grid gap-3 sm:grid-cols-3">
+            <div className="rounded-md border border-border bg-card/60 px-4 py-3">
+              <div className="text-[10px] uppercase tracking-widest text-foreground/40">
+                Creations
+              </div>
+              <div className="mt-0.5 text-2xl font-semibold tabular-nums">
+                {authorProfile.count.toLocaleString()}
+              </div>
+            </div>
+            <div className="rounded-md border border-border bg-card/60 px-4 py-3">
+              <div className="text-[10px] uppercase tracking-widest text-foreground/40">
+                Total subscribers
+              </div>
+              <div className="mt-0.5 text-2xl font-semibold tabular-nums">
+                {authorProfile.totalSubs.toLocaleString()}
+              </div>
+            </div>
+            <div className="rounded-md border border-border bg-card/60 px-4 py-3">
+              <div className="text-[10px] uppercase tracking-widest text-foreground/40">
+                By kind
+              </div>
+              <div className="mt-1 flex flex-wrap gap-1.5">
+                {kindEntries.map(([kind, n]) => (
+                  <span
+                    key={kind}
+                    className="inline-flex items-center gap-1 rounded-full border border-foreground/15 bg-foreground/5 px-2 py-0.5 text-xs"
+                  >
+                    <span className="font-mono text-foreground/60">{n}</span>
+                    <span className="text-foreground/80">
+                      {KIND_LABEL_PLURAL[kind as CreationKind] ?? kind}
+                    </span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {authorProfile.topCreation && (
+            <section className="space-y-2">
+              <div className="text-xs uppercase tracking-widest text-foreground/40">
+                Top creation
+              </div>
+              <div className="max-w-sm">
+                <CreationCard
+                  creation={authorProfile.topCreation}
+                  ratingMode={ratingMode}
+                />
+              </div>
+            </section>
+          )}
+        </>
+      )}
 
       <ProfileCreations steamid={user.steamid} />
       <SubmittedItems steamid={user.steamid} />
