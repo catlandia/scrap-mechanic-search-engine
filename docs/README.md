@@ -18,12 +18,14 @@
 
 ## Quick orientation
 
-- Current version: **V9.42 / BETA 3.2 — Header banner flipped to Beta 3.2 with copy noting the May 7 outage is fully resolved and the caching arc is in place**
+- Current version: **V9.43 / BETA 3.2 — Routed `/admin/queue` and `/admin/tags` through the cached `getAllTags` / `getAllCategories` helpers instead of inline DB calls — those two admin pages used to fire ~4 uncached queries per load even though V9.38 already cached the same data globally**
 - Stack: Next.js 15 App Router · TypeScript · Tailwind v4 · Drizzle + Neon · iron-session · Steam OpenID
 - Hard constraint: everything must remain on **free tiers** — no paid APIs, no metered per-item costs
 - Transactions are **not available** (neon-http driver) — writes are sequential, partial state is accepted
 
-## Recent changes (V4.6–V9.42)
+## Recent changes (V4.6–V9.43)
+
+- **V9.43 — Route admin pages through the V9.38 cached taxonomy helpers.** Two admin pages were reading the full tags + categories lists via inline `db.select(...).from(tags)` / `from(categories)` calls — `/admin/queue` (the tagging queue, used per-mod-session) and `/admin/tags` (the taxonomy editor). V9.38 wrapped `getAllTags()` and `getAllCategories()` in `unstable_cache` with the `creations-tags` tag + 10 min TTL, but neither page was using the helpers, so they bypassed the cache and fired 2 DB roundtrips per load anyway. Swapped both to use the cached helpers. Same data shape (the cached helpers return the same explicit columns the inline queries already used; `getAllCategories` returns `slug + description` as well, but the `QueueItem` Category prop is structurally `{id, name}` so the wider object passes through fine). Tag-write paths in `app/admin/actions.ts` already call `flushTagCatalog` which `revalidateTag(CACHE_TAG_CREATIONS_TAGS)`s — so admin tag edits invalidate the cache immediately; no chance of an admin saving a tag and seeing the old set on next load. Also dropped the now-unused inline `tags` / `categories` imports from `app/admin/(gated)/queue/page.tsx`.
 
 - **V9.42 — Beta 3.2.** Minor branch bump from 3.1 → 3.2. `BetaBanner` flipped to `Beta 3.2` with the dismiss-key rotated `smse_beta_dismissed_v3_1` → `_v3_2`, so anyone who dismissed the V9.37 banner sees the new one once. Copy pivots from "what's new" (the V9.37 banner recapped `/stats`, `/reviews`, `/compare`, and the browser extension across the 3.0–3.1 window) to "what just happened" (May 7 outage is fully resolved, caching arc is in place, free-tier CPU headroom is restored for the rest of the cycle). Honest and visible to anyone who watched the red V9.33 outage banner sit on the home page for two weeks. No new user-visible features to advertise — V9.38 / V9.39 / V9.40 were all behind-the-scenes caching, V9.41 was the outage-banner removal — so the banner copy leans into the resolution arc rather than fabricating fresh marketing copy. `/changelog` link preserved for the curious. Historical references to "Beta 3.1" in changelog entries / docs are left alone — those are accurate statements about what was true at the time, not branding to be kept in sync.
 

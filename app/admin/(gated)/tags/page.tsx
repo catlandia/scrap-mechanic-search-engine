@@ -1,39 +1,22 @@
-import { getDb } from "@/lib/db/client";
-import { categories, tags, type Category, type Tag } from "@/lib/db/schema";
+import { type Category, type Tag } from "@/lib/db/schema";
 import { createCategory, createTag } from "@/app/admin/actions";
 import { DeleteCategoryButton } from "@/components/admin/DeleteCategoryButton";
 import { getCurrentUser } from "@/lib/auth/session";
 import { effectiveRole, isCreator } from "@/lib/auth/roles";
+import { getAllCategories, getAllTags } from "@/lib/db/queries";
 import { TagChipEditable } from "@/components/admin/TagChipEditable";
 import { FormSubmitButton } from "@/components/FormSubmitButton";
 
 export const dynamic = "force-dynamic";
 
 export default async function TagsPage() {
-  const db = getDb();
+  // V9.38 wrapped getAllTags + getAllCategories in unstable_cache with the
+  // creations-tags tag — admin tag/category writes already flush it via
+  // flushTagCatalog, so the cached read is correct.
   const [user, allCategories, allTags] = await Promise.all([
     getCurrentUser(),
-    // Narrow SELECT so this keeps working before the V9.1 migration runs
-    // in prod — `SELECT *` on categories/tags would demand created_at +
-    // created_by_user_id columns that may not exist yet.
-    db
-      .select({
-        id: categories.id,
-        slug: categories.slug,
-        name: categories.name,
-        description: categories.description,
-      })
-      .from(categories)
-      .orderBy(categories.name),
-    db
-      .select({
-        id: tags.id,
-        slug: tags.slug,
-        name: tags.name,
-        categoryId: tags.categoryId,
-      })
-      .from(tags)
-      .orderBy(tags.name),
+    getAllCategories(),
+    getAllTags(),
   ]);
   const creatorView = isCreator(effectiveRole(user));
 

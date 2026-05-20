@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
-import { categories, creations, creationTags, tagVotes, tags } from "@/lib/db/schema";
+import { creations, creationTags, tagVotes } from "@/lib/db/schema";
+import { getAllCategories, getAllTags } from "@/lib/db/queries";
 import { QueueItem } from "@/components/admin/QueueItem";
 
 export const dynamic = "force-dynamic";
@@ -90,20 +91,14 @@ export default async function QueuePage() {
 
   const pendingIds = pending.map((p) => p.id);
 
-  const allTags = await db
-    .select({
-      id: tags.id,
-      slug: tags.slug,
-      name: tags.name,
-      categoryId: tags.categoryId,
-    })
-    .from(tags)
-    .orderBy(tags.name);
-
-  const allCategories = await db
-    .select({ id: categories.id, name: categories.name })
-    .from(categories)
-    .orderBy(categories.name);
+  // Use the cached helpers (V9.38) instead of inline queries — same shape,
+  // but skips two DB round-trips when the cache is warm. allCategories
+  // returns slug/description as extra fields; the QueueItem prop type
+  // only reads id+name, so the wider object is structurally fine.
+  const [allTags, allCategories] = await Promise.all([
+    getAllTags(),
+    getAllCategories(),
+  ]);
 
   const suggestedMap = new Map<
     string,
