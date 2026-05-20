@@ -5,6 +5,7 @@ import { UserMenu } from "@/components/UserMenu";
 import { MobileNav } from "@/components/MobileNav";
 import { NavDropdown } from "@/components/NavDropdown";
 import { BetaBanner } from "@/components/BetaBanner";
+import { ClaudeOutageBanner } from "@/components/ClaudeOutageBanner";
 import { DeployBanner } from "@/components/DeployBanner";
 import { CompareBasket } from "@/components/CompareBasket";
 import { ExtremeFunEffects } from "@/components/ExtremeFunEffects";
@@ -183,6 +184,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <DeployBanner funMode={funMode} />
         <ExtremeFunEffects enabled={funMode && funModeExtreme} />
         <CompareBasket />
+        <ClaudeOutageBanner />
         <BetaBanner />
         <header className="sticky top-0 z-30 border-b border-foreground/10 bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70">
           <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3 sm:flex-nowrap sm:gap-x-6">

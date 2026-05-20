@@ -795,6 +795,22 @@ export type NewChangelogEntry = typeof changelogEntries.$inferInsert;
 export type ChangelogRead = typeof changelogReads.$inferSelect;
 export type DeployAnnouncement = typeof deployAnnouncements.$inferSelect;
 
+// ---------------- Site flags ----------------
+// Tiny key-value store for global on/off switches the Creator can toggle
+// from /admin/abuse without a deploy. Each row is a singleton — the `key`
+// PK names the flag (e.g. "claude_outage"). Read on every layout render
+// via a short-TTL unstable_cache wrap; writes flip the cached state on
+// the next refresh window.
+export const siteFlags = pgTable("site_flags", {
+  key: text("key").primaryKey(),
+  enabled: boolean("enabled").notNull().default(false),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export type SiteFlag = typeof siteFlags.$inferSelect;
+
 // ---------------- Game reviews ----------------
 // Creator-authored sandbox-game reviews living at /reviews. Modeled on the
 // changelog table: drafts (publishedAt null) are creator-only, soft-delete

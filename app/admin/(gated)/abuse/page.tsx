@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { triggerFakeReboot } from "@/app/admin/actions";
+import { setClaudeOutageBanner, triggerFakeReboot } from "@/app/admin/actions";
 import { FormSubmitButton } from "@/components/FormSubmitButton";
 import { getCurrentUser } from "@/lib/auth/session";
 import { effectiveRole, isCreator } from "@/lib/auth/roles";
+import { getSiteFlag } from "@/lib/db/queries";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +29,8 @@ export default async function AbusePage() {
       </div>
     );
   }
+
+  const claudeOutageOn = await getSiteFlag("claude_outage");
 
   return (
     <div className="space-y-8">
@@ -64,6 +67,61 @@ export default async function AbusePage() {
               className="rounded-md bg-red-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-red-500"
             >
               Trigger fake reboot
+            </FormSubmitButton>
+          </form>
+        </div>
+      </section>
+
+      <section className="rounded-lg border border-amber-500/40 bg-amber-500/5 p-4">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="max-w-xl space-y-1">
+            <h2 className="text-base font-semibold text-amber-200">
+              Not actually abuse
+            </h2>
+            <p className="text-sm text-foreground/60">
+              Pins a site-wide amber banner that says{" "}
+              <em className="text-foreground/80">
+                I am outta Claude :( the development is stalled until I renew
+                the subscription for Claude
+              </em>{" "}
+              to the top of every page for every visitor — regardless of Fun
+              Mode. Flip it off when the subscription is back so the site
+              looks normal again.
+            </p>
+            <p className="text-xs text-foreground/40">
+              Current state:{" "}
+              <span
+                className={
+                  claudeOutageOn
+                    ? "font-semibold text-amber-200"
+                    : "text-foreground/60"
+                }
+              >
+                {claudeOutageOn ? "ON — visible to everyone" : "off"}
+              </span>
+            </p>
+          </div>
+          <form action={setClaudeOutageBanner}>
+            <input
+              type="hidden"
+              name="enabled"
+              value={claudeOutageOn ? "off" : "on"}
+            />
+            <FormSubmitButton
+              pendingLabel="Flipping…"
+              spinnerSize="sm"
+              toastSuccess={
+                claudeOutageOn
+                  ? "Claude outage banner turned off."
+                  : "Claude outage banner is now live for every visitor."
+              }
+              className={
+                claudeOutageOn
+                  ? "rounded-md bg-foreground/15 px-3 py-1.5 text-sm font-semibold text-foreground hover:bg-foreground/25"
+                  : "rounded-md bg-amber-500 px-3 py-1.5 text-sm font-semibold text-black hover:bg-amber-400"
+              }
+            >
+              {claudeOutageOn ? "Turn banner off" : "Turn banner on"}
             </FormSubmitButton>
           </form>
         </div>

@@ -9,6 +9,7 @@ import {
   CACHE_TAG_CREATIONS_TAGS,
   CACHE_TAG_CREATION_DETAIL,
   CACHE_TAG_CREATION_REPORTS,
+  CACHE_TAG_SITE_FLAGS,
   CACHE_TAG_STATS,
 } from "@/lib/db/queries";
 import { getDb } from "@/lib/db/client";
@@ -20,6 +21,7 @@ import {
   creations,
   deployAnnouncements,
   reports,
+  siteFlags,
   tags,
   users,
 } from "@/lib/db/schema";
@@ -1985,4 +1987,30 @@ export async function triggerFakeReboot() {
   const db = getDb();
   const scheduledAt = new Date(Date.now() + 60_000);
   await db.insert(deployAnnouncements).values({ scheduledAt, isPrank: true });
+}
+
+// Flip a `site_flags` row on or off. Creator-only — these are global
+// switches that every visitor sees regardless of Fun Mode. Upserts so a
+// brand-new key (one not seeded by a migration) creates its row on first
+// flip. revalidateTag fires the CACHE_TAG_SITE_FLAGS bust so the toggle
+// shows up immediately rather than waiting out the 30s read TTL.
+export async function setSiteFlag(key: string, enabled: boolean) {
+  await requireCreator();
+  const db = getDb();
+  await db
+    .insert(siteFlags)
+    .values({ key, enabled, updatedAt: new Date() })
+    .onConflictDoUpdate({
+      target: siteFlags.key,
+      set: { enabled, updatedAt: new Date() },
+    });
+  revalidateTag(CACHE_TAG_SITE_FLAGS);
+  revalidatePath("/", "layout");
+}
+
+// Form-friendly wrapper: reads target state from FormData so the toggle UI
+// on /admin/abuse can post directly without binding arguments client-side.
+export async function setClaudeOutageBanner(formData: FormData) {
+  const enabled = formData.get("enabled") === "on";
+  await setSiteFlag("claude_outage", enabled);
 }

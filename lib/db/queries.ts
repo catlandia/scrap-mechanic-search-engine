@@ -16,6 +16,7 @@ import {
   favorites,
   notifications,
   reports,
+  siteFlags,
   tagVotes,
   tags,
   users,
@@ -1952,4 +1953,33 @@ export const getActiveDeployAnnouncement = unstable_cache(
   _getActiveDeployAnnouncementUncached,
   ["getActiveDeployAnnouncement"],
   { revalidate: 5 },
+);
+
+// ---------------- Site flags ----------------
+// Tiny key-value store backed by the `site_flags` table — toggled by the
+// Creator from /admin/abuse, read on every layout render. Returns false
+// when the row doesn't exist (e.g. unseeded environments) so callers can
+// safely treat the helper as "is this thing currently on?".
+
+export const CACHE_TAG_SITE_FLAGS = "site-flags";
+
+async function _getSiteFlagUncached(key: string): Promise<boolean> {
+  const db = getDb();
+  const [row] = await db
+    .select({ enabled: siteFlags.enabled })
+    .from(siteFlags)
+    .where(eq(siteFlags.key, key))
+    .limit(1);
+  return row?.enabled ?? false;
+}
+
+// 30s TTL: short enough that a toggle from /admin/abuse propagates to live
+// visitors within a refresh window without the Creator having to flush
+// anything; long enough to collapse the per-layout-render hits to one DB
+// roundtrip per half-minute regardless of traffic. The tag exists too so
+// the toggle action can `revalidateTag` for immediate propagation.
+export const getSiteFlag = unstable_cache(
+  _getSiteFlagUncached,
+  ["getSiteFlag"],
+  { tags: [CACHE_TAG_SITE_FLAGS], revalidate: 30 },
 );
