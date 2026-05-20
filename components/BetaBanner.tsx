@@ -6,7 +6,7 @@ import { useT } from "@/lib/i18n/client";
 
 // Bump the version suffix whenever banner copy meaningfully changes — a new
 // key re-shows the banner to users who dismissed the previous message.
-const DISMISS_KEY = "smse_beta_dismissed_v3_1";
+const DISMISS_KEY = "smse_beta_dismissed_v3_2";
 
 export function BetaBanner() {
   const { t } = useT();
@@ -40,12 +40,12 @@ export function BetaBanner() {
     >
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2 text-xs sm:text-sm">
         <span className="font-semibold uppercase tracking-wider text-amber-300">
-          Beta 3.1
+          Beta 3.2
         </span>
         <span className="text-foreground/70">
-          <span className="font-semibold text-amber-200">New:</span>{" "}
-          a public site stats page, sandbox-game reviews, side-by-side
-          creation comparisons, and a Workshop browser extension.{" "}
+          The May 7th free-tier outage is behind us — three rounds of caching
+          across the site mean we're back comfortably under the CPU cap with
+          headroom for the rest of the cycle. Thanks for hanging in there.{" "}
           <Link
             href="/changelog"
             className="text-amber-200 underline underline-offset-2 hover:text-foreground"

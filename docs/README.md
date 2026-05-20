@@ -18,12 +18,14 @@
 
 ## Quick orientation
 
-- Current version: **V9.41 / BETA 3.1 — Removed the V9.33 free-tier outage banner from the home page now that the billing cycle has reset and the V9.38–V9.40 caching arc is in place**
+- Current version: **V9.42 / BETA 3.2 — Header banner flipped to Beta 3.2 with copy noting the May 7 outage is fully resolved and the caching arc is in place**
 - Stack: Next.js 15 App Router · TypeScript · Tailwind v4 · Drizzle + Neon · iron-session · Steam OpenID
 - Hard constraint: everything must remain on **free tiers** — no paid APIs, no metered per-item costs
 - Transactions are **not available** (neon-http driver) — writes are sequential, partial state is accepted
 
-## Recent changes (V4.6–V9.41)
+## Recent changes (V4.6–V9.42)
+
+- **V9.42 — Beta 3.2.** Minor branch bump from 3.1 → 3.2. `BetaBanner` flipped to `Beta 3.2` with the dismiss-key rotated `smse_beta_dismissed_v3_1` → `_v3_2`, so anyone who dismissed the V9.37 banner sees the new one once. Copy pivots from "what's new" (the V9.37 banner recapped `/stats`, `/reviews`, `/compare`, and the browser extension across the 3.0–3.1 window) to "what just happened" (May 7 outage is fully resolved, caching arc is in place, free-tier CPU headroom is restored for the rest of the cycle). Honest and visible to anyone who watched the red V9.33 outage banner sit on the home page for two weeks. No new user-visible features to advertise — V9.38 / V9.39 / V9.40 were all behind-the-scenes caching, V9.41 was the outage-banner removal — so the banner copy leans into the resolution arc rather than fabricating fresh marketing copy. `/changelog` link preserved for the curious. Historical references to "Beta 3.1" in changelog entries / docs are left alone — those are accurate statements about what was true at the time, not branding to be kept in sync.
 
 - **V9.41 — Removed the V9.33 outage banner.** The red `role="alert"` "My bad — we've hit our free hosting limit for the month" section that V9.33 put at the top of `app/page.tsx` is now gone. Two reasons: (1) the billing cycle reset on 2026-05-17 (anchor day 17 per the Vercel team's `createdAt`), and today is 2026-05-20, so the May 17 deadline the banner cited is three days in the past; (2) the V9.38 / V9.39 / V9.40 caching arc landed in the meantime, so the underlying CPU pressure that produced the banner in the first place has been addressed at the source — uncached page-load queries (footer counter, deploy poll, search filters, creators, author/profile, signed-in for-you feed, redundant lastSeenAt UPDATEs, double-call patterns on layout + page) are all squared away. The banner served its purpose during the outage; leaving it up past the reset date would just be apologising for a problem that's no longer there. The `JsonLd` block and the support callout that sat below it are unchanged.
 
