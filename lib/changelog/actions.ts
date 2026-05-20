@@ -97,12 +97,9 @@ export async function getUnreadChangelogCount(): Promise<number> {
   const user = await getCurrentUser();
   if (!user) return 0;
   const db = getDb();
-  const [read] = await db
-    .select({ lastSeen: changelogReads.lastSeenEntryId })
-    .from(changelogReads)
-    .where(eq(changelogReads.userId, user.steamid))
-    .limit(1);
-  const lastSeen = read?.lastSeen ?? 0;
+  // Single round-trip via subquery instead of two sequential queries —
+  // matters because neon-http is one HTTP fetch per query and this runs
+  // for every signed-in user on every page load (called from app/layout.tsx).
   const [row] = await db
     .select({ n: sql<number>`count(*)::int` })
     .from(changelogEntries)
@@ -110,7 +107,7 @@ export async function getUnreadChangelogCount(): Promise<number> {
       and(
         sql`${changelogEntries.publishedAt} is not null`,
         isNull(changelogEntries.deletedAt),
-        sql`${changelogEntries.id} > ${lastSeen}`,
+        sql`${changelogEntries.id} > coalesce((select ${changelogReads.lastSeenEntryId} from ${changelogReads} where ${changelogReads.userId} = ${user.steamid} limit 1), 0)`,
       ),
     );
   return Math.min(99, row?.n ?? 0);

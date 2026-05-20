@@ -693,7 +693,7 @@ export const getTopCreators = unstable_cache(
 // and excludes anything the viewer has already favorited / voted on / viewed
 // / commented on. Signed-out viewers and viewers without enough positive
 // signal fall through to a plain trending feed so the slot still gives value.
-export async function getForYouFeed(
+async function _getForYouFeedUncached(
   viewerSteamid: string | null,
   limit = 12,
 ): Promise<CreationCardRow[]> {
@@ -701,28 +701,48 @@ export async function getForYouFeed(
 
   const db = getDb();
 
-  // Liked tags = directly upvoted tags + tags carried by creations the viewer
-  // favorited or upvoted. Combining both pulls in implicit signal even when
-  // the viewer hasn't explicitly voted on tags yet.
-  const directLikedTags = await db
-    .select({ tagId: tagVotes.tagId })
-    .from(tagVotes)
-    .where(and(eq(tagVotes.userId, viewerSteamid), eq(tagVotes.value, 1)));
-
-  const favoritedIds = (
-    await db
+  // Five viewer-keyed selects run in parallel so neon-http's per-query HTTP
+  // overhead is amortised across one wait rather than five sequential ones.
+  // All five vote tables are PK'd or btree-indexed on user_id so each scan
+  // is cheap.
+  const [
+    directLikedTagRows,
+    favoritedRows,
+    voteRows,
+    viewRows,
+    commentRows,
+  ] = await Promise.all([
+    db
+      .select({ tagId: tagVotes.tagId })
+      .from(tagVotes)
+      .where(and(eq(tagVotes.userId, viewerSteamid), eq(tagVotes.value, 1))),
+    db
       .select({ id: favorites.creationId })
       .from(favorites)
-      .where(eq(favorites.userId, viewerSteamid))
-  ).map((r) => r.id);
-  const upvotedIds = (
-    await db
-      .select({ id: creationVotes.creationId })
+      .where(eq(favorites.userId, viewerSteamid)),
+    // One vote scan returns both "upvoted" (value=1, used as positive signal)
+    // and "any vote" (used for the seen filter) — caller splits on value.
+    db
+      .select({ id: creationVotes.creationId, value: creationVotes.value })
       .from(creationVotes)
+      .where(eq(creationVotes.userId, viewerSteamid)),
+    db
+      .select({ id: creationViews.creationId })
+      .from(creationViews)
+      .where(eq(creationViews.userId, viewerSteamid)),
+    db
+      .select({ id: comments.creationId })
+      .from(comments)
       .where(
-        and(eq(creationVotes.userId, viewerSteamid), eq(creationVotes.value, 1)),
-      )
-  ).map((r) => r.id);
+        and(
+          eq(comments.userId, viewerSteamid),
+          sql`${comments.creationId} IS NOT NULL`,
+        ),
+      ),
+  ]);
+
+  const favoritedIds = favoritedRows.map((r) => r.id);
+  const upvotedIds = voteRows.filter((r) => r.value === 1).map((r) => r.id);
   const positiveCreationIds = Array.from(
     new Set([...favoritedIds, ...upvotedIds]),
   );
@@ -742,42 +762,24 @@ export async function getForYouFeed(
   }
 
   const likedTagIds = Array.from(
-    new Set([...directLikedTags.map((r) => r.tagId), ...viaCreationsTags]),
+    new Set([
+      ...directLikedTagRows.map((r) => r.tagId),
+      ...viaCreationsTags,
+    ]),
   );
 
   // Need at least two liked tags to call this a meaningful "for you" mix.
   if (likedTagIds.length < 2) return getTrendingFeed(limit);
 
   // "Seen" set — anything the viewer already engaged with shouldn't appear.
-  const seenRows = [
-    ...favoritedIds,
-    ...(
-      await db
-        .select({ id: creationVotes.creationId })
-        .from(creationVotes)
-        .where(eq(creationVotes.userId, viewerSteamid))
-    ).map((r) => r.id),
-    ...(
-      await db
-        .select({ id: creationViews.creationId })
-        .from(creationViews)
-        .where(eq(creationViews.userId, viewerSteamid))
-    ).map((r) => r.id),
-    ...(
-      await db
-        .select({ id: comments.creationId })
-        .from(comments)
-        .where(
-          and(
-            eq(comments.userId, viewerSteamid),
-            sql`${comments.creationId} IS NOT NULL`,
-          ),
-        )
-    )
-      .map((r) => r.id)
-      .filter((x): x is string => x != null),
-  ];
-  const seen = Array.from(new Set(seenRows));
+  const seen = Array.from(
+    new Set([
+      ...favoritedIds,
+      ...voteRows.map((r) => r.id),
+      ...viewRows.map((r) => r.id),
+      ...commentRows.map((r) => r.id).filter((x): x is string => x != null),
+    ]),
+  );
 
   const conditions: SQL[] = [
     eq(creations.status, "approved"),
@@ -817,6 +819,21 @@ export async function getForYouFeed(
   }
   return matched;
 }
+
+// Home page is the hottest signed-in surface and this helper used to run
+// 6+ DB roundtrips per visit. Per-viewer keying means each user gets their
+// own cache slot; a 60s TTL covers the click-around-the-site bursts that
+// otherwise re-fire the whole pipeline. creations-list tag flushes the
+// cache whenever an admin action shifts the approved set, so promoted
+// items don't sit invisible for a minute. The viewer's own vote/favourite
+// writes deliberately don't flush — TTL absorbs them, and the result row
+// already excludes "seen" items, so a just-favourited row would only
+// disappear on the next refresh window anyway.
+export const getForYouFeed = unstable_cache(
+  _getForYouFeedUncached,
+  ["getForYouFeed"],
+  { tags: [CACHE_TAG_CREATIONS_LIST], revalidate: 60 },
+);
 
 // Quality-ordered list used as the signed-out / cold-start "For you"
 // fallback. Sorted by site upvote net first (so curated signal beats raw

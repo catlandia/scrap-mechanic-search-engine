@@ -1,7 +1,7 @@
 import { getIronSession, type SessionOptions } from "iron-session";
 import { cookies } from "next/headers";
 import { cache } from "react";
-import { and, eq, isNull, lt, or, sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import { users, type User } from "@/lib/db/schema";
 import { getPlayerSummary, getSmPlaytimeMinutes } from "@/lib/steam/client";
@@ -74,25 +74,25 @@ export const getCurrentUser = cache(async (): Promise<User | null> => {
     .limit(1);
   if (!user) return null;
   if (user.hardBanned) return null;
-  // Bump lastSeenAt at most once per minute per user. The conditional WHERE
-  // keeps this a no-op on most requests (single PK lookup, no row rewrite).
-  // We await because neon-http is a one-shot fetch; fire-and-forget would
-  // risk the function ending before the write completes.
-  try {
-    await db
-      .update(users)
-      .set({ lastSeenAt: sql`now()` })
-      .where(
-        and(
-          eq(users.steamid, user.steamid),
-          or(
-            isNull(users.lastSeenAt),
-            lt(users.lastSeenAt, sql`now() - interval '1 minute'`),
-          ),
-        ),
-      );
-  } catch {
-    // Presence tracking is best-effort — never let it block auth.
+  // Bump lastSeenAt at most once per minute per user. We branch in JS on
+  // the already-fetched lastSeenAt so we only send the UPDATE when the
+  // bump would actually change a row — sparing one DB roundtrip per
+  // signed-in page load for the ~98% of visits that happen inside the
+  // 1-minute window. (Previous version always sent the UPDATE and relied
+  // on a conditional WHERE clause to no-op server-side; the roundtrip
+  // happened either way.) We await because neon-http is a one-shot fetch;
+  // fire-and-forget would risk the function ending before the write
+  // completes.
+  const lastSeenMs = user.lastSeenAt?.getTime() ?? 0;
+  if (Date.now() - lastSeenMs > 60_000) {
+    try {
+      await db
+        .update(users)
+        .set({ lastSeenAt: sql`now()` })
+        .where(eq(users.steamid, user.steamid));
+    } catch {
+      // Presence tracking is best-effort — never let it block auth.
+    }
   }
 
   return await maybeRefreshSteamProfile(user);
