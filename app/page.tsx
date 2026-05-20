@@ -78,18 +78,6 @@ export default async function HomePage() {
   return (
     <div className="space-y-14">
       <JsonLd data={websiteJsonLd} />
-      <section
-        role="alert"
-        className="rounded-lg border border-red-500/50 bg-red-500/10 px-5 py-4 text-sm leading-relaxed text-red-200 sm:px-6"
-      >
-        <p className="font-semibold text-red-300">
-          My bad — we&apos;ve hit our free hosting limit for the month.
-        </p>
-        <p className="mt-1 text-red-200/80">
-          The site is still up, but pages may feel sluggish until the quota
-          resets on May 17. Thanks for hanging in there.
-        </p>
-      </section>
       <section className="rounded-lg border border-accent/30 bg-accent/5 px-5 py-4 text-sm leading-relaxed text-foreground/80 sm:px-6">
         <p>
           {t("home.supportCalloutBefore")}{" "}
