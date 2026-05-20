@@ -6,18 +6,18 @@ All typed query helpers are in `lib/db/queries.ts`. These are the read-side coun
 
 ## Caching
 
-The hot public-page queries are wrapped with `unstable_cache` so listings and creation detail render from memory across requests. The internal implementation lives under `_xxxUncached` names; the public exports (`getNewestApproved`, `getApprovedByKind`, `getApprovedKindCounts`, `getTopTagsForKind`, `searchApproved`, `getCreationDetail`, `getCreationVoteBreakdown`, `getCreationSiteCounts`, `getPublicReportBadge`) are the cache-wrapped versions, so call sites in pages don't change.
+The hot public-page queries are wrapped with `unstable_cache` so listings and creation detail render from memory across requests. The internal implementation lives under `_xxxUncached` names; the public exports keep their original names so call sites in pages don't change.
 
 Tags and TTLs:
 
 | Tag | Queries | TTL | Flushed by |
 |---|---|---|---|
-| `creations-list` | newest, by-kind, kind-counts, search | 2–10 min | `flushCreationListings` / `flushTagCatalog` in `app/admin/actions.ts` |
-| `creations-tags` | top-tags-for-kind | 10 min | `flushTagCatalog` |
+| `creations-list` | newest, by-kind, kind-counts, search, trending, top creators, author profile, author creations | 2–10 min | `flushCreationListings` / `flushTagCatalog` in `app/admin/actions.ts` |
+| `creations-tags` | top-tags-for-kind, all-tags, all-categories | 10 min | `flushTagCatalog` |
 | `creation-detail` | creation row + tags + categories | 5 min | `flushCreationDetail` / above helpers |
 | `creation-reports` | public report badge | 10 min | `flushReportBadges` |
 | `stats` | catalogue totals, approvals-by-month, top tags, top creations | 1 h | `flushCreationListings` / `flushTagCatalog` (V9.35+) |
-| (none, TTL-only) | vote breakdown, site counts | 60 s | TTL alone |
+| (none, TTL-only) | vote breakdown, site counts, user counts (footer), active deploy announcement | 5–60 s | TTL alone |
 
 **Why TTL-only on votes/site-counts:** users vote and favourite frequently; revalidating per-action would defeat the cache. A 60s window of stale counts is acceptable.
 
@@ -170,7 +170,7 @@ Returns a `Record<Kind, number>` mapping each kind to its count of approved crea
 
 ## `/stats` Aggregates (V9.35+)
 
-All six queries below are wrapped in `unstable_cache` with the `stats` tag and a 1 h TTL. The page hits all six in a single `Promise.all`. Flushed alongside listings whenever an admin action shifts the approved set.
+The five aggregate queries below (`getCatalogueTotals`, `getApprovalsByMonth`, `getTopTagsOverall`, `getMostSubscribedCreations`, `getMostFavouritedCreations`) are wrapped in `unstable_cache` with the `stats` tag and a 1 h TTL. The page hits them in a single `Promise.all`. Flushed alongside listings whenever an admin action shifts the approved set. `getUserCounts` is documented in this section because the page also surfaces a signed-in-users tile, but it has its own cache shape (TTL-only, 60s — see below).
 
 ### `getCatalogueTotals()`
 
@@ -191,6 +191,8 @@ Two ranking queries. The first is a straight `ORDER BY subscriptions DESC` over 
 ### `getUserCounts()`
 
 Returns `{ total, online }` for the footer presence display. Both counts come from one scan of the `users` table: `total = COUNT(*) WHERE NOT hard_banned`; `online = COUNT(*) FILTER (WHERE last_seen_at > now() - interval '5 minutes')`. Backed by `users_last_seen_idx`. Anonymous visitors aren't tracked — the counter only reflects signed-in accounts.
+
+Wrapped in `unstable_cache` with a 60s TTL since V9.38 — `app/layout.tsx` calls it on every page load, and the "online" window is already 5 minutes wide, so a minute of staleness on the displayed figure is well inside what the UX already promises. TTL-only (no cache tag): the inputs are `users.last_seen_at` bumps from `getCurrentUser`, not admin actions, so there's nothing meaningful to `revalidateTag` against.
 
 ---
 

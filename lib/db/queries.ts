@@ -494,7 +494,7 @@ function authorMatch(steamid: string): SQL {
   return sql`(${creations.authorSteamid} = ${steamid} or ${creations.creators} @> ${JSON.stringify([{ steamid }])}::jsonb)`;
 }
 
-export async function getAuthorProfile(steamid: string): Promise<AuthorProfile | null> {
+async function _getAuthorProfileUncached(steamid: string): Promise<AuthorProfile | null> {
   const db = getDb();
   const [row] = await db
     .select({
@@ -551,7 +551,18 @@ export async function getAuthorProfile(steamid: string): Promise<AuthorProfile |
   };
 }
 
-export async function getAuthorCreations(
+// Per-steamid keyed. Three queries per call (count + kindCounts + topCreation)
+// makes this an expensive helper, and /author/[steamid] + /profile/[steamid]
+// + /feed.xml?author= all hit it. creations-list tag covers approvals /
+// archives / restores / deletes — anything that would actually shift these
+// counts.
+export const getAuthorProfile = unstable_cache(
+  _getAuthorProfileUncached,
+  ["getAuthorProfile"],
+  { tags: [CACHE_TAG_CREATIONS_LIST], revalidate: 300 },
+);
+
+async function _getAuthorCreationsUncached(
   steamid: string,
   opts: { sort?: SortMode; limit?: number; offset?: number } = {},
 ): Promise<CreationCardRow[]> {
@@ -565,6 +576,12 @@ export async function getAuthorCreations(
     .limit(limit)
     .offset(offset);
 }
+
+export const getAuthorCreations = unstable_cache(
+  _getAuthorCreationsUncached,
+  ["getAuthorCreations"],
+  { tags: [CACHE_TAG_CREATIONS_LIST], revalidate: 120 },
+);
 
 export interface TopCreatorRow {
   steamid: string;
@@ -581,7 +598,7 @@ export interface TopCreatorRow {
 // `creators[]` jsonb axis, counted distinctly by creation id so a person who
 // appears as both primary and co-author on the same item doesn't double-
 // count. Optional `q` filters by case-insensitive name substring.
-export async function getTopCreators(
+async function _getTopCreatorsUncached(
   opts: {
     q?: string;
     limit?: number;
@@ -659,6 +676,17 @@ export async function getTopCreators(
     count: r.count,
   }));
 }
+
+// Powers /creators. The result set is keyed by the search query string, kind
+// filter, and paging — kept inside the cache key so each pill / search hits
+// its own slot. creations-list tag flushes the cache whenever an admin action
+// shifts the approved set (approve / archive / restore / delete / setKind /
+// add). 5 minutes of staleness on the directory is acceptable.
+export const getTopCreators = unstable_cache(
+  _getTopCreatorsUncached,
+  ["getTopCreators"],
+  { tags: [CACHE_TAG_CREATIONS_LIST], revalidate: 300 },
+);
 
 // "For you" feed. Scores candidate creations by how many of the viewer's
 // liked tags they carry, breaks ties on site upvote score and Steam subs,
@@ -836,7 +864,7 @@ export const getApprovedKindCounts = unstable_cache(
 // lastSeenAt bump, so leaving them in would double-skew both numbers.
 const ONLINE_WINDOW_MINUTES = 5;
 
-export async function getUserCounts(): Promise<{ total: number; online: number }> {
+async function _getUserCountsUncached(): Promise<{ total: number; online: number }> {
   const db = getDb();
   const [row] = await db
     .select({
@@ -848,7 +876,18 @@ export async function getUserCounts(): Promise<{ total: number; online: number }
   return { total: row?.total ?? 0, online: row?.online ?? 0 };
 }
 
-export async function getAllTags() {
+// Layout-bound footer counter — runs on every page load, so cache it. The
+// "online" window is already 5 minutes, so 60s of staleness on the displayed
+// figure is well within what the UX already promises. TTL-only (no tag): the
+// inputs are users.lastSeenAt bumps in getCurrentUser, not admin actions, so
+// there's nothing meaningful to revalidateTag against.
+export const getUserCounts = unstable_cache(
+  _getUserCountsUncached,
+  ["getUserCounts"],
+  { revalidate: 60 },
+);
+
+async function _getAllTagsUncached() {
   const db = getDb();
   // Explicit column list so the query keeps working if newer columns
   // (created_by_user_id / created_at from V9.1) aren't yet applied in prod.
@@ -865,7 +904,13 @@ export async function getAllTags() {
     .orderBy(tags.name);
 }
 
-export async function getAllCategories() {
+export const getAllTags = unstable_cache(
+  _getAllTagsUncached,
+  ["getAllTags"],
+  { tags: [CACHE_TAG_CREATIONS_TAGS], revalidate: 600 },
+);
+
+async function _getAllCategoriesUncached() {
   const db = getDb();
   return db
     .select({
@@ -877,6 +922,12 @@ export async function getAllCategories() {
     .from(categories)
     .orderBy(categories.name);
 }
+
+export const getAllCategories = unstable_cache(
+  _getAllCategoriesUncached,
+  ["getAllCategories"],
+  { tags: [CACHE_TAG_CREATIONS_TAGS], revalidate: 600 },
+);
 
 // ---------------- v2.0 community helpers ----------------
 
@@ -1844,7 +1895,7 @@ export const getMostFavouritedCreations = unstable_cache(
 
 // ---------------- end /stats aggregates ----------------
 
-export async function getActiveDeployAnnouncement(): Promise<DeployAnnouncement | null> {
+async function _getActiveDeployAnnouncementUncached(): Promise<DeployAnnouncement | null> {
   const db = getDb();
   // Real rows: alive while uncompleted, plus a 2-minute tail after
   // completion so laggy clients still see the completed state and reload.
@@ -1865,3 +1916,17 @@ export async function getActiveDeployAnnouncement(): Promise<DeployAnnouncement 
     .limit(1);
   return row ?? null;
 }
+
+// Polled by every open tab via /api/deploy-announcement every 8s in the
+// steady state (2s during the build-swap window). 99.9%+ of polls return
+// "no active announcement" because deploys are rare, so a 5s TTL collapses
+// that traffic to ~one DB hit per 5s globally regardless of tab count.
+// Worst case on a real deploy: the banner appears up to 5s late, well
+// inside the script's 60s countdown. Writes go directly to the DB via
+// scripts/deploy.ts / scripts/complete-deploy.ts so there's no
+// revalidateTag path — TTL-only is correct here.
+export const getActiveDeployAnnouncement = unstable_cache(
+  _getActiveDeployAnnouncementUncached,
+  ["getActiveDeployAnnouncement"],
+  { revalidate: 5 },
+);
