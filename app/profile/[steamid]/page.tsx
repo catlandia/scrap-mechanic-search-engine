@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { cache } from "react";
 import type { Metadata } from "next";
 import { eq } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
@@ -43,12 +44,14 @@ export const dynamic = "force-dynamic";
 
 type Params = Promise<{ steamid: string }>;
 
-async function loadUser(steamid: string) {
+// React `cache()` dedupes the generateMetadata + page render lookups within
+// one request — saves one DB roundtrip per /profile/[steamid] visit.
+const loadUser = cache(async (steamid: string) => {
   if (!/^\d{1,25}$/.test(steamid)) return null;
   const db = getDb();
   const [row] = await db.select().from(users).where(eq(users.steamid, steamid)).limit(1);
   return row ?? null;
-}
+});
 
 export async function generateMetadata({
   params,

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { cache } from "react";
 import { getReviewBySlug } from "@/lib/reviews/actions";
 import { steamHeaderUrl } from "@/lib/reviews/steam-header";
 import { Markdown } from "@/components/Markdown";
@@ -8,13 +9,17 @@ import { ScoreBadge } from "../page";
 
 export const dynamic = "force-dynamic";
 
+// React `cache()` dedupes the generateMetadata + page render lookups within
+// one request — saves one DB roundtrip per /reviews/[slug] visit.
+const loadReview = cache((slug: string) => getReviewBySlug(slug));
+
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const review = await getReviewBySlug(slug);
+  const review = await loadReview(slug);
   if (!review) return { title: "Review not found" };
   const description = review.body
     ? review.body.replace(/[*_`>#\-]/g, " ").slice(0, 200)
@@ -32,7 +37,7 @@ export default async function ReviewDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const review = await getReviewBySlug(slug);
+  const review = await loadReview(slug);
   if (!review) notFound();
 
   const thumb = review.thumbnailUrl ?? steamHeaderUrl(review.steamAppId);

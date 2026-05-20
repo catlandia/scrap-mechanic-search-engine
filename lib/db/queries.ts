@@ -1,6 +1,7 @@
 import { and, desc, eq, inArray, notInArray, sql, type SQL } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { unstable_cache } from "next/cache";
+import { cache } from "react";
 import { getDb } from "./client";
 import {
   categories,
@@ -1626,9 +1627,14 @@ export async function getUnreadNotificationCount(
   return row?.n ?? 0;
 }
 
-export async function getUnreadNotificationCountsByTier(
+// React `cache()` (per-request memo, not the next/cache cross-request store)
+// because /me/notifications calls this both from app/layout.tsx (bell counter)
+// and from the page itself (tier tab badges). Without dedupe, that's two
+// identical DB roundtrips per page render. cache() makes the second call a
+// no-op within the same request.
+export const getUnreadNotificationCountsByTier = cache(async (
   userId: string,
-): Promise<Record<NotificationTier, number>> {
+): Promise<Record<NotificationTier, number>> => {
   const db = getDb();
   const rows = await db
     .select({ tier: notifications.tier, n: sql<number>`count(*)::int` })
@@ -1645,7 +1651,7 @@ export async function getUnreadNotificationCountsByTier(
     if (r.tier in out) out[r.tier as NotificationTier] = r.n;
   }
   return out;
-}
+});
 
 export async function getUserNotifications(
   userId: string,
