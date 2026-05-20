@@ -44,8 +44,8 @@ export function BetaBanner() {
         </span>
         <span className="text-foreground/70">
           The May 7th free-tier outage is behind us — three rounds of caching
-          across the site mean we're back comfortably under the CPU cap with
-          headroom for the rest of the cycle. Thanks for hanging in there.{" "}
+          across the site mean we&apos;re back comfortably under the CPU cap
+          with headroom for the rest of the cycle. Thanks for hanging in there.{" "}
           <Link
             href="/changelog"
             className="text-amber-200 underline underline-offset-2 hover:text-foreground"
