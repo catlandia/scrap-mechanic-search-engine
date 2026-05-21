@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import "./globals.css";
+import { ErrorExplain } from "@/components/ErrorExplain";
 
 // Hardcoded per-locale bundle. This file replaces the entire HTML tree on a
 // fatal error, so the LocaleProvider isn't mounted and we can't read the
@@ -83,9 +84,7 @@ export default function GlobalError({
             </div>
             <h1 className="text-xl font-semibold text-foreground">{s.title}</h1>
             <p className="text-sm text-foreground/70">{s.body}</p>
-            {error.digest && (
-              <p className="text-[11px] text-foreground/40">ref: {error.digest}</p>
-            )}
+            <ErrorExplain digest={error.digest} />
             <button
               type="button"
               onClick={reset}

@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useT } from "@/lib/i18n/client";
+import { ErrorExplain } from "@/components/ErrorExplain";
 
 export default function Error({
   error,
@@ -27,9 +28,7 @@ export default function Error({
         {t("error.title")}
       </h1>
       <p className="text-sm text-foreground/70">{t("error.body")}</p>
-      {error.digest && (
-        <p className="text-[11px] text-foreground/40">ref: {error.digest}</p>
-      )}
+      <ErrorExplain digest={error.digest} />
       <button
         type="button"
         onClick={reset}

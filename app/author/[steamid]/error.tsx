@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect } from "react";
+import { ErrorExplain } from "@/components/ErrorExplain";
 
 export default function AuthorError({
   error,
@@ -23,11 +24,7 @@ export default function AuthorError({
         Something went wrong fetching their creations. Try reloading, or head
         to the creator directory.
       </p>
-      {error.digest && (
-        <p className="font-mono text-[10px] text-foreground/40">
-          ref: {error.digest}
-        </p>
-      )}
+      <ErrorExplain digest={error.digest} />
       <div className="flex flex-wrap gap-2 pt-1">
         <button
           type="button"

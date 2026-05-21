@@ -115,13 +115,35 @@ No paid build tools. No Turbopack in production (standard webpack).
 
 ---
 
-## Key Vercel Constraints (Hobby Plan)
+## Free-Tier Constraints — which one actually bites
+
+The site runs on two free-tier services (Vercel Hobby + Neon). They have totally separate meters, and **they are not equally dangerous.**
+
+**Neon (the storage tier) is by far the bigger constraint. Vercel overuse is far less of a problem in comparison.**
+
+When Neon's monthly quota runs out, every database lookup throws `HTTP 402` and the site goes effectively dark — the cached page shell still renders but anything needing a fresh read 404s or shows the error screen. Recovery only happens at the next monthly reset (the `quota_reset_at` field on the project, queryable via Neon's management API). At the time of writing (2026-05-21) the storage tier is **exhausted**; reset is **2026-06-01**.
+
+By contrast, when Vercel's Fluid Active CPU cap is exceeded, the platform issues a *warning* — it does not auto-pause the site. The V9.33 outage banner went up in fear of an enforcement action that turned out not to happen (V9.34 confirmed). So Vercel overuse is annoying and worth caching against, but it doesn't take the site down the way a Neon exhaustion does.
+
+**Rule of thumb:** optimise for fewer DB calls first, fewer Vercel function-CPU seconds second.
+
+### Vercel (Hobby) meters
 
 - **Cron jobs:** Max 2 cron jobs, minimum 1-day interval. Both our jobs are daily/weekly — within limits.
 - **Function timeout:** 10 seconds default. Ingest and refresh are designed to be chunked. If a single ingest run times out, re-run manually with fewer pages.
-- **Fluid Active CPU:** 4 hours/month. SSR public pages (`/`, `/[kind]`, `/creation/[id]`, `/search`, `/new`) all use `force-dynamic` for cookies/auth, so Next's route cache doesn't help. The countermeasure is `unstable_cache` on the underlying DB query helpers in `lib/db/queries.ts` — see `docs/queries.md` for tags / TTLs / when admin actions flush them. Without that layer, organic traffic growth blows the 4h cap by mid-month.
+- **Fluid Active CPU:** 4 hours/month. SSR public pages (`/`, `/[kind]`, `/creation/[id]`, `/search`, `/new`) all use `force-dynamic` for cookies/auth, so Next's route cache doesn't help. The countermeasure is `unstable_cache` on the underlying DB query helpers in `lib/db/queries.ts` — see `docs/queries.md` for tags / TTLs / when admin actions flush them. Without that layer, organic traffic growth blows the 4h cap by mid-month. Per V9.34: tipping over warns but does **not** auto-pause.
 - **Bandwidth:** Free tier is generous. Steam thumbnails are hotlinked from Steam's CDN — we serve no images ourselves.
-- **Postgres:** Neon free tier has 0.5 GB storage and connection pooling limits. At expected scale (tens of thousands of creations) this is sufficient.
+
+### Neon (storage) meters
+
+- **Compute hours** — the binding constraint. Active compute time is metered while the database is awake serving queries. When exhausted, every query returns HTTP 402 across the entire project until the monthly reset. The cron jobs are tiny; almost all consumption comes from page-traffic-driven DB hits, which is why the `unstable_cache` arc in V9.32 / V9.34 / V9.38 / V9.39 / V9.40 is the primary defence — every cache slot served from the data cache is one DB hit not made.
+- **Storage (disk):** 0.5 GB cap. At current scale we're at ~10% of cap — a distant secondary concern.
+- **Auto-suspend:** the compute auto-suspends after a default idle window (5 min on free). This is what keeps active-time bounded; do not disable it.
+- **Diagnostics:** the project state (`active_time`, `cpu_used_sec`, `quota_reset_at`, `synthetic_storage_size`) is queryable via `GET /api/v2/projects?org_id=…` against `console.neon.tech/api/v2` with a `napi_` bearer token — see the `reference-neon-api` memory for the org/project IDs. The detailed daily-history endpoint is gated to Scale+ and not usable on free.
+
+### On-site signalling
+
+Public error screens (`app/error.tsx`, `app/global-error.tsx`, `app/creation/[id]/error.tsx`, `app/author/[steamid]/error.tsx`) render `<ErrorExplain>`, which fetches `/api/health` on the client. The route does a tiny `SELECT 1` against Neon, catches any failure, and runs it through `lib/errors/codes.ts` to map raw errors to a stable `{ code, explanation }` pair. A Neon 402 surfaces as `STORAGE_QUOTA_EXHAUSTED` with copy that names the June 1 reset; anything else falls through to `UNKNOWN — Unknown error.` Add new mappings in `classifyError()` as new failure modes are observed.
 
 ---
 

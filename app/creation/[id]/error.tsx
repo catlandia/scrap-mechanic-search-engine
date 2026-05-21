@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect } from "react";
+import { ErrorExplain } from "@/components/ErrorExplain";
 
 export default function CreationError({
   error,
@@ -24,11 +25,7 @@ export default function CreationError({
         archived or hidden while we were loading it, or there was a network
         hiccup. You can try again, or browse something else.
       </p>
-      {error.digest && (
-        <p className="font-mono text-[10px] text-foreground/40">
-          ref: {error.digest}
-        </p>
-      )}
+      <ErrorExplain digest={error.digest} />
       <div className="flex flex-wrap gap-2 pt-1">
         <button
           type="button"
