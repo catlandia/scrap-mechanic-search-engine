@@ -14,6 +14,8 @@
 | [deployment.md](deployment.md) | Vercel config, cron jobs, migrations, env vars, Hobby plan constraints |
 | [captcha.md](captcha.md) | Custom SM-themed captcha — characters, session design, image hiding, tuning |
 | [blockdle.md](blockdle.md) | Blockdle minigame — block-guess *dle puzzle, extractor pipeline, daily/endless modes |
+| [pi-migration.md](pi-migration.md) | Planning: Pi-5-as-DB-fallback hardware shopping list + next steps (post-Neon-outage planning) |
+| [pi-migration-plan.md](pi-migration-plan.md) | Planning: step-by-step execution plan for the Pi migration — phases 0-7, code-only work that unblocks before hardware arrives |
 | [maintaining-docs.md](maintaining-docs.md) | Routing table + rules for keeping these docs small, current, and non-duplicative |
 
 ## Quick orientation
