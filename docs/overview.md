@@ -129,6 +129,7 @@ app/
     minigames/page.tsx            # minigames landing grid
     minigames/scrapcha/           # Scrapcha character-ID game
     minigames/blockdle/           # Blockdle block-guess *dle game (+ daily & all-time leaderboards)
+    minigames/clicker/            # Scrap Clicker idle game (100% localStorage, no DB)
   admin/
     login/page.tsx
     logout/page.tsx

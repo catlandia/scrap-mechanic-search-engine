@@ -252,6 +252,9 @@ const en: Dictionary = {
     "Near-impossible Scrap Mechanic info guesser. Nine clues, ten tries, 500+ blocks.",
   "minigames.blockdle.subtitle":
     "Guess the block. Stats tell you how close you are — green means match, arrows point you toward the answer.",
+  "minigames.clicker.name": "Scrap Clicker",
+  "minigames.clicker.blurb":
+    "A cozy idle clicker with real in-game art. Tap the bearing to harvest scrap, then buy pumps, engines, totebots and craftbots to automate the whole yard. Saves in your browser.",
   "minigames.blockdle.mode.daily": "Daily",
   "minigames.blockdle.mode.endless": "Endless",
   "minigames.blockdle.inputPlaceholder": "Type a block name…",
@@ -862,6 +865,9 @@ const ru: Dictionary = {
     "Почти невыполнимый угадайщик блоков Scrap Mechanic. Девять подсказок, десять попыток, 500+ блоков.",
   "minigames.blockdle.subtitle":
     "Угадайте блок. Характеристики подсказывают, насколько вы близки — зелёный значит совпадение, стрелки указывают направление.",
+  "minigames.clicker.name": "Скрап-кликер",
+  "minigames.clicker.blurb":
+    "Уютный кликер с настоящими внутриигровыми иконками. Нажимайте на подшипник, чтобы добывать скрап, а затем покупайте насосы, двигатели, тотботов и крафтботов, чтобы автоматизировать всю свалку. Прогресс сохраняется в браузере.",
   "minigames.blockdle.mode.daily": "Ежедневно",
   "minigames.blockdle.mode.endless": "Бесконечно",
   "minigames.blockdle.inputPlaceholder": "Введите название блока…",
@@ -1461,6 +1467,9 @@ const de: Dictionary = {
     "Beinahe unmöglicher Scrap-Mechanic-Block-Rater. Neun Hinweise, zehn Versuche, 500+ Blöcke.",
   "minigames.blockdle.subtitle":
     "Errate den Block. Die Werte zeigen, wie nah du dran bist — grün heißt Treffer, Pfeile weisen die Richtung.",
+  "minigames.clicker.name": "Scrap Clicker",
+  "minigames.clicker.blurb":
+    "Ein gemütlicher Idle-Clicker mit echten Spielgrafiken. Klicke auf das Kugellager, um Schrott zu sammeln, und kaufe dann Pumpen, Motoren, Totebots und Craftbots, um den ganzen Schrottplatz zu automatisieren. Speichert im Browser.",
   "minigames.blockdle.mode.daily": "Täglich",
   "minigames.blockdle.mode.endless": "Endlos",
   "minigames.blockdle.inputPlaceholder": "Blocknamen eingeben…",
@@ -2064,6 +2073,9 @@ const pl: Dictionary = {
     "Prawie niemożliwy odgadywacz klocków Scrap Mechanic. Dziewięć wskazówek, dziesięć prób, 500+ klocków.",
   "minigames.blockdle.subtitle":
     "Zgadnij klocek. Statystyki podpowiadają, jak blisko jesteś — zielony to trafienie, strzałki wskazują kierunek.",
+  "minigames.clicker.name": "Scrap Clicker",
+  "minigames.clicker.blurb":
+    "Przytulny idle-clicker z prawdziwą grafiką z gry. Klikaj w łożysko, aby zbierać złom, a potem kupuj pompy, silniki, toteboty i craftboty, aby zautomatyzować całe złomowisko. Zapisuje się w przeglądarce.",
   "minigames.blockdle.mode.daily": "Dzienny",
   "minigames.blockdle.mode.endless": "Bez końca",
   "minigames.blockdle.inputPlaceholder": "Wpisz nazwę klocka…",
@@ -2668,6 +2680,9 @@ const uk: Dictionary = {
     "Майже неможливий відгадувач блоків Scrap Mechanic. Дев'ять підказок, десять спроб, 500+ блоків.",
   "minigames.blockdle.subtitle":
     "Вгадайте блок. Характеристики підказують, наскільки ви близько — зелений означає збіг, стрілки вказують напрямок.",
+  "minigames.clicker.name": "Скрап-клікер",
+  "minigames.clicker.blurb":
+    "Затишний клікер зі справжніми внутрішньоігровими іконками. Натискайте на підшипник, щоб добувати скрап, а потім купуйте насоси, двигуни, тотботів і крафтботів, щоб автоматизувати все звалище. Прогрес зберігається у браузері.",
   "minigames.blockdle.mode.daily": "Щоденно",
   "minigames.blockdle.mode.endless": "Нескінченно",
   "minigames.blockdle.inputPlaceholder": "Введіть назву блоку…",
@@ -3262,6 +3277,9 @@ const zh: Dictionary = {
     "近乎不可能的 Scrap Mechanic 方块猜谜。九项线索,十次尝试,500+ 方块。",
   "minigames.blockdle.subtitle":
     "猜出这个方块。属性会提示你距离答案有多近 — 绿色表示匹配,箭头指向正确方向。",
+  "minigames.clicker.name": "Scrap Clicker",
+  "minigames.clicker.blurb":
+    "一款轻松的放置点击游戏,采用真实的游戏内图标。点击轴承来采集废料,然后购买泵、引擎、托特机器人和制造机器人,实现整个废料场的自动化。进度保存在浏览器中。",
   "minigames.blockdle.mode.daily": "每日",
   "minigames.blockdle.mode.endless": "无尽",
   "minigames.blockdle.inputPlaceholder": "输入方块名称…",

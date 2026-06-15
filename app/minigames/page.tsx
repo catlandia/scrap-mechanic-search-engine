@@ -71,6 +71,27 @@ export default async function MinigamesLandingPage() {
               </p>
             </Link>
           </li>
+          <li>
+            <Link
+              href="/minigames/clicker"
+              className="group flex h-full flex-col gap-2 rounded-lg border border-border bg-card p-5 transition hover:border-accent hover:bg-card/80"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <span className="text-3xl" aria-hidden>
+                  ♻️
+                </span>
+                <span className="rounded-full border border-accent/40 bg-accent/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-accent">
+                  {t("minigames.playLabel")}
+                </span>
+              </div>
+              <h3 className="text-lg font-semibold text-foreground group-hover:text-accent">
+                {t("minigames.clicker.name")}
+              </h3>
+              <p className="text-sm text-foreground/60">
+                {t("minigames.clicker.blurb")}
+              </p>
+            </Link>
+          </li>
         </ul>
       </section>
 
