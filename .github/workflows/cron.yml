@@ -1,0 +1,44 @@
+name: cron
+
+# Ingest + refresh used to run as Vercel Cron. They now run here, as plain
+# Node jobs against Neon, because (a) Steam's Web API 403s Cloudflare's egress
+# IPs and (b) the free Cloudflare Worker tier caps a request at 50 subrequests
+# — a full ingest makes far more. GitHub-hosted runners have neither limit.
+on:
+  schedule:
+    - cron: "0 6 * * *" # daily ingest   (06:00 UTC) — was vercel.json crons[0]
+    - cron: "0 3 * * 1" # weekly refresh (Mon 03:00 UTC) — was vercel.json crons[1]
+  workflow_dispatch:
+    inputs:
+      job:
+        description: Which job to run manually
+        type: choice
+        options: [ingest, refresh]
+        default: ingest
+
+concurrency:
+  group: cron
+  cancel-in-progress: false
+
+jobs:
+  cron:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm ci
+      - name: Run job
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          STEAM_API_KEY: ${{ secrets.STEAM_API_KEY }}
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            if [ "${{ github.event.schedule }}" = "0 3 * * 1" ]; then JOB=refresh; else JOB=ingest; fi
+          else
+            JOB="${{ inputs.job }}"
+          fi
+          echo "Running cron job: $JOB"
+          npx tsx scripts/cron.ts "$JOB"

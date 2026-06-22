@@ -5,42 +5,88 @@ loadEnv({ path: ".env", override: false });
 import { execSync } from "node:child_process";
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
+import { and, isNull, sql } from "drizzle-orm";
 import { deployAnnouncements } from "../lib/db/schema";
 
-// 60 seconds is long enough that active visitors on any page see the
-// countdown tick down a few times before the push fires, short enough
-// that it doesn't feel like a hostage situation for the person deploying.
+// 60 seconds is long enough that active visitors on any page see the countdown
+// tick down a few times before the Worker swaps under them, short enough that
+// it doesn't feel like a hostage situation for the person deploying.
 const COUNTDOWN_SECONDS = 60;
 
+function run(cmd: string) {
+  console.log(`\n$ ${cmd}`);
+  execSync(cmd, { stdio: "inherit", env: process.env });
+}
+
 async function main() {
-  const url = process.env.DATABASE_URL;
-  if (!url) {
+  const dbUrl = process.env.DATABASE_URL;
+  if (!dbUrl) {
+    console.error("DATABASE_URL is not set — add it to .env.local before deploying.");
+    process.exit(1);
+  }
+  if (!process.env.CLOUDFLARE_API_TOKEN) {
     console.error(
-      "DATABASE_URL is not set — add it to .env.local before running `npm run deploy`.",
+      "CLOUDFLARE_API_TOKEN is not set — add it to .env.local so wrangler can deploy non-interactively.",
     );
     process.exit(1);
   }
 
-  const db = drizzle(neon(url));
-  const scheduledAt = new Date(Date.now() + COUNTDOWN_SECONDS * 1000);
+  // Stamp the build with the current commit so the DeployBanner can tell the
+  // freshly-deployed bundle apart from the one a visitor currently has loaded
+  // (next.config bakes this into NEXT_PUBLIC_BUILD_ID).
+  const sha = execSync("git rev-parse --short HEAD").toString().trim();
+  process.env.CF_BUILD_SHA = sha;
 
-  console.log(
-    `Announcing deploy for ${scheduledAt.toISOString()} (${COUNTDOWN_SECONDS}s from now)…`,
-  );
+  // 1. Build FIRST. The live Worker keeps serving the old bundle throughout,
+  //    so the (slow) build causes zero visitor disruption — unlike the old
+  //    Vercel flow where the banner fired at push time and the swap came
+  //    minutes later.
+  console.log(`Building deployment ${sha}…`);
+  run("npx opennextjs-cloudflare build");
+
+  const db = drizzle(neon(dbUrl));
+
+  // 2. Announce the deploy and hold for the countdown, so every live visitor
+  //    gets the 60s banner + SFX before the Worker actually swaps.
+  const scheduledAt = new Date(Date.now() + COUNTDOWN_SECONDS * 1000);
   await db.insert(deployAnnouncements).values({ scheduledAt });
   console.log(
-    `Banner is live for every visitor. Waiting ${COUNTDOWN_SECONDS}s before pushing…\n`,
+    `\nBanner is live for every visitor. Waiting ${COUNTDOWN_SECONDS}s before deploying…\n`,
   );
-
   for (let i = COUNTDOWN_SECONDS; i > 0; i--) {
     process.stdout.write(`\r  T-${String(i).padStart(2, "0")}s…   `);
     await new Promise((r) => setTimeout(r, 1000));
   }
-  process.stdout.write("\n\n");
+  process.stdout.write("\n");
 
-  console.log("Pushing to origin…");
-  execSync("git push", { stdio: "inherit" });
-  console.log("\nDeploy triggered. Vercel is building now.");
+  // 3. Swap the Worker. wrangler returns once the new version is live at the
+  //    edge (a few seconds), so the swap is effectively atomic.
+  run("npx wrangler deploy");
+
+  // 4. Mark the announcement live → the next poll flips every visitor onto the
+  //    new bundle. (This was scripts/complete-deploy.ts; its Vercel build gate
+  //    is gone now that the deploy happens here, after the swap.)
+  const result = await db
+    .update(deployAnnouncements)
+    .set({ completedAt: sql`now()` })
+    .where(
+      and(
+        isNull(deployAnnouncements.completedAt),
+        sql`${deployAnnouncements.id} = (
+          SELECT id FROM ${deployAnnouncements}
+          WHERE completed_at IS NULL AND is_prank = false
+          ORDER BY scheduled_at DESC
+          LIMIT 1
+        )`,
+      ),
+    )
+    .returning({ id: deployAnnouncements.id });
+
+  if (result.length > 0) {
+    console.log(`\nDeploy ${sha} is live — marked announcement #${result[0].id}.`);
+  } else {
+    console.log(`\nDeploy ${sha} is live.`);
+  }
 }
 
 main().catch((err) => {

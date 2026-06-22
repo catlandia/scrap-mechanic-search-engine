@@ -12,12 +12,12 @@ export const SAVE_KEY = "smse_clicker_v1";
 
 // Real Scrap Mechanic item icons. The UUIDs below index into the icon set that
 // Blockdle already extracts from the game install (gitignored, fetched at build
-// from the private blockdle-data repo) and serves at the route below — so we get
-// genuine in-game art without committing Facepunch's assets to this public repo.
-// `emoji` is a graceful fallback for when the manifest isn't present (e.g. a
+// from the private blockdle-data repo) and copies the PNGs into /public — so we
+// get genuine in-game art without committing Facepunch's assets to this public
+// repo. `emoji` is a graceful fallback for when an icon isn't present (e.g. a
 // build with Blockdle unconfigured): <Icon> swaps to it if the PNG 404s.
 export function iconUrl(uuid: string): string {
-  return `/api/minigames/blockdle/icon/${uuid}`;
+  return `/blockdle-icons/${uuid}.png`;
 }
 
 /** The part the player taps to harvest scrap by hand. */

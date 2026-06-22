@@ -11,7 +11,7 @@ const ICONS_DIR = path.join(LIB_DIR, "icons");
 const BLOCKS_JSON_DISK = path.join(LIB_DIR, "blocks.json");
 const BLOCKS_GENERATED_TS = path.join(LIB_DIR, "blocks.generated.ts");
 const AUTOCOMPLETE_GENERATED_TS = path.join(LIB_DIR, "autocomplete.generated.ts");
-const ICONS_GENERATED_JSON = path.join(LIB_DIR, "_icons.generated.json");
+const PUBLIC_ICONS_DIR = path.resolve(process.cwd(), "public/blockdle-icons");
 
 const UUID_PNG = /^[0-9a-f-]{36}\.png$/i;
 
@@ -151,7 +151,6 @@ export const INDEX: readonly AutocompleteEntry[] = [];
 `;
   await fs.writeFile(BLOCKS_GENERATED_TS, blocksOut, "utf8");
   await fs.writeFile(AUTOCOMPLETE_GENERATED_TS, autoOut, "utf8");
-  await fs.writeFile(ICONS_GENERATED_JSON, "{}", "utf8");
 }
 
 async function readLocalSet(): Promise<
@@ -218,16 +217,23 @@ export const INDEX: readonly AutocompleteEntry[] = ${JSON.stringify(index)};
 `;
   await fs.writeFile(AUTOCOMPLETE_GENERATED_TS, autoOut, "utf8");
 
-  // 3. _icons.generated.json — base64 map keyed by uuid.
-  const iconMap: Record<string, string> = {};
+  // 3. Copy each icon PNG into /public so it's served as a static asset at
+  // /blockdle-icons/<uuid>.png. Keeping these out of the JS bundle is what
+  // lets the Worker fit Cloudflare's 3 MiB size limit — base64-inlining 541
+  // PNGs pushed the server bundle past 20 MB. Icons aren't a cheat vector
+  // (correctness is judged server-side), so a plain public URL keyed by the
+  // stable uuid is fine.
+  await fs.rm(PUBLIC_ICONS_DIR, { recursive: true, force: true });
+  await fs.mkdir(PUBLIC_ICONS_DIR, { recursive: true });
   for (const b of blocks) {
-    const buf = await fs.readFile(path.join(ICONS_DIR, `${b.uuid}.png`));
-    iconMap[b.uuid] = buf.toString("base64");
+    await fs.copyFile(
+      path.join(ICONS_DIR, `${b.uuid}.png`),
+      path.join(PUBLIC_ICONS_DIR, `${b.uuid}.png`),
+    );
   }
-  await fs.writeFile(ICONS_GENERATED_JSON, JSON.stringify(iconMap), "utf8");
 
   console.log(
-    `[blockdle] Wrote blocks.generated.ts (${blocks.length}), autocomplete.generated.ts (${index.length}), _icons.generated.json (${Object.keys(iconMap).length}).`,
+    `[blockdle] Wrote blocks.generated.ts (${blocks.length}), autocomplete.generated.ts (${index.length}), copied ${blocks.length} icons to public/blockdle-icons/.`,
   );
 }
 

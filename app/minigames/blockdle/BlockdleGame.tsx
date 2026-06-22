@@ -254,7 +254,7 @@ function RevealPanel({
       <div className="flex items-start gap-3">
         {view.answer && (
           <Image
-            src={`/api/minigames/blockdle/icon/${view.answer.uuid}`}
+            src={`/blockdle-icons/${view.answer.uuid}.png`}
             alt=""
             width={64}
             height={64}

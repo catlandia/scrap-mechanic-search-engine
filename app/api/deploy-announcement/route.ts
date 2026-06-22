@@ -11,7 +11,11 @@ export const dynamic = "force-dynamic";
 // Vercel may still be uploading lambdas + warming the CDN for another 30s
 // after that. Reloading on completedAt alone sometimes landed visitors
 // back on the OLD bundle.
-const SERVER_BUILD_ID = process.env.VERCEL_GIT_COMMIT_SHA ?? "dev";
+// Baked into the bundle at build time (next.config sets NEXT_PUBLIC_BUILD_ID
+// from the commit SHA), so the route served by the *currently live* Worker
+// reports that deployment's id — which the client compares against its own
+// baked id to know when a genuinely new bundle is live and it should reload.
+const SERVER_BUILD_ID = process.env.NEXT_PUBLIC_BUILD_ID ?? "dev";
 
 /**
  * Polled by the top-bar DeployBanner. Returns the currently-active deploy

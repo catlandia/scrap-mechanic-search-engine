@@ -1,0 +1,17 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "scrap-mechanic-search-engine",
+  "account_id": "005bca2a23488e096749457da4312628",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2025-09-23",
+  // nodejs_compat is mandatory for OpenNext: it backs Buffer, node:crypto
+  // (iron-session), and populates process.env from vars/secrets at runtime.
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "binding": "ASSETS",
+    "directory": ".open-next/assets"
+  },
+  "observability": {
+    "enabled": true
+  }
+}

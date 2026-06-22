@@ -52,7 +52,7 @@ export function GuessRow({ guess }: Props) {
     <div className={`grid ${GRID_COLS} gap-1.5 sm:gap-2`}>
       <div className="flex h-14 items-center justify-center overflow-hidden rounded border border-border bg-black/40">
         <Image
-          src={`/api/minigames/blockdle/icon/${guess.guessUuid}`}
+          src={`/blockdle-icons/${guess.guessUuid}.png`}
           alt=""
           width={48}
           height={48}

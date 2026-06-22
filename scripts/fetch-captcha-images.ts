@@ -1,5 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import { createHash } from "node:crypto";
 
 // Downloads the captcha image set from a private GitHub repo before build.
 // The images stay out of this repo so a cloner can't build a perceptual-hash
@@ -8,8 +9,13 @@ import path from "node:path";
 const IMAGES_DIR = path.resolve(process.cwd(), "lib/captcha/images");
 const MANIFEST_PATH = path.resolve(
   process.cwd(),
-  "lib/captcha/_images.generated.json",
+  "lib/captcha/_images.manifest.json",
 );
+// Hashed copies live in /public so they're served as static assets (and kept
+// out of the JS bundle). The content hash is unguessable and never exposed to
+// the client — the gated route fetches them server-side — so the
+// anti-enumeration threat model is preserved. See docs/captcha.md.
+const PUBLIC_CAPTCHA_DIR = path.resolve(process.cwd(), "public/_captcha");
 const EXPECTED_COUNT = 25;
 const JPG = /^\d+\.jpg$/i;
 
@@ -121,21 +127,28 @@ async function main() {
   await writeManifestFromDisk();
 }
 
-// Embed every on-disk image into a JSON manifest as base64. Next.js bundles
-// imported JSON reliably, where outputFileTracingIncludes for filesystem
-// reads has proven finicky on Vercel App Router functions.
+// Copy every on-disk image into /public/_captcha under an unguessable
+// content-hashed filename, and write a small `name -> hashed-filename` map.
+// The hashed files are served as static assets (so the 23 MB of JPEGs stay out
+// of the Worker bundle), but only ever fetched server-side through the
+// session-gated route — the client never sees the hashed URL, so the image set
+// can't be enumerated. See docs/captcha.md.
 async function writeManifestFromDisk() {
   const files = (await fs.readdir(IMAGES_DIR))
     .filter((f) => JPG.test(f))
     .sort();
-  const entries: Record<string, string> = {};
+  await fs.rm(PUBLIC_CAPTCHA_DIR, { recursive: true, force: true });
+  await fs.mkdir(PUBLIC_CAPTCHA_DIR, { recursive: true });
+  const manifest: Record<string, string> = {};
   for (const name of files) {
     const buf = await fs.readFile(path.join(IMAGES_DIR, name));
-    entries[name.toLowerCase()] = buf.toString("base64");
+    const hashed = `${createHash("sha256").update(buf).digest("hex")}.jpg`;
+    await fs.writeFile(path.join(PUBLIC_CAPTCHA_DIR, hashed), buf);
+    manifest[name.toLowerCase()] = hashed;
   }
-  await fs.writeFile(MANIFEST_PATH, JSON.stringify(entries));
+  await fs.writeFile(MANIFEST_PATH, JSON.stringify(manifest));
   console.log(
-    `[captcha] Wrote manifest with ${files.length} entries to lib/captcha/_images.generated.json`,
+    `[captcha] Copied ${files.length} hashed images to public/_captcha/ and wrote lib/captcha/_images.manifest.json`,
   );
 }
 
