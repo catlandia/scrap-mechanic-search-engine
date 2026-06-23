@@ -1,37 +1,33 @@
 "use client";
 
-import { createContext, useCallback, useContext, useMemo, type ReactNode } from "react";
+import { createContext, useCallback, useContext, type ReactNode } from "react";
 import type { Locale } from "@/lib/prefs";
-import { translate, type Dictionary } from "./dictionaries";
+import { getDictionary, translate } from "./dictionaries";
 
-interface LocaleCtx {
-  locale: Locale;
-  dict: Dictionary;
-}
-
-const Ctx = createContext<LocaleCtx | null>(null);
+// The context carries ONLY the locale string. The dictionaries module is
+// already in the client bundle (translate/getDictionary are imported here, a
+// "use client" module), so each consumer looks its dictionary up locally.
+// Passing the full dict object down from the server layout used to serialize
+// the entire ~600-key dictionary into the RSC/HTML payload on every request —
+// the dominant per-request CPU cost that was tripping the Worker CPU limit.
+const Ctx = createContext<Locale>("en");
 
 export function LocaleProvider({
   locale,
-  dict,
   children,
 }: {
   locale: Locale;
-  dict: Dictionary;
   children: ReactNode;
 }) {
-  const value = useMemo(() => ({ locale, dict }), [locale, dict]);
-  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={locale}>{children}</Ctx.Provider>;
 }
 
 export function useT() {
-  const ctx = useContext(Ctx);
+  const locale = useContext(Ctx);
   const t = useCallback(
-    (key: string, vars?: Record<string, string | number>): string => {
-      if (!ctx) return key;
-      return translate(ctx.dict, key, vars);
-    },
-    [ctx],
+    (key: string, vars?: Record<string, string | number>): string =>
+      translate(getDictionary(locale), key, vars),
+    [locale],
   );
-  return { t, locale: ctx?.locale ?? "en" };
+  return { t, locale };
 }

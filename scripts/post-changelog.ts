@@ -16,9 +16,9 @@ import { drizzle } from "drizzle-orm/neon-http";
 import { changelogEntries } from "../lib/db/schema";
 
 // --------------------- entry to post --------------------------------
-const TIER: "update" | "patch" = "update";
-const TITLE = "New minigame: Scrap Clicker";
-const BODY = `There's a new game in the Break Room: Scrap Clicker. Tap the bearing to harvest scrap, then spend it on real in-game parts — sensors, vacuum pumps, engines, totebots, craftbots and more — to automate the whole yard, plus upgrades that multiply everything. It even keeps earning while you're away. Your progress saves right in your browser, so there's no account and nothing to sign in for. Find it under Minigames & Others, or jump straight to /minigames/clicker.`;
+const TIER: "update" | "patch" = "patch";
+const TITLE = "Fixed: pages occasionally failing to load";
+const BODY = `Some visitors were running into an intermittent error where pages — the homepage, Newest, search, and individual creation pages — would randomly fail to load and show an error screen instead. That's fixed: the site now renders well within its free-hosting limits, so loads are reliable again. Link previews (the share cards you see when posting a creation on Discord or Reddit) are untouched. Thanks for bearing with the hiccup.`;
 // --------------------------------------------------------------------
 
 async function main() {

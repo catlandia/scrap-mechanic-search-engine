@@ -21,7 +21,6 @@ import {
   getRatingMode,
   getTheme,
 } from "@/lib/prefs.server";
-import { getDictionary } from "@/lib/i18n/dictionaries";
 import { getT } from "@/lib/i18n/server";
 import { LocaleProvider } from "@/lib/i18n/client";
 import { isModerator } from "@/lib/auth/roles";
@@ -39,6 +38,15 @@ export const metadata: Metadata = {
     template: "%s · Scrap Mechanic Search Engine",
   },
   description: siteDescription,
+  // Favicons are static assets in /public (referenced here) instead of the
+  // app/icon.png file convention: that convention inlines the PNGs (~82 KiB)
+  // into the Worker bundle, and the free Worker sits right at the 3 MiB cap.
+  // Static assets are served off the Worker by Cloudflare's CDN. See
+  // docs/deployment.md ("Why the images are static assets").
+  icons: {
+    icon: "/icon.png",
+    apple: "/apple-icon.png",
+  },
   openGraph: {
     title: siteTitle,
     description: siteDescription,
@@ -97,7 +105,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const funMode = await getFunMode();
   const funModeExtreme = await getFunModeExtreme();
   const { locale, t } = await getT();
-  const dict = getDictionary(locale);
   const browseItems = browseHrefs.map((b) => ({ href: b.href, label: t(b.key) }));
   const navItems: NavItem[] = [
     { kind: "link", href: "/new", label: t("nav.newest") },
@@ -178,7 +185,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         )}
       </head>
       <body className="min-h-screen bg-background text-foreground antialiased">
-        <LocaleProvider locale={locale} dict={dict}>
+        <LocaleProvider locale={locale}>
         <ToastProvider>
         <DeployBanner funMode={funMode} />
         <ExtremeFunEffects enabled={funMode && funModeExtreme} />
