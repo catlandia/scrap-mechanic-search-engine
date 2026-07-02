@@ -317,6 +317,25 @@ const en: Dictionary = {
   "minigames.silence.error":
     "Couldn't load the latest @ScrapMechanic post right now. Try again in a few minutes.",
 
+  "minigames.chapter2.name": "Chapter 2 countdown",
+  "minigames.chapter2.blurb":
+    "No release date yet — but the second Axolot announces one, this page becomes a live countdown to the next chapter.",
+  "minigames.chapter2.title": "Chapter 2 countdown",
+  "minigames.chapter2.subtitle":
+    "A live timer to the release of Scrap Mechanic's next chapter. The moment a date is announced, the clock starts — whether or not the devs ever make their own.",
+  "minigames.chapter2.totalSeconds": "{n} seconds to go.",
+  "minigames.chapter2.notAnnouncedTitle": "No release date… yet",
+  "minigames.chapter2.notAnnouncedBody":
+    "Axolot hasn't given the next chapter a date — Devblog 26 promised one \"in the coming months,\" and the latest teaser just said \"Tomorrow.\" The instant a real date drops, this page turns into a live countdown.",
+  "minigames.chapter2.notAnnouncedCta": "Meanwhile, watch the silence counter",
+  "minigames.chapter2.releasedTitle": "Chapter 2 is out!",
+  "minigames.chapter2.releasedBody":
+    "The wait is over — the next chapter has arrived. Go build something.",
+  "minigames.chapter2.releasedCta": "Open in Steam",
+  "minigames.chapter2.releaseDateLabel": "Release date",
+  "minigames.chapter2.disclaimer":
+    "A \"month\" here is a 30-day bucket — vibe over calendar. The date is set by hand the moment it's announced; there's no official countdown feed to read.",
+
   "creation.backToNewest": "← Back to newest",
   "creation.by": "by",
   "creation.viewOnSteamWorkshop": "View on Steam Workshop ↗",
@@ -930,6 +949,25 @@ const ru: Dictionary = {
   "minigames.silence.error":
     "Сейчас не удалось загрузить последний пост @ScrapMechanic. Попробуйте через несколько минут.",
 
+  "minigames.chapter2.name": "Обратный отсчёт до Chapter 2",
+  "minigames.chapter2.blurb":
+    "Даты выхода пока нет — но как только Axolot её объявят, эта страница станет живым отсчётом до следующей главы.",
+  "minigames.chapter2.title": "Обратный отсчёт до Chapter 2",
+  "minigames.chapter2.subtitle":
+    "Живой таймер до выхода следующей главы Scrap Mechanic. Как только объявят дату, отсчёт начнётся — даже если разработчики так и не сделают свой собственный.",
+  "minigames.chapter2.totalSeconds": "Осталось {n} секунд.",
+  "minigames.chapter2.notAnnouncedTitle": "Даты выхода пока нет…",
+  "minigames.chapter2.notAnnouncedBody":
+    "Axolot ещё не назвали дату следующей главы — в Devblog 26 обещали объявить её «в ближайшие месяцы», а последний тизер просто гласил «Tomorrow.». Как только появится настоящая дата, эта страница превратится в живой обратный отсчёт.",
+  "minigames.chapter2.notAnnouncedCta": "А пока следите за счётчиком тишины",
+  "minigames.chapter2.releasedTitle": "Chapter 2 вышла!",
+  "minigames.chapter2.releasedBody":
+    "Ожидание закончилось — следующая глава здесь. Идите что-нибудь стройте.",
+  "minigames.chapter2.releasedCta": "Открыть в Steam",
+  "minigames.chapter2.releaseDateLabel": "Дата выхода",
+  "minigames.chapter2.disclaimer":
+    "«Месяц» здесь — условные 30 дней, вайб важнее календаря. Дата вбивается вручную, как только её объявят: официальной ленты для отсчёта не существует.",
+
   "creation.backToNewest": "← К новым",
   "creation.by": "от",
   "creation.viewOnSteamWorkshop": "Открыть в Мастерской Steam ↗",
@@ -1531,6 +1569,25 @@ const de: Dictionary = {
     "Ein „Monat” ist hier eine 30-Tage-Einheit — das Gefühl zählt mehr als der Kalender. X hat keine kostenlose API, deshalb ist der letzte Post von Hand eingetragen.",
   "minigames.silence.error":
     "Der letzte @ScrapMechanic-Post ist gerade nicht ladbar. Versuch es in ein paar Minuten nochmal.",
+
+  "minigames.chapter2.name": "Chapter-2-Countdown",
+  "minigames.chapter2.blurb":
+    "Noch kein Release-Datum — aber sobald Axolot eines nennt, wird diese Seite zu einem Live-Countdown bis zum nächsten Kapitel.",
+  "minigames.chapter2.title": "Chapter-2-Countdown",
+  "minigames.chapter2.subtitle":
+    "Ein Live-Timer bis zum Release des nächsten Scrap-Mechanic-Kapitels. Sobald ein Datum feststeht, läuft die Uhr — egal ob die Entwickler jemals ihren eigenen Countdown machen.",
+  "minigames.chapter2.totalSeconds": "Noch {n} Sekunden.",
+  "minigames.chapter2.notAnnouncedTitle": "Noch kein Release-Datum …",
+  "minigames.chapter2.notAnnouncedBody":
+    "Axolot hat dem nächsten Kapitel noch kein Datum gegeben — Devblog 26 versprach eines „in den kommenden Monaten”, und der jüngste Teaser sagte nur „Tomorrow.”. Sobald ein echtes Datum feststeht, wird diese Seite zu einem Live-Countdown.",
+  "minigames.chapter2.notAnnouncedCta": "Beobachte solange den Stille-Zähler",
+  "minigames.chapter2.releasedTitle": "Chapter 2 ist da!",
+  "minigames.chapter2.releasedBody":
+    "Das Warten hat ein Ende — das nächste Kapitel ist da. Bau was Schönes.",
+  "minigames.chapter2.releasedCta": "In Steam öffnen",
+  "minigames.chapter2.releaseDateLabel": "Release-Datum",
+  "minigames.chapter2.disclaimer":
+    "Ein „Monat” ist hier eine 30-Tage-Einheit — Gefühl vor Kalender. Das Datum wird von Hand eingetragen, sobald es feststeht; es gibt keinen offiziellen Countdown-Feed.",
 
   "creation.backToNewest": "← Zurück zu Neueste",
   "creation.by": "von",
@@ -2137,6 +2194,25 @@ const pl: Dictionary = {
     "„Miesiąc” to tutaj umowne 30 dni — vibe ważniejszy niż kalendarz. X nie ma darmowego API, więc ostatni post jest wpisany ręcznie.",
   "minigames.silence.error":
     "Nie udało się teraz wczytać najnowszego posta @ScrapMechanic. Spróbuj za kilka minut.",
+
+  "minigames.chapter2.name": "Odliczanie do Chapter 2",
+  "minigames.chapter2.blurb":
+    "Jeszcze nie ma daty premiery — ale w chwili, gdy Axolot ją ogłosi, ta strona stanie się żywym odliczaniem do następnego rozdziału.",
+  "minigames.chapter2.title": "Odliczanie do Chapter 2",
+  "minigames.chapter2.subtitle":
+    "Żywy licznik do premiery następnego rozdziału Scrap Mechanic. Gdy tylko pojawi się data, zegar rusza — nawet jeśli twórcy nigdy nie zrobią własnego.",
+  "minigames.chapter2.totalSeconds": "Pozostało {n} sekund.",
+  "minigames.chapter2.notAnnouncedTitle": "Jeszcze nie ma daty premiery…",
+  "minigames.chapter2.notAnnouncedBody":
+    "Axolot nie podało jeszcze daty następnego rozdziału — Devblog 26 obiecał ją „w nadchodzących miesiącach”, a najnowsza zajawka mówiła tylko „Tomorrow.”. Gdy tylko pojawi się prawdziwa data, ta strona zmieni się w żywe odliczanie.",
+  "minigames.chapter2.notAnnouncedCta": "Tymczasem obserwuj licznik ciszy",
+  "minigames.chapter2.releasedTitle": "Chapter 2 jest już dostępny!",
+  "minigames.chapter2.releasedBody":
+    "Czekanie się skończyło — następny rozdział już tu jest. Idź coś zbudować.",
+  "minigames.chapter2.releasedCta": "Otwórz w Steam",
+  "minigames.chapter2.releaseDateLabel": "Data premiery",
+  "minigames.chapter2.disclaimer":
+    "„Miesiąc” to tutaj umowne 30 dni — vibe ważniejszy niż kalendarz. Data jest wpisywana ręcznie, gdy tylko zostanie ogłoszona; nie ma oficjalnego kanału do odliczania.",
 
   "creation.backToNewest": "← Do najnowszych",
   "creation.by": "autor:",
@@ -2747,6 +2823,25 @@ const uk: Dictionary = {
   "minigames.silence.error":
     "Наразі не вдалося завантажити останній пост @ScrapMechanic. Спробуйте за кілька хвилин.",
 
+  "minigames.chapter2.name": "Відлік до Chapter 2",
+  "minigames.chapter2.blurb":
+    "Дати виходу ще немає — але щойно Axolot її оголосять, ця сторінка стане живим відліком до наступного розділу.",
+  "minigames.chapter2.title": "Відлік до Chapter 2",
+  "minigames.chapter2.subtitle":
+    "Живий таймер до виходу наступного розділу Scrap Mechanic. Щойно оголосять дату, відлік почнеться — навіть якщо розробники так і не зроблять власний.",
+  "minigames.chapter2.totalSeconds": "Залишилось {n} секунд.",
+  "minigames.chapter2.notAnnouncedTitle": "Дати виходу ще немає…",
+  "minigames.chapter2.notAnnouncedBody":
+    "Axolot ще не назвали дату наступного розділу — у Devblog 26 обіцяли оголосити її «найближчими місяцями», а останній тизер лише повідомляв «Tomorrow.». Щойно з'явиться справжня дата, ця сторінка перетвориться на живий відлік.",
+  "minigames.chapter2.notAnnouncedCta": "А поки що стежте за лічильником тиші",
+  "minigames.chapter2.releasedTitle": "Chapter 2 вийшла!",
+  "minigames.chapter2.releasedBody":
+    "Очікування завершилося — наступний розділ уже тут. Ідіть щось збудуйте.",
+  "minigames.chapter2.releasedCta": "Відкрити у Steam",
+  "minigames.chapter2.releaseDateLabel": "Дата виходу",
+  "minigames.chapter2.disclaimer":
+    "«Місяць» тут — умовні 30 днів, вайб важливіший за календар. Дата вписується вручну, щойно її оголосять: офіційної стрічки для відліку не існує.",
+
   "creation.backToNewest": "← До нових",
   "creation.by": "від",
   "creation.viewOnSteamWorkshop": "Відкрити у Майстерні Steam ↗",
@@ -3343,6 +3438,25 @@ const zh: Dictionary = {
     "这里的「月」是按 30 天估的 — 感觉比精确日历更重要。X 没有免费 API,所以最新帖子是手动录入的。",
   "minigames.silence.error":
     "目前无法加载最新的 @ScrapMechanic 帖子,请稍后几分钟再试。",
+
+  "minigames.chapter2.name": "第二章倒计时",
+  "minigames.chapter2.blurb":
+    "发售日期还没公布 — 但只要 Axolot 一宣布,这个页面就会变成通往下一章的实时倒计时。",
+  "minigames.chapter2.title": "第二章倒计时",
+  "minigames.chapter2.subtitle":
+    "通往 Scrap Mechanic 下一章发售的实时计时器。一旦公布日期,倒计时就开始 — 哪怕开发者自己从没做过。",
+  "minigames.chapter2.totalSeconds": "还剩 {n} 秒。",
+  "minigames.chapter2.notAnnouncedTitle": "还没有发售日期……",
+  "minigames.chapter2.notAnnouncedBody":
+    "Axolot 还没给下一章定日期 — Devblog 26 承诺会在「未来几个月」公布,而最新的预告只说了一句「Tomorrow.」。一旦真正的日期公布,这个页面就会变成实时倒计时。",
+  "minigames.chapter2.notAnnouncedCta": "在此期间,看看沉默计时器",
+  "minigames.chapter2.releasedTitle": "第二章已发布!",
+  "minigames.chapter2.releasedBody":
+    "等待结束了 — 下一章已经到来。去造点东西吧。",
+  "minigames.chapter2.releasedCta": "在 Steam 打开",
+  "minigames.chapter2.releaseDateLabel": "发售日期",
+  "minigames.chapter2.disclaimer":
+    "这里的「月」是按 30 天估的 — 感觉比日历更重要。日期一经公布便手动录入;没有可读取的官方倒计时源。",
 
   "creation.backToNewest": "← 返回最新",
   "creation.by": "作者:",

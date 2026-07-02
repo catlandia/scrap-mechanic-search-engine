@@ -121,6 +121,27 @@ export default async function MinigamesLandingPage() {
               </p>
             </Link>
           </li>
+          <li>
+            <Link
+              href="/minigames/chapter2"
+              className="group flex h-full flex-col gap-2 rounded-lg border border-border bg-card p-5 transition hover:border-accent hover:bg-card/80"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <span className="text-3xl" aria-hidden>
+                  ⏰
+                </span>
+                <span className="rounded-full border border-purple-500/40 bg-purple-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-purple-300">
+                  {t("minigames.othersLabel")}
+                </span>
+              </div>
+              <h3 className="text-lg font-semibold text-foreground group-hover:text-accent">
+                {t("minigames.chapter2.name")}
+              </h3>
+              <p className="text-sm text-foreground/60">
+                {t("minigames.chapter2.blurb")}
+              </p>
+            </Link>
+          </li>
         </ul>
       </section>
     </div>
