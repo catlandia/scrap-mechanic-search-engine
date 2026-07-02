@@ -301,21 +301,21 @@ const en: Dictionary = {
 
   "minigames.silence.name": "Scrap Mechanic silence",
   "minigames.silence.blurb":
-    "How long since Axolot posted anything to the Steam news feed? The counter is ticking.",
+    "How long since Axolot posted anything to X? The counter is ticking.",
   "minigames.silence.title": "Time since the last Scrap Mechanic news",
   "minigames.silence.subtitle":
-    "Live counter reading from the official Steam news feed for Scrap Mechanic (appid 387990). Patch, announcement, dev diary — whatever lands, resets the clock.",
+    "Live counter tracking the official @ScrapMechanic account on X. Devblog, teaser, a real release date — whatever they post next resets the clock. (Steam security hotfixes don't count.)",
   "minigames.silence.months": "Months",
   "minigames.silence.days": "Days",
   "minigames.silence.hours": "Hours",
   "minigames.silence.minutes": "Minutes",
   "minigames.silence.seconds": "Seconds",
   "minigames.silence.totalSeconds": "{n} seconds total.",
-  "minigames.silence.lastNewsLabel": "Latest news item",
+  "minigames.silence.lastNewsLabel": "Latest post on X",
   "minigames.silence.disclaimer":
-    "A \"month\" here is a 30-day bucket — the vibe matters more than the calendar does. Data refreshes server-side every 10 minutes.",
+    "A \"month\" here is a 30-day bucket — the vibe matters more than the calendar does. X has no free API, so the last post is pinned by hand.",
   "minigames.silence.error":
-    "Couldn't reach the Steam news feed right now. Try again in a few minutes.",
+    "Couldn't load the latest @ScrapMechanic post right now. Try again in a few minutes.",
 
   "creation.backToNewest": "← Back to newest",
   "creation.by": "by",
@@ -914,21 +914,21 @@ const ru: Dictionary = {
 
   "minigames.silence.name": "Тишина Scrap Mechanic",
   "minigames.silence.blurb":
-    "Сколько прошло с тех пор, как Axolot что-то опубликовали в ленте новостей Steam? Таймер идёт.",
+    "Сколько прошло с тех пор, как Axolot что-то опубликовали в X? Таймер идёт.",
   "minigames.silence.title": "Сколько прошло с последней новости о Scrap Mechanic",
   "minigames.silence.subtitle":
-    "Живой счётчик читает официальную ленту новостей Steam для Scrap Mechanic (appid 387990). Патч, анонс, заметка разработчика — что бы ни появилось, таймер сбрасывается.",
+    "Живой счётчик следит за официальным аккаунтом @ScrapMechanic в X. Заметка разработчика, тизер, реальная дата выхода — что бы они ни опубликовали дальше, таймер сбрасывается. (Хотфиксы безопасности в Steam не в счёт.)",
   "minigames.silence.months": "Месяцев",
   "minigames.silence.days": "Дней",
   "minigames.silence.hours": "Часов",
   "minigames.silence.minutes": "Минут",
   "minigames.silence.seconds": "Секунд",
   "minigames.silence.totalSeconds": "Всего {n} секунд.",
-  "minigames.silence.lastNewsLabel": "Последняя новость",
+  "minigames.silence.lastNewsLabel": "Последний пост в X",
   "minigames.silence.disclaimer":
-    "«Месяц» здесь — это условные 30 дней, вайб важнее календаря. Данные обновляются на сервере раз в 10 минут.",
+    "«Месяц» здесь — это условные 30 дней, вайб важнее календаря. У X нет бесплатного API, поэтому последний пост вбит вручную.",
   "minigames.silence.error":
-    "Сейчас не удалось получить ленту новостей Steam. Попробуйте через несколько минут.",
+    "Сейчас не удалось загрузить последний пост @ScrapMechanic. Попробуйте через несколько минут.",
 
   "creation.backToNewest": "← К новым",
   "creation.by": "от",
@@ -1516,21 +1516,21 @@ const de: Dictionary = {
 
   "minigames.silence.name": "Scrap-Mechanic-Stille",
   "minigames.silence.blurb":
-    "Wie lange hat Axolot nichts mehr in den Steam-Newsfeed geschrieben? Die Uhr läuft.",
+    "Wie lange hat Axolot nichts mehr auf X gepostet? Die Uhr läuft.",
   "minigames.silence.title": "Zeit seit der letzten Scrap-Mechanic-News",
   "minigames.silence.subtitle":
-    "Live-Zähler, der den offiziellen Steam-Newsfeed für Scrap Mechanic (appid 387990) liest. Patch, Ankündigung, Dev-Notiz — sobald etwas landet, springt der Zähler zurück.",
+    "Live-Zähler, der den offiziellen @ScrapMechanic-Account auf X verfolgt. Devblog, Teaser, ein echtes Release-Datum — was auch immer als Nächstes kommt, setzt den Zähler zurück. (Steam-Security-Hotfixes zählen nicht.)",
   "minigames.silence.months": "Monate",
   "minigames.silence.days": "Tage",
   "minigames.silence.hours": "Stunden",
   "minigames.silence.minutes": "Minuten",
   "minigames.silence.seconds": "Sekunden",
   "minigames.silence.totalSeconds": "Insgesamt {n} Sekunden.",
-  "minigames.silence.lastNewsLabel": "Letzter News-Eintrag",
+  "minigames.silence.lastNewsLabel": "Letzter Post auf X",
   "minigames.silence.disclaimer":
-    "Ein „Monat” ist hier eine 30-Tage-Einheit — das Gefühl zählt mehr als der Kalender. Serverdaten werden alle 10 Minuten aufgefrischt.",
+    "Ein „Monat” ist hier eine 30-Tage-Einheit — das Gefühl zählt mehr als der Kalender. X hat keine kostenlose API, deshalb ist der letzte Post von Hand eingetragen.",
   "minigames.silence.error":
-    "Der Steam-Newsfeed ist gerade nicht erreichbar. Versuch es in ein paar Minuten nochmal.",
+    "Der letzte @ScrapMechanic-Post ist gerade nicht ladbar. Versuch es in ein paar Minuten nochmal.",
 
   "creation.backToNewest": "← Zurück zu Neueste",
   "creation.by": "von",
@@ -2122,21 +2122,21 @@ const pl: Dictionary = {
 
   "minigames.silence.name": "Cisza Scrap Mechanic",
   "minigames.silence.blurb":
-    "Ile czasu minęło, odkąd Axolot coś wrzuciło na kanał wiadomości Steam? Zegar tyka.",
+    "Ile czasu minęło, odkąd Axolot coś wrzuciło na X? Zegar tyka.",
   "minigames.silence.title": "Czas od ostatniej wiadomości o Scrap Mechanic",
   "minigames.silence.subtitle":
-    "Licznik na żywo czyta oficjalny kanał wiadomości Steam dla Scrap Mechanic (appid 387990). Łatka, ogłoszenie, notka dewelopera — cokolwiek się pojawi, licznik się resetuje.",
+    "Licznik na żywo śledzi oficjalne konto @ScrapMechanic na X. Notka dewelopera, zajawka, prawdziwa data premiery — cokolwiek wrzucą następnym razem, licznik się resetuje. (Steamowe łatki bezpieczeństwa się nie liczą.)",
   "minigames.silence.months": "Miesięcy",
   "minigames.silence.days": "Dni",
   "minigames.silence.hours": "Godzin",
   "minigames.silence.minutes": "Minut",
   "minigames.silence.seconds": "Sekund",
   "minigames.silence.totalSeconds": "Łącznie {n} sekund.",
-  "minigames.silence.lastNewsLabel": "Najnowsza wiadomość",
+  "minigames.silence.lastNewsLabel": "Najnowszy post na X",
   "minigames.silence.disclaimer":
-    "„Miesiąc” to tutaj umowne 30 dni — vibe ważniejszy niż kalendarz. Dane po stronie serwera odświeżają się co 10 minut.",
+    "„Miesiąc” to tutaj umowne 30 dni — vibe ważniejszy niż kalendarz. X nie ma darmowego API, więc ostatni post jest wpisany ręcznie.",
   "minigames.silence.error":
-    "Nie udało się teraz pobrać kanału wiadomości Steam. Spróbuj za kilka minut.",
+    "Nie udało się teraz wczytać najnowszego posta @ScrapMechanic. Spróbuj za kilka minut.",
 
   "creation.backToNewest": "← Do najnowszych",
   "creation.by": "autor:",
@@ -2731,21 +2731,21 @@ const uk: Dictionary = {
 
   "minigames.silence.name": "Тиша Scrap Mechanic",
   "minigames.silence.blurb":
-    "Скільки часу минуло, відколи Axolot щось писали в стрічці новин Steam? Годинник іде.",
+    "Скільки часу минуло, відколи Axolot щось писали в X? Годинник іде.",
   "minigames.silence.title": "Скільки минуло від останньої новини про Scrap Mechanic",
   "minigames.silence.subtitle":
-    "Живий лічильник читає офіційну стрічку новин Steam для Scrap Mechanic (appid 387990). Патч, анонс, нотатка розробника — щойно щось з'являється, таймер скидається.",
+    "Живий лічильник стежить за офіційним акаунтом @ScrapMechanic у X. Нотатка розробника, тизер, справжня дата виходу — щойно вони опублікують щось нове, таймер скидається. (Хотфікси безпеки в Steam не рахуються.)",
   "minigames.silence.months": "Місяців",
   "minigames.silence.days": "Днів",
   "minigames.silence.hours": "Годин",
   "minigames.silence.minutes": "Хвилин",
   "minigames.silence.seconds": "Секунд",
   "minigames.silence.totalSeconds": "Усього {n} секунд.",
-  "minigames.silence.lastNewsLabel": "Остання новина",
+  "minigames.silence.lastNewsLabel": "Останній пост у X",
   "minigames.silence.disclaimer":
-    "«Місяць» тут — умовні 30 днів, вайб важливіший за календар. Дані оновлюються на сервері раз на 10 хвилин.",
+    "«Місяць» тут — умовні 30 днів, вайб важливіший за календар. У X немає безкоштовного API, тож останній пост вписано вручну.",
   "minigames.silence.error":
-    "Наразі не вдалося отримати стрічку новин Steam. Спробуйте за кілька хвилин.",
+    "Наразі не вдалося завантажити останній пост @ScrapMechanic. Спробуйте за кілька хвилин.",
 
   "creation.backToNewest": "← До нових",
   "creation.by": "від",
@@ -3328,21 +3328,21 @@ const zh: Dictionary = {
 
   "minigames.silence.name": "Scrap Mechanic 沉默计时",
   "minigames.silence.blurb":
-    "距 Axolot 上次在 Steam 新闻中发帖已经多久了?计时器正在走。",
+    "距 Axolot 上次在 X 发帖已经多久了?计时器正在走。",
   "minigames.silence.title": "距上一条 Scrap Mechanic 新闻已过多久",
   "minigames.silence.subtitle":
-    "实时计数器,读取 Scrap Mechanic(appid 387990)的官方 Steam 新闻流。补丁、公告、开发者日志 — 只要有新内容,计时就归零。",
+    "实时计数器,追踪官方 @ScrapMechanic 账号在 X 上的动态。开发者日志、预告、真正的发售日期 — 只要他们再发点什么,计时就归零。(Steam 的安全热修复不算。)",
   "minigames.silence.months": "月",
   "minigames.silence.days": "天",
   "minigames.silence.hours": "时",
   "minigames.silence.minutes": "分",
   "minigames.silence.seconds": "秒",
   "minigames.silence.totalSeconds": "共 {n} 秒。",
-  "minigames.silence.lastNewsLabel": "最新新闻",
+  "minigames.silence.lastNewsLabel": "最新的 X 帖子",
   "minigames.silence.disclaimer":
-    "这里的「月」是按 30 天估的 — 感觉比精确日历更重要。服务器数据每 10 分钟刷新一次。",
+    "这里的「月」是按 30 天估的 — 感觉比精确日历更重要。X 没有免费 API,所以最新帖子是手动录入的。",
   "minigames.silence.error":
-    "目前无法获取 Steam 新闻流,请稍后几分钟再试。",
+    "目前无法加载最新的 @ScrapMechanic 帖子,请稍后几分钟再试。",
 
   "creation.backToNewest": "← 返回最新",
   "creation.by": "作者:",

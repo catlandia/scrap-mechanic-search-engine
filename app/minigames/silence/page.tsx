@@ -1,25 +1,22 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getT } from "@/lib/i18n/server";
-import { getLatestScrapMechanicNews } from "@/lib/steam/news";
+import { getLatestScrapMechanicTweet } from "@/lib/social/twitter";
 import { SilenceCounter } from "@/components/minigames/SilenceCounter";
 
 export const metadata: Metadata = {
   title: "Time since the last Scrap Mechanic news — Scrap Mechanic Search Engine",
   description:
-    "Live counter showing how long it's been since Axolot posted anything to the Scrap Mechanic Steam news feed.",
+    "Live counter showing how long it's been since Axolot posted anything to the official @ScrapMechanic account on X.",
   alternates: { canonical: "/minigames/silence" },
   robots: { index: false, follow: true },
 };
 
-// 10-minute revalidation matches the fetch helper's internal cache — the
-// counter itself ticks client-side, so a fresh server read only matters
-// when a new news item actually lands.
-export const revalidate = 600;
-
 export default async function SilencePage() {
   const { t } = await getT();
-  const news = await getLatestScrapMechanicNews();
+  // The last @ScrapMechanic post is pinned in lib/social/twitter.ts (X has no
+  // free API). The counter itself ticks client-side from this date.
+  const news = getLatestScrapMechanicTweet();
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useT } from "@/lib/i18n/client";
 
 interface Props {
-  /** Unix seconds of the latest SM Steam news item. */
+  /** Unix seconds of the latest @ScrapMechanic post on X. */
   sinceUnix: number;
 }
 
