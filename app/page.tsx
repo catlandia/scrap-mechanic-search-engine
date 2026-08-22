@@ -21,6 +21,20 @@ export const metadata: Metadata = {
   alternates: { canonical: "/" },
 };
 
+/**
+ * True when the DB error is a free-tier allowance being exhausted rather than
+ * a broken connection string. Neon signals this as an HTTP 402 carrying
+ * "exceeded the compute time quota" — an outage with a known end date (the
+ * monthly reset), not something a redeploy fixes.
+ */
+function isQuotaError(message: string): boolean {
+  return (
+    /\b402\b/.test(message) ||
+    /exceeded the (compute time|data transfer) quota/i.test(message) ||
+    /quota[^"]*exceeded/i.test(message)
+  );
+}
+
 const FEATURED_KINDS: Array<{
   kind: "blueprint" | "mod" | "world" | "challenge" | "tile";
   href: string;
@@ -132,15 +146,40 @@ export default async function HomePage() {
       </section>
 
       {dbError ? (
-        <section className="space-y-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-5 py-4 text-sm">
-          <div className="font-medium text-amber-200">Database not reachable.</div>
-          <div className="font-mono text-xs text-amber-100/80">{dbError}</div>
-          <div className="text-foreground/60">
-            Check that <code className="rounded bg-black/40 px-1">DATABASE_URL</code> is set in
-            Vercel and migrations have been applied (
-            <code className="rounded bg-black/40 px-1">npm run db:migrate</code>).
-          </div>
-        </section>
+        // Two different audiences hit this block. A blown free-tier quota is
+        // an outage every visitor sees, so it gets a plain-English
+        // explanation instead of a raw driver stack trace. Anything else is
+        // almost certainly a misconfiguration only the operator sees, so that
+        // keeps the technical detail.
+        isQuotaError(dbError) ? (
+          <section className="space-y-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-5 py-4 text-sm">
+            <div className="font-medium text-amber-200">
+              The site is over its free database allowance.
+            </div>
+            <div className="text-foreground/70">
+              Everything you can see still works, but nothing that needs the database
+              will load until the monthly allowance resets. This site runs entirely on
+              free hosting and earns nothing, so there is no bigger plan to fall back
+              on — it just has to wait out the month. Sorry for the mess.
+            </div>
+            <div className="text-foreground/60">
+              Sign-in is affected too: Steam will verify you fine, then the site cannot
+              save your session.
+            </div>
+          </section>
+        ) : (
+          <section className="space-y-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-5 py-4 text-sm">
+            <div className="font-medium text-amber-200">Database not reachable.</div>
+            <div className="font-mono text-xs text-amber-100/80">{dbError}</div>
+            <div className="text-foreground/60">
+              Check that <code className="rounded bg-black/40 px-1">DATABASE_URL</code> is set
+              as a Cloudflare Worker secret (
+              <code className="rounded bg-black/40 px-1">npx wrangler secret list</code>) and
+              that migrations have been applied (
+              <code className="rounded bg-black/40 px-1">npm run db:migrate</code>).
+            </div>
+          </section>
+        )
       ) : !hasAny ? (
         <section className="rounded-md border border-border bg-card/60 px-5 py-8 text-sm text-foreground/60">
           {t("home.emptyState")}
