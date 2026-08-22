@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import { users, type NewUser, type UserRole } from "@/lib/db/schema";
 import { getUserSession } from "@/lib/auth/session";
-import { verifySteamAssertion } from "@/lib/auth/steam-openid";
+import { verifySteamAssertionDetailed } from "@/lib/auth/steam-openid";
 import {
   applyAutogrants,
   maybeAutoGrantBetatester,
@@ -28,10 +28,16 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(home);
   };
 
-  const steamid = await verifySteamAssertion(params);
-  if (!steamid) {
+  const verified = await verifySteamAssertionDetailed(params);
+  if (!verified.ok) {
+    // The one line that tells a stale tab apart from Steam refusing to talk
+    // to our egress IP. Both used to look identical from the outside.
+    console.error(
+      `steam login: assertion rejected reason=${verified.reason} detail=${verified.detail ?? ""}`,
+    );
     return failUrl("invalid_assertion");
   }
+  const steamid = verified.steamid;
 
   const apiKey = process.env.STEAM_API_KEY;
   if (!apiKey) return failUrl("missing_api_key");

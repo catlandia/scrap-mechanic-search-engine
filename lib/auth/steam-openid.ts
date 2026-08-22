@@ -19,37 +19,95 @@ export function buildSteamLoginUrl(returnTo: string, realm: string): string {
   return `${STEAM_OPENID_URL}?${params.toString()}`;
 }
 
+/** Why an assertion was rejected. Logged so a failed sign-in is diagnosable. */
+export type SteamVerifyFailure =
+  | "not_id_res"
+  | "bad_claimed_id"
+  | "fetch_threw"
+  | "http_error"
+  | "not_valid";
+
+export type SteamVerifyResult =
+  | { ok: true; steamid: string }
+  | { ok: false; reason: SteamVerifyFailure; detail?: string };
+
 /**
  * Given the query params Steam sent to our return URL, POST them back with
  * `openid.mode=check_authentication` to have Steam confirm the signature.
- * Returns the verified SteamID64 on success, null on failure.
+ *
+ * Every rejection path returns a distinct reason. It used to return a bare
+ * `null` for all five, which meant a genuine Steam-side block and a stale
+ * browser tab produced byte-identical "invalid_assertion" bounces with
+ * nothing in the logs to tell them apart.
  */
-export async function verifySteamAssertion(
+export async function verifySteamAssertionDetailed(
   params: URLSearchParams,
-): Promise<string | null> {
-  if (params.get("openid.mode") !== "id_res") return null;
+): Promise<SteamVerifyResult> {
+  const mode = params.get("openid.mode");
+  if (mode !== "id_res") {
+    return { ok: false, reason: "not_id_res", detail: `mode=${mode ?? "<none>"}` };
+  }
   const claimedId = params.get("openid.claimed_id") ?? "";
   const match = claimedId.match(STEAMID_RE);
-  if (!match) return null;
+  if (!match) {
+    return { ok: false, reason: "bad_claimed_id", detail: claimedId.slice(0, 120) };
+  }
   const steamid = match[1];
 
-  const verifyBody = new URLSearchParams(params);
+  // Only forward the openid.* fields. Our own `next` query param rides along
+  // on the return URL, and echoing a non-OpenID key back into a
+  // check_authentication body is not something the spec asks for — strip it
+  // so the request contains exactly what Steam signed and nothing else.
+  const verifyBody = new URLSearchParams();
+  for (const [key, value] of params) {
+    if (key.startsWith("openid.")) verifyBody.set(key, value);
+  }
   verifyBody.set("openid.mode", "check_authentication");
 
   let res: Response;
   try {
     res = await fetch(STEAM_OPENID_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        // Steam is known to treat some datacentre egress as bot traffic (it
+        // 403s Cloudflare IPs on the Web API, which is why the crons live in
+        // GitHub Actions). Sending a real UA costs nothing and removes one
+        // reason for it to refuse this request.
+        "User-Agent":
+          "Mozilla/5.0 (compatible; ScrapMechanicSearchEngine/1.0; +https://scrap-mechanic-search-engine.com)",
+        Accept: "text/plain, */*",
+      },
       body: verifyBody.toString(),
       cache: "no-store",
     });
-  } catch {
-    return null;
+  } catch (err) {
+    return { ok: false, reason: "fetch_threw", detail: String(err).slice(0, 200) };
   }
-  if (!res.ok) return null;
+
+  if (!res.ok) {
+    let snippet = "";
+    try {
+      snippet = (await res.text()).slice(0, 200);
+    } catch {
+      // body unreadable — the status code is the useful part anyway
+    }
+    return { ok: false, reason: "http_error", detail: `status=${res.status} body=${snippet}` };
+  }
+
   const text = await res.text();
   // Response is key:value lines, e.g. "ns:http://specs.openid.net/auth/2.0\nis_valid:true\n".
   const isValid = /is_valid\s*:\s*true/i.test(text);
-  return isValid ? steamid : null;
+  if (!isValid) {
+    return { ok: false, reason: "not_valid", detail: text.slice(0, 200) };
+  }
+  return { ok: true, steamid };
+}
+
+/** Back-compat wrapper: verified SteamID64 on success, null on any failure. */
+export async function verifySteamAssertion(
+  params: URLSearchParams,
+): Promise<string | null> {
+  const result = await verifySteamAssertionDetailed(params);
+  return result.ok ? result.steamid : null;
 }
