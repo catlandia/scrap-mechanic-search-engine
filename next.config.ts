@@ -12,9 +12,21 @@ const BUILD_ID =
   process.env.CF_BUILD_SHA ??
   `dev-${process.pid}`;
 
+// Master switch for the deploy countdown banner and, more importantly, its
+// 8s-per-tab poll loop — the thing that pinned Neon's compute at 99.8% active
+// and blew the compute quota in August 2026. Declared here (rather than read
+// straight off process.env in the component) because an *unset* NEXT_PUBLIC_
+// var is not inlined into the client bundle: it falls through to a `process`
+// shim that always yields undefined, which happens to read as "off" but would
+// also silently ignore someone setting it to "on". Normalising it here means
+// the literal string is always baked in and the flag works in both directions.
+const DEPLOY_BANNER =
+  process.env.NEXT_PUBLIC_DEPLOY_BANNER === "on" ? "on" : "off";
+
 const config: NextConfig = {
   env: {
     NEXT_PUBLIC_BUILD_ID: BUILD_ID,
+    NEXT_PUBLIC_DEPLOY_BANNER: DEPLOY_BANNER,
   },
   images: {
     // Cloudflare Workers has no built-in next/image optimizer on the free
