@@ -1923,6 +1923,12 @@ async function _getActiveDeployAnnouncementUncached(): Promise<DeployAnnouncemen
   const db = getDb();
   // Real rows: alive while uncompleted, plus a 2-minute tail after
   // completion so laggy clients still see the completed state and reload.
+  // The `scheduled_at > now() - 20min` bound is a safety cap: if a deploy
+  // writes the announcement row but dies before stamping completed_at (as
+  // happened during the Cloudflare migration — rows #64 and #70 pinned a
+  // "Deploying now…" banner on every visitor for weeks), the banner must
+  // self-expire rather than linger forever. A real deploy stamps
+  // completed_at within ~90s of scheduled_at, so 20min is comfortably safe.
   // Prank rows (from /admin/abuse): alive from insertion through
   // scheduled_at + 10s. They never get completed; the short tail is all
   // the window the banner needs to show the "just kidding :^)" swap.
@@ -1931,6 +1937,7 @@ async function _getActiveDeployAnnouncementUncached(): Promise<DeployAnnouncemen
     .from(deployAnnouncements)
     .where(
       sql`(${deployAnnouncements.isPrank} = false
+            AND ${deployAnnouncements.scheduledAt} > now() - interval '20 minutes'
             AND (${deployAnnouncements.completedAt} IS NULL
                  OR ${deployAnnouncements.completedAt} > now() - interval '2 minutes'))
           OR (${deployAnnouncements.isPrank} = true

@@ -17,7 +17,7 @@ Differentiators vs Steam's built-in browser:
 - Community voting on tags and creations
 - Feature suggestion board
 
-**Constraint that must never be broken:** Every external dependency must be genuinely free. No per-request billing, no metered AI APIs. The project is designed to run indefinitely on Vercel Hobby + Neon free tier.
+**Constraint that must never be broken:** Every external dependency must be genuinely free. No per-request billing, no metered AI APIs. The project is designed to run indefinitely on Cloudflare Workers + Neon free tiers.
 
 ---
 
@@ -32,8 +32,9 @@ Differentiators vs Steam's built-in browser:
 | Admin auth | `iron-session` (single ADMIN_PASSWORD) |
 | User auth | Steam OpenID (no password, session via iron-session) |
 | Auto-tagging | Rule-based keyword matcher (zero cost, pure TS) |
-| Scheduling | Vercel Cron (Hobby plan, free) |
-| Images | Steam CDN thumbnails (hotlinked, no Vercel Blob) |
+| Hosting | Cloudflare Workers (free) via OpenNext (`@opennextjs/cloudflare`) |
+| Scheduling | GitHub Actions cron (free) — Steam 403s Cloudflare IPs, so crons run off-Worker |
+| Images | Steam CDN thumbnails (hotlinked); generated icon/captcha images served as static assets from Cloudflare's CDN |
 
 ---
 
@@ -178,17 +179,18 @@ lib/
     actions.ts                    # suggestion CRUD server actions
   captcha/
     questions.ts                  # character-pool + question generator (shared /verify + /minigames/scrapcha)
-    _images.generated.json        # base64 manifest (gitignored, build-time fetch)
+    _images.manifest.json         # name→hashed-filename map (gitignored); images served from /public/_captcha
   blockdle/
     types.ts compare.ts pick.ts session.ts share.ts
-    blocks.generated.ts _icons.generated.json autocomplete.generated.ts  # all gitignored
+    blocks.generated.ts autocomplete.generated.ts  # gitignored (icons → /public/blockdle-icons)
   i18n/
     dictionaries.ts               # en/ru/uk/de/pl/zh translation keys + translate()
     server.ts                     # getT() — reads smse_lang cookie, returns {locale, dict, t}
     client.tsx                    # LocaleProvider + useT() for client components
     english-tag.ts                # isEnglishTagName — ASCII-only tag-name guard
 middleware.ts                     # gates /admin/* behind login
-vercel.json                       # cron schedule
+wrangler.jsonc open-next.config.ts  # Cloudflare Worker config
+.github/workflows/cron.yml         # ingest/refresh cron (GitHub Actions)
 drizzle/                          # generated SQL migrations (checked in)
 scripts/
   migrate.ts

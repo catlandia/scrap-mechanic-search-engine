@@ -2,148 +2,105 @@
 
 ## Platform
 
-Vercel Hobby plan (free). Linked to this GitHub repo. Automatic deployments on push to `main`.
+**Cloudflare Workers** (free tier), via the OpenNext adapter (`@opennextjs/cloudflare`). The Next.js app is bundled into a single Worker and served at the custom domain **scrap-mechanic-search-engine.com** (domain + DNS on Cloudflare Registrar). Neon Postgres is unchanged — its HTTP driver runs inside the Worker.
+
+Deploys are **not** triggered by `git push`. They run from a developer machine via `npm run deploy` (see below). Migrated off Vercel 2026-06-22.
+
+### Why the images are static assets, not bundled
+
+Free Workers cap a script at **3 MiB gzipped**. The captcha (23 MB) and blockdle-icon (7 MB) base64 manifests, imported into route code, pushed the Worker to 24 MiB. They were evicted from the JS bundle and are served as static assets instead (Cloudflare serves `/public` from its CDN, off the Worker size budget):
+
+- **Blockdle/clicker icons** → `/public/blockdle-icons/<uuid>.png`, loaded directly by the client (icons aren't a cheat vector).
+- **Captcha images** → content-hashed `/public/_captcha/<sha256>.jpg`, never exposed to the client; the session-gated `/api/captcha/image` + `/api/minigames/scrapcha/image` routes fetch them server-side through the `ASSETS` binding, keeping the set unenumerable. See `docs/captcha.md`.
+
+Both `/public` subfolders are generated at build by the fetch scripts and gitignored. (R2 would have been the textbook fit for the private captcha set, but it isn't enabled on the account — the ASSETS-binding proxy gives the same practical privacy.)
 
 ---
 
 ## Environment Variables
 
-Set in Vercel dashboard (Settings → Environment Variables). Pull locally with:
-```bash
-vercel env pull .env.local
-```
+Runtime secrets live as **Cloudflare Worker secrets** (`wrangler secret put` / `secret bulk`). Local dev and `npm run deploy` read them from `.env.local`. The cron secrets also live in **GitHub Actions secrets**.
 
-| Variable | Required | Notes |
+| Variable | Where | Notes |
 |---|---|---|
-| `DATABASE_URL` | Yes | Neon Postgres connection string |
-| `STEAM_API_KEY` | Yes | Free — register at `steamcommunity.com/dev/apikey` |
-| `CRON_SECRET` | Yes | Random string; cron endpoints check `Authorization: Bearer <value>` |
-| `ADMIN_PASSWORD` | Yes | Legacy single-password admin gate |
-| `SESSION_SECRET` | Yes | Min 32 chars; iron-session encryption key |
-| `NEXT_PUBLIC_SITE_URL` | Yes | Canonical URL (e.g. `https://yourdomain.com`); used for OG meta |
-| `CREATOR_STEAMID` | Yes | SteamID of site owner; grants creator-tier role on login |
-| `CAPTCHA_IMAGES_TOKEN` | Yes (prod) | Fine-grained PAT with Contents:Read on the private captcha-images repo |
-| `CAPTCHA_IMAGES_REPO` | Yes (prod) | `owner/repo` name of the private captcha-images repo |
-| `CAPTCHA_IMAGES_BRANCH` | No | Defaults to `main` |
-| `CAPTCHA_IMAGES_PATH` | No | Defaults to repo root — set if jpgs live in a subfolder |
-| `BLOCKDLE_DATA_TOKEN` | Yes (prod) | Fine-grained PAT with Contents:Read on the private blockdle-data repo |
-| `BLOCKDLE_DATA_REPO` | Yes (prod) | `owner/repo` name of the private blockdle-data repo |
-| `BLOCKDLE_DATA_BRANCH` | No | Defaults to `main` |
-| `BLOCKDLE_DATA_PATH` | No | Defaults to repo root — set if `blocks.json` + `icons/` live in a subfolder |
-
-Captcha images **and** the Blockdle block catalogue are fetched at build time — the npm `build` script chains `scripts/fetch-captcha-images.ts` + `scripts/fetch-blockdle-data.ts` before `next build`. Both output sets are gitignored; first Vercel deployment requires all four required env vars per pipeline or the build fails. See `docs/captcha.md` and `docs/blockdle.md` for setup.
+| `DATABASE_URL` | Worker + GitHub + `.env.local` | Neon Postgres connection string |
+| `STEAM_API_KEY` | Worker + GitHub + `.env.local` | Free — `steamcommunity.com/dev/apikey`. Only the GitHub Actions crons actually call Steam (the Worker can't — Steam 403s Cloudflare IPs) |
+| `SESSION_SECRET` | Worker + `.env.local` | Min 32 chars; iron-session key |
+| `ADMIN_PASSWORD` | Worker + `.env.local` | Legacy single-password admin gate |
+| `CRON_SECRET` | Worker + `.env.local` | Guards `/api/cron/*` (no longer driven by a scheduler — see Crons) |
+| `CREATOR_STEAMID` | Worker + `.env.local` | Site owner; grants creator role on login |
+| `NEXT_PUBLIC_SITE_URL` | `.env.local` (baked at build) | `https://scrap-mechanic-search-engine.com`; OG/sitemap/robots |
+| `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` | `.env.local` | wrangler auth for `npm run deploy` |
+| `CAPTCHA_IMAGES_*`, `BLOCKDLE_DATA_*` | `.env.local` (build-time) | Fetch the private image/data sets at build. Optional locally once the sets are on disk |
 
 ---
 
-## Cron Jobs (`vercel.json`)
+## Cron Jobs — GitHub Actions (`.github/workflows/cron.yml`)
 
-```json
-{
-  "crons": [
-    { "path": "/api/cron/ingest",  "schedule": "0 6 * * *"  },
-    { "path": "/api/cron/refresh", "schedule": "0 3 * * 1"  }
-  ]
-}
-```
+Ingest + refresh **cannot run in the Worker**: Steam's Web API 403s Cloudflare's egress IPs, and free Workers cap a request at 50 subrequests (a full ingest makes far more). They run as plain Node jobs on GitHub-hosted runners via `scripts/cron.ts`, directly against Neon.
 
-| Job | Schedule | What it does |
+| Job | Schedule (UTC) | What it does |
 |---|---|---|
-| `/api/cron/ingest` | 6 AM UTC daily | Fetches ~50 new items per kind from Steam, runs follow-count gate, inserts pending, runs tagger |
-| `/api/cron/refresh` | 3 AM UTC Mondays | Updates engagement metrics (subs, favorites, votes) for all approved items |
+| ingest | 6 AM daily | `runIngest` (≤5 pages/kind from Steam, follow-count gate, insert pending, tag) + `refreshStaleCreators(200)` |
+| refresh | 3 AM Mondays | `runRefresh` — re-syncs subs/favorites/votes for approved items |
 
-Both routes require `Authorization: Bearer <CRON_SECRET>` header. Vercel sends this automatically.
+Secrets `DATABASE_URL` + `STEAM_API_KEY` are set in the repo's Actions secrets. Manual run: **Actions → cron → Run workflow**. The `/api/cron/*` routes still exist (handy for a manual curl with `Authorization: Bearer <CRON_SECRET>`) but nothing schedules them now.
 
 ---
 
 ## Database Migrations
 
-Migrations live in `drizzle/` and are checked into git.
+Migrations live in `drizzle/` (checked in). `scripts/migrate.ts` runs as part of the build chain (between the asset-fetch scripts and `next build`), so a schema change ships with its code change in one `npm run deploy`. A failed migration fails the build; prod stays on the previous Worker version.
 
 ```bash
-# Generate a new migration from schema changes:
-npm run db:generate
-
-# Apply all pending migrations:
-npm run db:migrate
-
-# Shortcut for local dev (push schema directly, no migration file):
-npm run db:push
+npm run db:generate   # emit SQL from schema changes
+npm run db:migrate    # apply pending migrations
+npm run db:push       # dev-only: push schema directly
 ```
-
-**Migration history:**
-- `0001` — initial schema
-- `0002–0009` — community features, roles, comments, suggestions, votes
-- `0010` — `hard_banned` column on users (V4.8)
-
-Migrations also run automatically during every Vercel build — `scripts/migrate.ts` sits between the asset-fetch scripts and `next build` in `package.json`'s `build` command. This means a schema change plus its code change can ship together in one push: the migration runs before `next build`, Neon gets the new column, and the new code finds it there. If a migration fails the whole deploy fails (fail-fast), and prod stays on the previous working version.
 
 ---
 
 ## Deploying with a visitor countdown (`npm run deploy`)
 
-**Every push to `main` must go through `npm run deploy` — never bare `git push`.** The 60-second countdown isn't cosmetic. Visitors may be in the middle of something that breaks when the site restarts: composing a long comment, tagging a pending item in `/admin/triage`, filling out a `/submit` form, mid-swipe through a triage stack. The banner gives them a visible + audible heads-up so they can finish or save before the bundle flips. A bare `git push` skips all of that and silently yanks the rug out from under anyone mid-action.
+**`git push` no longer deploys anything.** Production changes ship via `npm run deploy` (`scripts/deploy.ts`), which needs `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` in `.env.local`:
 
-The only legitimate exception is a change no visitor could possibly notice (repo-internal docs, a commit to a branch other than `main`, etc.) — and the cost of running `npm run deploy` is still only 60 seconds, so erring toward running it is almost always correct.
+1. **Builds first** (`opennextjs-cloudflare build`, stamping the commit SHA into `CF_BUILD_SHA` → `NEXT_PUBLIC_BUILD_ID`) while the live Worker keeps serving the old bundle — so the slow build causes zero visitor disruption.
+2. Writes a `deploy_announcements` row with `scheduled_at = now() + 60s`. Every live page shows a sticky red top-bar countdown (`components/DeployBanner.tsx` polls `/api/deploy-announcement` every 8s, ticks locally for smooth ms, pulses under 10s). Two SFX fire **only for Fun-Mode visitors** (`smse_fun_mode` cookie): `public/sfx/deploy-countdown.mp3` when the banner first appears, `public/sfx/deploy-live.mp3` at zero. The same banner serves the Creator-only fake-reboot prank from `/admin/abuse` (`is_prank = true`), also Fun-Mode-only; the live-stamp step skips prank rows.
+3. Counts down 60s in the terminal.
+4. `wrangler deploy` swaps the Worker — live at the edge within seconds.
+5. Stamps `completed_at`. Clients see it on their next poll and hold "Deploying now…", then reload once `/api/deploy-announcement`'s `serverBuildId` (the **live Worker's** baked `NEXT_PUBLIC_BUILD_ID`) differs from the `NEXT_PUBLIC_BUILD_ID` in their loaded bundle. Gating on the build-id swap — not just `completed_at` — avoids reloading onto a not-yet-swapped bundle. One reload per announcement (sessionStorage-guarded), ~11.5s after the swap so the visitor sees the confirmation first.
 
-The script:
-
-1. Writes a row to `deploy_announcements` with `scheduled_at = now() + 60s`.
-2. Every page on the live site starts showing a sticky red top-bar countdown (`components/DeployBanner.tsx` polls `/api/deploy-announcement` every 8s, ticks locally at ~30fps for smooth milliseconds, pulses under 10s). Two SFX fire alongside the visual — `public/sfx/deploy-countdown.mp3` the moment a new announcement first appears on the client, and `public/sfx/deploy-live.mp3` the instant the countdown hits zero — **only when the visitor has Fun Mode on** (`smse_fun_mode` cookie, default off; see `docs/pages.md` for the full preference story). Normies see the same banner, just silently; that's the correct trade-off because the banner is a genuine "save your work" warning but the SFX are pure flavour. Each is keyed per-announcement via a ref so polls + render ticks can't retrigger. The zero-hit sting cuts off the countdown jingle mid-play if it's still going (`countdownAudioRef.pause()` then a fresh `Audio` for the sting) so the two tracks can't overlap — the sting always wins. `audio.play()` rejections from the browser autoplay policy are swallowed silently. The same banner also serves the Creator-only fake-reboot prank from `/admin/abuse` — rows with `is_prank = true` run the identical countdown + SFX path, then swap to "just kidding :^)" at zero and self-hide 10s later, **but only for Fun-Mode visitors**; anyone with Fun Mode off gets an early-return and sees nothing, so a prank never jolts a visitor who didn't opt in. `scripts/complete-deploy.ts` explicitly skips prank rows so a real deploy landing during a prank tail doesn't stamp the wrong row as live.
-3. Counts down in the terminal for 60 seconds.
-4. Runs `git push` → triggers Vercel build → runs migrations → deploys.
-5. The banner holds "Deploying now — the page will auto-refresh when the new version is ready." indefinitely — it never self-hides on a timer. `scripts/complete-deploy.ts` runs at the end of the Vercel build and stamps `completed_at` on the pending announcement. Clients see that on their next poll and the banner swaps to **"New version built — waiting for it to go live on the CDN…"** while the client polls every 2s for the actual traffic swap. Once the serving deployment's `VERCEL_GIT_COMMIT_SHA` (returned by `/api/deploy-announcement` as `serverBuildId`) differs from `NEXT_PUBLIC_BUILD_ID` baked into the old client's bundle, the banner flips to "✅ New version is live — reloading…" and the page auto-reloads onto the new bundle ~11.5s later (`RELOAD_DELAY_AFTER_SWAP_MS`). One reload per announcement, guarded by sessionStorage so the new bundle doesn't reload itself in a loop. Gating the reload on the build-id swap — not just `completed_at` — is what prevents the "reloaded but landed back on the OLD bundle" window during the ~30–60s between `next build` finishing and Vercel actually promoting the new deployment to production. The ~10s hold after the swap gives the visitor a visible beat to finish what they were doing (and see the "live — reloading" confirmation) instead of the page blinking out from under them the instant the CDN flips.
+**Why the 60s isn't cosmetic:** visitors may be mid-comment, tagging in `/admin/triage`, or filling `/submit`. The banner is a save-your-work warning. The only legitimate skip is a change no visitor could notice (e.g. `.claude/` config) — and since `git push` doesn't deploy, "skipping" just means it reaches prod on the next `npm run deploy`.
 
 ---
 
 ## Build
 
 ```bash
-npm run build        # runs: fetch-captcha → fetch-blockdle → migrate → next build → complete-deploy
-npm run typecheck    # tsc --noEmit (CI check)
+npm run build        # fetch-captcha → fetch-blockdle → migrate → next build
+npm run typecheck    # tsc --noEmit
 npm run lint         # next lint
 ```
 
-No paid build tools. No Turbopack in production (standard webpack).
+`opennextjs-cloudflare build` runs `npm run build` internally, then bundles the Worker into `.open-next/` (gitignored). Standard webpack, no Turbopack in production.
 
 ---
 
 ## Database Client
 
-`lib/db/client.ts` — lazy-initialized Drizzle client using `drizzle-orm/neon-http`.
-
-**Important:** The Neon HTTP driver does **not support transactions**. Admin writes are sequential. Partial state is accepted on failure. Never write code that depends on atomicity.
+`lib/db/client.ts` — lazy Drizzle client over `drizzle-orm/neon-http`. The Neon HTTP driver does **not support transactions**; admin writes are sequential and partial state is accepted on failure. Never write code that depends on atomicity.
 
 ---
 
 ## Free-Tier Constraints — which one actually bites
 
-The site runs on two free-tier services (Vercel Hobby + Neon). They have totally separate meters, and **they are not equally dangerous.**
+**Neon compute is the binding constraint, not the host.** Moving off Vercel removed the old Vercel Active-CPU worry, but Neon is unchanged: when its monthly compute quota runs out, every query throws `HTTP 402` and the site goes effectively dark until the monthly reset (`quota_reset_at`, queryable via Neon's management API — see the `reference-neon-api` memory). The `unstable_cache` layer on `lib/db/queries.ts` (see `docs/queries.md`) is the primary defence — every cache hit is one DB call not made.
 
-**Neon (the storage tier) is by far the bigger constraint. Vercel overuse is far less of a problem in comparison.**
-
-When Neon's monthly quota runs out, every database lookup throws `HTTP 402` and the site goes effectively dark — the cached page shell still renders but anything needing a fresh read 404s or shows the error screen. Recovery only happens at the next monthly reset (the `quota_reset_at` field on the project, queryable via Neon's management API). At the time of writing (2026-05-21) the storage tier is **exhausted**; reset is **2026-06-01**.
-
-By contrast, when Vercel's Fluid Active CPU cap is exceeded, the platform issues a *warning* — it does not auto-pause the site. The V9.33 outage banner went up in fear of an enforcement action that turned out not to happen (V9.34 confirmed). So Vercel overuse is annoying and worth caching against, but it doesn't take the site down the way a Neon exhaustion does.
-
-**Rule of thumb:** optimise for fewer DB calls first, fewer Vercel function-CPU seconds second.
-
-### Vercel (Hobby) meters
-
-- **Cron jobs:** Max 2 cron jobs, minimum 1-day interval. Both our jobs are daily/weekly — within limits.
-- **Function timeout:** 10 seconds default. Ingest and refresh are designed to be chunked. If a single ingest run times out, re-run manually with fewer pages.
-- **Fluid Active CPU:** 4 hours/month. SSR public pages (`/`, `/[kind]`, `/creation/[id]`, `/search`, `/new`) all use `force-dynamic` for cookies/auth, so Next's route cache doesn't help. The countermeasure is `unstable_cache` on the underlying DB query helpers in `lib/db/queries.ts` — see `docs/queries.md` for tags / TTLs / when admin actions flush them. Without that layer, organic traffic growth blows the 4h cap by mid-month. Per V9.34: tipping over warns but does **not** auto-pause.
-- **Bandwidth:** Free tier is generous. Steam thumbnails are hotlinked from Steam's CDN — we serve no images ourselves.
-
-### Neon (storage) meters
-
-- **Compute hours** — the binding constraint. Active compute time is metered while the database is awake serving queries. When exhausted, every query returns HTTP 402 across the entire project until the monthly reset. The cron jobs are tiny; almost all consumption comes from page-traffic-driven DB hits, which is why the `unstable_cache` arc in V9.32 / V9.34 / V9.38 / V9.39 / V9.40 is the primary defence — every cache slot served from the data cache is one DB hit not made.
-- **Storage (disk):** 0.5 GB cap. At current scale we're at ~10% of cap — a distant secondary concern.
-- **Auto-suspend:** the compute auto-suspends after a default idle window (5 min on free). This is what keeps active-time bounded; do not disable it.
-- **Diagnostics:** the project state (`active_time`, `cpu_used_sec`, `quota_reset_at`, `synthetic_storage_size`) is queryable via `GET /api/v2/projects?org_id=…` against `console.neon.tech/api/v2` with a `napi_` bearer token — see the `reference-neon-api` memory for the org/project IDs. The detailed daily-history endpoint is gated to Scale+ and not usable on free.
+Cloudflare Workers free tier is generous for this read-heavy app (100k requests/day), and static assets (images, JS, CSS) are served off the Worker entirely. The two limits that shaped the architecture were the **3 MiB Worker size cap** (→ images as static assets) and the **50-subrequest cap + Steam IP block** (→ crons on GitHub Actions).
 
 ### On-site signalling
 
-Public error screens (`app/error.tsx`, `app/global-error.tsx`, `app/creation/[id]/error.tsx`, `app/author/[steamid]/error.tsx`) render `<ErrorExplain>`, which fetches `/api/health` on the client. The route does a tiny `SELECT 1` against Neon, catches any failure, and runs it through `lib/errors/codes.ts` to map raw errors to a stable `{ code, explanation }` pair. A Neon 402 surfaces as `STORAGE_QUOTA_EXHAUSTED` with copy that names the June 1 reset; anything else falls through to `UNKNOWN — Unknown error.` Add new mappings in `classifyError()` as new failure modes are observed.
+Public error screens render `<ErrorExplain>`, which fetches `/api/health` (a tiny `SELECT 1`) and maps failures via `lib/errors/codes.ts`. A Neon 402 surfaces as `STORAGE_QUOTA_EXHAUSTED`; add new mappings in `classifyError()` as new failure modes appear.
 
 ---
 
@@ -151,7 +108,7 @@ Public error screens (`app/error.tsx`, `app/global-error.tsx`, `app/creation/[id
 
 ```bash
 npm run db:migrate    # apply schema
-npm run db:seed       # insert categories + ~40 starter tags with keyword aliases
+npm run db:seed       # categories + ~40 starter tags
 ```
 
-After seeding, trigger the first ingest manually from `/admin/ingest` with `pagesPerKind=5` to pull in a meaningful initial dataset.
+Then trigger the first ingest manually — run `npx tsx scripts/cron.ts ingest` locally (it talks to Neon + Steam directly), or kick the GitHub Actions `cron` workflow with the `ingest` input.

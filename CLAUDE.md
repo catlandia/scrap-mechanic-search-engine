@@ -4,7 +4,7 @@ Guidance for Claude Code when working in this repo.
 
 ## Project
 
-Scrap Mechanic Search Engine — a curated public directory of Scrap Mechanic Steam Workshop creations (Blueprints, Mods, Worlds, Challenges, Tiles, Custom Games, Terrain Assets). Free-tier only: Vercel Hobby + Neon Postgres + Steam Web API. No paid AI API.
+Scrap Mechanic Search Engine — a curated public directory of Scrap Mechanic Steam Workshop creations (Blueprints, Mods, Worlds, Challenges, Tiles, Custom Games, Terrain Assets). Free-tier only: Cloudflare Workers + Neon Postgres + Steam Web API. No paid AI API.
 
 ## Documentation
 
@@ -17,7 +17,7 @@ Detailed docs live in `docs/`. Start with `docs/README.md` — it's the index ta
 - Drizzle ORM + Neon serverless (`drizzle-orm/neon-http`)
 - `iron-session` for admin auth, gated via `middleware.ts`
 - Rule-based keyword tagger in `lib/tagger/` (no LLM)
-- Vercel Cron for ingest + refresh
+- GitHub Actions cron for ingest + refresh (Steam 403s Cloudflare IPs, so crons can't run in the Worker)
 
 ## Commands
 
@@ -32,10 +32,10 @@ npm run db:migrate       # apply migrations via scripts/migrate.ts
 npm run db:push          # drizzle-kit push (dev-only shortcut)
 npm run db:studio        # Drizzle Studio GUI
 npm run db:seed          # seed categories + starter tags
-npm run deploy           # announce 60s countdown banner to live visitors, then git push
+npm run deploy           # build, announce 60s countdown banner to live visitors, then wrangler deploy
 ```
 
-**Always push via `npm run deploy`, never bare `git push`.** The script inserts a `deploy_announcements` row 60 seconds before pushing so every live visitor sees a countdown banner with SFX and has time to save/finish what they're doing before the site restarts. The countdown banner is a feature, not decoration — skipping it silently kicks anyone mid-action into a broken flow. Exception: zero-visitor moments where nobody could be impacted (very early morning, or if the working tree really has nothing visitors could notice like a README-only change) — and even then, the cost of running `npm run deploy` is sixty seconds.
+**Always deploy via `npm run deploy`.** Note that `git push` no longer deploys anything — the site runs on Cloudflare Workers (`wrangler deploy`), not Vercel. The script builds the Worker, then inserts a `deploy_announcements` row 60 seconds before the swap so every live visitor sees a countdown banner with SFX and has time to save/finish what they're doing before the site restarts. The countdown banner is a feature, not decoration — skipping it silently kicks anyone mid-action into a broken flow. Exception: zero-visitor moments where nobody could be impacted (very early morning, or if the working tree really has nothing visitors could notice like a README-only change) — and even then, the cost of running `npm run deploy` is sixty seconds.
 
 Env vars live in `.env.local` (see `.env.example`). Required for full operation: `DATABASE_URL`, `STEAM_API_KEY`, `CRON_SECRET`, `ADMIN_PASSWORD`, `SESSION_SECRET` (≥ 32 chars), `NEXT_PUBLIC_SITE_URL`.
 
@@ -61,7 +61,8 @@ Env vars live in `.env.local` (see `.env.example`). Required for full operation:
 - `middleware.ts` — gates `/admin/*` except `/admin/login`
 - `drizzle/` — generated SQL migrations (checked in)
 - `scripts/` — `migrate.ts`, `seed.ts`, `smoke-classify.ts`
-- `vercel.json` — cron schedule
+- `wrangler.jsonc`, `open-next.config.ts` — Cloudflare Worker config
+- `.github/workflows/cron.yml` — ingest/refresh cron (GitHub Actions)
 
 ## Notes
 

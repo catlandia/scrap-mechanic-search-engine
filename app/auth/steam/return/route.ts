@@ -60,12 +60,24 @@ export async function GET(req: NextRequest) {
     lastSeenAt: now,
   };
 
-  // Existing-user lookup (to preserve their current role unless creator promotion applies).
-  const existing = await db
-    .select()
-    .from(users)
-    .where(eq(users.steamid, steamid))
-    .limit(1);
+  // Every DB touch below is wrapped: Steam has already told us who this
+  // person is, so a database outage must surface as a readable
+  // "we're down, not you" message rather than an unhandled throw. Before
+  // this guard existed, a Neon compute-quota 402 turned the whole flow
+  // into a silent bounce back to the homepage — indistinguishable from
+  // "Steam login is broken", which is exactly how it got reported.
+  let existing: (typeof users.$inferSelect)[];
+  try {
+    // Existing-user lookup (to preserve their current role unless creator promotion applies).
+    existing = await db
+      .select()
+      .from(users)
+      .where(eq(users.steamid, steamid))
+      .limit(1);
+  } catch (err) {
+    console.error("steam login: user lookup failed", err);
+    return failUrl("db_unavailable");
+  }
 
   // Hard-banned steamids can't sign in. Session never gets set.
   if (existing[0]?.hardBanned) {
@@ -78,25 +90,30 @@ export async function GET(req: NextRequest) {
     : existingRole ?? "user";
 
   const siteJoinedAt = existing[0]?.siteJoinedAt ?? now;
-  if (existing.length === 0) {
-    await db.insert(users).values({
-      ...baseRow,
-      role: nextRole,
-      siteJoinedAt: now,
-    });
-  } else {
-    await db
-      .update(users)
-      .set({
-        personaName: baseRow.personaName,
-        avatarUrl: baseRow.avatarUrl,
-        profileUrl: baseRow.profileUrl,
-        steamCreatedAt: baseRow.steamCreatedAt,
-        smPlaytimeMinutes: baseRow.smPlaytimeMinutes,
-        lastSeenAt: now,
+  try {
+    if (existing.length === 0) {
+      await db.insert(users).values({
+        ...baseRow,
         role: nextRole,
-      })
-      .where(eq(users.steamid, steamid));
+        siteJoinedAt: now,
+      });
+    } else {
+      await db
+        .update(users)
+        .set({
+          personaName: baseRow.personaName,
+          avatarUrl: baseRow.avatarUrl,
+          profileUrl: baseRow.profileUrl,
+          steamCreatedAt: baseRow.steamCreatedAt,
+          smPlaytimeMinutes: baseRow.smPlaytimeMinutes,
+          lastSeenAt: now,
+          role: nextRole,
+        })
+        .where(eq(users.steamid, steamid));
+    }
+  } catch (err) {
+    console.error("steam login: user upsert failed", err);
+    return failUrl("db_unavailable");
   }
 
   // Best-effort: never let a badge grant failure block the sign-in flow.

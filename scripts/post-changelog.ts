@@ -17,8 +17,8 @@ import { changelogEntries } from "../lib/db/schema";
 
 // --------------------- entry to post --------------------------------
 const TIER: "update" | "patch" = "patch";
-const TITLE = "Fixed: pages occasionally failing to load";
-const BODY = `Some visitors were running into an intermittent error where pages — the homepage, Newest, search, and individual creation pages — would randomly fail to load and show an error screen instead. That's fixed: the site now renders well within its free-hosting limits, so loads are reliable again. Link previews (the share cards you see when posting a creation on Discord or Reddit) are untouched. Thanks for bearing with the hiccup.`;
+const TITLE = "You can now support the site on Ko-fi";
+const BODY = `If you've ever wanted to chip in toward the running costs, there's finally a way: a "Support me" button on Ko-fi, reachable from the floating button in the corner of any page or from the Support page. It's entirely optional and the site stays 100% free either way — but every little bit genuinely helps keep it online and improving as it grows toward the Chapter 2 rush. Thank you 💚`;
 // --------------------------------------------------------------------
 
 async function main() {

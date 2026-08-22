@@ -135,18 +135,18 @@ Or set `SM_INSTALL_DIR` once and drop the flag. Writes `blocks.json` + `icons/<u
 
 **3. Create a fine-grained PAT** with `Contents: Read` scoped only to that repo. GitHub doesn't expose fine-grained token creation via API, so this step is always manual (web UI).
 
-**4. Set env vars** in Vercel (Production + Preview + Development) and `.env.local` for dev:
+**4. Set env vars** in `.env.local` (used by local builds and `npm run deploy`):
 
-- `BLOCKDLE_DATA_TOKEN` — the PAT (mark as Sensitive in Vercel)
+- `BLOCKDLE_DATA_TOKEN` — the PAT
 - `BLOCKDLE_DATA_REPO` — `owner/repo`
 - `BLOCKDLE_DATA_BRANCH` — default `main`
 - `BLOCKDLE_DATA_PATH` — leave empty if `blocks.json` is at the repo root
 
-**5. Build.** The npm `build` script chains `scripts/fetch-blockdle-data.ts` before `next build`. The fetch pulls `blocks.json` + every `icons/*.png` via the GitHub Contents API and writes three gitignored files into `lib/blockdle/`:
+**5. Build.** The npm `build` script chains `scripts/fetch-blockdle-data.ts` before `next build`. The fetch pulls `blocks.json` + every `icons/*.png` via the GitHub Contents API and writes two gitignored files into `lib/blockdle/`, plus the icon PNGs into `/public/blockdle-icons/`:
 
 - `blocks.generated.ts` — typed `BLOCKS: readonly Block[]`, imported server-side only
 - `autocomplete.generated.ts` — slim `INDEX: { uuid, name, nameLower }[]`, safe for the client bundle
-- `_icons.generated.json` — `{ uuid: base64-png }` manifest served by the icon route
+- `/public/blockdle-icons/<uuid>.png` — the icon PNGs as static assets, served directly by Cloudflare's CDN (no base64 manifest, no API route)
 
 **Dev escape hatch:** if `BLOCKDLE_DATA_TOKEN` is unset but `lib/blockdle/blocks.json` + `lib/blockdle/icons/*.png` exist on disk (e.g. from a local extractor run), the fetch script regenerates the three files from disk without hitting GitHub.
 
@@ -188,7 +188,7 @@ Filtered to users with at least one win (loss-only players don't make "people wh
 - `app/minigames/blockdle/AutocompleteInput.tsx` — client-side prefix + substring match against `INDEX`. Strips non-alphanumerics from both query and name so "craft bot" matches "Craftbot".
 - `app/minigames/blockdle/actions.ts` — `startBlockdle`, `submitBlockdleGuess`, `resetBlockdle`, `clearEndlessStats`, `getTodayLeaderboard`. Guess validation + comparison + session mutation + leaderboard write all happen server-side.
 - `app/minigames/blockdle/Leaderboard.tsx` — Server Component. Renders today's top finishers; passes `LeaderboardEntry[]` in from the server page.
-- `app/api/minigames/blockdle/icon/[uuid]/route.ts` — PNG served from `_icons.generated.json`. No session check; icons aren't a cheat vector. `Cache-Control: public, max-age=31536000, immutable`.
+- Block/clicker icons are static assets at `/blockdle-icons/<uuid>.png` (copied into `/public` at build by `fetch-blockdle-data.ts`), served straight from Cloudflare's CDN. No API route, no session check — icons aren't a cheat vector. The old `/api/minigames/blockdle/icon/[uuid]` route was removed in the Cloudflare migration to keep the Worker under its 3 MiB size cap.
 - `lib/blockdle/session.ts` — iron-session cookie `smse_blockdle_v3`, 30-day TTL, signed with `SESSION_SECRET`. Holds `{ daily?, endless? }`.
 
 ### Session size
@@ -210,7 +210,7 @@ lib/blockdle/
   share.ts                   — buildShareGrid (emoji copy-string, 9 cells per row)
   blocks.generated.ts        (gitignored)
   autocomplete.generated.ts  (gitignored)
-  _icons.generated.json      (gitignored)
+  (icons → /public/blockdle-icons/<uuid>.png at build — gitignored)
   blocks.json                (gitignored, dev escape hatch)
   icons/<uuid>.png           (gitignored, dev escape hatch)
 
@@ -243,4 +243,4 @@ When SM ships an update that adds blocks:
 1. Re-run the extractor with `--strict` to catch new `physicsMaterial` values, unmapped shapeset files, or a newly-added shapeset in the manifest.
 2. If `--strict` flags something, update `CATEGORY_FOR_FILE`, `INVENTORY_TYPE_FOR_SHAPESET`, `MATERIAL_ALIASES`, or `EXTRA_SHAPESETS` as needed.
 3. Overwrite the private `blockdle-data` repo with the new `blocks.json` + `icons/`.
-4. Push any commit to trigger a Vercel rebuild — `fetch-blockdle-data` re-generates, `next build` picks up the new catalogue automatically.
+4. Run `npm run deploy` — `fetch-blockdle-data` re-generates and the build picks up the new catalogue automatically.

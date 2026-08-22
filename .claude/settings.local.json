@@ -13,7 +13,6 @@
       "Grep(*)",
       "WebFetch(*)",
       "WebSearch(*)",
-      "mcp__*",
       "Bash(npm --version)",
       "Bash(git --version)",
       "Bash(git add *)",
@@ -24,7 +23,8 @@
       "Bash(git pull *)",
       "Bash(mv lib/blockdle/blocks.json.bak lib/blockdle/blocks.json)",
       "Bash(mv lib/blockdle/icons.bak lib/blockdle/icons)",
-      "Bash(npx tsx *)"
+      "Bash(npx tsx *)",
+      "Bash(echo \"exit: $?\")"
     ],
     "deny": [
       "Bash(format *)",

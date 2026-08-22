@@ -518,7 +518,8 @@ const en: Dictionary = {
   "support.bugsP1BadgeAfter": "badge.",
   "support.moneyHeading": "Money support",
   "support.moneyP1":
-    "Right now there's no way to donate — I haven't set up a Patreon, Ko-fi, or anything similar yet. But if the site grows, it'll eventually outgrow the free tiers, and at that point financial support would genuinely help keep it online and improving. If you'd like to contribute that way later, check back — I'll add a link here when something's set up.",
+    "Donations are now open! You can support the site on Ko-fi with the button below — or the floating “Support me” button in the corner of any page. It's completely optional, but it genuinely helps cover the free-tier running costs and keep the site online and improving as it grows. Thank you 💚",
+  "support.moneyKofiButton": "Support on Ko-fi",
   "support.moneyP2":
     "In the meantime the items above are the most useful things you can do.",
 
@@ -1141,7 +1142,8 @@ const ru: Dictionary = {
   "support.bugsP1BadgeAfter": ".",
   "support.moneyHeading": "Финансовая поддержка",
   "support.moneyP1":
-    "Пока что пожертвований нет — я ещё не завёл ни Patreon, ни Ko-fi, ни чего-либо подобного. Но если сайт вырастет, он рано или поздно упрётся в лимиты бесплатных тарифов, и тогда финансовая поддержка действительно поможет держать его онлайн и развивать. Если захотите поддержать проект позже — заглядывайте сюда, я добавлю ссылку, когда всё настрою.",
+    "Теперь можно поддержать проект! Это можно сделать на Ko-fi кнопкой ниже — или плавающей кнопкой «Support me» в углу любой страницы. Это совершенно по желанию, но действительно помогает покрывать расходы на бесплатных тарифах и держать сайт онлайн и развивать его. Спасибо 💚",
+  "support.moneyKofiButton": "Поддержать на Ko-fi",
   "support.moneyP2":
     "А пока перечисленное выше — самое полезное, что вы можете сделать.",
 
@@ -1763,7 +1765,8 @@ const de: Dictionary = {
   "support.bugsP1BadgeAfter": "-Abzeichen.",
   "support.moneyHeading": "Finanzielle Unterstützung",
   "support.moneyP1":
-    "Aktuell kann man nicht spenden — ich habe weder Patreon noch Ko-fi oder Ähnliches eingerichtet. Aber wenn die Seite wächst, sprengt sie irgendwann die kostenlosen Tarife, und dann würde finanzielle Unterstützung wirklich helfen, sie online zu halten und weiterzuentwickeln. Wenn du später auf diesem Weg beitragen möchtest — schau wieder vorbei, ich füge hier einen Link hinzu, sobald etwas eingerichtet ist.",
+    "Spenden sind jetzt möglich! Du kannst die Seite über Ko-fi mit dem Button unten unterstützen — oder mit dem schwebenden „Support me“-Button in der Ecke jeder Seite. Es ist völlig freiwillig, hilft aber wirklich, die Kosten der kostenlosen Tarife zu decken und die Seite online zu halten und weiterzuentwickeln. Danke 💚",
+  "support.moneyKofiButton": "Auf Ko-fi unterstützen",
   "support.moneyP2":
     "Bis dahin sind die oben genannten Punkte das Nützlichste, was du tun kannst.",
 
@@ -2388,7 +2391,8 @@ const pl: Dictionary = {
   "support.bugsP1BadgeAfter": ".",
   "support.moneyHeading": "Wsparcie finansowe",
   "support.moneyP1":
-    "Na razie nie ma jak wpłacić — nie założyłem jeszcze Patreona, Ko-fi ani niczego podobnego. Ale jeśli strona urośnie, w końcu przerośnie darmowe plany, a wtedy wsparcie finansowe naprawdę pomogłoby utrzymać ją online i rozwijać. Jeśli chciałbyś wesprzeć później — zajrzyj ponownie, dodam tu link, gdy tylko coś ustawię.",
+    "Można już wspierać projekt! Zrobisz to na Ko-fi przyciskiem poniżej — albo pływającym przyciskiem „Support me” w rogu każdej strony. To całkowicie dobrowolne, ale naprawdę pomaga pokryć koszty darmowych planów i utrzymać stronę online oraz ją rozwijać. Dziękuję 💚",
+  "support.moneyKofiButton": "Wesprzyj na Ko-fi",
   "support.moneyP2":
     "Tymczasem powyższe rzeczy to najbardziej przydatne, co możesz zrobić.",
 
@@ -3015,7 +3019,8 @@ const uk: Dictionary = {
   "support.bugsP1BadgeAfter": ".",
   "support.moneyHeading": "Фінансова підтримка",
   "support.moneyP1":
-    "Наразі пожертв немає — я ще не завів ані Patreon, ані Ko-fi, ані чогось подібного. Але якщо сайт зросте, рано чи пізно він упреться в ліміти безкоштовних тарифів, і тоді фінансова підтримка справді допомогла б тримати його в мережі та розвивати. Якщо захочете підтримати проєкт згодом — зазирайте, я додам сюди посилання, щойно все налаштую.",
+    "Тепер проєкт можна підтримати! Це можна зробити на Ko-fi кнопкою нижче — або плаваючою кнопкою «Support me» в кутку будь-якої сторінки. Це цілком за бажанням, але справді допомагає покривати витрати на безкоштовних тарифах і тримати сайт у мережі та розвивати його. Дякую 💚",
+  "support.moneyKofiButton": "Підтримати на Ko-fi",
   "support.moneyP2":
     "А поки що перелічене вище — найкорисніше, що ви можете зробити.",
 
@@ -3628,7 +3633,8 @@ const zh: Dictionary = {
   "support.bugsP1BadgeAfter": "徽章。",
   "support.moneyHeading": "资金支持",
   "support.moneyP1":
-    "目前还没有捐赠渠道——我还没搭建 Patreon、Ko-fi 之类的东西。但如果本站发展起来,迟早会超出免费额度的范围,到那时财务支持会真正帮助它保持在线并持续改进。如果你希望日后以这种方式支持——请回来看看,等我搭好后会在这里加上链接。",
+    "现在可以捐赠了！你可以用下方的按钮在 Ko-fi 上支持本站——或点击任意页面角落里浮动的“Support me”按钮。完全是自愿的,但确实有助于覆盖免费额度的运行成本,让本站保持在线并持续改进。谢谢 💚",
+  "support.moneyKofiButton": "在 Ko-fi 上支持",
   "support.moneyP2":
     "在此期间,以上这些事情就是你能做的最有用的事。",
 

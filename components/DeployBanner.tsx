@@ -2,7 +2,25 @@
 
 import { useEffect, useRef, useState } from "react";
 
-const POLL_MS = 8_000;
+// Master switch for the whole feature, banner *and* poll. Default OFF.
+//
+// This poll is what killed the site in August 2026. It runs from every open
+// tab, and `/api/deploy-announcement` hits Neon on every request — the
+// `unstable_cache({ revalidate: 5 })` around the query was a no-op on
+// Cloudflare (see open-next.config.ts). One tab left open overnight is a
+// database query every 8 seconds, forever, which means Neon's compute never
+// reaches its 5-minute autosuspend and bills the whole month at 100% active.
+// The compute quota blew on 2026-08-19 and took Steam sign-in down with it.
+//
+// So the banner now has to be switched on deliberately, and `scripts/deploy.ts`
+// reads the same flag so it never announces a deploy that nobody is listening
+// for. Set NEXT_PUBLIC_DEPLOY_BANNER=on to re-enable both halves at once.
+const BANNER_ENABLED = process.env.NEXT_PUBLIC_DEPLOY_BANNER === "on";
+
+// Steady-state cadence. Was 8s; a 60s countdown only needs a handful of
+// polls to look live, and 30s cuts the idle query load by ~4x for whenever
+// the banner is switched back on.
+const POLL_MS = 30_000;
 // Once the announcement flips to completedAt but the serving build id still
 // matches what the client was loaded with, Vercel is still uploading /
 // promoting the new deployment. Poll faster during that window so the
@@ -79,6 +97,9 @@ export function DeployBanner({ funMode }: { funMode: boolean }) {
     serverBuildId !== null && serverBuildId !== CLIENT_BUILD_ID;
 
   useEffect(() => {
+    // Feature off → never open the poll loop. This is the whole point of the
+    // flag: no timer, no fetch, no Neon query, so an idle tab costs nothing.
+    if (!BANNER_ENABLED) return;
     cancelledRef.current = false;
     let timer: ReturnType<typeof setTimeout> | null = null;
     async function poll() {

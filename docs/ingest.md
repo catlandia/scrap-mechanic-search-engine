@@ -4,14 +4,16 @@ The ingest system is responsible for discovering new Workshop items on Steam and
 
 ---
 
-## Cron Schedule (`vercel.json`)
+## Cron Schedule (GitHub Actions — `.github/workflows/cron.yml`)
 
-| Job | Path | Schedule | Purpose |
-|---|---|---|---|
-| Ingest | `/api/cron/ingest` | `0 6 * * *` | Daily at 6 AM UTC — fetch new items |
-| Refresh | `/api/cron/refresh` | `0 3 * * 1` | Mondays at 3 AM UTC — update engagement metrics |
+Ingest + refresh run as plain Node jobs on GitHub-hosted runners (`scripts/cron.ts`), directly against Neon — **not** in the Cloudflare Worker, which can't reach Steam (403s Cloudflare's egress IPs) and caps a request at 50 subrequests. See `docs/deployment.md`.
 
-Both endpoints check `Authorization: Bearer <CRON_SECRET>` before running.
+| Job | Schedule (UTC) | Purpose |
+|---|---|---|
+| `cron.ts ingest`  | `0 6 * * *` (daily 6 AM) | Fetch new items + top up contributor attribution |
+| `cron.ts refresh` | `0 3 * * 1` (Mon 3 AM)   | Update engagement metrics (subs/favorites/votes) |
+
+The `/api/cron/{ingest,refresh}` routes still exist for a manual curl (`Authorization: Bearer <CRON_SECRET>`) but nothing schedules them.
 
 ---
 

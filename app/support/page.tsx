@@ -114,6 +114,14 @@ export default async function SupportPage() {
         <p className="text-sm leading-relaxed text-foreground/80">
           {t("support.moneyP1")}
         </p>
+        <a
+          href="https://ko-fi.com/cyberslime2077"
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center gap-2 rounded-lg bg-[#794bc4] px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
+        >
+          ☕ {t("support.moneyKofiButton")}
+        </a>
         <p className="text-sm leading-relaxed text-foreground/80">
           {t("support.moneyP2")}
         </p>
