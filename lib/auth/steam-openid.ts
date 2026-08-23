@@ -32,6 +32,31 @@ export type SteamVerifyResult =
   | { ok: false; reason: SteamVerifyFailure; detail?: string };
 
 /**
+ * Undo the `+` → space corruption that happens to Steam's signature in transit.
+ *
+ * Steam percent-encodes the `+` characters in its base64 fields as `%2B`, but
+ * by the time the request reaches this Worker the URL has been normalised and
+ * that `%2B` is a literal `+`. `URLSearchParams` then does the standard
+ * form-decoding thing and reads `+` as a space — so `openid.sig` and
+ * `openid.response_nonce` arrive with spaces wherever Steam put a `+`. Handing
+ * that back to `check_authentication` is a different byte string from the one
+ * Steam signed, so Steam correctly answers `is_valid:false` and the sign-in
+ * fails. (`%2F` and `%3D` are left alone by the same normalisation, which is
+ * why only some sign-ins looked broken — it depends on whether that
+ * particular signature happened to contain a `+`.)
+ *
+ * No field in an OpenID assertion may contain a literal space: they are URLs,
+ * identifiers, comma-separated lists and base64 blobs. So a space here is
+ * always a `+` that was mangled, and restoring it is unambiguous.
+ *
+ * Setting a real `+` on the outgoing URLSearchParams re-encodes it as `%2B`,
+ * which is exactly what Steam signed.
+ */
+function restorePlus(value: string): string {
+  return value.includes(" ") ? value.replaceAll(" ", "+") : value;
+}
+
+/**
  * Given the query params Steam sent to our return URL, POST them back with
  * `openid.mode=check_authentication` to have Steam confirm the signature.
  *
@@ -60,7 +85,7 @@ export async function verifySteamAssertionDetailed(
   // so the request contains exactly what Steam signed and nothing else.
   const verifyBody = new URLSearchParams();
   for (const [key, value] of params) {
-    if (key.startsWith("openid.")) verifyBody.set(key, value);
+    if (key.startsWith("openid.")) verifyBody.set(key, restorePlus(value));
   }
   verifyBody.set("openid.mode", "check_authentication");
 
