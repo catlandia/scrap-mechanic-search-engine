@@ -21,14 +21,14 @@ import { config as loadEnv } from "dotenv";
 loadEnv({ path: ".env.local", override: false });
 loadEnv({ path: ".env", override: false });
 
-import { neon } from "@neondatabase/serverless";
-import { drizzle } from "drizzle-orm/neon-http";
+import postgres from "postgres";
+import { drizzle } from "drizzle-orm/postgres-js";
 import { sql } from "drizzle-orm";
 
 async function main() {
   const url = process.env.DATABASE_URL;
   if (!url) throw new Error("DATABASE_URL is not set");
-  const db = drizzle(neon(url));
+  const db = drizzle(postgres(url, { ssl: "require", max: 1, prepare: false }));
 
   // Postgres checks the UNIQUE constraint per row inside UPDATE, so we can't
   // reassign overlapping ranges in one shot. Two-phase: negate every assigned
@@ -78,7 +78,7 @@ async function main() {
       COALESCE(MAX(short_id), 0)::int                    AS max_short
     FROM creations
   `);
-  console.log("Summary:", result.rows?.[0]);
+  console.log("Summary:", result?.[0]);
 }
 
 main().catch((err) => {

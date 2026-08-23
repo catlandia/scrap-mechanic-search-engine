@@ -1,12 +1,22 @@
-import { getIronSession, type SessionOptions } from "iron-session";
+import { getIronSession } from "iron-session";
 import { cookies } from "next/headers";
 import { cache } from "react";
 import { eq, sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import { users, type User } from "@/lib/db/schema";
 import { getPlayerSummary, getSmPlaytimeMinutes } from "@/lib/steam/client";
+import {
+  SESSION_COOKIE_NAME,
+  buildSessionOptions,
+  type UserSession,
+} from "./session-options";
 
-export const SESSION_COOKIE_NAME = "smse_session";
+// Re-exported so existing importers keep working. The definitions live in
+// ./session-options, which imports no database code — `middleware.ts` runs on
+// the edge runtime and pulling this module in would drag the whole Postgres
+// driver along with it.
+export { SESSION_COOKIE_NAME, buildSessionOptions };
+export type { UserSession };
 
 // How old the Steam profile snapshot (persona name, avatar, playtime) can
 // get before getCurrentUser re-pulls it from the Steam Web API. 10 minutes
@@ -14,24 +24,6 @@ export const SESSION_COOKIE_NAME = "smse_session";
 // loose enough that casual page-load bursts don't hammer Steam's quota.
 // At worst one fetch per user per 10 minutes.
 const PROFILE_REFRESH_STALE_MS = 10 * 60 * 1000;
-
-export interface UserSession {
-  steamid?: string;
-}
-
-export function buildSessionOptions(password: string): SessionOptions {
-  return {
-    cookieName: SESSION_COOKIE_NAME,
-    password,
-    cookieOptions: {
-      secure: process.env.NODE_ENV === "production",
-      httpOnly: true,
-      sameSite: "lax",
-      path: "/",
-      maxAge: 60 * 60 * 24 * 7,
-    },
-  };
-}
 
 function requireSecret(): string {
   const password = process.env.SESSION_SECRET;

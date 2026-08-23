@@ -11,8 +11,8 @@ import { config as loadEnv } from "dotenv";
 loadEnv({ path: ".env.local", override: false });
 loadEnv({ path: ".env", override: false });
 
-import { neon } from "@neondatabase/serverless";
-import { drizzle } from "drizzle-orm/neon-http";
+import postgres from "postgres";
+import { drizzle } from "drizzle-orm/postgres-js";
 import { changelogEntries } from "../lib/db/schema";
 
 // --------------------- entry to post --------------------------------
@@ -27,7 +27,7 @@ async function main() {
   const author = process.env.CREATOR_STEAMID;
   if (!author) throw new Error("CREATOR_STEAMID is not set");
 
-  const db = drizzle(neon(url));
+  const db = drizzle(postgres(url, { ssl: "require", max: 1, prepare: false }));
   const [row] = await db
     .insert(changelogEntries)
     .values({

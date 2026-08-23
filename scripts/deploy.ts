@@ -3,8 +3,8 @@ loadEnv({ path: ".env.local", override: false });
 loadEnv({ path: ".env", override: false });
 
 import { execSync } from "node:child_process";
-import { neon } from "@neondatabase/serverless";
-import { drizzle } from "drizzle-orm/neon-http";
+import postgres from "postgres";
+import { drizzle } from "drizzle-orm/postgres-js";
 import { and, isNull, sql } from "drizzle-orm";
 import { deployAnnouncements } from "../lib/db/schema";
 
@@ -59,7 +59,7 @@ async function main() {
   console.log(`Building deployment ${sha}…`);
   run("npx opennextjs-cloudflare build");
 
-  const db = drizzle(neon(dbUrl));
+  const db = drizzle(postgres(dbUrl, { ssl: "require", max: 1, prepare: false }));
 
   if (!SKIP_BANNER) {
     // 2. Announce the deploy and hold for the countdown, so every live visitor
@@ -80,7 +80,7 @@ async function main() {
         ? "\n⚠  Banner suspended (--no-banner): swapping immediately, no visitor countdown.\n"
         : "\n⚠  Banner off (NEXT_PUBLIC_DEPLOY_BANNER is not 'on'): no browser is polling\n" +
             "   for announcements, so the countdown would warn nobody. Swapping immediately,\n" +
-            "   and touching zero Neon queries on the way.\n",
+            "   and touching zero database queries on the way.\n",
     );
   }
 

@@ -11,6 +11,12 @@
     "binding": "ASSETS",
     "directory": ".open-next/assets"
   },
+  // TCP bridge to Supabase. Workers cannot hold a raw postgres socket across
+  // requests, and postgres.js reconnecting per query blows the free plan's
+  // 50-subrequest cap — Hyperdrive pools outside the Worker instead.
+  "hyperdrive": [
+    { "binding": "HYPERDRIVE", "id": "898478174ab7440192c497416b7caf9f" }
+  ],
   "observability": {
     "enabled": true
   }

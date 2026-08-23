@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { SORT_LABELS, SORT_MODES, type SortMode } from "@/lib/db/queries";
+import { SORT_LABELS, SORT_MODES, type SortMode } from "@/lib/db/sort";
 
 export function SortSelector({
   current,

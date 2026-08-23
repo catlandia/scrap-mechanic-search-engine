@@ -1,12 +1,12 @@
 import { config as loadEnv } from "dotenv";
 loadEnv({ path: ".env.local", override: false });
 
-import { neon } from "@neondatabase/serverless";
+import postgres from "postgres";
 
 async function main() {
   const url = process.env.DATABASE_URL;
   if (!url) throw new Error("DATABASE_URL not set");
-  const sql = neon(url);
+  const sql = postgres(url, { ssl: "require", max: 1, prepare: false });
 
   const scheduledAt = new Date(Date.now() + 60 * 1000);
   const rows = await sql`

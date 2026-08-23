@@ -147,6 +147,30 @@ function buildRow(
   };
 }
 
+
+/**
+ * Postgres caps a single statement at 65,535 bind parameters. Drizzle sends one
+ * parameter per column per row, so a wide table like `creations` (~30 columns)
+ * overflows at a little over 2,000 rows — and a deep backfill inserts far more
+ * than that in one go. Exceeding it fails the whole statement, which then
+ * cascades: the creations never land, so every dependent creation_tags /
+ * creation_categories row is rejected by its foreign key.
+ *
+ * Splitting on the actual column count keeps each statement inside the cap
+ * regardless of how wide the table is.
+ */
+function chunkForInsert<T extends Record<string, unknown>>(rows: T[]): T[][] {
+  if (rows.length === 0) return [];
+  const columns = Math.max(1, Object.keys(rows[0]).length);
+  const perStatement = Math.max(1, Math.floor(60000 / columns));
+  if (rows.length <= perStatement) return [rows];
+  const out: T[][] = [];
+  for (let i = 0; i < rows.length; i += perStatement) {
+    out.push(rows.slice(i, i + perStatement));
+  }
+  return out;
+}
+
 export async function runIngest(options: IngestOptions = {}): Promise<IngestResult> {
   const apiKey = process.env.STEAM_API_KEY;
   if (!apiKey) throw new Error("STEAM_API_KEY is not set");
@@ -364,7 +388,9 @@ export async function runIngest(options: IngestOptions = {}): Promise<IngestResu
       buildRow(c, (c.item.creator && nameMap.get(c.item.creator)) ?? null),
     );
     try {
-      await db.insert(creations).values(rows);
+      for (const batch of chunkForInsert(rows)) {
+        await db.insert(creations).values(batch);
+      }
     } catch (err) {
       errors.push({
         message: `bulk insert: ${err instanceof Error ? err.message : err}`,
@@ -444,7 +470,9 @@ export async function runIngest(options: IngestOptions = {}): Promise<IngestResu
 
     if (batchedTagRows.length > 0) {
       try {
-        await db.insert(creationTags).values(batchedTagRows).onConflictDoNothing();
+        for (const batch of chunkForInsert(batchedTagRows)) {
+          await db.insert(creationTags).values(batch).onConflictDoNothing();
+        }
         tagRowsInserted = batchedTagRows.length;
       } catch (err) {
         errors.push({
@@ -454,10 +482,9 @@ export async function runIngest(options: IngestOptions = {}): Promise<IngestResu
     }
     if (batchedCategoryRows.length > 0) {
       try {
-        await db
-          .insert(creationCategories)
-          .values(batchedCategoryRows)
-          .onConflictDoNothing();
+        for (const batch of chunkForInsert(batchedCategoryRows)) {
+          await db.insert(creationCategories).values(batch).onConflictDoNothing();
+        }
       } catch (err) {
         errors.push({
           message: `batch insert creation_categories: ${err instanceof Error ? err.message : err}`,

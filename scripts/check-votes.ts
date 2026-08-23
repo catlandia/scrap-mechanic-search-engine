@@ -13,7 +13,7 @@ async function main() {
       COUNT(*) AS total
     FROM creations WHERE status = 'approved'
   `);
-  console.log("Vote breakdown:", counts.rows);
+  console.log("Vote breakdown:", counts);
 
   const samples = await db.execute(sql`
     SELECT id, title, vote_score, votes_up, votes_down, subscriptions
@@ -23,7 +23,7 @@ async function main() {
     LIMIT 10
   `);
   console.log("\nSamples with score but sparse vote data:");
-  for (const r of samples.rows) console.log(r);
+  for (const r of samples) console.log(r);
 }
 
 main().then(() => process.exit(0)).catch((e) => { console.error(e); process.exit(1); });

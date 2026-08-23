@@ -1,0 +1,64 @@
+name: neon-restore
+
+# One-shot recovery of the community history stranded in Neon.
+#
+# Neon's free compute quota was exhausted on 2026-08-19, which took the site
+# down and forced the move to Supabase on 2026-08-22. The catalogue was rebuilt
+# from the Steam Workshop, but accounts, comments, votes, favourites and
+# moderation decisions only exist in Neon and cannot be reconstructed. Neon's
+# quota resets at 2026-09-01T00:00:00Z, at which point the data is readable
+# again.
+#
+# This runs daily and simply keeps failing to connect until the reset happens,
+# then does the restore and sets site_flags.neon_restore_completed. Every run
+# after that short-circuits before it opens a connection, so the job stops
+# spending the very quota that caused the outage. It is safe to leave enabled.
+on:
+  schedule:
+    - cron: "30 1 * * *" # daily 01:30 UTC — comfortably after the 00:00 reset
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: dry-run reports what would change; apply commits it
+        type: choice
+        options: [dry-run, apply]
+        default: dry-run
+
+concurrency:
+  group: neon-restore
+  cancel-in-progress: false
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm ci
+
+      - name: Restore from Neon
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.mode }}" = "dry-run" ]; then
+            FLAGS=""
+          else
+            FLAGS="--apply"
+          fi
+          echo "Running restore $FLAGS"
+          set +e
+          npx tsx scripts/restore-from-neon.ts $FLAGS
+          code=$?
+          set -e
+          # Exit 2 is the script's "Neon is still quota-locked" signal. That is
+          # the expected state on every run before the reset, so treat it as a
+          # successful no-op rather than paging anyone with a red run.
+          if [ $code -eq 2 ]; then
+            echo "Neon not reachable yet — will retry tomorrow."
+            exit 0
+          fi
+          exit $code

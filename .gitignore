@@ -56,3 +56,9 @@ Thumbs.db
 # source folder. Distributed via GitHub Releases / AMO / Chrome Web Store
 # rather than committed to history.
 /smse-extension.zip
+
+# Local backups of env/schema taken during the 2026-08-22 Neon -> Supabase move.
+# .env.local.bak still holds the old Neon connection string (with its password),
+# so it must never be committed. scripts/restore-from-neon.ts reads it locally.
+*.bak
+.env.local.bak

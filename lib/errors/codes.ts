@@ -8,6 +8,23 @@ export const UNKNOWN_ERROR: ErrorInfo = {
   explanation: "Unknown error.",
 };
 
+/**
+ * Free-tier database allowances reset at the start of the next UTC month.
+ * This used to be the hardcoded string "June 1", which was still being shown
+ * to visitors in late August — a wrong date is worse than no date, because it
+ * tells people the site is already overdue to recover.
+ */
+function nextQuotaResetLabel(now: Date = new Date()): string {
+  const reset = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1),
+  );
+  return reset.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "long",
+    timeZone: "UTC",
+  });
+}
+
 export function classifyError(err: unknown): ErrorInfo {
   const msg =
     err instanceof Error
@@ -24,7 +41,9 @@ export function classifyError(err: unknown): ErrorInfo {
     return {
       code: "STORAGE_QUOTA_EXHAUSTED",
       explanation:
-        "The site's free storage tier (Neon) has run out for this billing cycle. The current cycle resets on June 1 — the site will recover automatically then. Until then, fresh database lookups will fail; cached pages still load.",
+        `The site's free database allowance has run out for this billing cycle. ` +
+        `It resets on ${nextQuotaResetLabel()} and the site recovers automatically then. ` +
+        `Until then, anything that needs a fresh database lookup will fail.`,
     };
   }
 

@@ -24,6 +24,10 @@ const DEPLOY_BANNER =
   process.env.NEXT_PUBLIC_DEPLOY_BANNER === "on" ? "on" : "off";
 
 const config: NextConfig = {
+  // postgres.js opens a real TCP socket, so it must stay an external require
+  // rather than being bundled and traced for browser/edge polyfills. Without
+  // this the server build tries to resolve 'net'/'tls'/'fs' and fails.
+  serverExternalPackages: ["postgres"],
   env: {
     NEXT_PUBLIC_BUILD_ID: BUILD_ID,
     NEXT_PUBLIC_DEPLOY_BANNER: DEPLOY_BANNER,

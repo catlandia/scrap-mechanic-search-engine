@@ -2,15 +2,15 @@ import { config as loadEnv } from "dotenv";
 loadEnv({ path: ".env.local", override: false });
 loadEnv({ path: ".env", override: false });
 
-import { neon } from "@neondatabase/serverless";
+import postgres from "postgres";
 
 async function main() {
   const url = process.env.DATABASE_URL;
   if (!url) throw new Error("DATABASE_URL not set");
-  const sql = neon(url);
+  const sql = postgres(url, { ssl: "require", max: 1, prepare: false });
   const counts = await sql`SELECT status, COUNT(*) AS n FROM feature_suggestions GROUP BY status`;
   console.log("Counts by status:");
-  for (const r of counts as Array<{ status: string; n: number }>) {
+  for (const r of counts as unknown as Array<{ status: string; n: number }>) {
     console.log(`  ${r.status}: ${r.n}`);
   }
   console.log("\nMost recent 25:");
@@ -20,7 +20,7 @@ async function main() {
     ORDER BY created_at DESC
     LIMIT 25
   `;
-  for (const r of rows as Array<{ id: number; status: string; title: string }>) {
+  for (const r of rows as unknown as Array<{ id: number; status: string; title: string }>) {
     console.log(`#${r.id} [${r.status}] ${r.title}`);
   }
 }

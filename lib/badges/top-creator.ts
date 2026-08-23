@@ -59,7 +59,7 @@ export async function refreshTopCreatorBadge(): Promise<void> {
       limit 1
     `);
 
-    const winner: string | null = rows.rows?.[0]?.steamid ?? null;
+    const winner: string | null = rows?.[0]?.steamid ?? null;
 
     if (winner) {
       await db
@@ -128,7 +128,7 @@ export async function refreshTopCreatorBadgeForKind(
       limit 1
     `);
 
-    const winner: string | null = rows.rows?.[0]?.steamid ?? null;
+    const winner: string | null = rows?.[0]?.steamid ?? null;
 
     if (winner) {
       await db

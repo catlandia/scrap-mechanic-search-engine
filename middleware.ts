@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getIronSession } from "iron-session";
-import { buildSessionOptions, type UserSession } from "@/lib/auth/session";
+import { buildSessionOptions, type UserSession } from "@/lib/auth/session-options";
 import {
   botVerifiedSessionOptions,
   type BotVerifiedSession,

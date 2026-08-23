@@ -3,6 +3,7 @@ import { alias } from "drizzle-orm/pg-core";
 import { unstable_cache } from "next/cache";
 import { cache } from "react";
 import { getDb } from "./client";
+import type { SortMode } from "./sort";
 import {
   categories,
   commentVotes,
@@ -91,43 +92,15 @@ export const cardColumns = {
   uploadedByUserId: creations.uploadedByUserId,
 };
 
-export const SORT_MODES = [
-  "relevance",
-  "newest",
-  "oldest",
-  "steam-newest",
-  "steam-oldest",
-  "popular",
-  "unpopular",
-  "favorites",
-  "least-favorites",
-  "rating",
-  "least-rating",
-  "site-rating",
-  "site-least-rating",
-] as const;
-export type SortMode = (typeof SORT_MODES)[number];
 
-export const SORT_LABELS: Record<SortMode, string> = {
-  relevance: "Most relevant",
-  newest: "Newest on site",
-  oldest: "Oldest on site",
-  "steam-newest": "Newest on Steam",
-  "steam-oldest": "Oldest on Steam",
-  popular: "Most subscribers (Steam)",
-  unpopular: "Fewest subscribers (Steam)",
-  favorites: "Most favourites (Steam)",
-  "least-favorites": "Fewest favourites (Steam)",
-  rating: "Highest rated (Steam)",
-  "least-rating": "Lowest rated (Steam)",
-  "site-rating": "Highest upvote score (Site)",
-  "site-least-rating": "Lowest upvote score (Site)",
-};
-
-export function parseSortMode(raw: string | undefined | null): SortMode {
-  if (raw && (SORT_MODES as readonly string[]).includes(raw)) return raw as SortMode;
-  return "newest";
-}
+// Sort vocabulary now lives in ./sort so client components can import it
+// without dragging the Postgres driver into the browser bundle.
+export {
+  SORT_MODES,
+  SORT_LABELS,
+  parseSortMode,
+} from "./sort";
+export type { SortMode } from "./sort";
 
 // `?page=` URL param → zero-indexed offset. Non-numeric input lands on page 0
 // rather than NaN. `maxIndex` caps how deep into OFFSET queries a caller can
@@ -663,7 +636,7 @@ async function _getTopCreatorsUncached(
   `;
   const result = await db.execute(query);
   return (
-    result.rows as Array<{
+    result as unknown as Array<{
       steamid: string;
       name: string | null;
       avatar_url: string | null;
@@ -1817,7 +1790,7 @@ async function _getApprovalsByMonthUncached(months = 12): Promise<MonthlyApprova
     group by span.month
     order by span.month asc
   `);
-  return (result.rows as Array<{ month: string; count: number }>).map((r) => ({
+  return (result as unknown as Array<{ month: string; count: number }>).map((r) => ({
     monthIso: r.month,
     count: Number(r.count),
   }));
